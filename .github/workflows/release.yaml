@@ -1,7 +1,7 @@
 name: Promote charm
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       origin-channel:
         type: choice
