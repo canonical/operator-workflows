@@ -19,7 +19,7 @@ jobs:
         uses: actions/github-script@v6.2.0
         with:
           script: |
-            # const sha = ${{ github.event.pull_request.head.sha }};
+            # const sha = '${{ github.event.pull_request.head.sha }}';
             const fs = require('fs');
             let report = JSON.parse(fs.readFileSync('test-result.json', 'utf8'));
             
