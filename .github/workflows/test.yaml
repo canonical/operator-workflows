@@ -24,11 +24,11 @@ jobs:
             let result = JSON.parse(fs.readFileSync('test-result.json', 'utf8'));
             
             let lint_result = result['testenvs']['lint']['test'];
-            let lint_success = True;
+            let lint_success = true;
             let lint_output = '';
             for (lint_test_result in lint_result) {
               if (lint_test_result['retcode'] != 0) {
-                lint_success = False;
+                lint_success = false;
               }
               if (lint_test_result['output']) {
                 lint_output += lint_test_result['output'];
