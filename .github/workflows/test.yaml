@@ -18,7 +18,7 @@ jobs:
         id: export-test-report
         env:
           GITHUB_EVENT_PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 ${{ github.action_path }}/.github/files/extract_test_result.py
+        run: python3 canonical/operator-workflows/.github/files/extract_test_result.py
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         if: always()
