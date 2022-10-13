@@ -19,7 +19,7 @@ jobs:
         uses: actions/github-script@v6.2.0
         with:
           script: |
-            const sha = ${{ github.event.pull_request.head.sha }};
+            # const sha = ${{ github.event.pull_request.head.sha }};
             const fs = require('fs');
             let report = JSON.parse(fs.readFileSync('test-result.json', 'utf8'));
             
@@ -45,24 +45,24 @@ jobs:
             let coverage_output = coverage_result[0]['output'];
 
             let reports = []
-            if (!lint_success) {
-              reports.push(
-                `Lint checks failed for {sha}\n
-                \`\`\`\n${lint_output.trim()}\n\`\`\``
-              );
-            }
-            if (!unit_success) {
-              reports.push(
-                `Unit tests failed for ${sha}\n
-                \`\`\`\n${unit_output.trim()}\n\`\`\``
-              );
-            }
-            reports.push(
-              `Test coverage for ${sha}\n
-              \`\`\`\n${coverage_output.trim()}\n\`\`\``
-              Static code analysis report\n
-              \`\`\`\n${static_output.trim()}\n\`\`\``
-            );
+            # if (!lint_success) {
+              # reports.push(
+                # `Lint checks failed for {sha}\n
+                # \`\`\`\n${lint_output.trim()}\n\`\`\``
+              # );
+            # }
+            # if (!unit_success) {
+              # reports.push(
+                # `Unit tests failed for ${sha}\n
+                # \`\`\`\n${unit_output.trim()}\n\`\`\``
+              # );
+            # }
+            # reports.push(
+              # `Test coverage for ${sha}\n
+              # \`\`\`\n${coverage_output.trim()}\n\`\`\``
+              # Static code analysis report\n
+              # \`\`\`\n${static_output.trim()}\n\`\`\``
+            # );
             let json = JSON.stringify(reports);
             fs.writeFile('report.json', json);
       - name: Upload coverage report
