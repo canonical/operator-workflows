@@ -48,21 +48,21 @@ jobs:
             if (!lint_success) {
               reports.push(
                 `Lint checks failed for {sha}\n
-                \`\`\`\n${lint_output.trim()}\n\`\`\``;
-              )
+                \`\`\`\n${lint_output.trim()}\n\`\`\``
+              );
             }
             if (!unit_success) {
               reports.push(
                 `Unit tests failed for ${sha}\n
-                \`\`\`\n${unit_output.trim()}\n\`\`\``;
-              )
+                \`\`\`\n${unit_output.trim()}\n\`\`\``
+              );
             }
             reports.push(
               `Test coverage for ${sha}\n
               \`\`\`\n${coverage_output.trim()}\n\`\`\``
               Static code analysis report\n
-              \`\`\`\n${static_output.trim()}\n\`\`\``;
-            )
+              \`\`\`\n${static_output.trim()}\n\`\`\``
+            );
             let json = JSON.stringify(reports);
             fs.writeFile('report.json', json);
       - name: Upload coverage report
