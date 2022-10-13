@@ -46,7 +46,7 @@ jobs:
             let reports = [];
             if (!lint_success) {
               reports.push(
-                `Lint checks failed for {sha}\n
+                `Lint checks failed for ${sha}\n
                 \`\`\`\n${lint_output.trim()}\n\`\`\``
               );
             }
