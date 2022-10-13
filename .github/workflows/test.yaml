@@ -23,41 +23,45 @@ jobs:
               const fs = require('fs');
               let report = JSON.parse(fs.readFileSync('test-result.json', 'utf8'));
               
-              let lint_result = result['testenvs']['lint']['test']
-              let lint_success = True
-              let lint_output = ''
-              for lint_test_result in lint_result:
-                if lint_test_result['retcode'] != 0:
-                  lint_success = False
-                if lint_test_result['output']:
-                  lint_output += lint_test_result['output']
-              let unit_result = result['testenvs']['unit']['test']
-              let unit_success = unit_result[0]['retcode'] == 0
-              let unit_output = unit_result[0]['output']
-              let static_result = result['testenvs']['static']['test']
-              let static_success = static_result[0]['retcode'] == 0
-              let static_output = static_result[0]['output']
-              let coverage_result = result['testenvs']['coverage-report']['test']
-              let coverage_success = coverage_result[0]['retcode'] == 0
-              let coverage_output = coverage_result[0]['output']
+              let lint_result = result['testenvs']['lint']['test'];
+              let lint_success = True;
+              let lint_output = '';
+              for (lint_test_result in lint_result) {
+                if (lint_test_result['retcode'] != 0) {
+                  lint_success = False;
+                }
+                if (lint_test_result['output']) {
+                  lint_output += lint_test_result['output'];
+                }
+              }
+              let unit_result = result['testenvs']['unit']['test'];
+              let unit_success = unit_result[0]['retcode'] == 0;
+              let unit_output = unit_result[0]['output'];
+              let static_result = result['testenvs']['static']['test'];
+              let static_success = static_result[0]['retcode'] == 0;
+              let static_output = static_result[0]['output'];
+              let coverage_result = result['testenvs']['coverage-report']['test'];
+              let coverage_success = coverage_result[0]['retcode'] == 0;
+              let coverage_output = coverage_result[0]['output'];
 
               let reports = []
-              if not lint_success:
+              if (!lint_success) {
                 reports.push(
                   `Lint checks failed for {sha}\n
-                  \`\`\`\n${lint_output.trim()}\n\`\`\``
+                  \`\`\`\n${lint_output.trim()}\n\`\`\``;
                 )
-              if not unit_success:
+              }
+              if (!unit_success) {
                 reports.push(
                   `Unit tests failed for ${sha}\n
-                  \`\`\`\n${unit_output.trim()}\n\`\`\``
+                  \`\`\`\n${unit_output.trim()}\n\`\`\``;
                 )
-
+              }
               reports.push(
                 `Test coverage for ${sha}\n
                 \`\`\`\n${coverage_output.trim()}\n\`\`\``
                 Static code analysis report\n
-                \`\`\`\n${static_output.trim()}\n\`\`\``
+                \`\`\`\n${static_output.trim()}\n\`\`\``;
               )
               let json = JSON.stringify(reports);
               fs.writeFile('report.json', json);
