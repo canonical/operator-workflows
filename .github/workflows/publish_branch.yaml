@@ -1,7 +1,7 @@
 name: Release charm to a branch in channel edge
 
 on:
-  workflow_dispatch:
+  workflow_call:
     secrets:
       CHARMHUB_TOKEN:
         required: true
