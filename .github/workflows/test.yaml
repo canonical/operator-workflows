@@ -59,7 +59,7 @@ jobs:
             }
             reports.push(
               `Test coverage for ${sha}\n
-              \`\`\`\n${coverage_output.trim()}\n\`\`\``
+              \`\`\`\n${coverage_output.trim()}\n\`\`\`
               Static code analysis report\n
               \`\`\`\n${static_output.trim()}\n\`\`\``
             );
