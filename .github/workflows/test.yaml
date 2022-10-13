@@ -13,12 +13,14 @@ jobs:
         run: python3 -m pip install tox
       - name: Run tests
         run: tox --result-json=test-result.json
+      - name: Download script
+        run: curl -o extract_test_result.py https://github.com/canonical/operator-workflows/tree/initial-workflow-templates/.github/files/extract_test_result.py
       - name: Export test report
         if: always() && github.event_name == 'pull_request'
         id: export-test-report
         env:
           GITHUB_EVENT_PULL_REQUEST_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python3 canonical/operator-workflows/.github/files/extract_test_result.py
+        run: python3 extract_test_result.py
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
         if: always()
