@@ -44,18 +44,18 @@ jobs:
             let coverage_output = coverage_result[0].output;
 
             let reports = [];
-            # if (!lint_success) {
-            #   reports.push(
-            #     `Lint checks failed for ${sha}\n
-            #     \`\`\`\n${lint_output.trim()}\n\`\`\``
-            #   );
-            # }
-            # if (!unit_success) {
-            #   reports.push(
-            #     `Unit tests failed for ${sha}\n
-            #     \`\`\`\n${unit_output.trim()}\n\`\`\``
-            #   );
-            # }
+            //if (!lint_success) {
+            //  reports.push(
+            //    `Lint checks failed for ${sha}\n
+            //    \`\`\`\n${lint_output.trim()}\n\`\`\``
+            //  );
+            //}
+            //if (!unit_success) {
+            //  reports.push(
+            //    `Unit tests failed for ${sha}\n
+            //    \`\`\`\n${unit_output.trim()}\n\`\`\``
+            //  );
+            //}
             reports.push(
               `Test coverage for ${sha}\n
               \`\`\`\n${coverage_output.trim()}\n\`\`\`
