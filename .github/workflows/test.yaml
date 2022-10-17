@@ -2,11 +2,16 @@ name: Tests
 
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: Runner image for the unit tests
+        type: string
+        default: ubuntu-20.04
 
 jobs:
   lint-and-unit-test:
     name: Lint and unit tests
-    runs-on: ubuntu-20.04
+    runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies

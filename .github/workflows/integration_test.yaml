@@ -6,6 +6,10 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
+      runs-on:
+        description: Runner image for the integration tests
+        type: string
+        default: ubuntu-20.04
     outputs:
       images:
         description: Pushed docker images
@@ -18,9 +22,9 @@ env:
 jobs:
   get-images:
     name: Get images
-    runs-on: ubuntu-20.04
+    runs-on: ${{ inputs.runs-on }}
     outputs:
-      images: ${{ env.DOCKER_IMAGES }}
+      images: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - name: Get dockerfiles
@@ -53,7 +57,7 @@ jobs:
 
   integration-test:
     name: Integration tests
-    runs-on: ubuntu-20.04
+    runs-on: ${{ inputs.runs-on }}
     needs: [get-images, build-images]
     if:  ${{ !failure() }}
     steps:

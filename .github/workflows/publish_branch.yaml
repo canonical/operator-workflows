@@ -6,6 +6,9 @@ on:
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
+      test-runs-on:
+        description: Runner image for the tests
+        type: string
 
 jobs:
   lib-check:
@@ -21,11 +24,14 @@ jobs:
   tests:
     name: Run tests
     uses: ./.github/workflows/test.yaml
+    with:
+      runs-on: ${{ inputs.test-runs-on }}
   integration-tests:
     name: Run integration tests
     uses: ./.github/workflows/integration_test.yaml
     with:
       extra-arguments: ${{ inputs.integration-test-extra-arguments }}
+      runs-on: ${{ inputs.test-runs-on }}
   select-branch:
     name: Select target branch
     runs-on: ubuntu-latest
