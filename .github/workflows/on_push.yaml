@@ -9,6 +9,9 @@ name: Publish to edge
 
 on:
   workflow_call:
+    inputs:
+      integration-test-extra-arguments:
+        description: Additional arguments to pass to the integration tests
 
 jobs:
   lib-check:
@@ -32,6 +35,8 @@ jobs:
   integration-tests:
     name: Run integration tests
     uses: ./.github/workflows/integration_test.yaml
+    with:
+      extra-arguments: ${{ inputs.integration-test-extra-arguments }}
   select-channel:
     name: Select target channel
     runs-on: ubuntu-latest

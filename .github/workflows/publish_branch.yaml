@@ -2,6 +2,9 @@ name: Release charm to a branch in channel edge
 
 on:
   workflow_call:
+    inputs:
+      integration-test-extra-arguments:
+        description: Additional arguments to pass to the integration tests
 
 jobs:
   lib-check:
@@ -20,6 +23,8 @@ jobs:
   integration-tests:
     name: Run integration tests
     uses: ./.github/workflows/integration_test.yaml
+    with:
+      extra-arguments: ${{ inputs.integration-test-extra-arguments }}
   select-branch:
     name: Select target branch
     runs-on: ubuntu-latest
