@@ -5,6 +5,7 @@ on:
     inputs:
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
+        type: string
 
 jobs:
   lib-check:

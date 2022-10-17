@@ -5,6 +5,7 @@ on:
     inputs:
       extra-arguments:
         description: Additional arguments to pass to the integration tests
+        type: string
     outputs:
       images:
         description: Pushed docker images
