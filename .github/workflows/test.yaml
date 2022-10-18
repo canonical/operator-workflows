@@ -1,0 +1,80 @@
+name: Tests
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        description: Runner image for the unit tests
+        type: string
+        default: ubuntu-20.04
+
+jobs:
+  lint-and-unit-test:
+    name: Lint and unit tests
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: python3 -m pip install tox
+      - name: Run tests
+        run: tox --result-json=test-result.json
+      - name: Export test report
+        if: always()
+        id: export-test-report
+        uses: actions/github-script@v6.2.0
+        with:
+          script: |
+            const no_color = (text) => {
+                return text.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+            }
+
+            const sha = '${{ github.event.pull_request.head.sha }}';
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('test-result.json')).testenvs;
+            
+            let lint_result = result.lint.test;
+            let lint_success = true;
+            let lint_output = '';
+            for (let lint_test_result of lint_result) {
+              if (lint_test_result.retcode != 0) {
+                lint_success = false;
+              }
+              if (lint_test_result.output) {
+                lint_output += lint_test_result.output;
+              }
+            }
+            let unit_result = result.unit.test;
+            let unit_success = unit_result[0].retcode == 0;
+            let unit_output = unit_result[0].output;
+            let static_result = result.static.test;
+            let static_output = static_result[0].output;
+            let coverage_result = result["coverage-report"].test;
+            let coverage_output = coverage_result[0].output;
+
+            let reports = [];
+            if (!lint_success) {
+              reports.push(
+                `Lint checks failed for ${sha}\n
+                \`\`\`\n${no_color(lint_output).trim()}\n\`\`\``
+              );
+            }
+            if (!unit_success) {
+              reports.push(
+                `Unit tests failed for ${sha}\n
+                \`\`\`\n${no_color(unit_output).trim()}\n\`\`\``
+              );
+            }
+            reports.push(
+              `Test coverage for ${sha}\n
+              \`\`\`\n${no_color(coverage_output).trim()}\n\`\`\`
+              Static code analysis report\n
+              \`\`\`\n${no_color(static_output).trim()}\n\`\`\``
+            );
+            let json = JSON.stringify(reports);
+            fs.writeFileSync('report.json', json);
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        if: always() && github.event_name == 'pull_request'
+        with:
+          name: report
+          path: report.json

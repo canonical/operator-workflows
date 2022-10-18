@@ -1,0 +1,16 @@
+name: Comment on the pull request
+
+on:
+  workflow_call:
+
+jobs:
+  comment-on-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: canonical/operator-workflows/.github/actions/comment_pr
+        with:
+          artifact-name: report
+          github-token: ${{ secrets.GITHUB_TOKEN }}
