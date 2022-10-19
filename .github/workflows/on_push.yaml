@@ -16,6 +16,7 @@ on:
       test-runs-on:
         description: Runner image for the tests
         type: string
+        default: ubuntu-20.04
 
 jobs:
   lib-check:
