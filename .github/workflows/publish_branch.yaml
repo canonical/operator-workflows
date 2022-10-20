@@ -3,6 +3,10 @@ name: Release charm to a branch in channel edge
 on:
   workflow_call:
     inputs:
+      charm-type:
+        description: Charm substrate (k8s or machine)
+        type: string
+        default: k8s
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
@@ -31,6 +35,7 @@ jobs:
     name: Run integration tests
     uses: ./.github/workflows/integration_test.yaml
     with:
+      charm-type: ${{ inputs.charm-type }}
       extra-arguments: ${{ inputs.integration-test-extra-arguments }}
       runs-on: ${{ inputs.test-runs-on }}
   select-branch:
