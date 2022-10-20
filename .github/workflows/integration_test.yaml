@@ -96,31 +96,31 @@ jobs:
           app: ${{ env.CHARM_NAME }}
           model: testing
 
-    integration-test-lxd:
-      strategy:
-        matrix:
-          series: [xenial, bionic, focal]
-        fail-fast: false
-      name: Integration tests (lxd)
-      # [2022-09-29] The integration tests have to run on Ubuntu 18.04 to be able to support Xenial
-      runs-on: ubuntu-18.04
-      if: ${{ !failure() && inputs.is-machine-charm }}
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v3
-        - name: Setup operator environment
-          uses: charmed-kubernetes/actions-operator@main
-          with:
-            provider: lxd
-          # [2022-09-29] Need to install Python 3.8 because that is what the tests run on and 18.04
-          # comes with Python 3.6
-        - uses: actions/setup-python@v4
-          with:
-            python-version: '3.8'
-        - name: Run integration tests
-          run: |
-            args=""
-            for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-              args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
-            done
-            tox -e integration -- --series ${{ matrix.series }} $args ${{ inputs.extra-arguments }}
+  integration-test-lxd:
+    strategy:
+      matrix:
+        series: [xenial, bionic, focal]
+      fail-fast: false
+    name: Integration tests (lxd)
+    # [2022-09-29] The integration tests have to run on Ubuntu 18.04 to be able to support Xenial
+    runs-on: ubuntu-18.04
+    if: ${{ !failure() && inputs.is-machine-charm }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: lxd
+        # [2022-09-29] Need to install Python 3.8 because that is what the tests run on and 18.04
+        # comes with Python 3.6
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Run integration tests
+        run: |
+          args=""
+          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
+            args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
+          done
+          tox -e integration -- --series ${{ matrix.series }} $args ${{ inputs.extra-arguments }}
