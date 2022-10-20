@@ -13,6 +13,10 @@ on:
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
+      is-machine-charm:
+        description: Charm substrate (k8s or machine)
+        type: boolean
+        default: false
       test-runs-on:
         description: Runner image for the tests
         type: string
@@ -44,6 +48,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     with:
       extra-arguments: ${{ inputs.integration-test-extra-arguments }}
+      is-machine-charm: ${{ inputs.is-machine-charm }}
       runs-on: ${{ inputs.test-runs-on }}
   select-channel:
     name: Select target channel
