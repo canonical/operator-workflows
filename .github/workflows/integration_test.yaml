@@ -3,13 +3,13 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
-      charm-type:
-        description: Charm substrate (k8s or machine)
-        type: string
-        default: k8s
       extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
+      is-machine-charm:
+        description: Charm substrate (k8s or machine)
+        type: boolean
+        default: false
       runs-on:
         description: Runner image for the integration tests
         type: string
@@ -63,7 +63,7 @@ jobs:
     name: Integration tests (k8s)
     runs-on: ${{ inputs.runs-on }}
     needs: [get-images, build-images]
-    if: ${{ !failure() && inputs.charm-type == "k8s" }}
+    if: ${{ !failure() && !inputs.is-machine-charm }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup operator environment
@@ -104,7 +104,7 @@ jobs:
       name: Integration tests (lxd)
       # [2022-09-29] The integration tests have to run on Ubuntu 18.04 to be able to support Xenial
       runs-on: ubuntu-18.04
-      if: ${{ !failure() inputs.charm-type == "machine" }}
+      if: ${{ !failure() && inputs.is-machine-charm }}
       steps:
         - name: Checkout
           uses: actions/checkout@v3
