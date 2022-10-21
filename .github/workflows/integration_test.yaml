@@ -40,7 +40,6 @@ jobs:
       - name: Get repository owner
         run: |
           owner=${{ github.repository_owner }}
-          echo ${{ github.event_name }}
           if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             owner=${{ github.event.pull_request.head.repo.owner.login }}
           fi
