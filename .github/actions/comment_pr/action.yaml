@@ -43,6 +43,7 @@ runs:
 
           console.log("------------------------------------")
           console.log(context.payload.workflow_run.repository)
+          console.log(${{ github.event.workflow_run.id }})
           console.log("------------------------------------")
 
           const issue_number = (await github.rest.actions.getWorkflowRun({
