@@ -37,11 +37,11 @@ jobs:
       owner: ${{ env.HEAD_REPO_OWNER }}
     steps:
       - uses: actions/checkout@v3
-      - name: Get dockerfiles
+      - name: Get repository owner
         run: |
           owner=${{ github.repository_owner }}
-          echo ${{ github.event.workflow_run.event }}
-          if [[ ${{ github.event.workflow_run.event }} == 'pull_request' ]]; then
+          echo ${{ github.event_name }}
+          if [[ ${{ github.event_name }} == 'pull_request' ]]; then
             owner=${{ github.event.pull_request.head.repo.owner.login }}
           fi
           echo "HEAD_REPO_OWNER=$owner" >> $GITHUB_ENV
