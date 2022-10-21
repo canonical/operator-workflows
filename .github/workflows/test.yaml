@@ -14,8 +14,10 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Install tox
         run: python3 -m pip install tox
+      - name: Install woke snap
+        run: sudo snap install woke
       - name: Run tests
         run: tox --result-json=test-result.json
       - name: Export test report
