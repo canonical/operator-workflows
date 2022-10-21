@@ -41,6 +41,10 @@ runs:
           const fs = require('fs');
           const comments = JSON.parse(fs.readFileSync('${{ inputs.artifact-name }}.json'));
 
+          console.log("------------------------------------")
+          console.log(context.payload.workflow_run.repository)
+          console.log("------------------------------------")
+
           const issue_number = (await github.rest.actions.getWorkflowRun({
             owner : context.payload.workflow_run.repository.owner.login,
             repo : context.payload.workflow_run.repository.name,
