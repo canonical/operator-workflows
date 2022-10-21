@@ -47,19 +47,15 @@ runs:
           const owner = context.payload.workflow_run.repository.owner.login;
           const repo = context.payload.workflow_run.repository.name;
 
-          const pulls = (await github.rest.pulls.list({
+          const pull = (await github.rest.pulls.list({
             owner : context.repo.owner,
             repo : context.repo.repo,
-          }));
+          })).filter(pr => pr.statuses_url.includes(context.payload.workflow_run.head_sha));
 
-          console.log(context.payload.repository)
-          console.log("---------------------------------------")
+          console.log(context.payload.workflow_run.head_sha)
+          console.log(pull)
 
-          console.log(pulls)
-
-          const issue_number = context.payload.workflow_run.pull_requests[0].number;
-
-
+          const issue_number = pull.number;
 
           const createComment = async (body) => {
               await github.rest.issues.createComment({
