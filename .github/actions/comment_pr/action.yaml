@@ -40,7 +40,16 @@ runs:
         script: |
           const fs = require('fs');
           const comments = JSON.parse(fs.readFileSync('${{ inputs.artifact-name }}.json'));
-          
+
+          console.log("-----------------------------------------");
+          console.log(context.repo.owner);
+          console.log(context.repo.repo);
+          console.log("-----------------------------------------");
+          console.log(JSON.stringify(context.payload.workflow_run));
+          console.log("-----------------------------------------");
+          console.log(JSON.stringify(context.payload));
+          console.log("-----------------------------------------");
+
           const issue_number = (await github.rest.actions.getWorkflowRun({
             owner : context.repo.owner,
             repo : context.repo.repo,
