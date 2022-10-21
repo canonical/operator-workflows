@@ -42,9 +42,18 @@ runs:
           const comments = JSON.parse(fs.readFileSync('${{ inputs.artifact-name }}.json'));
 
           console.log("------------------------------------")
-          console.log(context.payload.workflow_run.repository)
+          console.log(context.payload.workflow_run.repository.owner.login)
+          console.log(context.payload.workflow_run.repository.name)
           console.log(${{ github.event.workflow_run.id }})
           console.log("------------------------------------")
+
+          const w = (await github.rest.actions.getWorkflowRun({
+            owner : context.payload.workflow_run.repository.owner.login,
+            repo : context.payload.workflow_run.repository.name,
+            run_id : ${{ github.event.workflow_run.id }},
+          }));
+          console.log(w)
+          console.log(JSON.stringify(w))
 
           const issue_number = (await github.rest.actions.getWorkflowRun({
             owner : context.payload.workflow_run.repository.owner.login,
