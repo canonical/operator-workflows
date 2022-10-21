@@ -66,7 +66,7 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
-integration-test:
+  integration-test:
     name: Integration tests
     strategy:
       matrix:
