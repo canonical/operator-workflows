@@ -40,7 +40,8 @@ jobs:
       - name: Get dockerfiles
         run: |
           owner=${{ github.repository_owner }}
-          if [[ github.event.workflow_run.event == 'pull_request' ]]; then
+          echo ${{ github.event.workflow_run.event }}
+          if [[ ${{ github.event.workflow_run.event }} == 'pull_request' ]]; then
             owner=${{ github.event.pull_request.head.repo.owner.login }}
           fi
           echo "HEAD_REPO_OWNER=$owner" >> $GITHUB_ENV
