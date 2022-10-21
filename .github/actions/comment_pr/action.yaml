@@ -46,7 +46,13 @@ runs:
 
           const owner = context.payload.workflow_run.repository.owner.login;
           const repo = context.payload.workflow_run.repository.name;
-          console.log(context.payload.workflow_run)
+          console.log(context.payload.pull_request)
+
+          const prs = (await github.rest.actions.getWorkflowRun({
+            owner : context.repo.owner,
+            repo : context.repo.repo,
+          }));
+
           const issue_number = context.payload.workflow_run.pull_requests[0].number;
 
           const createComment = async (body) => {
