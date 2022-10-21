@@ -52,7 +52,7 @@ runs:
             repo : context.repo.repo,
           }));
 
-          console.log(context.payload.workflow_run)
+          console.log(context.payload.repository)
           console.log("---------------------------------------")
 
           console.log(pulls)
