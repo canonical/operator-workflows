@@ -4,16 +4,23 @@ on:
   workflow_call:
     inputs:
       extra-arguments:
-        description: Additional arguments to pass to the integration tests
+        description: Additional arguments to pass to the integration tests step
         type: string
-      is-machine-charm:
-        description: Charm substrate (k8s or machine)
-        type: boolean
-        default: false
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
+      provider:
+        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: microk8s
       runs-on:
         description: Runner image for the integration tests
         type: string
         default: ubuntu-20.04
+      series:
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
+        type: string
+        default: '[""]'
     outputs:
       images:
         description: Pushed docker images
@@ -59,18 +66,23 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
-  integration-test-k8s:
-    name: Integration tests (k8s)
+  integration-test:
+    name: Integration tests
+    strategy:
+      matrix:
+        series: ${{ fromJSON(inputs.series) }}
+      fail-fast: false
     runs-on: ${{ inputs.runs-on }}
     needs: [get-images, build-images]
-    if: ${{ !failure() && !inputs.is-machine-charm }}
+    if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
-          provider: microk8s
+          provider: ${{ inputs.provider }}
       - name: Configure GHCR in microk8s
+        if: ${{ inputs.provider == 'microk8s' }}
         run: |
           # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
           # Note: containerd has to be restarted for the changes to take effect
@@ -81,6 +93,9 @@ jobs:
           password = \"${{ secrets.GITHUB_TOKEN }}\"
           " >> /var/snap/microk8s/current/args/containerd-template.toml'
           sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+      - name: Pre-run script
+        if: ${{ inputs.pre-run-script != '' }}
+        run: bash ${{ inputs.pre-run-script }}
       - name: Run integration tests
         run: |
           echo "CHARM_NAME=$(yq '.name' metadata.yaml)" >> $GITHUB_ENV
@@ -88,39 +103,15 @@ jobs:
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
           done
-          tox -e integration -- --model testing $args ${{ inputs.extra-arguments }}
+
+          series=""
+          if [ ! -z ${{ matrix.series }} ]; then
+            series="--series ${{ matrix.series }}"
+          fi
+          tox -e integration -- --model testing $series $args ${{ inputs.extra-arguments }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
         with:
           app: ${{ env.CHARM_NAME }}
           model: testing
-
-  integration-test-lxd:
-    strategy:
-      matrix:
-        series: [xenial, bionic, focal]
-      fail-fast: false
-    name: Integration tests (lxd)
-    # [2022-09-29] The integration tests have to run on Ubuntu 18.04 to be able to support Xenial
-    runs-on: ubuntu-18.04
-    if: ${{ !failure() && inputs.is-machine-charm }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: lxd
-        # [2022-09-29] Need to install Python 3.8 because that is what the tests run on and 18.04
-        # comes with Python 3.6
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.8'
-      - name: Run integration tests
-        run: |
-          args=""
-          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
-          done
-          tox -e integration -- --series ${{ matrix.series }} $args ${{ inputs.extra-arguments }}
