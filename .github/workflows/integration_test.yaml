@@ -28,9 +28,22 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
 
 jobs:
+  get-repo-owner:
+    name: Get repository owner
+    runs-on: ubuntu-20.04
+    outputs:
+      owner: ${{ env.HEAD_REPO_OWNER }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get dockerfiles
+        run: |
+          HEAD_REPO_OWNER=${{ github.repository_owner }}
+          if [[ github.event.workflow_run.event == 'pull_request' ]]; then
+            HEAD_REPO_OWNER=${{ github.event.pull_request.head.repo.owner.login }}
+          fi
+          echo $HEAD_REPO_OWNER >> $GITHUB_ENV
   get-images:
     name: Get images
     runs-on: ubuntu-20.04
@@ -40,11 +53,13 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get dockerfiles
         id: set-images
-        run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+        run: |
+          DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
+          echo $DOCKER_IMAGES >> $GITHUB_ENV
   build-images:
     name: Build image
     runs-on: ubuntu-20.04
-    needs: get-images
+    needs: [get-images, get-repo-owner]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     strategy:
       matrix:
@@ -63,7 +78,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
+          tags: ${{ env.REGISTRY }}/${{ needs.get-repo-owner.outputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
   integration-test:
@@ -73,7 +88,7 @@ jobs:
         series: ${{ fromJSON(inputs.series) }}
       fail-fast: false
     runs-on: ${{ inputs.runs-on }}
-    needs: [get-images, build-images]
+    needs: [get-images, get-repo-owner, build-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -101,7 +116,7 @@ jobs:
           echo "CHARM_NAME=$(yq '.name' metadata.yaml)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
+            args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ needs.get-repo-owner.outputs.owner }}/${image_name}:${{ github.run_id }}"
           done
 
           series=""
