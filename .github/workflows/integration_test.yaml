@@ -18,9 +18,9 @@ on:
         type: string
         default: ubuntu-20.04
       series:
-        description: List of series to run the tests in JSON format. Each element will be passed to tox as --series argument
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
         type: string
-        default: [""]
+        default: '[""]'
     outputs:
       images:
         description: Pushed docker images
