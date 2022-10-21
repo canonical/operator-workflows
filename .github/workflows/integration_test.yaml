@@ -105,7 +105,7 @@ jobs:
           done
 
           series=""
-          if [[ -z ${{ matrix.series }} ]]; then
+          if [ -z ${{ matrix.series }} ]; then
             series="--series ${{ matrix.series }}"
           fi
           tox -e integration -- --model testing $series $args ${{ inputs.extra-arguments }}
