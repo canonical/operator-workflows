@@ -15,17 +15,20 @@ runs:
       with:
         script: |
           const fs = require('fs');
+          const owner = context.payload.workflow_run.repository.owner.login;
+          const repo = context.payload.workflow_run.repository.name;
+          const run_id = ${{ github.event.workflow_run.id }};
           const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }},
+              owner: owner,
+              repo: repo,
+              run_id: run_id,
           });
           const matchArtifact = artifacts.data.artifacts.filter(artifact => 
             artifact.name == '${{ inputs.artifact-name }}'
           )[0];
           const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: owner,
+              repo: repo,
               artifact_id: matchArtifact.id,
               archive_format: 'zip',
           });
@@ -40,17 +43,20 @@ runs:
         script: |
           const fs = require('fs');
           const comments = JSON.parse(fs.readFileSync('${{ inputs.artifact-name }}.json'));
-          
-          const issue_number = (await github.rest.actions.getWorkflowRun({
+
+          const owner = context.payload.workflow_run.repository.owner.login;
+          const repo = context.payload.workflow_run.repository.name;
+
+          const pull = (await github.rest.pulls.list({
             owner : context.repo.owner,
             repo : context.repo.repo,
-            run_id : ${{ github.event.workflow_run.id }},
-          })).data.pull_requests[0].number;
+          })).data.filter(pr => pr.head.sha == context.payload.workflow_run.head_sha)[0];
+          const issue_number = pull.number;
 
           const createComment = async (body) => {
               await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: owner,
+                  repo: repo,
                   issue_number: issue_number,
                   body,
               });
@@ -58,8 +64,8 @@ runs:
           
           const deleteGithubActionsComments = async () => {
               const existingComments = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: owner,
+                  repo: repo,
                   issue_number: issue_number,
               });
               const githubActionsComments = existingComments.data.filter(
@@ -67,8 +73,8 @@ runs:
               );
               for (const comment of githubActionsComments) {
                   await github.rest.issues.deleteComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
+                      owner: owner,
+                      repo: repo,
                       comment_id: comment.id,
                   });
               }
