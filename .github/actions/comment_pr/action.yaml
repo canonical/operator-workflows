@@ -16,16 +16,16 @@ runs:
         script: |
           const fs = require('fs');
           const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: context.payload.workflow_run.repository.owner.login,
+              repo: context.payload.workflow_run.repository.name,
               run_id: ${{ github.event.workflow_run.id }},
           });
           const matchArtifact = artifacts.data.artifacts.filter(artifact => 
             artifact.name == '${{ inputs.artifact-name }}'
           )[0];
           const download = await github.rest.actions.downloadArtifact({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
+              owner: context.payload.workflow_run.repository.owner.login,
+              repo: context.payload.workflow_run.repository.name,
               artifact_id: matchArtifact.id,
               archive_format: 'zip',
           });
@@ -41,23 +41,16 @@ runs:
           const fs = require('fs');
           const comments = JSON.parse(fs.readFileSync('${{ inputs.artifact-name }}.json'));
 
-          console.log("-----------------------------------------");
-          console.log(context.repo.owner);
-          console.log(context.repo.repo);
-          console.log("-----------------------------------------");
-          console.log(JSON.stringify(context.payload.workflow_run));
-          console.log("-----------------------------------------");
-
           const issue_number = (await github.rest.actions.getWorkflowRun({
-            owner : context.repo.owner,
-            repo : context.repo.repo,
+            owner : context.payload.workflow_run.repository.owner.login,
+            repo : context.payload.workflow_run.repository.name,
             run_id : ${{ github.event.workflow_run.id }},
           })).data.pull_requests[0].number;
 
           const createComment = async (body) => {
               await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: context.payload.workflow_run.repository.owner.login,
+                  repo: context.payload.workflow_run.repository.name,
                   issue_number: issue_number,
                   body,
               });
@@ -65,8 +58,8 @@ runs:
           
           const deleteGithubActionsComments = async () => {
               const existingComments = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
+                  owner: context.payload.workflow_run.repository.owner.login,
+                  repo: context.payload.workflow_run.repository.name,
                   issue_number: issue_number,
               });
               const githubActionsComments = existingComments.data.filter(
@@ -74,8 +67,8 @@ runs:
               );
               for (const comment of githubActionsComments) {
                   await github.rest.issues.deleteComment({
-                      owner: context.repo.owner,
-                      repo: context.repo.repo,
+                      owner: context.payload.workflow_run.repository.owner.login,
+                      repo: context.payload.workflow_run.repository.name,
                       comment_id: comment.id,
                   });
               }
