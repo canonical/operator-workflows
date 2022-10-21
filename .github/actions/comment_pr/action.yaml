@@ -50,7 +50,7 @@ runs:
           const pull = (await github.rest.pulls.list({
             owner : context.repo.owner,
             repo : context.repo.repo,
-          })).data.filter(pr => pr.statuses_url.includes(context.payload.workflow_run.head_sha));
+          })).data.filter(pr => pr.head.sha == context.payload.workflow_run.head_sha)[0];
 
           console.log(context.payload.workflow_run.head_sha)
           console.log(pull)
