@@ -51,10 +51,6 @@ runs:
             owner : context.repo.owner,
             repo : context.repo.repo,
           })).data.filter(pr => pr.head.sha == context.payload.workflow_run.head_sha)[0];
-
-          console.log(context.payload.workflow_run.head_sha)
-          console.log(pull)
-
           const issue_number = pull.number;
 
           const createComment = async (body) => {
