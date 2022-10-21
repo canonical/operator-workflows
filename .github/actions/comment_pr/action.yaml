@@ -47,10 +47,9 @@ runs:
           const owner = context.payload.workflow_run.repository.owner.login;
           const repo = context.payload.workflow_run.repository.name;
 
-          console.log(github.rest)
           console.log(github.rest.pulls)
 
-          const pulls = (await github.rest.pulls.get({
+          const pulls = (await github.rest.pulls.list({
             owner : context.repo.owner,
             repo : context.repo.repo,
           }));
