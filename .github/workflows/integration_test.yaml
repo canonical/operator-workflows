@@ -39,11 +39,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get dockerfiles
         run: |
-          HEAD_REPO_OWNER=${{ github.repository_owner }}
+          owner=${{ github.repository_owner }}
           if [[ github.event.workflow_run.event == 'pull_request' ]]; then
-            HEAD_REPO_OWNER=${{ github.event.pull_request.head.repo.owner.login }}
+            owner=${{ github.event.pull_request.head.repo.owner.login }}
           fi
-          echo $HEAD_REPO_OWNER >> $GITHUB_ENV
+          echo "HEAD_REPO_OWNER=$owner" >> $GITHUB_ENV
   get-images:
     name: Get images
     runs-on: ubuntu-20.04
@@ -54,8 +54,8 @@ jobs:
       - name: Get dockerfiles
         id: set-images
         run: |
-          DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
-          echo $DOCKER_IMAGES >> $GITHUB_ENV
+          images=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
+          echo "DOCKER_IMAGES=$images" >> $GITHUB_ENV
   build-images:
     name: Build image
     runs-on: ubuntu-20.04
