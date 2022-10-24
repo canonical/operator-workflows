@@ -45,6 +45,7 @@ jobs:
       provider: ${{ inputs.integration-test-provider }}
       runs-on: ${{ inputs.test-runs-on }}
       series: ${{ inputs.integration-test-series }}
+      default: '[""]'
   select-branch:
     name: Select target branch
     runs-on: ubuntu-latest
