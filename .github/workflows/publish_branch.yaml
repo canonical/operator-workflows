@@ -15,6 +15,7 @@ on:
       integration-test-series:
         description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
         type: string
+        default: '[""]'
       test-runs-on:
         description: Runner image for the tests
         type: string
