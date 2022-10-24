@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       extra-arguments:
-        description: Additional arguments to pass to the integration tests step
+        description: Additional arguments to pass to the integration test execution
         type: string
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
