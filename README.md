@@ -10,7 +10,7 @@ To use the workflows in your repository, just reuse them including the `secrets:
 
 The following workflows are available:
 
-* test: executes the default tox targets defined in the `tox.ini`file and generates a plain text report. The following parameters are available for this workflow:
+* test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description
 | runs-on| string | ubuntu-20.04 | Image runner for the test execution |
