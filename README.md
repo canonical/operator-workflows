@@ -20,7 +20,7 @@ The following workflows are available:
 * integration_test: Builds the existing Dockerfiles, if any, and executes the integration test target defined in the `tox.ini` file. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
-|--------------------|----------|--------------------|
+|--------------------|----------|--------------------|-------------------|
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined (here)[https://github.com/charmed-kubernetes/actions-operator#usage] |
@@ -31,7 +31,7 @@ The following workflows are available:
 * on_push: Builds and publishes the charm and its resources to appropriate channel, as defined (here)[https://github.com/canonical/charming-actions/tree/main/channel].  The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
-|--------------------|----------|--------------------|
+|--------------------|----------|--------------------|-------------------|
 | integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | integration-test-provider | string | microk8s | Actions operator provider as defined (here)[https://github.com/charmed-kubernetes/actions-operator#usage] |
@@ -40,6 +40,6 @@ The following workflows are available:
 
 * release: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
 | Name | Type | Default | Description |
-|--------------------|----------|--------------------|
+|--------------------|----------|--------------------|-------------------|
 | destination-channel | string | "" | Destination channel |
 | origin-channel | string | "" | Origin channel |
