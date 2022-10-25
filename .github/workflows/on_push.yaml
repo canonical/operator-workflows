@@ -19,6 +19,7 @@ on:
       integration-test-provider:
         description: Actions operator provider for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
+        default: microk8s
       integration-test-series:
         description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
         type: string
