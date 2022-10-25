@@ -27,11 +27,6 @@ on:
         description: Runner image for the tests
         type: string
         default: ubuntu-20.04
-    secrets:
-      CHARMHUB-TOKEN:
-        required: true
-      GITHUB-TOKEN:
-        required: true
 
 jobs:
   lib-check:

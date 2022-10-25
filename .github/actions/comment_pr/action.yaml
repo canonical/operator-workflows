@@ -4,9 +4,6 @@ inputs:
   artifact-name:
     required: true
     description: Artifact containing a JSON file with the list of comments to be published
-secrets:
-  GITHUB-TOKEN:
-    required: true
 
 runs:
   using: composite

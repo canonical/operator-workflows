@@ -8,11 +8,6 @@ on:
         type: string
       images:
         type: string
-    secrets:
-      CHARMHUB-TOKEN:
-        required: true
-      GITHUB-TOKEN:
-        required: true
 
 env:
   REGISTRY: ghcr.io
