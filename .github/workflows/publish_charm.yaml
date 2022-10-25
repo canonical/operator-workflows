@@ -33,7 +33,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish image
         env:
-          CHARMCRAFT_AUTH:  ${{ secrets.charmhub-token }}
+          CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           charmName=$(yq '.name' metadata.yaml)
