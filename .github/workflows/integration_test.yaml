@@ -26,8 +26,6 @@ on:
         description: Pushed docker images
         value: ${{ jobs.get-images.outputs.images }}
     secrets:
-      CHARMHUB-TOKEN:
-        required: true
       GITHUB-TOKEN:
         required: true
 
