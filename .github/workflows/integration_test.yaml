@@ -25,6 +25,7 @@ on:
       images:
         description: Pushed docker images
         value: ${{ jobs.get-images.outputs.images }}
+    secrets: inherit
 
 env:
   REGISTRY: ghcr.io

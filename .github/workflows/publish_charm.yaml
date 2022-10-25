@@ -8,11 +8,7 @@ on:
         type: string
       images:
         type: string
-    secrets:
-      charmhub-token:
-        required: true
-      github-token:
-        required: true
+    secrets: inherit
 
 env:
   REGISTRY: ghcr.io
@@ -55,7 +51,7 @@ jobs:
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.1.1
         with:
-          credentials: ${{ secrets.charmhub-token }}
-          github-token: ${{ secrets.github-token }}
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}
           upload-image: false

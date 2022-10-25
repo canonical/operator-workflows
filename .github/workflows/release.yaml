@@ -9,9 +9,7 @@ on:
       destination-channel:
         type: string
         description: 'Destination Channel'
-    secrets:
-      CHARMHUB_TOKEN:
-        required: true
+    secrets: inherit
 
 jobs:
   promote-charm:

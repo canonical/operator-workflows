@@ -2,6 +2,7 @@ name: Comment on the pull request
 
 on:
   workflow_call:
+    secrets: inherit
 
 jobs:
   comment-on-pr:
