@@ -39,6 +39,7 @@ The following workflows are available:
 | test-runs-on | string | ubuntu-20.04 | Image runner for the test execution |
 
 * release: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
+
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | destination-channel | string | "" | Destination channel |
