@@ -27,7 +27,11 @@ on:
         description: Runner image for the tests
         type: string
         default: ubuntu-20.04
-    secrets: inherit
+    secrets:
+      CHARMHUB-TOKEN:
+        required: true
+      GITHUB-TOKEN:
+        required: true
 
 jobs:
   lib-check:
@@ -59,6 +63,7 @@ jobs:
       provider: ${{ inputs.integration-test-provider }}
       runs-on: ${{ inputs.test-runs-on }}
       series: ${{ inputs.integration-test-series }}
+    secrets: inherit
   select-channel:
     name: Select target channel
     runs-on: ubuntu-latest
@@ -75,3 +80,4 @@ jobs:
     with:
       channel: ${{ needs.select-channel.outputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
+    secrets: inherit

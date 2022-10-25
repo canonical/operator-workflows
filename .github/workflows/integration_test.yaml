@@ -25,7 +25,11 @@ on:
       images:
         description: Pushed docker images
         value: ${{ jobs.get-images.outputs.images }}
-    secrets: inherit
+    secrets:
+      CHARMHUB-TOKEN:
+        required: true
+      GITHUB-TOKEN:
+        required: true
 
 env:
   REGISTRY: ghcr.io

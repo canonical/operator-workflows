@@ -7,7 +7,6 @@ on:
         description: Runner image for the unit tests
         type: string
         default: ubuntu-20.04
-    secrets: inherit
 
 jobs:
   lint-and-unit-test:

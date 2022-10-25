@@ -2,7 +2,6 @@ name: Comment on the pull request
 
 on:
   workflow_call:
-    secrets: inherit
 
 jobs:
   comment-on-pr:
@@ -14,4 +13,4 @@ jobs:
       - uses: canonical/operator-workflows/.github/actions/comment_pr@main
         with:
           artifact-name: report
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        secrets: inherit

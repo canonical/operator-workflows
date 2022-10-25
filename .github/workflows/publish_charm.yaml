@@ -8,7 +8,11 @@ on:
         type: string
       images:
         type: string
-    secrets: inherit
+    secrets:
+      CHARMHUB-TOKEN:
+        required: true
+      GITHUB-TOKEN:
+        required: true
 
 env:
   REGISTRY: ghcr.io
@@ -31,7 +35,7 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.github-token }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.charmhub-token }}
