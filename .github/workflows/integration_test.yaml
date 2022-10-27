@@ -65,7 +65,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: if: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
+          push: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
