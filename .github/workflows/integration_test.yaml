@@ -72,6 +72,8 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
+      # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
+      # so an artifact is published instead
       - name: Build image and publish artifact
         uses: docker/build-push-action@v3
         if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
@@ -99,13 +101,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
         with:
           provider: ${{ inputs.provider }}
       - name: Enable microk8s registry
-        # Add a step to wait for the registry to become available after it has
-        # been deployed to avoid any issues with trying to push images to it
-        # before it is ready
+        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
         run: |
           sudo microk8s.enable registry
           sudo microk8s.kubectl -n container-registry rollout status -w deployment/registry
