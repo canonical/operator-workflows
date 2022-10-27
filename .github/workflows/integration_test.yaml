@@ -52,9 +52,9 @@ jobs:
       - name: Dump GitHub context
         id: github_context_step
         run: |
-          echo '${{ github.event.workflow_run.event != 'pull_request' }}'
+          echo '${{ github.event_name != 'pull_request' }}'
           echo '${{ github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
-          echo '${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
+          echo '${{ github.event_name != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
         if: ${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}
@@ -65,7 +65,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push image
         uses: docker/build-push-action@v3
-        if: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name }}
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name }}
         with:
           context: .
           push: true
@@ -75,14 +75,14 @@ jobs:
       # so an artifact is published instead
       - name: Build image and publish artifact
         uses: docker/build-push-action@v3
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
         with:
           context: .
           file: ${{ matrix.image }}.Dockerfile
           outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
         with:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
@@ -103,18 +103,18 @@ jobs:
         with:
           provider: ${{ inputs.provider }}
       - name: Enable microk8s registry
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
         run: |
           sudo microk8s.enable registry
           sudo microk8s.kubectl -n container-registry rollout status -w deployment/registry
       - name: Download all artifacts
         uses: actions/download-artifact@v3
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
         with:
           name: ${{ inputs.resource-name }}
           path: /tmp
       - name: Push images to microk8s registry
-        if: ${{ github.event.workflow_run.event == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}  
         run: |
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             imageId=$(docker load --input ${image_name}/${image_name}.tar | sed -e "s/^Loaded image ID: //")
@@ -122,7 +122,7 @@ jobs:
             docker push localhost:32000/${image_name}:latest
           done
       - name: Configure GHCR in microk8s
-        if: ${{ inputs.provider == 'microk8s' &&  (github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name) }}
+        if: ${{ inputs.provider == 'microk8s' &&  (github.event_name != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name) }}
         run: |
           # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
           # Note: containerd has to be restarted for the changes to take effect
