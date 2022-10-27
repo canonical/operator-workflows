@@ -55,6 +55,7 @@ jobs:
           echo '${{ github.event_name != 'pull_request' }}'
           echo '${{ github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
           echo '${{ github.event_name != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
+          echo ${{ fromJSON(github.event) }}
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
         if: ${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}
