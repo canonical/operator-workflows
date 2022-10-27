@@ -29,7 +29,6 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
-  USE_REGISTRY: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
 
 jobs:
   get-images:
@@ -49,7 +48,6 @@ jobs:
     name: Build image
     runs-on: ubuntu-20.04
     needs: get-images
-    if: ${{ env.USE_REGISTRY == 'true' }}
     strategy:
       matrix:
         image: ${{ fromJSON(needs.get-images.outputs.images) }}
@@ -67,7 +65,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: true
+          push: if: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
