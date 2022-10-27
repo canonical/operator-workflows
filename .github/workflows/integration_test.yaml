@@ -55,9 +55,7 @@ jobs:
       - name: Dump GitHub context
         id: github_context_step
         run: |
-          echo '${{ github.event.workflow_run.event == 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}'
-          echo '${{ github.event.workflow_run.event == 'pull_request' }}'
-          echo '${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}'
+          echo '${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name}}'
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
         if: ${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}
@@ -71,7 +69,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          push: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
+          push: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name == github.event.pull_request.base.head.full_name }}
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ matrix.image }}.Dockerfile
 
