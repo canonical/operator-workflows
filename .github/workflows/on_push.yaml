@@ -61,6 +61,7 @@ jobs:
       series: ${{ inputs.integration-test-series }}
     secrets: inherit
   select-channel:
+    if: github.repository_owner == 'canonical'
     name: Select target channel
     runs-on: ubuntu-latest
     outputs:
@@ -70,6 +71,7 @@ jobs:
         id: channel
         uses: canonical/charming-actions/channel@2.1.1
   publish-charm:
+    if: github.repository_owner == 'canonical'
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
     needs: [ tests, integration-tests, select-channel ]
