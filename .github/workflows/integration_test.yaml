@@ -52,6 +52,11 @@ jobs:
       matrix:
         image: ${{ fromJSON(needs.get-images.outputs.images) }}
     steps:
+       - name: Dump GitHub context
+        id: github_context_step
+        run: echo '{{ github.event.workflow_run.event == 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}'
+        run: echo '{{ github.event.workflow_run.event == 'pull_request' }}'
+        run: echo '{{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}'
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
         if: ${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}
