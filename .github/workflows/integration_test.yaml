@@ -29,6 +29,7 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
+  USE_REGISTRY: ${{ github.event.workflow_run.event != 'pull_request' || github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name }}
 
 jobs:
   get-images:
@@ -48,13 +49,14 @@ jobs:
     name: Build image
     runs-on: ubuntu-20.04
     needs: get-images
-    if: ${{ needs.get-images.outputs.images != '[]' }}
+    if: ${{ env.USE_REGISTRY }}
     strategy:
       matrix:
         image: ${{ fromJSON(needs.get-images.outputs.images) }}
     steps:
       - uses: actions/checkout@v3
       - name: Log in to the Container registry
+        if: ${{ github.event.pull_request.base.repo.full_name != github.event.pull_request.base.head.full_name}}
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
