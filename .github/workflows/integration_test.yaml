@@ -49,7 +49,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-20.04
     needs: get-images
-    if: env.USE_REGISTRY
+    if: env.USE_REGISTRY == 'true'
     strategy:
       matrix:
         image: ${{ fromJSON(needs.get-images.outputs.images) }}
