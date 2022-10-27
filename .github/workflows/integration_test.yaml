@@ -111,9 +111,6 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         if: ${{ github.event.repository.fork }}
-        with:
-          name: ${{ inputs.resource-name }}
-          path: /tmp
       - name: Push images to microk8s registry
         if: ${{ github.event.repository.fork }}
         run: |
