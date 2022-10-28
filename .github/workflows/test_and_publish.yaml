@@ -1,4 +1,4 @@
-name: Publish to edge
+name: Publish charm
 
 # On push to a "special" branch, we:
 # * always publish to charmhub at latest/edge/branchname
