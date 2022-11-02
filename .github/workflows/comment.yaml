@@ -13,4 +13,4 @@ jobs:
       - uses: canonical/operator-workflows/.github/actions/comment_pr@main
         with:
           artifact-name: report
-        secrets: inherit
+          github-token: ${{ secrets.GITHUB_TOKEN }}
