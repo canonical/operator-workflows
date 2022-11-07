@@ -2,16 +2,22 @@ name: Tests
 
 on:
   workflow_call:
-    inputs:
-      runs-on:
-        description: Runner image for the unit tests
-        type: string
-        default: ubuntu-20.04
 
 jobs:
+  get-runner-image:
+    name: Get runner image
+    runs-on: ubuntu-22.04
+    outputs:
+      runs-on: ${{ env.BUILD_ON }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get build-on and run-on values
+        run: |
+          echo "BUILD_ON=$(yq '[.bases.[].build-on.[].name, .bases.[].build-on.[].channel] | join("-")' charmcraft.yaml" >> $GITHUB_ENV
   lint-and-unit-test:
     name: Lint and unit tests
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: get-runner-image
     steps:
       - uses: actions/checkout@v3
       - name: Install tox
