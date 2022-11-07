@@ -2,6 +2,10 @@ name: Get runner image
 
 on:
   workflow_call:
+    outputs:
+      runs-on:
+        description: "Image runner"
+        value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
   get-runner-image:
