@@ -76,7 +76,7 @@ jobs:
         if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Build image and publish artifact
         uses: docker/build-push-action@v3
-        if: $${{ github.event.pull_request.head.repo.fork }}
+        if: ${{ github.event.pull_request.head.repo.fork }}
         with:
           context: .
           file: ${{ matrix.image }}.Dockerfile
