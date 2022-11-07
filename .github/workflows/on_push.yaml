@@ -35,7 +35,7 @@ jobs:
     # By disabling this job on forked repositories, we can achieve 
     # disabling the publishing to Charmhub action on forked repositories 
     # while still running tests on push events
-    if: ${{ !github.event.repository.fork }}
+    if: github.repository_owner == 'canonical'
     name: Check libraries
     runs-on: ubuntu-latest
     steps:
@@ -61,7 +61,6 @@ jobs:
       series: ${{ inputs.integration-test-series }}
     secrets: inherit
   select-channel:
-    if: ${{ !github.event.repository.fork }}
     name: Select target channel
     runs-on: ubuntu-latest
     outputs:
@@ -71,7 +70,6 @@ jobs:
         id: channel
         uses: canonical/charming-actions/channel@2.1.1
   publish-charm:
-    if: ${{ !github.event.repository.fork }}
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
     needs: [ tests, integration-tests, select-channel ]
