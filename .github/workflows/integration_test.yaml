@@ -114,7 +114,6 @@ jobs:
         run: |
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             docker load --input ${image_name}/${image_name}.tar
-            imageId=$(docker images localhost:32000/indico-nginx:latest --format "{{.ID}}")
             docker push localhost:32000/${image_name}:latest
           done
       - name: Configure GHCR in microk8s
@@ -137,7 +136,11 @@ jobs:
           echo "CHARM_NAME=$(yq '.name' metadata.yaml)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
+            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
+              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
+            else
+              args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
+            fi
           done
 
           series=""
