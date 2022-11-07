@@ -116,10 +116,8 @@ jobs:
         if: ${{ github.event.pull_request.base.repo.fork }}
         run: |
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            imageId=$(docker load --input ${image_name}/${image_name}.tar | sed -e "s/^Loaded image ID: //")
-            echo "docker load --input ${image_name}/${image_name}.tar"
-            echo "docker tag $imageId localhost:32000/${image_name}:latest"
-            docker tag $imageId localhost:32000/${image_name}:latest
+            docker load --input ${image_name}/${image_name}.tar
+            imageId=$(docker images localhost:32000/indico-nginx:latest --format "{{.ID}}")
             docker push localhost:32000/${image_name}:latest
           done
       - name: Configure GHCR in microk8s
