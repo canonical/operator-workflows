@@ -4,7 +4,7 @@ on:
   workflow_call:
     outputs:
       runs-on:
-        description: "Image runner"
+        description: "Get first occurence of build-on base as image runner"
         value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
@@ -17,5 +17,5 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get build-on and run-on values
         run: |
-          echo "BUILD_ON=$(yq '[.bases.[].build-on.[].name, .bases.[].build-on.[].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
+          echo "BUILD_ON=$(yq '[.bases.[].build-on.[0].name, .bases.[].build-on.[0].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
 
