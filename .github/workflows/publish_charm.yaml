@@ -14,9 +14,13 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
+  get-runner-image:
+    name: Get runner image
+    uses: ./.github/workflows/get_runner_image.yaml
   publish-images:
     name: Publish images to charmhub
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: get-runner-image
     if: ${{ inputs.images != '[]' }}
     strategy:
       matrix:
@@ -41,9 +45,9 @@ jobs:
           imageId=$(docker images $image --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=trace
   publish-charm:
-    name: Publish charm to ${{ needs.select-channel.outputs.channel }}
-    runs-on: ubuntu-latest
-    needs: publish-images
+    name: Publish charm to ${{ inputs.channel }}
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: [get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
