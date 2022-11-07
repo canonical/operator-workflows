@@ -33,7 +33,7 @@ jobs:
     # while still running tests on push events
     if: github.repository_owner == 'canonical'
     name: Check libraries
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
@@ -55,7 +55,7 @@ jobs:
     secrets: inherit
   select-channel:
     name: Select target channel
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       channel: ${{ steps.channel.outputs.name }}
     steps:
