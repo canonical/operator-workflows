@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get build-on and run-on values
         run: |
-          echo "BUILD_ON=$(yq '[.bases.[].build-on.[].name, .bases.[].build-on.[].channel] | join("-")' charmcraft.yaml" >> $GITHUB_ENV
+          echo "BUILD_ON=$(yq '[.bases.[].build-on.[].name, .bases.[].build-on.[].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
