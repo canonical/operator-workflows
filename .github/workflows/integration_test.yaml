@@ -104,8 +104,8 @@ jobs:
       - name: Enable microk8s registry
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          sudo microk8s.enable registry
-          sudo microk8s.kubectl -n container-registry rollout status -w deployment/registry
+          sudo microk8s enable registry
+          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
