@@ -14,11 +14,11 @@ jobs:
       - run: |
           pwd
           ls
-          mv canonical-web-and-design /tmp
+          mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
-          yq eval-all '. as $item ireduce ({}; . *+ $item)' /tmp/canonical-web-and-design/Inclusive-naming/config.yml .woke.yaml > /tmp/config.yaml
+          yq eval-all '. as $item ireduce ({}; . *+ $item)' /tmp/config.yml .woke.yaml > /tmp/config.yaml
       - name: Run inclusive naming check
         uses: canonical-web-and-design/inclusive-naming@main
         with:
