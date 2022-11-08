@@ -17,7 +17,7 @@ jobs:
           path: inclusive-naming
       - name: Merge configuration files
         run: |
-          yq eval-all '. as $item ireduce ({}; . *+ $item)' inclusive-naming/config.yaml current./woke.yaml > /tmp/config.yaml
+          yq eval-all '. as $item ireduce ({}; . *+ $item)' inclusive-naming/config.yml current/.woke.yaml > /tmp/config.yaml
       - name: Run inclusive naming check
         uses: canonical-web-and-design/inclusive-naming@main
         with:
