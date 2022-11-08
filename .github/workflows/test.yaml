@@ -11,8 +11,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: canonical-web-and-design/Inclusive-naming
-      - run: mv canonical-web-and-design /tmp/canonical-web-and-design/Inclusive-naming
-          path: /tmp/inclusive-naming
+      - run: mv canonical-web-and-design /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
