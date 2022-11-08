@@ -22,7 +22,7 @@ jobs:
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' .woke.yaml /tmp/config.yml > /tmp/config.yaml
+            ' .woke.yaml /tmp/config.yml > /tmp/config.yml
           fi
       - name: Run inclusive naming check
         uses: canonical/inclusive-naming@main
@@ -30,7 +30,7 @@ jobs:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: '. -c /tmp/config.yaml'
+          woke-args: '. -c /tmp/config.yml'
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
