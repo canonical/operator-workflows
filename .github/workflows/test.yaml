@@ -17,11 +17,13 @@ jobs:
         run: |
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
-          yq eval-all '
-          (
-            . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
-          ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-          ' .woke.yaml /tmp/config.yml > /tmp/config.yaml
+          if [ -f .woke.yaml ]; then
+            yq eval-all '
+            (
+              . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
+            ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
+            ' .woke.yaml /tmp/config.yml > /tmp/config.yaml
+          fi
       - name: Run inclusive naming check
         uses: canonical/inclusive-naming@main
         with:
