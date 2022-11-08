@@ -6,6 +6,7 @@ on:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
         with:
