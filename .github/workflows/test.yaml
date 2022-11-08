@@ -10,19 +10,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: canonical-web-and-design/Inclusive-naming
+          repository: canonical/Inclusive-naming
       - run: mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
+          # Combine all entries and replace matching elements by
+          # .name in .rules for the ones in .woke.yaml
           yq eval-all '
           (
             . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
           ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
           ' .woke.yaml /tmp/config.yml > /tmp/config.yaml
-          cat /tmp/config.yaml
       - name: Run inclusive naming check
-        uses: canonical-web-and-design/inclusive-naming@main
+        uses: canonical/inclusive-naming@main
         with:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
