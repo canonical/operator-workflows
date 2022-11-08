@@ -18,7 +18,7 @@ jobs:
         run: |
           yq eval-all '. as $item ireduce ({}; . *+ $item)' inclusive-naming/config.yaml current./woke.yaml > /tmp/config.yaml
       - name: Run inclusive naming check
-        uses: canonical-web-and-design/Inclusive-naming/.github/workflows/woke.yaml@main
+        uses: canonical-web-and-design/inclusive-naming@main
         with:
           fail-on-error: "true"
           woke-args: '. -c /tmp/config.yaml'
