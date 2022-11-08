@@ -21,6 +21,7 @@ jobs:
       - name: Run inclusive naming check
         uses: canonical-web-and-design/inclusive-naming@main
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           fail-on-error: "true"
           woke-args: '. -c /tmp/config.yaml'
   get-runner-image:
