@@ -100,7 +100,7 @@ jobs:
         with:
           provider: ${{ inputs.provider }}
       - name: Enable microk8s registry
-        if: ${{ github.event.pull_request.head.repo.fork }}
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
           sudo microk8s enable registry
           sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
@@ -108,7 +108,7 @@ jobs:
         uses: actions/download-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Push images to microk8s registry
-        if: ${{ github.event.pull_request.head.repo.fork }}
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             docker load --input ${image_name}/${image_name}.tar
