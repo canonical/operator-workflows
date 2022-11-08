@@ -23,7 +23,7 @@ jobs:
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
-          if [ ! -z "$woke_file" ];
+          if [ ! -z "$woke_file" ]; then
             yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
