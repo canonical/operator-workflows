@@ -9,13 +9,14 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
         with:
           repository: canonical-web-and-design/Inclusive-naming
+      - run: mv canonical-web-and-design /tmp/canonical-web-and-design/Inclusive-naming
           path: /tmp/inclusive-naming
+      - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
-          yq eval-all '. as $item ireduce ({}; . *+ $item)' /tmp/inclusive-naming/config.yml .woke.yaml > /tmp/config.yaml
+          yq eval-all '. as $item ireduce ({}; . *+ $item)' /tmp/canonical-web-and-design/Inclusive-naming/config.yml .woke.yaml > /tmp/config.yaml
       - name: Run inclusive naming check
         uses: canonical-web-and-design/inclusive-naming@main
         with:
