@@ -4,6 +4,24 @@ on:
   workflow_call:
 
 jobs:
+  inclusive-naming-check:
+    name: Inclusive naming
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: current
+      - uses: actions/checkout@v3
+        with:
+          repository: canonical-web-and-design/Inclusive-naming
+          path: inclusive-naming
+      - name: Merge configuration files
+        run: |
+          yq eval-all '. as $item ireduce ({}; . *+ $item)' inclusive-naming/config.yaml current./woke.yaml > /tmp/config.yaml
+      - name: Run inclusive naming check
+        uses: canonical-web-and-design/Inclusive-naming/.github/workflows/woke.yaml@main
+        with:
+          fail-on-error: "true"
+          woke-args: '. -c /tmp/config.yaml'
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
