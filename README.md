@@ -35,7 +35,7 @@ The following workflows are available:
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
-* release: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
+* promote_charm: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
