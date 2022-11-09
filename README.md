@@ -33,9 +33,13 @@ The following workflows are available:
 | integration-test-provider | string | microk8s | Actions operator provider as defined (here)[https://github.com/charmed-kubernetes/actions-operator#usage] |
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument |
 
+The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml`file, defaulting to ubuntu-22.04 if the file does not exist.
+
 * release: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | destination-channel | string | "" | Destination channel |
 | origin-channel | string | "" | Origin channel |
+
+The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml`file, defaulting to ubuntu-22.04 if the file does not exist.

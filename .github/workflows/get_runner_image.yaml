@@ -17,5 +17,5 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get build-on value
         run: |
-          echo "BUILD_ON=$(yq '[.bases.[].build-on.[0].name, .bases.[].build-on.[0].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
+          echo "BUILD_ON=$(yq '[.bases.[0].build-on.[0].name, .bases.[0].build-on.[0].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
 
