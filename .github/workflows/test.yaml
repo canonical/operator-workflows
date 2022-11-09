@@ -54,7 +54,6 @@ jobs:
         run: tox --result-json=test-result.json
       - name: Export test report
         if: always()
-        id: export-test-report
         uses: actions/github-script@v6.2.0
         with:
           script: |
