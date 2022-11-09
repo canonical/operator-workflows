@@ -4,6 +4,39 @@ on:
   workflow_call:
 
 jobs:
+  inclusive-naming-check:
+    name: Inclusive naming
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: canonical/Inclusive-naming
+      - run: mv * /tmp
+      - uses: actions/checkout@v3
+      - name: Merge configuration files
+        run: |
+          # Combine all entries and replace matching elements by
+          # .name in .rules for the ones in .woke.yaml
+          woke_file=""
+          if [ -f .woke.yaml ]; then
+            woke_file=".woke.yaml"
+          elif [ -f .woke.yml ]; then
+            woke_file=".woke.yml"
+          fi
+          if [ ! -z "$woke_file" ]; then
+            yq eval-all '
+            (
+              . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
+            ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
+            ' $woke_file /tmp/config.yml > /tmp/config.yml
+          fi
+      - name: Run inclusive naming check
+        uses: canonical/inclusive-naming@main
+        with:
+          fail-on-error: "true"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+          woke-args: '. -c /tmp/config.yml'
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
