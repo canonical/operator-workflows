@@ -10,11 +10,11 @@ To use the workflows in your repository, just reuse them including the `secrets:
 
 The following workflows are available:
 
-* test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report.
+* test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report. This requires the `lint`, `unit`, `static` and `coverage-report` `tox` environments to be included in the tox defaults.
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the integration test target defined in the `tox.ini` file. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
