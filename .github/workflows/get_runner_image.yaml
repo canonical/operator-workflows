@@ -17,5 +17,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get build-on value
         run: |
-          echo "BUILD_ON=$(yq '[.bases.[].build-on.[0].name, .bases.[].build-on.[0].channel] | join("-")' charmcraft.yaml)" >> $GITHUB_ENV
+          image="ubuntu-22.04"
+          if [ -f charmcraft.yaml ]; then
+            image=$(yq '[.bases.[].build-on.[0].name, .bases.[].build-on.[0].channel] | join("-")' charmcraft.yaml)
+          fi
+          echo "BUILD_ON=$image" >> $GITHUB_ENV
 
