@@ -99,11 +99,13 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
-      - name: Enable microk8s registry
+      - name: Enable microk8s registry, ingress, dns and hostpath-storage
         if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
-          sudo microk8s enable registry
+          sudo microk8s enable registry ingress dns hostpath-storage
           sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
+          sudo microk8s.kubectl -n kube-system rollout status -w deployment/hostpath-provisioner
+          sudo microk8s.kubectl -n kube-system rollout status -w deployment/coredns
       - name: Download all artifacts
         uses: actions/download-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
