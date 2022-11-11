@@ -40,6 +40,23 @@ jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
+  shellcheck-lint:
+    name: Shell scripts lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+  docker-lint:
+    name: Dockerfile lint
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check for Dockerfiles
+        run: echo Dockerfiles=$(find . -name "*Dockerfile") >> $GITHUB_ENV
+      - if: ${{ env.Dockerfiles != '' }}
+        name: Run HadoLint
+        uses: jbergstroem/hadolint-gh-action@v1
+        with:
+          dockerfile: "${{ env.Dockerfiles }}"
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
