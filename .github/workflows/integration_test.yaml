@@ -131,7 +131,7 @@ jobs:
         run: bash ${{ inputs.pre-run-script }}
       - name: Run integration tests
         run: |
-          echo "CHARM_NAME=$(yq '.name' metadata.yaml | echo UNKNOWN)" >> $GITHUB_ENV
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
