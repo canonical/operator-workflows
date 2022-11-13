@@ -22,4 +22,3 @@ jobs:
             image=$(yq '[.bases.[0].build-on.[0].name, .bases.[0].build-on.[0].channel] | join("-")' charmcraft.yaml)
           fi
           echo "BUILD_ON=$image" >> $GITHUB_ENV
-
