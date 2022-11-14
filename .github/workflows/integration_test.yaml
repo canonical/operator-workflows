@@ -126,6 +126,10 @@ jobs:
           password = \"${{ secrets.GITHUB_TOKEN }}\"
           " >> /var/snap/microk8s/current/args/containerd-template.toml'
           sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+      - name: Enable microk8s ingress
+        if: ${{ inputs.provider == 'microk8s' }}
+        run: |
+          sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash ${{ inputs.pre-run-script }}
