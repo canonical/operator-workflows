@@ -37,6 +37,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           woke-args: '. -c /tmp/config.yml'
+          filter-mode: nofilter
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
