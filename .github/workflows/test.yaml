@@ -48,10 +48,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Shellcheck Problem Matchers
         uses: lumaxis/shellcheck-problem-matchers@v1.1.2
-      - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
-        with:
-          severity: error
+      - run: shellcheck -f gcc $(find . -name "*.sh" -type f)
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
