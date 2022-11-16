@@ -30,6 +30,7 @@ jobs:
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
             ' $woke_file /tmp/config.yml > /tmp/config.yml
           fi
+          cat /tmp/config.yml
       - name: Run inclusive naming check
         uses: canonical/inclusive-naming@main
         with:
