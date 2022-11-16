@@ -23,18 +23,12 @@ jobs:
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
-          echo "--------------"
-          yq eval-all '
-          (
-            . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
-          ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-          ' $woke_file /tmp/config.yml
           if [ ! -z "$woke_file" ]; then
             yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' $woke_file /tmp/config.yml > /tmp/config.yml
+            ' $woke_file /tmp/config.yml | tee /tmp/config.yml
           fi
           
           echo "------------------"
