@@ -15,6 +15,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
+          echo "------------------------"
+          ls /tmp
+          echo "----------------"
+          cat /tmp/config.yml
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
