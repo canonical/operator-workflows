@@ -18,6 +18,7 @@ jobs:
           echo "------------------------"
           ls /tmp
           echo "----------------"
+          yq --version
           cat /tmp/config.yml
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
@@ -27,6 +28,14 @@ jobs:
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
+          cat if [ ! -z "$woke_file" ]; then
+            yq eval-all '
+            (
+              . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
+            ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
+            ' $woke_file /tmp/config.yml
+          fi
+          echo "-----------------------------"
           if [ ! -z "$woke_file" ]; then
             yq eval-all '
             (
