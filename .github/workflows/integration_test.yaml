@@ -17,6 +17,10 @@ on:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
         type: string
         default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for testing.
+        type: boolean
+        default: false
     outputs:
       images:
         description: Pushed docker images
@@ -95,6 +99,10 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
+      - name: Setup Devstack Swift
+        if: ${{ inputs.setup-devstack-swift }}
+        id: setup-devstack-swift
+        uses: canonical/setup-devstack-swift@v1
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
