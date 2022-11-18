@@ -47,8 +47,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+      - name: Shellcheck Problem Matchers
+        uses: lumaxis/shellcheck-problem-matchers@v1.1.2
+      - run: shellcheck -f gcc $(find . -name "*.sh" -type f)
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
