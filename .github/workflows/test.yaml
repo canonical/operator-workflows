@@ -98,9 +98,11 @@ jobs:
                         -print0)
           echo "filepaths=${filepaths[@]}" >> $GITHUB_OUTPUT
           set +f # re-enable globbing
-      - name: Shellcheck Problem Matchers
+      - if: ${{ steps.gather.outputs.filepaths != '' }}
+        name: Shellcheck Problem Matchers
         uses: lumaxis/shellcheck-problem-matchers@v1.1.2
-      - run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
+      - if: ${{ steps.gather.outputs.filepaths != '' }}
+        run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
