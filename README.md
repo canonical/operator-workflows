@@ -43,3 +43,17 @@ The runner image will be set to the value of `bases[0].build-on[0]` in the `char
 | origin-channel | string | "" | Origin channel |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
+
+* test_and_notify_failure: Performs test and integration_test and send email notification on failures. The following parameters are available for this workflow:
+
+| Name | Type | Default | Description |
+|--------------------|----------|--------------------|-------------------|
+| integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
+| integration-test-provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument |
+| email-server-address | string | smtp.gmail.com | Address of email server used for sending email
+| email-server-port | int | smtp.gmail.com | Port of email server used for sending email
+| email-receiver | string | "" | Email address for receiving the failure notification
+
+The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
