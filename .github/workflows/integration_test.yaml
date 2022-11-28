@@ -17,7 +17,7 @@ on:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
         default: '[""]'
-      module:
+      modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
@@ -97,7 +97,7 @@ jobs:
     strategy:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
-        module: ${{ fromJSON(inputs.module) }}
+        modules: ${{ fromJSON(inputs.modules) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [get-images, get-runner-image, build-images]
@@ -165,8 +165,8 @@ jobs:
             series="--series ${{ matrix.series }}"
           fi
           module=""
-          if [ ! -z ${{ matrix.module }} ]; then
-            module="-k ${{ matrix.module }}"
+          if [ ! -z ${{ matrix.modules }} ]; then
+            module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing $series $module $args ${{ inputs.extra-arguments }}
       - name: Dump logs
