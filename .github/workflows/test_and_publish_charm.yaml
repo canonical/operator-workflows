@@ -21,7 +21,11 @@ on:
         type: string
         default: microk8s
       integration-test-series:
-        description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
+        description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      integration-test-modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
 
@@ -52,6 +56,7 @@ jobs:
       pre-run-script: ${{ inputs.integration-test-pre-run-script }}
       provider: ${{ inputs.integration-test-provider }}
       series: ${{ inputs.integration-test-series }}
+      modules: ${{ inputs.integration-test-modules }}
     secrets: inherit
   select-channel:
     name: Select target channel

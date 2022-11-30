@@ -14,7 +14,11 @@ on:
         type: string
         default: microk8s
       series:
-        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
       setup-devstack-swift:
@@ -93,6 +97,7 @@ jobs:
     strategy:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
+        modules: ${{ fromJSON(inputs.modules) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [get-images, get-runner-image, build-images]
@@ -159,7 +164,11 @@ jobs:
           if [ ! -z ${{ matrix.series }} ]; then
             series="--series ${{ matrix.series }}"
           fi
-          tox -e integration -- --model testing $series $args ${{ inputs.extra-arguments }}
+          module=""
+          if [ ! -z ${{ matrix.modules }} ]; then
+            module="-k ${{ matrix.modules }}"
+          fi
+          tox -e integration -- --model testing $series $module $args ${{ inputs.extra-arguments }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
