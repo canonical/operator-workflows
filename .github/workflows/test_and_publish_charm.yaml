@@ -28,6 +28,10 @@ on:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for integration tests.
+        type: boolean
+        default: false
 
 jobs:
   lib-check:
@@ -57,6 +61,7 @@ jobs:
       provider: ${{ inputs.integration-test-provider }}
       series: ${{ inputs.integration-test-series }}
       modules: ${{ inputs.integration-test-modules }}
+      setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
     secrets: inherit
   select-channel:
     name: Select target channel
