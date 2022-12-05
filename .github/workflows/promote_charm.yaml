@@ -9,6 +9,15 @@ on:
       destination-channel:
         type: string
         description: 'Destination Channel'
+      base-name:
+        type: string
+        description: 'Charmcraft Base Name'
+      base-channel:
+        type: string
+        description: 'Charmcraft Base Channel'
+      base-architecture:
+        type: string
+        description: 'Charmcraft Base Architecture'
 
 jobs:
   get-runner-image:
@@ -27,3 +36,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ github.event.inputs.origin-channel }}
           destination-channel: ${{ github.event.inputs.destination-channel }}
+          base-name: ${{ github.event.inputs.base-name }}
+          base-channel: ${{ github.event.inputs.base-channel }}
+          base-architecture: ${{ github.event.inputs.base-architecture }}
