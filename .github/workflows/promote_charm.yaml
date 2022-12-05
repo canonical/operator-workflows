@@ -32,8 +32,6 @@ jobs:
     needs: get-runner-image
     steps:
       - uses: actions/checkout@v3
-      - name: debug
-        run: echo "${{ github.event.inputs.origin-channel }} ${{ github.event.inputs.base-name }} ${{ github.event.inputs.base-channel }} ${{ github.event.inputs.base-architecture }}"
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
@@ -44,3 +42,8 @@ jobs:
           base-name: ${{ github.event.inputs.base-name }}
           base-channel: ${{ github.event.inputs.base-channel }}
           base-architecture: ${{ github.event.inputs.base-architecture }}
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
+        with:
+          limit-access-to-actor: true
