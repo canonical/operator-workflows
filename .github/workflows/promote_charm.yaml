@@ -10,17 +10,14 @@ on:
         type: string
         description: 'Destination Channel'
       base-name:
-        required: true
+        type: string
         description: 'Charmcraft Base Name'
-        default: 'ubuntu'
       base-channel:
-        required: true
+        type: string
         description: 'Charmcraft Base Channel'
-        default: '20.04'
       base-architecture:
-        required: true
+        type: string
         description: 'Charmcraft Base Architecture'
-        default: 'amd64'
 
 jobs:
   get-runner-image:
