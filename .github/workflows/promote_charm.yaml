@@ -2,22 +2,22 @@ name: Promote charm
 
 on:
   workflow_call:
-    inputs:
       origin-channel:
         type: string
         description: 'Origin Channel'
       destination-channel:
         type: string
         description: 'Destination Channel'
-      charm-base-name:
+    inputs:
+      base-name:
         type: string
         description: 'Charmcraft Base Name'
         default: 'ubuntu'
-      charm-base-channel:
+      base-channel:
         type: string
         description: 'Charmcraft Base Channel'
         default: '20.04'
-      charm-base-architecture:
+      base-architecture:
         type: string
         description: 'Charmcraft Base Architecture'
         default: 'amd64'
@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Debug logging
-        run: echo "${{ github.event.inputs.charm-base-name }} ${{ github.event.inputs.origin-channel }} ${{ github.event.inputs.charm-base-channel }}"
+        run: echo "${{ inputs.base-name }} ${{ github.event.inputs.origin-channel }} ${{ inputs.base-channel }}"
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
@@ -41,6 +41,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ github.event.inputs.origin-channel }}
           destination-channel: ${{ github.event.inputs.destination-channel }}
-          base-name: ${{ github.event.inputs.charm-base-name }}
-          base-channel: ${{ github.event.inputs.charm-base-channel }}
-          base-architecture: ${{ github.event.inputs.charm-base-architecture }}
+          base-name: ${{ inputs.base-name }}
+          base-channel: ${{ inputs.base-channel }}
+          base-architecture: ${{ inputs.base-architecture }}
