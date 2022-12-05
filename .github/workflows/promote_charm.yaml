@@ -9,15 +9,15 @@ on:
       destination-channel:
         type: string
         description: 'Destination Channel'
-      base-name:
+      charm-base-name:
         type: string
         description: 'Charmcraft Base Name'
         default: 'ubuntu'
-      base-channel:
+      charm-base-channel:
         type: string
         description: 'Charmcraft Base Channel'
         default: '20.04'
-      base-architecture:
+      charm-base-architecture:
         type: string
         description: 'Charmcraft Base Architecture'
         default: 'amd64'
@@ -32,6 +32,8 @@ jobs:
     needs: get-runner-image
     steps:
       - uses: actions/checkout@v3
+      - name: Debug logging
+        run: echo "${{ github.event.inputs.charm-base-name }} ${{ github.event.inputs.origin-channel }} ${{ github.event.inputs.charm-base-channel }}"
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
@@ -39,11 +41,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ github.event.inputs.origin-channel }}
           destination-channel: ${{ github.event.inputs.destination-channel }}
-          base-name: ${{ github.event.inputs.base-name }}
-          base-channel: ${{ github.event.inputs.base-channel }}
-          base-architecture: ${{ github.event.inputs.base-architecture }}
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ failure() }}
-        with:
-          limit-access-to-actor: true
+          base-name: ${{ github.event.inputs.charm-base-name }}
+          base-channel: ${{ github.event.inputs.charm-base-channel }}
+          base-architecture: ${{ github.event.inputs.charm-base-architecture }}
