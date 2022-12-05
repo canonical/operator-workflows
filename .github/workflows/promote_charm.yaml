@@ -2,13 +2,13 @@ name: Promote charm
 
 on:
   workflow_call:
+    inputs:
       origin-channel:
         type: string
         description: 'Origin Channel'
       destination-channel:
         type: string
         description: 'Destination Channel'
-    inputs:
       base-name:
         type: string
         description: 'Charmcraft Base Name'
