@@ -36,6 +36,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ github.event.inputs.origin-channel }}
           destination-channel: ${{ github.event.inputs.destination-channel }}
-          base-name: 'ubuntu'
-          base-channel: '22.04'
-          base-architecture: 'amd64'
+          base-name: ${{ github.event.inputs.base-name }}
+          base-channel: ${{ github.event.inputs.base-channel }}
+          base-architecture: ${{ github.event.inputs.base-architecture}}
