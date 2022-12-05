@@ -10,14 +10,17 @@ on:
         type: string
         description: 'Destination Channel'
       base-name:
+        type: string
         description: 'Charmcraft Base Name'
         required: true
         default: ''
       base-channel:
+        type: string
         description: 'Charmcraft Base Channel'
         required: true
         default: ''
       base-architecture:
+        type: string
         description: 'Charmcraft Base Architecture'
         required: true
         default: ''
