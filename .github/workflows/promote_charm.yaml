@@ -12,12 +12,15 @@ on:
       base-name:
         type: string
         description: 'Charmcraft Base Name'
+        default: 'ubuntu'
       base-channel:
         type: string
         description: 'Charmcraft Base Channel'
+        default: '20.04'
       base-architecture:
         type: string
         description: 'Charmcraft Base Architecture'
+        default: 'amd64'
 
 jobs:
   get-runner-image:
