@@ -32,15 +32,13 @@ jobs:
     needs: get-runner-image
     steps:
       - uses: actions/checkout@v3
-      - name: Debug logging
-        run: echo "${{ inputs.base-name }} ${{ github.event.inputs.origin-channel }} ${{ inputs.base-channel }}"
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          origin-channel: ${{ github.event.inputs.origin-channel }}
-          destination-channel: ${{ github.event.inputs.destination-channel }}
+          origin-channel: ${{ inputs.origin-channel }}
+          destination-channel: ${{ inputs.destination-channel }}
           base-name: ${{ inputs.base-name }}
           base-channel: ${{ inputs.base-channel }}
           base-architecture: ${{ inputs.base-architecture }}
