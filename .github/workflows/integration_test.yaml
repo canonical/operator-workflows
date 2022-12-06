@@ -25,6 +25,14 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      varieties:
+        type: string
+        default: |
+          [{"name": "", "args": ""}]
+        description: >
+          An array of object with two keys "name" and "args" in JSON format that represent different varieties of the integration test,
+          i.e. '[{"name": "single unit test", "args": "--num-units=1"}, {"name": "multiple unit test", "args": "--num-units=3"}]' .
+          The "args" of each element will be passed to pytest, and the "name" will be included in the GitHub action run job name.
     outputs:
       images:
         description: Pushed docker images
@@ -93,12 +101,21 @@ jobs:
           path: /tmp/${{ matrix.image }}.tar
 
   integration-test:
-    name: Integration tests
     strategy:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
         modules: ${{ fromJSON(inputs.modules) }}
+        varieties: ${{ fromJSON(inputs.varieties) }}
       fail-fast: false
+    name: >-
+      Integration tests${{ (matrix.series || matrix.modules || matrix.varieties.name) && 
+        format(" ({0}{1}{2})",
+          format("{0}{1}", matrix.modules, (matrix.series || matrix.varieties.name) && ", " || ""),
+          format("{0}{1}", matrix.series,  matrix.varieties.name && ", " || ""),
+          matrix.varieties.name
+        )
+        || ""
+      }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [get-images, get-runner-image, build-images]
     if: ${{ !failure() }}
@@ -168,7 +185,7 @@ jobs:
           if [ ! -z ${{ matrix.modules }} ]; then
             module="-k ${{ matrix.modules }}"
           fi
-          tox -e integration -- --model testing $series $module $args ${{ inputs.extra-arguments }}
+          tox -e integration -- --model testing $series $module $args ${{ inputs.extra-arguments }} $${{ matrix.varieties.args}}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()

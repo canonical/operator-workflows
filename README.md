@@ -24,6 +24,7 @@ The following workflows are available:
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| varieties | string | '[{"name": "", "args": ""}]' | An array of object with two keys "name" and "args" in JSON format that represent different varieties of the integration test, i.e. '[{"name": "single-unit test", "args": "--num-units=1"}, {"name": "multiple-unit test", "args": "--num-units=3"}]'. The "args" of each element will be passed to pytest, and the "name" will be included in the GitHub action run job name. |
 
 * test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
@@ -35,6 +36,7 @@ The following workflows are available:
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | integration-test-modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for integration tests. |
+| integration-test-varieties | string | '[{"name": "", "args": ""}]' | An array of object with two keys "name" and "args" in JSON format that represent different varieties of the integration test, i.e. '[{"name": "single-unit test", "args": "--num-units=1"}, {"name": "multiple-unit test", "args": "--num-units=3"}]'. The "args" of each element will be passed to pytest, and the "name" will be included in the GitHub action run job name. |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
