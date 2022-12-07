@@ -32,7 +32,8 @@ jobs:
             name=$(yq '.bases.[0].build-on.[0].name' charmcraft.yaml)
             channel=$(yq '.bases.[0].build-on.[0].channel' charmcraft.yaml)
           fi
-          echo "BASE_NAME=$name\nBASE_CHANNEL=$channel" >> $GITHUB_ENV
+          echo "BASE_NAME=$name" >> $GITHUB_ENV
+          echo "BASE_CHANNEL=$channel" >> $GITHUB_ENV
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
