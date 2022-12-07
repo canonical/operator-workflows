@@ -9,14 +9,6 @@ on:
       destination-channel:
         type: string
         description: 'Destination Channel'
-      base-name:
-        type: string
-        description: 'Charmcraft Base Name'
-        default: 'ubuntu'
-      base-channel:
-        type: string
-        description: 'Charmcraft Base Channel'
-        default: '20.04'
       base-architecture:
         type: string
         description: 'Charmcraft Base Architecture'
@@ -39,6 +31,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ inputs.origin-channel }}
           destination-channel: ${{ inputs.destination-channel }}
-          base-name: ${{ inputs.base-name }}
-          base-channel: ${{ inputs.base-channel }}
+          base-name: $(yq '.bases.[0].build-on.[0].name' charmcraft.yaml)
+          base-channel: $(yq '.bases.[0].build-on.[0].channel' charmcraft.yaml)
           base-architecture: ${{ inputs.base-architecture }}
