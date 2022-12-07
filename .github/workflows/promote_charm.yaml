@@ -39,6 +39,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ inputs.origin-channel }}
           destination-channel: ${{ inputs.destination-channel }}
-          base-name: $name
-          base-channel: $channel
+          base-name: ${{ name }}
+          base-channel: ${{ channel }}
           base-architecture: ${{ inputs.base-architecture }}
