@@ -24,12 +24,6 @@ jobs:
     needs: get-runner-image
     steps:
       - uses: actions/checkout@v3
-      - name: Get build-on value
-        run: |
-          name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
-          channel=$(yq '.bases.[0].build-on.[0].channel // '20.04'' charmcraft.yaml)
-          echo "BASE_NAME=$name" >> $GITHUB_ENV
-          echo "BASE_CHANNEL=$channel" >> $GITHUB_ENV
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.1.1
         with:
@@ -37,6 +31,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ inputs.origin-channel }}
           destination-channel: ${{ inputs.destination-channel }}
-          base-name: ${{ env.BASE_NAME }}
-          base-channel: ${{ env.BASE_CHANNEL }}
+          base-name: ${{ env.BUILD_ON_NAME }}
+          base-channel: ${{ env.BUILD_ON_CHANNEL }}
           base-architecture: ${{ inputs.base-architecture }}
