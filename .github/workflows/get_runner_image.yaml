@@ -26,11 +26,11 @@ jobs:
       - name: Get build-on value
         run: |
           name="ubuntu"
-          channel="20.04"
+          channel="22.04"
           image="ubuntu-22.04"
           if [ -f charmcraft.yaml ]; then
             name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
-            channel=$(yq '.bases.[0].build-on.[0].channel // '20.04'' charmcraft.yaml)
+            channel=$(yq '.bases.[0].build-on.[0].channel // '22.04'' charmcraft.yaml)
             image="$name-$channel"
           fi
           echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
