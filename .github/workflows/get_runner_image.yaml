@@ -3,8 +3,14 @@ name: Get runner image
 on:
   workflow_call:
     outputs:
+      name:
+        description: "Get first occurrence of build-on base name"
+        value: ${{ jobs.get-runner-image.outputs.name }}
+      channel:
+        description: "Get first occurrence of build-on base channel"
+        value: ${{ jobs.get-runner-image.outputs.channel }}
       runs-on:
-        description: "Get first occurence of build-on base as image runner"
+        description: "Get first occurrence of build-on base as image runner"
         value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
@@ -12,6 +18,8 @@ jobs:
     name: Get runner image
     runs-on: ubuntu-22.04
     outputs:
+      name: ${{ env.BUILD_ON_NAME }}
+      channel: ${{ env.BUILD_ON_CHANNEL }}
       runs-on: ${{ env.BUILD_ON }}
     steps:
       - uses: actions/checkout@v3
