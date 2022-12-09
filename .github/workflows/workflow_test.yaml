@@ -6,3 +6,5 @@ on:
 jobs:
   Tests:
     uses: ./.github/workflows/test.yaml
+    with:
+      tox-ini-dir: 'tests/'
