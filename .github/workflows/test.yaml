@@ -1,7 +1,9 @@
 name: Tests
 
-on:
-  workflow_call:
+on: [workflow_call, pull_request]
+
+env:
+  TOX_INI_DIR: ${{ github.event_name == 'pull_request' && 'tests/' || './' }}
 
 jobs:
   inclusive-naming-check:
@@ -124,7 +126,7 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json
+        run: tox --result-json=test-result.json -c ${{ env.TOX_INI_DIR }}
       - name: Export test report
         if: always()
         uses: actions/github-script@v6.2.0
