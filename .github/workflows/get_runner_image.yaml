@@ -27,12 +27,11 @@ jobs:
         run: |
           name="ubuntu"
           channel="22.04"
-          image="ubuntu-22.04"
           if [ -f charmcraft.yaml ]; then
             name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
             channel=$(yq '.bases.[0].build-on.[0].channel // '22.04'' charmcraft.yaml)
-            image="$name-$channel"
           fi
+          image="$name-$channel"
           echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
           echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
           echo "BUILD_ON=$image" >> $GITHUB_ENV
