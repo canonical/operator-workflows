@@ -7,4 +7,4 @@ jobs:
   Tests:
     uses: ./.github/workflows/test.yaml
     with:
-      tox-ini-dir: 'tests/'
+      tox-ini-dir: 'tests/workflows/test'
