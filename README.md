@@ -10,7 +10,12 @@ To use the workflows in your repository, just reuse them including the `secrets:
 
 The following workflows are available:
 
-* test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report. This requires the `lint`, `unit`, `static` and `coverage-report` `tox` environments to be included in the tox defaults.
+* test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report. This requires the `lint`, `unit`, `static` and `coverage-report` `tox` environments to be included in the tox defaults. The following parameters are available for this workflow:
+
+
+| Name | Type | Default | Description |
+|--------------------|----------|--------------------|-------------------|
+| tox-ini-dir | string | "./" | Directory where `tox.ini` file resides in, used as an input argument to `-c` [flag](https://tox.wiki/en/latest/cli_interface.html#tox--c) in tox |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
