@@ -1,0 +1,10 @@
+name: Workflow test
+
+on:
+  pull_request:
+
+jobs:
+  Tests:
+    uses: ./.github/workflows/test.yaml
+    with:
+      tox-ini-dir: 'tests/workflows/test'

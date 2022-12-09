@@ -2,6 +2,11 @@ name: Tests
 
 on:
   workflow_call:
+    inputs:
+        tox-ini-dir:
+          type: string
+          description: Path to tox.ini file
+          default: './'
 
 jobs:
   inclusive-naming-check:
@@ -124,7 +129,7 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json
+        run: tox --result-json=test-result.json -c ${{ inputs.tox-ini-dir }}
       - name: Export test report
         if: always()
         uses: actions/github-script@v6.2.0
