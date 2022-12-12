@@ -8,3 +8,4 @@ jobs:
     uses: ./.github/workflows/test.yaml
     with:
       tox-ini-dir: 'tests/workflows/test'
+    secrets: inherit
