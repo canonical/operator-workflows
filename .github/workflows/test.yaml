@@ -189,22 +189,17 @@ jobs:
         with:
           name: report
           path: report.json
-  docs-exist:
-    name: Check docs folder existence
-    runs-on: ubuntu-22.04
-    id: docs-exist
-    steps:
-      - uses: actions/checkout@v3 
-      - name: Search for docs folder
-        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
     needs: docs-exist
-    if: needs.docs-exist.outputs.docs_exist == 'True'
     steps:
       - uses: actions/checkout@v3
+      - name: Search for docs folder
+        id: docs-exist
+        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
+        if: steps.docs-exist.outputs.docs_exist == 'True'
         uses: canonical/upload-charm-docs@main
         with:
           discourse_host: discourse.charmhub.io
