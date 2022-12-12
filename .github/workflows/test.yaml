@@ -195,8 +195,8 @@ jobs:
     id: docs-exist
     steps:
       - uses: actions/checkout@v3 
-      - run: |
-        echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
+      - name: Search for docs folder
+        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
