@@ -192,7 +192,6 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
-    needs: docs-exist
     steps:
       - uses: actions/checkout@v3
       - name: Search for docs folder
