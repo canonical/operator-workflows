@@ -3,8 +3,14 @@ name: Get runner image
 on:
   workflow_call:
     outputs:
+      name:
+        description: "Get first occurrence of build-on base name"
+        value: ${{ jobs.get-runner-image.outputs.name }}
+      channel:
+        description: "Get first occurrence of build-on base channel"
+        value: ${{ jobs.get-runner-image.outputs.channel }}
       runs-on:
-        description: "Get first occurence of build-on base as image runner"
+        description: "Get first occurrence of build-on base as image runner"
         value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
@@ -12,13 +18,20 @@ jobs:
     name: Get runner image
     runs-on: ubuntu-22.04
     outputs:
+      name: ${{ env.BUILD_ON_NAME }}
+      channel: ${{ env.BUILD_ON_CHANNEL }}
       runs-on: ${{ env.BUILD_ON }}
     steps:
       - uses: actions/checkout@v3
       - name: Get build-on value
         run: |
-          image="ubuntu-22.04"
+          name="ubuntu"
+          channel="22.04"
           if [ -f charmcraft.yaml ]; then
-            image=$(yq '[.bases.[0].build-on.[0].name, .bases.[0].build-on.[0].channel] | join("-")' charmcraft.yaml)
+            name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
+            channel=$(yq '.bases.[0].build-on.[0].channel // '22.04'' charmcraft.yaml)
           fi
+          image="$name-$channel"
+          echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
+          echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
           echo "BUILD_ON=$image" >> $GITHUB_ENV

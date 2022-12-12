@@ -9,6 +9,10 @@ on:
       destination-channel:
         type: string
         description: 'Destination Channel'
+      base-architecture:
+        type: string
+        description: 'Charmcraft Base Architecture'
+        default: 'amd64'
 
 jobs:
   get-runner-image:
@@ -25,5 +29,8 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          origin-channel: ${{ github.event.inputs.origin-channel }}
-          destination-channel: ${{ github.event.inputs.destination-channel }}
+          origin-channel: ${{ inputs.origin-channel }}
+          destination-channel: ${{ inputs.destination-channel }}
+          base-name: ${{ needs.get-runner-image.outputs.name }}
+          base-channel: ${{ needs.get-runner-image.outputs.channel }}
+          base-architecture: ${{ inputs.base-architecture }}
