@@ -10,5 +10,5 @@
         "issues" : {"type" : "string"},
         "tags" : {"type" : "array", "items": {"type": "string"}}
     },
-    "required": ["name", "display-name", "summary", "description", "maintainers", "issues"]
+    "required": ["name", "display-name", "summary", "description", "docs", "maintainers", "issues"]
 }
