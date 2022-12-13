@@ -125,13 +125,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/checkout@v3
-        with:
-          repository: canonical/operator-workflows
-      - name: Install tox
+      - name: Install check-jsonschema
         run: python3 -m pip install check-jsonschema
+      - name: Download schema
+        run: curl -o $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/lint-metadata/.github/files/metadata.schema
       - name: Run lint
-        run: ls ${GITHUB_WORKSPACE}/.. # check-jsonschema tmp/metadata.yaml --schemafile ./github/files/metadata.schema
+        run: check-jsonschema tmp/metadata.yaml --schemafile ./github/files/metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
