@@ -6,7 +6,7 @@
         "summary" : {"type" : "string", "maxLength": 50},
         "description" : {"type" : "string"},
         "docs" : {"type" : "string"},
-        "maintainers" : {"type" : "array", "items": {"type": "string", "enum": ["launchpad.net/~canonical-is-devops"]}},
+        "maintainers" : {"type" : "array", "items": {"type": "string"}, "minItems": 1},
         "issues" : {"type" : "string"},
         "tags" : {"type" : "array", "items": {"type": "string"}}
     },
