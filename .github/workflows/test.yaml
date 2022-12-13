@@ -128,7 +128,7 @@ jobs:
       - name: Install check-jsonschema
         run: python3 -m pip install check-jsonschema
       - name: Download schema
-        run: curl -o $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+        run: curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
       - name: Run lint
         run: check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
