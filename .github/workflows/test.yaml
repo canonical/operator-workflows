@@ -120,6 +120,17 @@ jobs:
         uses: jbergstroem/hadolint-gh-action@v1
         with:
           dockerfile: "${{ env.Dockerfiles }}"
+  lint-metadata:
+    name: Lint metadata.yaml
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install check-jsonschema
+        run: python3 -m pip install check-jsonschema
+      - name: Download schema
+        run: curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+      - name: Run lint
+        run: check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
