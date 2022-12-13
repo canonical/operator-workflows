@@ -125,10 +125,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
+        path: /tmp
       - name: Install tox
         run: python3 -m pip install check-jsonschema
       - name: Run lint
-        run: check-jsonschema metadata.yaml --schemafile ./github/files/metadata.schema
+        run: check-jsonschema /tmp/metadata.yaml --schemafile ./github/files/metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
