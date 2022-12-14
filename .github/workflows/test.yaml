@@ -137,9 +137,9 @@ jobs:
         id: dockerfiles
         run: |
           ls -la
-          find . -name \"*Dockerfile\"
-          echo "found=$(find . -name \"*Dockerfile\")"
-          echo "found=$(find . -name \"*Dockerfile\")" >> $GITHUB_OUTPUT
+          find . -name "*Dockerfile"
+          echo "found=$(find . -name "*Dockerfile")"
+          echo "found=$(find . -name "*Dockerfile")" >> $GITHUB_OUTPUT
       - if: ${{ steps.dockerfiles.found != '' }}
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
