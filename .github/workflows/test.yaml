@@ -5,13 +5,16 @@ on:
     inputs:
       working-directory:
         type: string
-        description: Path to tox.ini file
+        description: The working directory for jobs
         default: './'
 
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -50,6 +53,9 @@ jobs:
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Gather files to scan
@@ -111,11 +117,14 @@ jobs:
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Check for Dockerfiles
         id: dockerfiles
-        run: echo "{found}={$(find . -name "*Dockerfile")}" >> $GITHUB_OUTPUT
+        run: echo "found=$(find . -name \"*Dockerfile\")" >> $GITHUB_OUTPUT
       - if: ${{ steps.dockerfiles.found != '' }}
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
@@ -133,8 +142,8 @@ jobs:
         id: metadataYaml
         run: |
           ls -la
-          echo "{exists}={$([ -f metadata.yaml ] && echo "true" || echo "false")}"
-          echo "{exists}={$([ -f metadata.yaml ] && echo "true" || echo "false")}" >> $GITHUB_OUTPUT
+          echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")"
+          echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: check
         run: echo ${{ steps.metadataYaml.outputs.exists }}
       - name: Run lint
@@ -147,12 +156,15 @@ jobs:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: get-runner-image
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json -c ${{ inputs.working-directory }}
+        run: tox --result-json=test-result.json
       - name: Export test report
         if: always()
         uses: actions/github-script@v6.2.0
@@ -215,6 +227,9 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Search for docs folder
