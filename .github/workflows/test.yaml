@@ -143,7 +143,6 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.found }}"
       - name: Report
         id: report
-        run: echo "outcome=success" >> $GITHUB_OUTPUT
         run: echo "outcome=$([ ${{ steps.dockerfiles.found }} = '' ] && echo skip || echo success)" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
