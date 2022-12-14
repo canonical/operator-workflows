@@ -13,8 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: metadata_yaml
     steps:
-      - run:  |
-        [ "${{ needs.metadata_yaml.outputs.docker-lint-outcome }}" = "success" ]
+      - run: "[ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'success' ]"
   no_metadata_yaml:
     uses: ./.github/workflows/test.yaml
     with:
