@@ -129,7 +129,7 @@ jobs:
       - name: Check file existence
         id: metadataYaml
         run: |
-          echo "{exists}={$([ -f metadata.yaml ] && echo "true"
+          echo "{exists}={$([ -f metadata.yaml ] && echo "true" || echo "false")}"
           echo "{exists}={$([ -f metadata.yaml ] && echo "true" || echo "false")}" >> $GITHUB_OUTPUT
       - name: check
         run: echo ${{ steps.metadataYaml.outputs.exists }}
