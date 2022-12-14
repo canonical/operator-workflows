@@ -7,10 +7,10 @@ jobs:
   metadata_yaml:
     uses: ./.github/workflows/test.yaml
     with:
-      working-directory: 'tests/workflows/test/metadata_yaml'
+      working-directory: 'tests/workflows/test/metadata_yaml/'
     secrets: inherit
   no_metadata_yaml:
     uses: ./.github/workflows/test.yaml
     with:
-      working-directory: 'tests/workflows/test/no_metadata_yaml'
+      working-directory: 'tests/workflows/test/no_metadata_yaml/'
     secrets: inherit

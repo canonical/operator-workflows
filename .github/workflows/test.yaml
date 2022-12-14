@@ -17,6 +17,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
+        working-directory: ${{ inputs.working-directory }}
         with:
           repository: canonical/Inclusive-naming
       - run: mv * /tmp
@@ -41,6 +42,7 @@ jobs:
           fi
       - name: Run inclusive naming check
         uses: canonical/inclusive-naming@main
+        working-directory: ${{ inputs.working-directory }}
         with:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
