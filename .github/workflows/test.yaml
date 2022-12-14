@@ -136,6 +136,7 @@ jobs:
       - name: Check for Dockerfiles
         id: dockerfiles
         run: |
+          ls -la
           find . -name \"*Dockerfile\"
           echo "found=$(find . -name \"*Dockerfile\")"
           echo "found=$(find . -name \"*Dockerfile\")" >> $GITHUB_OUTPUT
