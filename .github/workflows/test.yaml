@@ -146,7 +146,7 @@ jobs:
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
-          dockerfile: "${{ steps.dockerfiles.outputs.found }}"
+          dockerfile: "${{ inputs.working-directory }}${{ steps.dockerfiles.outputs.found }}"
       - name: Report
         id: report
         run: echo "outcome=$([ '${{ steps.dockerfiles.outputs.found }}' = '' ] && echo skip || echo success)" >> $GITHUB_OUTPUT
