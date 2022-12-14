@@ -3,10 +3,10 @@ name: Tests
 on:
   workflow_call:
     inputs:
-        tox-ini-dir:
-          type: string
-          description: Path to tox.ini file
-          default: './'
+      working-directory:
+        type: string
+        description: Path to tox.ini file
+        default: './'
 
 jobs:
   inclusive-naming-check:
@@ -124,6 +124,9 @@ jobs:
   lint-metadata:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
@@ -149,7 +152,7 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json -c ${{ inputs.tox-ini-dir }}
+        run: tox --result-json=test-result.json -c ${{ inputs.working-directory }}
       - name: Export test report
         if: always()
         uses: actions/github-script@v6.2.0
