@@ -9,10 +9,10 @@ on:
         default: './'
     outputs:
       docker-lint-outcome:
-        description: whether the docker linting succeeded
+        description: The outcome of the docker linting
         value: ${{ jobs.docker-lint.outputs.outcome }}
       metadata-lint-outcome:
-        description: whether the metadata.yaml linting succeeded
+        description: The outcome of the metadata.yaml linting
         value: ${{ jobs.metadata-lint.outputs.outcome }}
 
 jobs:
@@ -190,7 +190,7 @@ jobs:
 
             const sha = '${{ github.event.pull_request.head.sha }}';
             const fs = require('fs');
-            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}' + 'test-result.json')).testenvs;
+            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}test-result.json')).testenvs;
 
             let lint_result = result.lint.test;
             let lint_success = true;
