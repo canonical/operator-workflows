@@ -9,6 +9,12 @@ jobs:
     with:
       working-directory: 'tests/workflows/test/metadata_yaml/'
     secrets: inherit
+  metadata_yaml_check:
+    runs-on: ubuntu-latest
+    needs: metadata_yaml
+    steps:
+      - run:  |
+        [ "${{ needs.metadata_yaml.outputs.docker-lint-outcome }}" = "success" ]
   no_metadata_yaml:
     uses: ./.github/workflows/test.yaml
     with:

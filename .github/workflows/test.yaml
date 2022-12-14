@@ -7,6 +7,13 @@ on:
         type: string
         description: The working directory for jobs
         default: './'
+    outputs:
+      docker-lint-outcome:
+        description: whether the docker linting succeeded
+        value: ${{ jobs.docker-lint.outputs.outcome }}
+      metadata-lint-outcome:
+        description: whether the metadata.yaml linting succeeded
+        value: ${{ jobs.metadata-lint.outputs.outcome }}
 
 jobs:
   inclusive-naming-check:
@@ -119,6 +126,8 @@ jobs:
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
+    outputs:
+      outcome: ${{ steps.report.outputs.outcome }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -132,28 +141,31 @@ jobs:
         uses: jbergstroem/hadolint-gh-action@v1
         with:
           dockerfile: "${{ steps.dockerfiles.found }}"
-  lint-metadata:
+      - name: Report
+        id: report
+        run: echo "outcome=success" >> $GITHUB_OUTPUT
+  metadata-lint:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    outputs:
+      success: ${{ steps.report.outputs.success }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
         id: metadataYaml
-        run: |
-          ls -la
-          echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")"
-          echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
-      - name: check
-        run: echo ${{ steps.metadataYaml.outputs.exists }}
+        run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Run lint
         if: steps.metadataYaml.outputs.exists == 'true'
         run: |
           python3 -m pip install check-jsonschema
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
+      - name: Report
+        id: report
+        run: echo "outcome=success" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
