@@ -21,7 +21,7 @@ jobs:
       - no_metadata_yaml
     steps:
       - run: |
-          test '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success'
-          test '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'success'
-          test '${{ needs.no_metadata_yaml.outputs.metadata-lint-outcome }}' = 'success'
-          test '${{ needs.no_metadata_yaml.outputs.docker-lint-outcome }}' = 'success'
+          [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ]
+          [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'success' ]
+          [ '${{ needs.no_metadata_yaml.outputs.metadata-lint-outcome }}' = 'skip' ]
+          [ '${{ needs.no_metadata_yaml.outputs.docker-lint-outcome }}' = 'success' ]
