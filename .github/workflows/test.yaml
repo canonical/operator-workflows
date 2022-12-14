@@ -17,9 +17,9 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
-        working-directory: ${{ inputs.working-directory }}
         with:
           repository: canonical/Inclusive-naming
+          path: ${{ inputs.working-directory }}
       - run: mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
@@ -42,13 +42,13 @@ jobs:
           fi
       - name: Run inclusive naming check
         uses: canonical/inclusive-naming@main
-        working-directory: ${{ inputs.working-directory }}
         with:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           woke-args: '. -c /tmp/config.yml'
           filter-mode: nofilter
+          workdir: ${{ inputs.working-directory }}
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
