@@ -140,14 +140,16 @@ jobs:
           find . -name "*Dockerfile"
           echo "found=$(find . -name "*Dockerfile")"
           echo "found=$(find . -name "*Dockerfile")" >> $GITHUB_OUTPUT
-      - if: ${{ steps.dockerfiles.found != '' }}
+      - name: Show output
+        run: echo ${{ steps.dockerfiles.outputs.found }}
+      - if: ${{ steps.dockerfiles.outputs.found != '' }}
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
-          dockerfile: "${{ steps.dockerfiles.found }}"
+          dockerfile: "${{ steps.dockerfiles.outputs.found }}"
       - name: Report
         id: report
-        run: echo "outcome=$([ '${{ steps.dockerfiles.found }}' = '' ] && echo skip || echo success)" >> $GITHUB_OUTPUT
+        run: echo "outcome=$([ '${{ steps.dockerfiles.outputs.found }}' = '' ] && echo skip || echo success)" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
