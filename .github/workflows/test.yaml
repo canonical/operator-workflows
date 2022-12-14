@@ -178,7 +178,7 @@ jobs:
 
             const sha = '${{ github.event.pull_request.head.sha }}';
             const fs = require('fs');
-            const result = JSON.parse(fs.readFileSync('test-result.json')).testenvs;
+            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}' + 'test-result.json')).testenvs;
 
             let lint_result = result.lint.test;
             let lint_success = true;
