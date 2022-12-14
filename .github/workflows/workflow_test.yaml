@@ -4,8 +4,13 @@ on:
   pull_request:
 
 jobs:
-  Tests:
+  metadata_yaml:
     uses: ./.github/workflows/test.yaml
     with:
-      tox-ini-dir: 'tests/workflows/test'
+      tox-ini-dir: 'tests/workflows/test/metadata_yaml'
+    secrets: inherit
+  no_metadata_yaml:
+    uses: ./.github/workflows/test.yaml
+    with:
+      tox-ini-dir: 'tests/workflows/test/no_metadata_yaml'
     secrets: inherit

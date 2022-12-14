@@ -114,23 +114,28 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check for Dockerfiles
-        run: echo Dockerfiles=$(find . -name "*Dockerfile") >> $GITHUB_ENV
-      - if: ${{ env.Dockerfiles != '' }}
+        id: dockerfiles
+        run: echo "{found}={$(find . -name "*Dockerfile")}" >> $GITHUB_OUTPUT
+      - if: ${{ steps.dockerfiles.found != '' }}
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
-          dockerfile: "${{ env.Dockerfiles }}"
+          dockerfile: "${{ steps.dockerfiles.found }}"
   lint-metadata:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
-      - name: Install check-jsonschema
-        run: python3 -m pip install check-jsonschema
-      - name: Download schema
-        run: curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+      - name: Check file existence
+        id: metadataYaml
+        run: |
+          echo "{exists}={$([ -f metadata.yaml ] && echo "true" || echo "false")}" >> $GITHUB_OUTPUT
       - name: Run lint
-        run: check-jsonschema metadata.yaml --schemafile metadata.schema
+        if: steps.metadataYaml.outputs.exists == 'true'
+        run: |
+          python3 -m pip install check-jsonschema
+          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+          check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
