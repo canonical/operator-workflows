@@ -151,7 +151,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     outputs:
-      success: ${{ steps.report.outputs.success }}
+      outcome: ${{ steps.report.outputs.outcome }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
