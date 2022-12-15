@@ -138,7 +138,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Check for Dockerfiles
         id: dockerfiles
-        run: echo -n "found=$(find . -name "*Dockerfile" -printf "%p ")" >> $GITHUB_OUTPUT
+        run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
       - if: ${{ steps.dockerfiles.outputs.found != '' }}
         name: Run HadoLint
         uses: jbergstroem/hadolint-gh-action@v1
