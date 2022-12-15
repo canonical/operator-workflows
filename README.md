@@ -15,7 +15,7 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
-| tox-ini-dir | string | "./" | Directory where `tox.ini` file resides in, used as an input argument to `-c` [flag](https://tox.wiki/en/latest/cli_interface.html#tox--c) in tox |
+| working-directory | string | "./" | Directory where jobs should be executed |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
