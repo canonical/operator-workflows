@@ -18,5 +18,3 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
       - name: Show index page
         run: echo '${{ steps.publishDocumentation.outputs.index_url }}'
-
-
