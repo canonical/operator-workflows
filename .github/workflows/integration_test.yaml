@@ -214,7 +214,7 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
 
       - name: Run Litmus Chaos experiments
-        uses: merkata/github-chaos-actions@run-multiple-scenarios
+        uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
