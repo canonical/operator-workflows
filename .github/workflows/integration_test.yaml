@@ -175,6 +175,7 @@ jobs:
         with:
           app: ${{ env.CHARM_NAME }}
           model: testing
+  required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
     needs:
