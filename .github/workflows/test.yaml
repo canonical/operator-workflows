@@ -260,3 +260,11 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+  required_status_checks:
+    name: Required Status Checks
+    runs-on: ubuntu-latest
+    needs:
+      - test
+      - lint
+    steps:
+      - run: echo tests passed
