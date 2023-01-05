@@ -25,6 +25,30 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      chaos-enabled:
+        type: boolean
+        description: Whether Chaos testing is enabled
+        default: false
+      chaos-experiments:
+        type: string
+        description: List of experiments to run
+        default: ""
+      chaos-namespace:
+        type: string
+        description: Namespace to install Litmus Chaos
+        default: testing
+      chaos-app-namespace:
+        type: string
+        description: Namespace of chaos tested application
+        default: testing
+      chaos-app-label:
+        type: string
+        description: Label for chaos selection
+        default: ""
+      chaos-app-kind:
+        type: string
+        description: Application kind
+        default: statefulset
     outputs:
       images:
         description: Pushed docker images
@@ -168,13 +192,35 @@ jobs:
           if [ ! -z ${{ matrix.modules }} ]; then
             module="-k ${{ matrix.modules }}"
           fi
-          tox -e integration -- --model testing $series $module $args ${{ inputs.extra-arguments }}
+          tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
         with:
           app: ${{ env.CHARM_NAME }}
           model: testing
+      - name: Setting up kubeconfig ENV for Github Chaos Action
+        if: ${{ inputs.chaos-enabled }}
+        run: echo ::set-env name=KUBE_CONFIG_DATA::$(sudo microk8s config | base64 -w 0)
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+      - name: Setup Litmus
+        if: ${{ inputs.chaos-enabled }}
+        uses: merkata/github-chaos-actions@master
+        env:
+          INSTALL_LITMUS: true
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+
+      - name: Run Litmus Chaos experiments
+        uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
+        env:
+          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+          APP_LABEL: ${{ inputs.chaos-app-label }}
+          APP_KIND: ${{ inputs.chaos-app-kind }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
