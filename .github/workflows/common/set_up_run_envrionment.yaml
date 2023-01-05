@@ -1,0 +1,65 @@
+name: Set up environment
+description: Set up environment to run the integration and load tests
+inputs:
+  images:
+    description:  JSON array containing the image names to pushed to the repository or as an artifact
+    type: string
+  pre-run-script:
+    description: Path to the bash script to be run before the integration and load tests
+    type: string
+  provider:
+    description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+    type: string
+    default: microk8s
+  setup-devstack-swift:
+    description: Use setup-devstack-swift action to prepare a swift server for testing.
+    type: boolean
+    default: false
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - name: Setup Devstack Swift
+      if: ${{ inputs.setup-devstack-swift }}
+      id: setup-devstack-swift
+      uses: canonical/setup-devstack-swift@v1
+    - name: Create OpenStack credential file
+      run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
+    - name: Setup operator environment
+      uses: charmed-kubernetes/actions-operator@main
+      with:
+        provider: ${{ inputs.provider }}
+    - name: Enable microk8s registry
+      if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+      run: |
+        sudo microk8s enable registry
+        sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      if: ${{ github.event.pull_request.head.repo.fork }}
+    - name: Push images to microk8s registry
+      if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+      run: |
+        for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+          docker load --input ${image_name}/${image_name}.tar
+          docker push localhost:32000/${image_name}:latest
+        done
+    - name: Configure GHCR in microk8s
+      if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
+      run: |
+        # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
+        # Note: containerd has to be restarted for the changes to take effect
+        # (https://github.com/containerd/cri/blob/master/docs/registry.md)
+        sudo su -c 'echo "
+        [plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"ghcr.io\".auth]
+        username = \"${{ github.actor }}\"
+        password = \"${{ secrets.GITHUB_TOKEN }}\"
+        " >> /var/snap/microk8s/current/args/containerd-template.toml'
+        sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+    - name: Enable microk8s ingress
+      if: ${{ inputs.provider == 'microk8s' }}
+      run: |
+        sudo microk8s enable ingress
+    - name: Pre-run script
+      if: ${{ inputs.pre-run-script != '' }}
+      run: bash ${{ inputs.pre-run-script }}

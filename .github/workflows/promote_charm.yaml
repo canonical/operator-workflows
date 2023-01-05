@@ -17,7 +17,7 @@ on:
 jobs:
   get-runner-image:
     name: Get runner image
-    uses: ./.github/workflows/get_runner_image.yaml
+    uses: ./.github/workflows/common/get_runner_image.yaml
   promote-charm:
     name: Promote charm
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
