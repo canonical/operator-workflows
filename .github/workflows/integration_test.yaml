@@ -217,4 +217,7 @@ jobs:
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
+          APP_KIND: ${{ inputs.chaos-app-kind }}
