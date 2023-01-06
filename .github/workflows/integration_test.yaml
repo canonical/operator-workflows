@@ -227,9 +227,16 @@ jobs:
       - name: Import load test .env file
         id: import-env
         if: ${{ inputs.load-test-enabled }}
-        run: < ${{ env.ENV_FILE }} >> $GITHUB_ENV
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const env = parseEnv(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`);
+            Object.entries(env).forEach(x => core.exportVariable(...x));
+            return env;
       - name: Run local k6 test
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load_tests/load-test.js
+        env: fromJSON(steps.import-env.outputs.env)

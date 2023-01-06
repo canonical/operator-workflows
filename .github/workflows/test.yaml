@@ -185,7 +185,7 @@ jobs:
         run: tox --result-json=test-result.json
       - name: Export test report
         if: always()
-        uses: actions/github-script@v6.2.0
+        uses: actions/github-script@v6
         with:
           script: |
             const no_color = (text) => {
