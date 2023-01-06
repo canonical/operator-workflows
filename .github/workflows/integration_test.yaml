@@ -239,4 +239,4 @@ jobs:
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load_tests/load-test.js
-        env: fromJSON(steps.import-env.outputs.env)
+        env: ${{ fromJSON(steps.import-env.outputs.env) }}
