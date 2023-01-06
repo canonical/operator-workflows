@@ -216,7 +216,7 @@ jobs:
               black \
               mypy \
               pylint \
-              pydocstyles \
+              pydocstyle \
               "
           for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
               CMD_REGEX="commands.*=.*\n(\s.*\n)*(\s.*$EXPECTED_LINT_CMD)"
