@@ -202,7 +202,7 @@ jobs:
             "
           for EXPECTED_LINTER in $EXPECTED_LINTERS; do
             grep -Fq $EXPECTED_LINTER tox.ini || \
-              echo $EXPECTED_LINTER should be in tox.ini 1>&2 && false
+              (echo $EXPECTED_LINTER should be in tox.ini 1>&2 && false)
           done
       - name: Report
         id: report
