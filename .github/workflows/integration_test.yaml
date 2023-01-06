@@ -224,6 +224,9 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
+      - name: Import load test .env file
+        if: ${{ inputs.load-test-enabled }}
+        bash: export $(grep -v '^#' load_tests/.env | xargs)
       - name: Run local k6 test
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
