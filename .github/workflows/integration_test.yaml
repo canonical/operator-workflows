@@ -3,28 +3,6 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
-      extra-arguments:
-        description: Additional arguments to pass to the integration test execution
-        type: string
-      pre-run-script:
-        description: Path to the bash script to be run before the integration and load tests
-        type: string
-      provider:
-        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: microk8s
-      series:
-        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
-        type: string
-        default: '[""]'
-      modules:
-        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
-        type: string
-        default: '[""]'
-      setup-devstack-swift:
-        description: Use setup-devstack-swift action to prepare a swift server for testing.
-        type: boolean
-        default: false
       chaos-enabled:
         type: boolean
         description: Whether Chaos testing is enabled
@@ -49,10 +27,36 @@ on:
         type: string
         description: Application kind
         default: statefulset
+      extra-arguments:
+        description: Additional arguments to pass to the integration test execution
+        type: string
+      load-test-enabled:
+        type: boolean
+        description: Whether load testing is enabled
+        default: false
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
+        type: string
+        default: '[""]'
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
+      provider:
+        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: microk8s
+      series:
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for testing.
+        type: boolean
+        default: false
     outputs:
       images:
         description: Pushed docker images
-        value: ${{ jobs.build-images.outputs.images }}
+        value: ${{ jobs.get-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
@@ -61,13 +65,61 @@ env:
 jobs:
   get-runner-image:
     name: Get runner image
-    uses: ./.github/workflows/common/get_runner_image.yaml
+    uses: ./.github/workflows/get_runner_image.yaml
+  get-images:
+    name: Get images
+    runs-on: ubuntu-22.04
+    outputs:
+      images: ${{ env.DOCKER_IMAGES }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get dockerfiles
+        run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
   build-images:
     name: Build image
-    needs: get-runner-image
-    uses: ././.github/workflows/common/build_images.yaml
-    with:
-      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: [get-images, get-runner-image]
+    if: ${{ needs.get-images.outputs.images != '[]' }}
+    strategy:
+      matrix:
+        image: ${{ fromJSON(needs.get-images.outputs.images) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Log in to the Container registry
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v3
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          context: .
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
+          file: ${{ matrix.image }}.Dockerfile
+      # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
+      # so an artifact is published instead
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        if: ${{ github.event.pull_request.head.repo.fork }}
+      - name: Build image as tarball
+        uses: docker/build-push-action@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          context: .
+          file: ${{ matrix.image }}.Dockerfile
+          tags: localhost:32000/${{ matrix.image }}:latest
+          outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          name: ${{ matrix.image }}
+          path: /tmp/${{ matrix.image }}.tar
+
   integration-test:
     name: Integration tests
     strategy:
@@ -76,22 +128,59 @@ jobs:
         modules: ${{ fromJSON(inputs.modules) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-runner-image, build-images]
+    needs: [get-images, get-runner-image, build-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
-      - name: Set up environment
-        uses: .github/common/set_up_run_environment
+      - name: Setup Devstack Swift
+        if: ${{ inputs.setup-devstack-swift }}
+        id: setup-devstack-swift
+        uses: canonical/setup-devstack-swift@v1
+      - name: Create OpenStack credential file
+        run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
         with:
-          images: ${{ needs.build-images.outputs.images }}
-          pre-run-script: ${{ inputs.pre-run-script }}
           provider: ${{ inputs.provider }}
-          setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      - name: Enable microk8s registry
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+        run: |
+          sudo microk8s enable registry
+          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+      - name: Push images to microk8s registry
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+        run: |
+          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
+            docker load --input ${image_name}/${image_name}.tar
+            docker push localhost:32000/${image_name}:latest
+          done
+      - name: Configure GHCR in microk8s
+        if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
+        run: |
+          # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
+          # Note: containerd has to be restarted for the changes to take effect
+          # (https://github.com/containerd/cri/blob/master/docs/registry.md)
+          sudo su -c 'echo "
+          [plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"ghcr.io\".auth]
+          username = \"${{ github.actor }}\"
+          password = \"${{ secrets.GITHUB_TOKEN }}\"
+          " >> /var/snap/microk8s/current/args/containerd-template.toml'
+          sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+      - name: Enable microk8s ingress
+        if: ${{ inputs.provider == 'microk8s' }}
+        run: |
+          sudo microk8s enable ingress
+      - name: Pre-run script
+        if: ${{ inputs.pre-run-script != '' }}
+        run: bash ${{ inputs.pre-run-script }}
       - name: Run integration tests
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
-          for image_name in $(echo '${{ needs.build-images.outputs.images }}' | jq -cr '.[]'); do
+          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
             if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
               args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
             else
@@ -119,7 +208,6 @@ jobs:
         run: echo ::set-env name=KUBE_CONFIG_DATA::$(sudo microk8s config | base64 -w 0)
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-
       - name: Setup Litmus
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@master
@@ -127,8 +215,8 @@ jobs:
           INSTALL_LITMUS: true
           CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
           APP_NS: ${{ inputs.chaos-app-namespace }}
-
       - name: Run Litmus Chaos experiments
+        if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
@@ -136,3 +224,8 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
+      - name: Run local k6 test
+        if: ${{ inputs.load-test-enabled }}
+        uses: grafana/k6-action@v0.2.0
+        with:
+          filename: load_tests/load-test.js

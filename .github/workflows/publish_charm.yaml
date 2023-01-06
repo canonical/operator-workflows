@@ -16,7 +16,7 @@ env:
 jobs:
   get-runner-image:
     name: Get runner image
-    uses: ./.github/workflows/common/get_runner_image.yaml
+    uses: ./.github/workflows/get_runner_image.yaml
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
