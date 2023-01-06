@@ -234,7 +234,7 @@ jobs:
             const env = parseEnv(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`);
             Object.entries(env).forEach(x => core.exportVariable(...x));
             return env;
-      - name: Run local k6 test
+      - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
         with:
