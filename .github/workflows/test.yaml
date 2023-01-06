@@ -187,22 +187,41 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run lint
         run: |
-          EXPECTED_LINTERS="\
-            mypy \
-            isort \
-            black \
-            flake8-docstrings \
-            flake8-docstrings-complete \
-            flake8-builtins \
-            flake8-test-docs \
-            pep8-naming \
-            codespell \
-            pylint \
-            pydocstyle \
-            "
-          for EXPECTED_LINTER in $EXPECTED_LINTERS; do
-            grep -Fq $EXPECTED_LINTER tox.ini || \
-              (echo $EXPECTED_LINTER should be in tox.ini 1>&2 && false)
+          # Check dependencies
+          EXPECTED_LINT_DEPS="\
+              mypy \
+              isort \
+              black \
+              flake8-docstrings \
+              flake8-docstrings-complete \
+              flake8-builtins \
+              flake8-test-docs \
+              pep8-naming \
+              codespell \
+              pylint \
+              pydocstyle \
+              "
+          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
+              DEP_REGEX="deps.*=.*\n(\s.*\n)*(\s.*$EXPECTED_LINT_DEP)"
+              python3 -c "from pathlib import Path; import re; import sys; sys.exit(1) if not re.search(r'$DEP_REGEX', Path('tox.ini').read_text()) else sys.exit(0)" || \
+                  (echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini" 1>&2 && false)
+          done
+
+          # Check cmmands
+          EXPECTED_LINT_CMDS="\
+              pydocstyle \
+              codespell \
+              flake8 \
+              isort \
+              black \
+              mypy \
+              pylint \
+              pydocstyle \
+              "
+          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
+              CMD_REGEX="commands.*=.*\n(\s.*\n)*(\s.*$EXPECTED_LINT_CMD)"
+              python3 -c "from pathlib import Path; import re; import sys; sys.exit(1) if not re.search(r'$CMD_REGEX', Path('tox.ini').read_text()) else sys.exit(0)" || \
+                  (echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini" 1>&2 && false)
           done
       - name: Report
         id: report
