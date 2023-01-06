@@ -17,6 +17,11 @@ on:
           The outcome of the metadata.yaml linting, mainly for the puposes of the tests for this
           workflow
         value: ${{ jobs.metadata-lint.outputs.outcome }}
+      tox-lint-outcome:
+        description: |
+          The outcome of the tox.ini linting, mainly for the puposes of the tests for this
+          workflow
+        value: ${{ jobs.tox-lint.outputs.outcome }}
 
 jobs:
   inclusive-naming-check:
@@ -170,6 +175,38 @@ jobs:
       - name: Report
         id: report
         run: echo "outcome=$([ ${{ steps.metadataYaml.outputs.exists }} = 'true' ] && echo success || echo skip)" >> $GITHUB_OUTPUT
+  tox-lint:
+    name: Lint tox.ini
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    outputs:
+      outcome: ${{ steps.report.outputs.outcome }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run lint
+        run: |
+          EXPECTED_LINTERS="\
+            mypy \
+            isort \
+            black \
+            flake8-docstrings \
+            flake8-docstrings-complete \
+            flake8-builtins \
+            flake8-test-docs \
+            pep8-naming \
+            codespell \
+            pylint \
+            pydocstyle \
+            "
+          for EXPECTED_LINTER in $EXPECTED_LINTERS; do
+            grep -Fq $EXPECTED_LINTER tox.ini || \
+              echo $EXPECTED_LINTER should be in tox.ini 1>&2 && false
+          done
+      - name: Report
+        id: report
+        run: echo "outcome=success" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
