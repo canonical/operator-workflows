@@ -231,7 +231,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            cont dotenv = require('dotenv');
+            const dotenv = require('dotenv');
             const env = dotenv.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`))
             console.log("-------------------------")
             console.log(env)
