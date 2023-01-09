@@ -29,6 +29,7 @@ jobs:
       - run: |
           [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skip' ] || (echo metadata lint failed && false)
           [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skip' ] || (echo docker lint failed && false)
+          [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo tox lint failed && false)
           [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata lint failed && false)
           [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skip' ] || (echo docker lint failed && false)
           [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skip' ] || (echo metadata lint failed && false)
