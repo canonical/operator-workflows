@@ -230,6 +230,10 @@ jobs:
         if: ${{ inputs.load-test-enabled }}
         with:
           path: load_tests/.env
+      - name: Print stuff
+        run: |
+          echo ${{ steps.import-env.outputs }}
+          echo ${{ fromJSON(steps.import-env.outputs) }}
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
