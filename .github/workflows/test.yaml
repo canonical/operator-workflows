@@ -209,8 +209,8 @@ jobs:
               pydocstyle \
               "
           for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
-              # Check that the `lint installed: ` includes the expected dependency
-              DEP_REGEX="lint installed: .*$EXPECTED_LINT_DEP"
+              # Check that the `lint: ` includes the expected dependency
+              DEP_REGEX="lint: .*$EXPECTED_LINT_DEP"
               if ! grep -q "$DEP_REGEX" stdout.log ; then
                   # Write to stderr
                   >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
