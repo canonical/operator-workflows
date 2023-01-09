@@ -226,7 +226,7 @@ jobs:
           APP_KIND: ${{ inputs.chaos-app-kind }}
       - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
-        run: echo "JSON_ENV=$(cat load_tests/env.json | tr -d \"[:space:]\")" >> $GITHUB_ENV
+        run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
       - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
         run: echo ${{ fromJSON(env.JSON_ENV) }}
