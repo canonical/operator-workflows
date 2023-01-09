@@ -225,18 +225,11 @@ jobs:
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
       - name: Import load test .env file
+        uses: falti/dotenv-action@v1
         id: import-env
         if: ${{ inputs.load-test-enabled }}
-        uses: actions/github-script@v6
         with:
-          script: |
-            const fs = require('fs');
-            const dotenv = require('dotenv');
-            const env = dotenv.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`))
-            console.log("-------------------------")
-            console.log(env)
-            Object.entries(env).forEach(x => core.exportVariable(...x));
-            return env;
+          path: load_tests/.env
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
