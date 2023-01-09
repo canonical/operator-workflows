@@ -318,3 +318,15 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+  required_status_checks:
+    name: Required Test Status Checks
+    runs-on: ubuntu-latest
+    needs:
+      - inclusive-naming-check
+      - shellcheck-lint
+      - docker-lint
+      - metadata-lint
+      - lint-and-unit-test
+      - draft-publish-docs
+    steps:
+      - run: echo required checks passed
