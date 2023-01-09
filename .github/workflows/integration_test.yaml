@@ -224,19 +224,15 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
-      - name: Import load test .env file
-        uses: falti/dotenv-action@v1
-        id: import-env
+      - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
-        with:
-          path: load_tests/.env
-      - name: Print stuff
-        run: |
-          echo '${{ steps.import-env.outputs.LOAD_TEST_HOSTNAME }}'
-          echo '${{ fromJSON(steps.import-env.outputs) }}'
+        run: echo "JSON_ENV=$(cat load_tests/env.json)" >> $GITHUB_ENV
+      - name: Import load test json.env file
+        if: ${{ inputs.load-test-enabled }}
+        run: echo ${{ fromJSON(env.JSON_ENV) }}
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
         with:
           filename: load_tests/load-test.js
-        env: ${{ fromJSON(steps.import-env.outputs) }}
+        env: ${{ fromJSON(env.JSON_ENV) }}
