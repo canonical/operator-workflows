@@ -231,7 +231,10 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const env = parseEnv(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`);
+            cont dotenv = require('dotenv');
+            const env = dotenv.parse(fs.readFileSync(`${process.env.GITHUB_WORKSPACE}/load_tests/.env`))
+            console.log("-------------------------")
+            console.log(env)
             Object.entries(env).forEach(x => core.exportVariable(...x));
             return env;
       - name: Run k6 load tests
