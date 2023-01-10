@@ -230,7 +230,6 @@ jobs:
               "
           for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
               # Check that there was a `lint run-test: ` line for the expected command
-              # CMD_REGEX="lint.*commands\[\d+\].*$EXPECTED_LINT_CMD"
               CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
               if ! grep -q "$CMD_REGEX" stdout.log ; then
                   # Write to stderr
