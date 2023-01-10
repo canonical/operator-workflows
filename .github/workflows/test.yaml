@@ -210,7 +210,7 @@ jobs:
               "
           for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
               # Check that the `lint: ` includes the expected dependency
-              DEP_REGEX="lint: .*$EXPECTED_LINT_DEP"
+              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
               if ! grep -q "$DEP_REGEX" stdout.log ; then
                   # Write to stderr
                   >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
@@ -218,11 +218,11 @@ jobs:
               fi
           done
 
-          # Check cmmands
+          # Check commands
           EXPECTED_LINT_CMDS="\
               pydocstyle \
               codespell \
-              (p?)flake8 \
+              flake8 \
               isort \
               black \
               mypy \
@@ -230,7 +230,8 @@ jobs:
               "
           for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
               # Check that there was a `lint run-test: ` line for the expected command
-              CMD_REGEX="lint run-test: commands\[\d+\] \| $EXPECTED_LINT_CMD"
+              # CMD_REGEX="lint.*commands\[\d+\].*$EXPECTED_LINT_CMD"
+              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
               if ! grep -q "$CMD_REGEX" stdout.log ; then
                   # Write to stderr
                   >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
