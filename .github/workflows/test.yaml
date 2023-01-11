@@ -17,6 +17,11 @@ on:
           The outcome of the metadata.yaml linting, mainly for the puposes of the tests for this
           workflow
         value: ${{ jobs.metadata-lint.outputs.outcome }}
+      lint-and-unit-test-outcome:
+        description: |
+          The outcome of the linting and unit testing, mainly for the puposes of the tests for this
+          workflow
+        value: ${{ jobs.lint-and-unit-test.outputs.outcome }}
 
 jobs:
   inclusive-naming-check:
@@ -174,6 +179,8 @@ jobs:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: get-runner-image
+    outputs:
+      outcome: ${{ steps.report.outputs.outcome }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -182,7 +189,54 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json
+        run: |
+          # Ensure that stdout appears as normal and redirect to file and exit depends on exit code of first command
+          tox --result-json=test-result.json | tee stdout.log ; test ${PIPESTATUS[0]} -eq 0
+      - name: Check lint and test stdout
+        run: |
+          # Check dependencies
+          EXPECTED_LINT_DEPS="\
+              mypy \
+              isort \
+              black \
+              flake8-docstrings \
+              flake8-docstrings-complete \
+              flake8-builtins \
+              flake8-test-docs \
+              pep8-naming \
+              codespell \
+              pylint \
+              pydocstyle \
+              "
+          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
+              # Check that there is a `lint...<dependency>` line for each of the expected dependencies
+              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
+              if ! grep -q "$DEP_REGEX" stdout.log ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
+
+          # Check commands
+          EXPECTED_LINT_CMDS="\
+              pydocstyle \
+              codespell \
+              flake8 \
+              isort \
+              black \
+              mypy \
+              pylint \
+              "
+          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
+              # Check that there is a `lint...commands...<command>` line for each of the expected commands
+              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
+              if ! grep -q "$CMD_REGEX" stdout.log ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
       - name: Export test report
         if: always()
         uses: actions/github-script@v6
@@ -242,6 +296,9 @@ jobs:
         with:
           name: report
           path: report.json
+      - name: Report
+        id: report
+        run: echo "outcome=success" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
@@ -261,3 +318,15 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+  required_status_checks:
+    name: Required Test Status Checks
+    runs-on: ubuntu-latest
+    needs:
+      - inclusive-naming-check
+      - shellcheck-lint
+      - docker-lint
+      - metadata-lint
+      - lint-and-unit-test
+      - draft-publish-docs
+    steps:
+      - run: echo required checks passed

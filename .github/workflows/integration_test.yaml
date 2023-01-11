@@ -27,6 +27,7 @@ on:
         type: string
         description: Application kind
         default: statefulset
+<<<<<<< HEAD
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -53,6 +54,12 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+=======
+      chaos-duration:
+        type: string
+        description: Duration of the chaos experiment
+        default: 60
+>>>>>>> origin/main
     outputs:
       images:
         description: Pushed docker images
@@ -224,6 +231,7 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
+          TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
       - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
         run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
@@ -236,3 +244,10 @@ jobs:
         with:
           filename: load_tests/load-test.js
         env: ${{ fromJSON(env.JSON_ENV) }}
+  required_status_checks:
+    name: Required Integration Test Status Checks
+    runs-on: ubuntu-latest
+    needs:
+      - integration-test
+    steps:
+      - run: echo required checks passed
