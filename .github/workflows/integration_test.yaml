@@ -27,7 +27,10 @@ on:
         type: string
         description: Application kind
         default: statefulset
-<<<<<<< HEAD
+      chaos-duration:
+        type: string
+        description: Duration of the chaos experiment
+        default: 60
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -54,12 +57,6 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
-=======
-      chaos-duration:
-        type: string
-        description: Duration of the chaos experiment
-        default: 60
->>>>>>> origin/main
     outputs:
       images:
         description: Pushed docker images
