@@ -231,7 +231,9 @@ jobs:
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
       - name: Status
         if: ${{ inputs.load-test-enabled }}
-        run: juju status
+        run: |
+          juju status
+          microk8s status
       - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
         run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
