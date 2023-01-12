@@ -4,7 +4,7 @@
 
 ## Description
 
-By enabling ZAP in our integration test, the [ZAP full scan GitHub action](https://github.com/marketplace/actions/owasp-zap-full-scan) will run a ZAP full scan that attacks the web application to find additional vulnerabilities.
+By enabling ZAP in the integration test, the [ZAP full scan GitHub action](https://github.com/marketplace/actions/owasp-zap-full-scan) will run a ZAP full scan that attacks the web application to find additional vulnerabilities.
 
 The alerts will be maintained as a GitHub issue in the corresponding repository as well as an artifact in the Integration Test workflow.
 
