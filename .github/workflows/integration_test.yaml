@@ -77,10 +77,13 @@ on:
       zap-before-command:
         description: Command to run before ZAP testing
         type: string
-      zap-options:
+      zap-cmd-options:
         description: Options to be used by ZAP
         type: string
         default: "-T 60"
+      zap-rules-file-name:
+        description: Rules file to ignore any alerts from the ZAP scan
+        type: string
     outputs:
       images:
         description: Pushed docker images
@@ -273,10 +276,11 @@ jobs:
           ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
         with:
-          issue_title: 'ZAP report'
+          issue_title: 'OWASP ZAP report'
           fail_action: false
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
-          cmd_options: ${{ inputs.zap-options }}
+          cmd_options: ${{ inputs.zap-cmd-options }}
+          rules_file_name: ${{ inputs.zap-rules-file-name }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest

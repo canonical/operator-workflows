@@ -43,8 +43,10 @@ The following workflows are available:
 | zap-target-protocol | string | "http" | ZAP target protocol |
 | zap-target-port | string | 80 | ZAP target port |
 | zap-before-command | string | "" | Command to run before ZAP testing |
-| zap-options | string | "-T 60" | Options to be used by ZAP |
+| zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
+| zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
 
+More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 * test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
