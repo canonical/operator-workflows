@@ -233,7 +233,7 @@ jobs:
         if: ${{ inputs.load-test-enabled }}
         run: |
           juju status
-          microk8s status
+          sudo microk8s status
       - name: Import load test json.env file
         if: ${{ inputs.load-test-enabled }}
         run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
