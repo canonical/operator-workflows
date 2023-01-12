@@ -6,6 +6,12 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
+      extra-test-matrix:
+        description: |
+          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
+          Each mapping will be injected into the matrix section of the integration-test.
+        type: string
+        default: '{}'
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -25,6 +31,23 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      chaos-app-kind:
+        type: string
+        description: Application kind
+        default: statefulset
+      chaos-app-label:
+        type: string
+        description: Label for chaos selection
+        default: ""
+      chaos-app-namespace:
+        type: string
+        description: Namespace of chaos tested application
+        default: testing
+      chaos-duration:
+        type: string
+        description: |
+          Duration of the chaos experiment (added to 600s for go test timeout)
+        default: 60
       chaos-enabled:
         type: boolean
         description: Whether Chaos testing is enabled
@@ -33,26 +56,25 @@ on:
         type: string
         description: List of experiments to run
         default: ""
+      chaos-interval:
+        type: string
+        description: Interval to attempt re-run of an experiment
+        default: 30
       chaos-namespace:
         type: string
         description: Namespace to install Litmus Chaos
         default: testing
-      chaos-app-namespace:
+      chaos-status-delay:
         type: string
-        description: Namespace of chaos tested application
-        default: testing
-      chaos-app-label:
+        description: Delay is the wait(sleep) time on every status retry
+        default: 5
+      chaos-status-duration:
         type: string
-        description: Label for chaos selection
-        default: ""
-      chaos-app-kind:
-        type: string
-        description: Application kind
-        default: statefulset
-      chaos-duration:
-        type: string
-        description: Duration of the chaos experiment
-        default: 60
+        description: |
+          Duration used for status check retries
+          Retry is chaos-duration/chaos-delay times and each retry
+          sleeps chaos-delay
+        default: 90
       zap-dast-enabled:
         type: boolean
         description: Whether ZAP testing is enabled
@@ -157,6 +179,7 @@ jobs:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
         modules: ${{ fromJSON(inputs.modules) }}
+        ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [get-images, get-runner-image, build-images]
@@ -243,19 +266,22 @@ jobs:
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@master
         env:
-          INSTALL_LITMUS: true
-          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
           APP_NS: ${{ inputs.chaos-app-namespace }}
-          KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          INSTALL_LITMUS: true
+
       - name: Run Litmus Chaos experiments
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
-          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
-          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
-          APP_NS: ${{ inputs.chaos-app-namespace }}
-          APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
+          APP_LABEL: ${{ inputs.chaos-app-label }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+          CHAOS_INTERVAL: ${{ inputs.chaos-interval }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          DELAY: $${{ inputs.chaos-status-delay }}
+          DURATION: ${{ inputs.chaos-status-duration }}
+          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
           KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
