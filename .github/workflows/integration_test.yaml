@@ -3,28 +3,6 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
-      extra-arguments:
-        description: Additional arguments to pass to the integration test execution
-        type: string
-      pre-run-script:
-        description: Path to the bash script to be run before the integration tests
-        type: string
-      provider:
-        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: microk8s
-      series:
-        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
-        type: string
-        default: '[""]'
-      modules:
-        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
-        type: string
-        default: '[""]'
-      setup-devstack-swift:
-        description: Use setup-devstack-swift action to prepare a swift server for testing.
-        type: boolean
-        default: false
       chaos-enabled:
         type: boolean
         description: Whether Chaos testing is enabled
@@ -53,6 +31,32 @@ on:
         type: string
         description: Duration of the chaos experiment
         default: 60
+      extra-arguments:
+        description: Additional arguments to pass to the integration test execution
+        type: string
+      load-test-enabled:
+        type: boolean
+        description: Whether load testing is enabled
+        default: false
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
+        type: string
+        default: '[""]'
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
+      provider:
+        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: microk8s
+      series:
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for testing.
+        type: boolean
+        default: false
     outputs:
       images:
         description: Pushed docker images
@@ -208,7 +212,6 @@ jobs:
         run: echo ::set-env name=KUBE_CONFIG_DATA::$(sudo microk8s config | base64 -w 0)
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-
       - name: Setup Litmus
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@master
@@ -216,8 +219,8 @@ jobs:
           INSTALL_LITMUS: true
           CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
           APP_NS: ${{ inputs.chaos-app-namespace }}
-
       - name: Run Litmus Chaos experiments
+        if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
@@ -226,6 +229,23 @@ jobs:
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
+      - name: Status
+        if: ${{ inputs.load-test-enabled }}
+        run: |
+          juju status
+          sudo microk8s status
+      - name: Import load test json.env file
+        if: ${{ inputs.load-test-enabled }}
+        run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
+      - name: Import load test json.env file
+        if: ${{ inputs.load-test-enabled }}
+        run: echo ${{ fromJSON(env.JSON_ENV) }}
+      - name: Run k6 load tests
+        if: ${{ inputs.load-test-enabled }}
+        uses: grafana/k6-action@v0.2.0
+        with:
+          filename: load_tests/load-test.js
+        env: ${{ fromJSON(env.JSON_ENV) }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
