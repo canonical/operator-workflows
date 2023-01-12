@@ -6,6 +6,12 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
+      extra-test-matrix:
+        description: |
+          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
+          Each mapping will be injected into the matrix section of the integration-test.
+        type: string
+        default: '{}'
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -126,6 +132,7 @@ jobs:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
         modules: ${{ fromJSON(inputs.modules) }}
+        ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [get-images, get-runner-image, build-images]
