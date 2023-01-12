@@ -51,8 +51,24 @@ on:
         default: statefulset
       chaos-duration:
         type: string
-        description: Duration of the chaos experiment
+        description: |
+          Duration of the chaos experiment (added to 600s for go test timeout)
         default: 60
+      chaos-interval:
+        type: string
+        description: Interval to attempt re-run of an experiment
+        default: 30
+      chaos-status-duration:
+        type: string
+        description: |
+          Duration used for status check retries
+          Retry is chaos-duration/chaos-delay times and each retry
+          sleeps chaos-delay
+        default: 90
+      chaos-status-delay:
+        type: string
+        description: Delay is the wait(sleep) time on every status retry
+        default: 5
     outputs:
       images:
         description: Pushed docker images
@@ -218,6 +234,7 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
 
       - name: Run Litmus Chaos experiments
+        if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
@@ -226,6 +243,9 @@ jobs:
           APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
+          CHAOS_INTERVAL: ${{ inputs.chaos-interval }}
+          DURATION: ${{ inputs.chaos-status-duration }}
+          DELAY: $${{ inputs.chaos-status-delay }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
