@@ -31,6 +31,23 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      chaos-app-kind:
+        type: string
+        description: Application kind
+        default: statefulset
+      chaos-app-label:
+        type: string
+        description: Label for chaos selection
+        default: ""
+      chaos-app-namespace:
+        type: string
+        description: Namespace of chaos tested application
+        default: testing
+      chaos-duration:
+        type: string
+        description: |
+          Duration of the chaos experiment (added to 600s for go test timeout)
+        default: 60
       chaos-enabled:
         type: boolean
         description: Whether Chaos testing is enabled
@@ -39,26 +56,25 @@ on:
         type: string
         description: List of experiments to run
         default: ""
+      chaos-interval:
+        type: string
+        description: Interval to attempt re-run of an experiment
+        default: 30
       chaos-namespace:
         type: string
         description: Namespace to install Litmus Chaos
         default: testing
-      chaos-app-namespace:
+      chaos-status-delay:
         type: string
-        description: Namespace of chaos tested application
-        default: testing
-      chaos-app-label:
+        description: Delay is the wait(sleep) time on every status retry
+        default: 5
+      chaos-status-duration:
         type: string
-        description: Label for chaos selection
-        default: ""
-      chaos-app-kind:
-        type: string
-        description: Application kind
-        default: statefulset
-      chaos-duration:
-        type: string
-        description: Duration of the chaos experiment
-        default: 60
+        description: |
+          Duration used for status check retries
+          Retry is chaos-duration/chaos-delay times and each retry
+          sleeps chaos-delay
+        default: 90
     outputs:
       images:
         description: Pushed docker images
@@ -220,18 +236,22 @@ jobs:
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@master
         env:
-          INSTALL_LITMUS: true
-          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
           APP_NS: ${{ inputs.chaos-app-namespace }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          INSTALL_LITMUS: true
 
       - name: Run Litmus Chaos experiments
+        if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
         env:
-          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
-          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
-          APP_NS: ${{ inputs.chaos-app-namespace }}
-          APP_LABEL: ${{ inputs.chaos-app-label }}
           APP_KIND: ${{ inputs.chaos-app-kind }}
+          APP_LABEL: ${{ inputs.chaos-app-label }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+          CHAOS_INTERVAL: ${{ inputs.chaos-interval }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          DELAY: $${{ inputs.chaos-status-delay }}
+          DURATION: ${{ inputs.chaos-status-duration }}
+          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
   required_status_checks:
     name: Required Integration Test Status Checks
