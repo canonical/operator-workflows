@@ -272,6 +272,7 @@ jobs:
       - name: Remove Docker
         if: ${{ inputs.load-test-enabled }}
         run: |
+          # Workaround to fix IP tables so that microk8s is reacheable on port 80 during the load test execution
           # https://github.com/canonical/lxd-cloud/blob/f20a64a8af42485440dcbfd370faf14137d2f349/test/includes/lxd.sh#L13-L23
           sudo rm -rf /etc/docker
           sudo apt-get purge moby-buildx moby-engine moby-cli moby-compose moby-containerd moby-runc -y
