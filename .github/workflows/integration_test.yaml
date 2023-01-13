@@ -75,6 +75,37 @@ on:
           Retry is chaos-duration/chaos-delay times and each retry
           sleeps chaos-delay
         default: 90
+      zap-auth-header:
+        description: If this is defined then its value will be added as a header to all of the ZAP requests
+        type: string
+      zap-auth-header-value:
+        description:  If this is defined then its value will be used as the header name to all of the ZAP requests
+        type: string
+      zap-before-command:
+        description: Command to run before ZAP testing
+        type: string
+      zap-cmd-options:
+        description: Options to be used by ZAP
+        type: string
+        default: "-T 60"
+      zap-enabled:
+        type: boolean
+        description: Whether ZAP testing is enabled
+        default: false
+      zap-target:
+        description:  If this is not set, the unit IP address will be used as ZAP target
+        type: string
+      zap-target-port:
+        description:  ZAP target port
+        type: string
+        default: 80
+      zap-target-protocol:
+        description:  ZAP target protocol
+        type: string
+        default: "http"
+      zap-rules-file-name:
+        description: Rules file to ignore any alerts from the ZAP scan
+        type: string
     outputs:
       images:
         description: Pushed docker images
@@ -228,10 +259,9 @@ jobs:
           model: testing
       - name: Setting up kubeconfig ENV for Github Chaos Action
         if: ${{ inputs.chaos-enabled }}
-        run: echo ::set-env name=KUBE_CONFIG_DATA::$(sudo microk8s config | base64 -w 0)
+        run: echo "KUBE_CONFIG_DATA=$(sudo microk8s config | base64 -w 0)" >> $GITHUB_ENV
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-
       - name: Setup Litmus
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@master
@@ -253,6 +283,30 @@ jobs:
           DURATION: ${{ inputs.chaos-status-duration }}
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
+          KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+      - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
+        if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
+        run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
+      - name: Set Zap target env for Github Zap Action to zap-target value
+        if: ${{ inputs.zap-enabled && inputs.zap-target != '' }}
+        run: echo "ZAP_TARGET=${{ inputs.zap-target }}" >> $GITHUB_ENV
+      - name: Run command before Github Zap Action
+        if: ${{ inputs.zap-enabled && inputs.zap-before-command != '' }}
+        run: ${{ inputs.zap-before-command }}
+        env:
+          ZAP_TARGET: ${{ env.ZAP_TARGET }}
+      - name: Run Github Zap Action
+        if: ${{ inputs.zap-enabled }}
+        uses: zaproxy/action-full-scan@v0.4.0
+        env:
+          ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
+          ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
+        with:
+          issue_title: 'OWASP ZAP report'
+          fail_action: false
+          target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
+          cmd_options: ${{ inputs.zap-cmd-options }}
+          rules_file_name: ${{ inputs.zap-rules-file-name }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest

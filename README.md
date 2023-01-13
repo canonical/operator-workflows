@@ -29,6 +29,24 @@ The following workflows are available:
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| chaos-enabled  | bool | false | Whether Chaos testing is enabled |
+| chaos-experiments | string | "" | List of experiments to run |
+| chaos-namespace | string | testing | Namespace to install Litmus Chaos |
+| chaos-app-namespace | string | testing | Namespace of chaos tested application |
+| chaos-app-label | string | "" | Label for chaos selection |
+| chaos-app-kind | string | statefulset | Application kind |
+| chaos-duration | string | 60 | Duration of the chaos experiment |
+| zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
+| zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
+| zap-before-command | string | "" | Command to run before ZAP testing |
+| zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
+| zap-enabled | boolean | false | Whether ZAP testing is enabled |
+| zap-target | string | "" | If this is not set, the unit IP address will be used as ZAP target |
+| zap-target-protocol | string | "http" | ZAP target protocol |
+| zap-target-port | string | 80 | ZAP target port |
+| zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
+
+More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 * test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
