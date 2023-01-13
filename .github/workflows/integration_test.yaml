@@ -267,6 +267,7 @@ jobs:
           # Workaround to fix IP tables so that microk8s is reacheable on port 80 during the load test execution
           # https://github.com/canonical/lxd-cloud/blob/f20a64a8af42485440dcbfd370faf14137d2f349/test/includes/lxd.sh#L13-L23
           sudo iptables -P FORWARD ACCEPT
+          curl localhost:80
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         uses: grafana/k6-action@v0.2.0
