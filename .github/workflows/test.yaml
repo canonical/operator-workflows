@@ -161,21 +161,21 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     outputs:
       outcome: ${{ steps.report.outputs.outcome }}
-      exists: ${{ steps.metadataYaml.outputs.exists }}
+      exists: ${{ steps.metadata.outputs.exists }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
-        id: metadataYaml
+        id: metadata
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Run lint
-        if: steps.metadataYaml.outputs.exists == 'true'
+        if: steps.metadata.outputs.exists == 'true'
         run: |
           python3 -m pip install check-jsonschema
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
       - name: Report
         id: report
-        run: echo "outcome=$([ ${{ steps.metadataYaml.outputs.exists }} = 'true' ] && echo success || echo skip)" >> $GITHUB_OUTPUT
+        run: echo "outcome=$([ ${{ steps.metadata.outputs.exists }} = 'true' ] && echo success || echo skip)" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
@@ -311,12 +311,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: Search for metadata and docs key in metadata
         if: needs.metadata-lint.outputs.exists == 'true'
-        id: metadataDocs
+        id: metadata-docs
         run: |
           echo $(grep -q 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' )
           echo "exist=$(grep -q 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
       - name: Publish documentation
-        if: needs.metadata-lint.outputs.exists == 'true' && steps.metadataDocs.outputs.exist == 'true'
+        if: needs.metadata-lint.outputs.exists == 'true' && steps.metadata-docs.outputs.exist == 'true'
         uses: canonical/upload-charm-docs@main
         with:
           discourse_host: discourse.charmhub.io
