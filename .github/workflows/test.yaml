@@ -313,7 +313,8 @@ jobs:
         if: needs.metadata-lint.outputs.exists == 'true'
         id: metadataDocs
         run: |
-          echo "exist=$(grep 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' ))" >> $GITHUB_OUTPUT
+          echo $(grep 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' )
+          echo "exist=$(grep 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' )" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: needs.metadata-lint.outputs.exists == 'true' && steps.metadataDocs.outputs.exist == 'true'
         uses: canonical/upload-charm-docs@main
