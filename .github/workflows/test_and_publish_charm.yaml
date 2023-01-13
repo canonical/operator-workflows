@@ -13,6 +13,10 @@ on:
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
+      integration-test-extra-test-matrix:
+        description: Additional mapping of test matrices to pass to the integration tests in JSON format, i.e. '{"extras":["foo","bar"]}'
+        type: string
+        default: '{}'
       integration-test-pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -58,6 +62,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     with:
       extra-arguments: ${{ inputs.integration-test-extra-arguments }}
+      extra-test-matrix: ${{ inputs.integration-test-extra-test-matrix }}
       pre-run-script: ${{ inputs.integration-test-pre-run-script }}
       provider: ${{ inputs.integration-test-provider }}
       series: ${{ inputs.integration-test-series }}
