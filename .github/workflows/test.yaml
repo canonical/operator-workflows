@@ -310,13 +310,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Search for metadata and docs key in metadata
-        if: ${{ needs.metadata-lint.outputs.exists }} == 'true'
+        if: needs.metadata-lint.outputs.exists == 'true'
         id: metadataDocs
         run: |
-          echo ${{ needs.metadata-lint.outputs.exists }}
           echo "exist=$(grep 'docs: https://discourse.charmhub.io/t/' metadata.yaml && echo 'true' || echo 'false' ))" >> $GITHUB_OUTPUT
       - name: Publish documentation
-        if: ${{ needs.metadata-lint.outputs.exists }} == 'true' && ${{ steps.metadataDocs.outputs.exist }} == 'true'
+        if: needs.metadata-lint.outputs.exists == 'true' && steps.metadataDocs.outputs.exist == 'true'
         uses: canonical/upload-charm-docs@main
         with:
           discourse_host: discourse.charmhub.io
