@@ -36,14 +36,14 @@ The following workflows are available:
 | chaos-app-label | string | "" | Label for chaos selection |
 | chaos-app-kind | string | statefulset | Application kind |
 | chaos-duration | string | 60 | Duration of the chaos experiment |
-| zap-dast-enabled | boolean | false | Whether ZAP testing is enabled |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
+| zap-before-command | string | "" | Command to run before ZAP testing |
+| zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
+| zap-enabled | boolean | false | Whether ZAP testing is enabled |
 | zap-target | string | "" | If this is not set, the unit IP address will be used as ZAP target |
 | zap-target-protocol | string | "http" | ZAP target protocol |
 | zap-target-port | string | 80 | ZAP target port |
-| zap-before-command | string | "" | Command to run before ZAP testing |
-| zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
 | zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
 
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).

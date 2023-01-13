@@ -15,7 +15,7 @@ The alerts will be maintained as a GitHub issue in the corresponding repository 
 
 ## How to use
 
-If there is no need for customization, the test can be enabled by setting the parameter ``zap-dast-enabled`` to true.
+If there is no need for customization, the test can be enabled by setting the parameter ``zap-enabled`` to true.
 
 Then, after the integration tests, the ZAP full scan will run against the Charm unit IP address (port 80) and the logs can be viewed in the Job output, the artifact, or if vulnerabilities are found, in an issue entitled 'OWASP ZAP report'.
 
@@ -31,8 +31,10 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      zap-dast-enabled: true
+      zap-enabled: true
 ```
+
+Since zap-target is not set, the unit IP address will be used as the target.
 
 ### Custom target port and run command before the test
 
@@ -44,7 +46,7 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      zap-dast-enabled: true
+      zap-enabled: true
       zap-target-port: 8080
       zap-before-command: "curl -H \"Host: indico.local\" $ZAP_TARGET:8080/bootstrap --data-raw 'csrf_token=00000000-0000-0000-0000-000000000000&first_name=admin&last_name=admin&email=admin%40admin.com&username=admin&password=lunarlobster&confirm_password=lunarlobster&affiliation=Canonical'"
 ```
@@ -59,7 +61,7 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      zap-dast-enabled: true
+      zap-enabled: true
       zap-auth-header: Auth
       zap-auth-value: SomeValue
 ```
@@ -105,7 +107,7 @@ jobs:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
     secrets: inherit
     with:
-      zap-dast-enabled: true
+      zap-enabled: true
       zap-cmd-options: '-T 60 -z "-addoninstall jython" --hook "/zap/wrk/tests/zap/hook.py"'
 ```
 
