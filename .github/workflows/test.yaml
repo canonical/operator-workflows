@@ -161,6 +161,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     outputs:
       outcome: ${{ steps.report.outputs.outcome }}
+      exists: ${{ steps.metadataYaml.outputs.exists }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
@@ -302,12 +303,19 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
+    needs: metadata-lint
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
+      - name: Search for metadata and docs key in metadata
+        if: ${{ needs.metadata-lint.outputs.exists }} == 'true'
+        id: metadataDocs
+        run: |
+          echo "exist=$(grep 'docs: https://discourse.charmhub.io/t/' metadata.yaml && 'true' || 'false' ))" >> $GITHUB_OUTPUT
       - name: Publish documentation
+        if: ${{ needs.metadata-lint.outputs.exists }} == 'true' && steps.metadataDocs.outputs.exist == 'true'
         uses: canonical/upload-charm-docs@main
         with:
           discourse_host: discourse.charmhub.io
