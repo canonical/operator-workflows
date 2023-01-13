@@ -19,16 +19,18 @@ The following workflows are available:
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. This workflow also supports running addtional load and charos tests. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| load-test-enabled | bool | false | Whether load testing is enabled. |
+| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
-| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+
 
 * test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
