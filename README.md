@@ -23,6 +23,13 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| chaos-enabled  | bool | false | Whether Chaos testing is enabled |
+| chaos-experiments | string | "" | List of experiments to run |
+| chaos-namespace | string | testing | Namespace to install Litmus Chaos |
+| chaos-app-namespace | string | testing | Namespace of chaos tested application |
+| chaos-app-label | string | "" | Label for chaos selection |
+| chaos-app-kind | string | statefulset | Application kind |
+| chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | load-test-enabled | bool | false | Whether load testing is enabled. |
 | load-test-run-args | string | "" | Commend line arguments for the load test execution. |
@@ -31,13 +38,6 @@ The following workflows are available:
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
-| chaos-enabled  | bool | false | Whether Chaos testing is enabled |
-| chaos-experiments | string | "" | List of experiments to run |
-| chaos-namespace | string | testing | Namespace to install Litmus Chaos |
-| chaos-app-namespace | string | testing | Namespace of chaos tested application |
-| chaos-app-label | string | "" | Label for chaos selection |
-| chaos-app-kind | string | statefulset | Application kind |
-| chaos-duration | string | 60 | Duration of the chaos experiment |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
 | zap-before-command | string | "" | Command to run before ZAP testing |
