@@ -75,6 +75,10 @@ on:
           Retry is chaos-duration/chaos-delay times and each retry
           sleeps chaos-delay
         default: 90
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
     outputs:
       images:
         description: Pushed docker images
@@ -88,6 +92,8 @@ jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
+    with:
+      working-directory: ${{ inputs.working-directory }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
@@ -96,6 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Get dockerfiles
+        working-directory: ${{ inputs.working-directory }}
         run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
   build-images:
     name: Build image
@@ -121,7 +128,7 @@ jobs:
           context: .
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
-          file: ${{ matrix.image }}.Dockerfile
+          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
       - name: Set up Docker Buildx
@@ -132,7 +139,7 @@ jobs:
         if: ${{ github.event.pull_request.head.repo.fork }}
         with:
           context: .
-          file: ${{ matrix.image }}.Dockerfile
+          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
           tags: localhost:32000/${{ matrix.image }}:latest
           outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
       - name: Upload image artifact
@@ -160,6 +167,7 @@ jobs:
         id: setup-devstack-swift
         uses: canonical/setup-devstack-swift@v1
       - name: Create OpenStack credential file
+        working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
@@ -200,6 +208,7 @@ jobs:
         if: ${{ inputs.pre-run-script != '' }}
         run: bash ${{ inputs.pre-run-script }}
       - name: Run integration tests
+        working-directory: ${{ inputs.working-directory }}
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
