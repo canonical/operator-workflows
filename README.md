@@ -25,6 +25,7 @@ The following workflows are available:
 |--------------------|----------|--------------------|-------------------|
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | load-test-enabled | bool | false | Whether load testing is enabled. |
+| load-test-run-args | string | "" | Commend line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |

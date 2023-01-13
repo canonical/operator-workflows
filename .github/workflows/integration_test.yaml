@@ -60,6 +60,10 @@ on:
         type: boolean
         description: Whether load testing is enabled
         default: false
+      load-test-run-args:
+        type: string
+        description: Commend line arguments for the load test execution
+        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -255,24 +259,12 @@ jobs:
           DURATION: ${{ inputs.chaos-status-duration }}
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
-      - name: Import load test json.env file
+      - name: Install k6s
         if: ${{ inputs.load-test-enabled }}
-        run: echo "JSON_ENV=$(jq -c . < load_tests/env.json)" >> $GITHUB_ENV
-      - name: Import load test json.env file
-        if: ${{ inputs.load-test-enabled }}
-        run: echo ${{ fromJSON(env.JSON_ENV) }}
-      - name: Reconfigure iptables
-        if: ${{ inputs.load-test-enabled }}
-        run: |
-          # Workaround to fix IP tables so that microk8s is reacheable on port 80 during the load test execution
-          # https://github.com/canonical/lxd-cloud/blob/f20a64a8af42485440dcbfd370faf14137d2f349/test/includes/lxd.sh#L13-L23
-          sudo iptables -P FORWARD ACCEPT
-          curl localhost:80
+        run: sudo snap install k6
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
-        uses: grafana/k6-action@v0.2.0
-        with:
-          filename: load_tests/load-test.js
+        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
         env: ${{ fromJSON(env.JSON_ENV) }}
   required_status_checks:
     name: Required Integration Test Status Checks
