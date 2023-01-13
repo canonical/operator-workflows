@@ -24,6 +24,8 @@ The following workflows are available:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
+| working-directory | string | "./" | Custom working directory for jobs to run on |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
@@ -35,6 +37,7 @@ The following workflows are available:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| integration-test-extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | integration-test-provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
