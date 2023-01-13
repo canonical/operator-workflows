@@ -255,7 +255,7 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           CHAOS_INTERVAL: ${{ inputs.chaos-interval }}
           CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
-          DELAY: $${{ inputs.chaos-status-delay }}
+          DELAY: ${{ inputs.chaos-status-delay }}
           DURATION: ${{ inputs.chaos-status-duration }}
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
