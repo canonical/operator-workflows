@@ -62,7 +62,7 @@ on:
         default: false
       load-test-run-args:
         type: string
-        description: Commend line arguments for the load test execution
+        description: Command line arguments for the load test execution
         default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument

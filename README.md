@@ -19,7 +19,7 @@ The following workflows are available:
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. This workflow also supports running addtional load and charos tests. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. This workflow also supports running addtional load and chaos tests. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
@@ -32,7 +32,7 @@ The following workflows are available:
 | chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | load-test-enabled | bool | false | Whether load testing is enabled. |
-| load-test-run-args | string | "" | Commend line arguments for the load test execution. |
+| load-test-run-args | string | "" | Command line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
