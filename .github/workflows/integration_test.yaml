@@ -320,7 +320,6 @@ jobs:
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
-        env: ${{ fromJSON(env.JSON_ENV) }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
