@@ -3,34 +3,6 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
-      extra-arguments:
-        description: Additional arguments to pass to the integration test execution
-        type: string
-      extra-test-matrix:
-        description: |
-          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
-          Each mapping will be injected into the matrix section of the integration-test.
-        type: string
-        default: '{}'
-      pre-run-script:
-        description: Path to the bash script to be run before the integration tests
-        type: string
-      provider:
-        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: microk8s
-      series:
-        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
-        type: string
-        default: '[""]'
-      modules:
-        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
-        type: string
-        default: '[""]'
-      setup-devstack-swift:
-        description: Use setup-devstack-swift action to prepare a swift server for testing.
-        type: boolean
-        default: false
       chaos-app-kind:
         type: string
         description: Application kind
@@ -75,6 +47,42 @@ on:
           Retry is chaos-duration/chaos-delay times and each retry
           sleeps chaos-delay
         default: 90
+      extra-arguments:
+        description: Additional arguments to pass to the integration test execution
+        type: string
+      extra-test-matrix:
+        description: |
+          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
+          Each mapping will be injected into the matrix section of the integration-test.
+        type: string
+        default: '{}'
+      load-test-enabled:
+        type: boolean
+        description: Whether load testing is enabled
+        default: false
+      load-test-run-args:
+        type: string
+        description: Command line arguments for the load test execution
+        default: ""
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
+        type: string
+        default: '[""]'
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
+      provider:
+        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: microk8s
+      series:
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for testing.
+        type: boolean
+        default: false
       zap-auth-header:
         description: If this is defined then its value will be added as a header to all of the ZAP requests
         type: string
@@ -269,7 +277,6 @@ jobs:
           APP_NS: ${{ inputs.chaos-app-namespace }}
           CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
           INSTALL_LITMUS: true
-
       - name: Run Litmus Chaos experiments
         if: ${{ inputs.chaos-enabled }}
         uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
@@ -307,6 +314,12 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+      - name: Install k6s
+        if: ${{ inputs.load-test-enabled }}
+        run: sudo snap install k6
+      - name: Run k6 load tests
+        if: ${{ inputs.load-test-enabled }}
+        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
