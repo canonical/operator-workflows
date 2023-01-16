@@ -31,7 +31,7 @@ The following workflows are available:
 | chaos-app-kind | string | statefulset | Application kind |
 | chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
-| load-test-enabled | bool | false | Whether load testing is enabled. |
+| load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
 | load-test-run-args | string | "" | Command line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
