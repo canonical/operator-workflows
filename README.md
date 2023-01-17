@@ -19,7 +19,7 @@ The following workflows are available:
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. This workflow also supports running addtional load and chaos tests. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
@@ -32,10 +32,12 @@ The following workflows are available:
 | chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
+| load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
+| load-test-run-args | string | "" | Command line arguments for the load test execution. |
+| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
-| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
 | working-directory | string | "./" | Custom working directory for jobs to run on |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |

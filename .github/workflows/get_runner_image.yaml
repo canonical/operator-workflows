@@ -9,13 +9,13 @@ on:
         default: "./"
     outputs:
       name:
-        description: "Get first occurrence of build-on base name"
+        description: Get first occurrence of build-on base name
         value: ${{ jobs.get-runner-image.outputs.name }}
       channel:
-        description: "Get first occurrence of build-on base channel"
+        description: Get first occurrence of build-on base channel
         value: ${{ jobs.get-runner-image.outputs.channel }}
       runs-on:
-        description: "Get first occurrence of build-on base as image runner"
+        description: Get first occurrence of build-on base as image runner
         value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
