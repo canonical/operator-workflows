@@ -31,6 +31,7 @@ The following workflows are available:
 | chaos-app-kind | string | statefulset | Application kind |
 | chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
 | load-test-run-args | string | "" | Command line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
@@ -38,6 +39,7 @@ The following workflows are available:
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| working-directory | string | "./" | Custom working directory for jobs to run on |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
 | zap-before-command | string | "" | Command to run before ZAP testing |
@@ -55,6 +57,7 @@ More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| integration-test-extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | integration-test-provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
