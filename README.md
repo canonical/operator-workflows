@@ -23,14 +23,6 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
-| extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
-| extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
-| working-directory | string | "./" | Custom working directory for jobs to run on |
-| pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
-| provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
-| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
-| setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
 | chaos-enabled  | bool | false | Whether Chaos testing is enabled |
 | chaos-experiments | string | "" | List of experiments to run |
 | chaos-namespace | string | testing | Namespace to install Litmus Chaos |
@@ -38,6 +30,14 @@ The following workflows are available:
 | chaos-app-label | string | "" | Label for chaos selection |
 | chaos-app-kind | string | statefulset | Application kind |
 | chaos-duration | string | 60 | Duration of the chaos experiment |
+| extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
+| extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
+| pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
+| provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
+| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
+| setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| working-directory | string | "./" | Custom working directory for jobs to run on |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
 | zap-before-command | string | "" | Command to run before ZAP testing |
