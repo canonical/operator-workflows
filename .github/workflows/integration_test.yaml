@@ -93,6 +93,7 @@ on:
       trivy-fs-ref:
         type: string
         description: Target directory to do the Trivy testing
+        default: "."
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
