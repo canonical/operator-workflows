@@ -321,6 +321,12 @@ jobs:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
           KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+      - name: Install k6s
+        if: ${{ inputs.load-test-enabled }}
+        run: sudo snap install k6
+      - name: Run k6 load tests
+        if: ${{ inputs.load-test-enabled }}
+        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
         uses: aquasecurity/trivy-action@master
@@ -358,12 +364,6 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
-      - name: Install k6s
-        if: ${{ inputs.load-test-enabled }}
-        run: sudo snap install k6
-      - name: Run k6 load tests
-        if: ${{ inputs.load-test-enabled }}
-        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
