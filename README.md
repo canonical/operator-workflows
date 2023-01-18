@@ -39,6 +39,12 @@ The following workflows are available:
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
+| trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
+| trivy-fs-ref | string | "." | Whether Trivy testing of type fs is enabled |
+| trivy-image-config | string | "" | Trivy YAML configuration for image type |
+| trivy-image-enabled | boolean | false | Whether Trivy testing of type image is enabled |
+| trivy-image-ref | string | "" | Whether Trivy testing of type image is enabled |
 | working-directory | string | "./" | Custom working directory for jobs to run on |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
@@ -51,6 +57,8 @@ The following workflows are available:
 | zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
 
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
+
+More information about Trivy testing can be found [here](TRIVY.MD).
 
 * test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 

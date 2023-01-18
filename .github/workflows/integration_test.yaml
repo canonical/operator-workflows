@@ -83,6 +83,26 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      trivy-image-enabled:
+        type: boolean
+        description: Whether Trivy testing of type image is enabled
+        default: false
+      trivy-image-ref:
+        type: string
+        description: Image reference, e.g. alpine:3.10.2
       working-directory:
         type: string
         description: The working directory for jobs
@@ -300,6 +320,20 @@ jobs:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
           KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+      - name: Run Github Trivy FS Action
+        if: ${{ inputs.trivy-fs-enabled }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ${{ inputs.trivy-fs-ref }}
+          trivy-config: ${{ inputs.trivy-fs-config }}
+      - name: Run Github Trivy Image Action
+        if: ${{ inputs.trivy-image-enabled && inputs.trivy-image-ref != '' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'image'
+          image-ref: ${{ inputs.trivy-image-ref }}
+          trivy-config: ${{ inputs.trivy-image-config }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
