@@ -74,7 +74,6 @@ It's possible to override or modify the behavior of the script components by usi
 First, create a ```hook.py``` file with the following content:
 
 ```python
-# pylint: disable=missing-module-docstring,invalid-name,unused-argument
 import logging
 
 
@@ -113,7 +112,6 @@ Note: The ```zap_pre_shutdown``` was altered just to show the script list and co
 Then, create a ```add_header_request.py``` file with the following content:
 
 ```python
-# pylint: disable=missing-module-docstring,invalid-name,unused-argument
 def sendingRequest(msg, initiator, helper):  # noqa: N802
     """sendingRequest is a name defined and expected by ZAP tool
     Args:
@@ -163,7 +161,6 @@ The ```add_header_request.py``` file should have the following content:
 For more information, see this [ZAP Proxy issue](https://github.com/zaproxy/zaproxy/issues/1318).
 
 ```python
-# pylint: disable=missing-module-docstring,invalid-name,unused-argument
 def sendingRequest(msg, initiator, helper):  # noqa: N802
     """sendingRequest is a name defined and expected by ZAP tool
     Args:
@@ -193,7 +190,6 @@ def responseReceived(msg, initiator, helper):  # noqa: N802
 Same procedure as the previous item but with the ```rewrite_and_log_request.py``` file.
 
 ```python
-# pylint: disable=missing-module-docstring,invalid-name,unused-argument
 import os
 
 log_filename = r'/zap/wrk/requests.log'

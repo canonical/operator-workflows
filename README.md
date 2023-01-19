@@ -41,10 +41,9 @@ The following workflows are available:
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
 | trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
 | trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
-| trivy-fs-ref | string | "." | Whether Trivy testing of type fs is enabled |
+| trivy-fs-ref | string | "." | Target directory to do the Trivy testing |
 | trivy-image-config | string | "" | Trivy YAML configuration for image type |
-| trivy-image-enabled | boolean | false | Whether Trivy testing of type image is enabled |
-| trivy-image-ref | string | "" | Whether Trivy testing of type image is enabled |
+| trivy-image-ref | string | "" | Image reference, e.g. alpine:3.10.2 |
 | working-directory | string | "./" | Custom working directory for jobs to run on |
 | zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
 | zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |

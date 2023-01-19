@@ -10,7 +10,7 @@ The result will be available in the integration test output.
 
 ## Warning
 
-- Environment variable has preference over configuration set by ``trivy-fs-config`` or ``trivy-image-config`` parameters.
+- Environment variables have preference over configuration set by ``trivy-fs-config`` or ``trivy-image-config`` parameters.
 
 ## How to use
 
