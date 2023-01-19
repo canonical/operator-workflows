@@ -83,6 +83,20 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+        default: "."
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
       working-directory:
         type: string
         description: The working directory for jobs
@@ -168,6 +182,16 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
+      - name: Run Github Trivy Image Action
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
       - name: Set up Docker Buildx
@@ -187,6 +211,14 @@ jobs:
         with:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
+      - name: Run Github Trivy Image Action
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: /tmp/${{ matrix.image }}.tar
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
   integration-test:
     name: Integration tests
@@ -300,6 +332,19 @@ jobs:
           EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
           TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
           KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+      - name: Install k6s
+        if: ${{ inputs.load-test-enabled }}
+        run: sudo snap install k6
+      - name: Run k6 load tests
+        if: ${{ inputs.load-test-enabled }}
+        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
+      - name: Run Github Trivy FS Action
+        if: ${{ inputs.trivy-fs-enabled }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ${{ inputs.trivy-fs-ref }}
+          trivy-config: ${{ inputs.trivy-fs-config }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
@@ -313,7 +358,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-full-scan@v0.4.0
+        uses: zaproxy/action-baseline@v0.7.0
         env:
           ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
@@ -323,12 +368,6 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
-      - name: Install k6s
-        if: ${{ inputs.load-test-enabled }}
-        run: sudo snap install k6
-      - name: Run k6 load tests
-        if: ${{ inputs.load-test-enabled }}
-        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest

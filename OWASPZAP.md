@@ -47,8 +47,9 @@ jobs:
     secrets: inherit
     with:
       zap-enabled: true
-      zap-target-port: 8080
-      zap-before-command: "curl -H \"Host: indico.local\" $ZAP_TARGET:8080/bootstrap --data-raw 'csrf_token=00000000-0000-0000-0000-000000000000&first_name=admin&last_name=admin&email=admin%40admin.com&username=admin&password=lunarlobster&confirm_password=lunarlobster&affiliation=Canonical'"
+      zap-target: localhost
+      zap-target-port: 80
+      zap-before-command: "curl -H \"Host: indico.local\" $ZAP_TARGET/bootstrap --data-raw 'csrf_token=00000000-0000-0000-0000-000000000000&first_name=admin&last_name=admin&email=admin%40admin.com&username=admin&password=lunarlobster&confirm_password=lunarlobster&affiliation=Canonical'"
 ```
 
 ### Authorization Header
@@ -66,42 +67,80 @@ jobs:
       zap-auth-value: SomeValue
 ```
 
-### Custom Header
+### Custom Header (except Host)
 
 It's possible to override or modify the behavior of the script components by using a [Scan Hook](https://www.zaproxy.org/docs/docker/scan-hooks/). Within the hook, a script can be loaded to change the request and add a new header.
 
 First, create a ```hook.py``` file with the following content:
+
 ```python
+import logging
+
+
 def zap_started(zap, target):
-   print(zap.script.load('Add Header Script', 'httpsender', 'python : jython', '/zap/wrk/tests/zap/add_header_request.py'))
-   print(zap.script.enable('Add Header Script'))
+    """Actions when starts
+
+    Args:
+        zap (ZAPv2): ZAPv2 instance
+        target (string): Target being scanned
+    """
+    logging.info(
+        zap.script.load(
+            "Add Header Script",
+            "httpsender",
+            "python : jython",
+            "/zap/wrk/tests/zap/add_header_request.py",
+        )
+    )
+    logging.info(zap.script.enable("Add Header Script"))
+
 
 def zap_pre_shutdown(zap):
-    print("script.listEngines")
-    print(zap.script.list_engines)
-    print()
-    print("script.listScripts")
-    print(zap.script.list_scripts)
+    """Actions before shutdown
+
+    Args:
+        zap (ZAPv2): ZAPv2 instance
+    Returns:
+        None
+    """
+    logging.info("script.listEngines: %s", zap.script.list_engines)
+    logging.info("script.listScripts: %s", zap.script.list_scripts)
 ```
 
 Note: The ```zap_pre_shutdown``` was altered just to show the script list and confirm if it was loaded as expected.
 
 Then, create a ```add_header_request.py``` file with the following content:
+
 ```python
-headers = dict({"Host": "indico.local"})
+def sendingRequest(msg, initiator, helper):  # noqa: N802
+    """sendingRequest is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        HttpMessage: returns HttpMessage updated
+    """
+    msg.getRequestHeader().setHeader("Some-Header", "Some-Value")
+    return msg
 
-def sendingRequest(msg, initiator, helper):
-    for item in list(headers):
-      msg.getRequestHeader().setHeader(item, headers[item])
 
-def responseReceived(msg, initiator, helper):
-    pass;
+def responseReceived(msg, initiator, helper):  # noqa: N802
+    """responseReceived is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        None
+    """
 ```
 
 This will add every header defined in ```headers``` to every request made by ZAP.
 
 The workflow should look like this:
-```
+
+```yaml
 jobs:
   integration-tests:
     uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
@@ -115,6 +154,37 @@ jobs:
 2. Set the hook parameter to the ```hook.py``` file inside the repository.
 3. The ```hook.py``` should be updated accordingly to the ```add_header_request.py``` path in the repository as well.
 
+## Custom Host Header
+
+The ```add_header_request.py``` file should have the following content:
+
+For more information, see this [ZAP Proxy issue](https://github.com/zaproxy/zaproxy/issues/1318).
+
+```python
+def sendingRequest(msg, initiator, helper):  # noqa: N802
+    """sendingRequest is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        HttpMessage: returns HttpMessage updated
+    """
+    msg.setUserObject({"host": "indico.local"})
+    return msg
+
+
+def responseReceived(msg, initiator, helper):  # noqa: N802
+    """responseReceived is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        None
+    """
+```
+
 ### Bonus: Rewrite the URL and log the requests
 
 Same procedure as the previous item but with the ```rewrite_and_log_request.py``` file.
@@ -125,19 +195,34 @@ import os
 log_filename = r'/zap/wrk/requests.log'
 target = os.getenv('ZAP_TARGET')
 
-def sendingRequest(msg, initiator, helper):
+def sendingRequest(msg, initiator, helper):  # noqa: N802
+    """sendingRequest is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        HttpMessage: returns HttpMessage updated
+    """
     host = msg.getRequestHeader().getURI().getHost()
 
     if "indico.local" in host:
         uri = msg.getRequestHeader().getURI()
-        uri.setEscapedAuthority(target + ":8080")
+        uri.setEscapedAuthority(target)
         msg.getRequestHeader().setURI(uri);
 
     with open(log_filename, 'a') as f:
       f.write(msg.getRequestHeader().toString())
+    return msg
 
 
-
-def responseReceived(msg, initiator, helper):
-    pass;
+def responseReceived(msg, initiator, helper):  # noqa: N802
+    """responseReceived is a name defined and expected by ZAP tool
+    Args:
+        msg (HttpMessage): all requests/responses sent/received by ZAP
+        initiator (int): the component that initiated the request
+        helper (HttpSender): returns the HttpSender instance used to send the request
+    Returns:
+        None
+    """
 ```
