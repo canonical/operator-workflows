@@ -14,7 +14,7 @@ The result will be available in the integration test output.
 
 ## How to use
 
-If there is no need for customization, the test can be enabled by setting the parameter ``trivy-fs-enabled`` or ``trivy-image-enabled`` to true.
+If there is no need for customization, the test can be enabled by setting the parameter ``trivy-fs-enabled`` to true.
 
 For fs, the ``trivy-fs-ref`` has ``"."`` as default value.
 
