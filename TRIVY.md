@@ -18,6 +18,8 @@ If there is no need for customization, the test can be enabled by setting the pa
 
 For fs, the ``trivy-fs-ref`` has ``"."`` as default value.
 
+Default configuration: will fail with exit code 1 for high and critical vulnerabilities.
+
 Custom configurations can be set in a ``trivy.yaml`` file stored in the repository for both types of testing. The location should be set in ``trivy-fs-config`` and/or ``trivy-image-config``parameters.
 
 ## Examples

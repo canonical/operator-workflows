@@ -187,6 +187,8 @@ jobs:
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
           trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
@@ -209,6 +211,14 @@ jobs:
         with:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
+      - name: Run Github Trivy Image Action
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: /tmp/${{ matrix.image }}.tar
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
   integration-test:
     name: Integration tests
