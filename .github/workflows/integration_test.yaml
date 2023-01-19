@@ -94,12 +94,13 @@ on:
         type: string
         description: Target directory to do the Trivy testing
         default: "."
+      trivy-image-enabled:
+        type: boolean
+        description: Whether Trivy testing of type image is enabled
+        default: false
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
-      trivy-image-ref:
-        type: string
-        description: Image reference, e.g. alpine:3.10.2
       working-directory:
         type: string
         description: The working directory for jobs
@@ -204,6 +205,12 @@ jobs:
         with:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
+      - name: Run Github Trivy Image Action
+        if: ${{ inputs.trivy-image-enabled }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: /tmp/${{ matrix.image }}.tar
+          trivy-config: ${{ inputs.trivy-image-config }}
 
   integration-test:
     name: Integration tests
@@ -330,13 +337,6 @@ jobs:
           scan-type: 'fs'
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
-      - name: Run Github Trivy Image Action
-        if: ${{ inputs.trivy-image-ref != '' }}
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'image'
-          image-ref: ${{ inputs.trivy-image-ref }}
-          trivy-config: ${{ inputs.trivy-image-config }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
