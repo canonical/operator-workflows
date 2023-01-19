@@ -202,6 +202,7 @@ jobs:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
       - name: Run Github Trivy Image Action
+        if: ${{ github.event.pull_request.head.repo.fork && inputs.trivy-image-enabled }}
         uses: aquasecurity/trivy-action@master
         with:
           input: /tmp/${{ matrix.image }}.tar
