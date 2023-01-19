@@ -94,10 +94,6 @@ on:
         type: string
         description: Target directory to do the Trivy testing
         default: "."
-      trivy-image-enabled:
-        type: boolean
-        description: Whether Trivy testing of type image is enabled
-        default: false
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
@@ -206,7 +202,6 @@ jobs:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
       - name: Run Github Trivy Image Action
-        if: ${{ inputs.trivy-image-enabled }}
         uses: aquasecurity/trivy-action@master
         with:
           input: /tmp/${{ matrix.image }}.tar

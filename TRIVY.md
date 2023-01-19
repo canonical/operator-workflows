@@ -16,11 +16,9 @@ The result will be available in the integration test output.
 
 If there is no need for customization, the test can be enabled by setting the parameter ``trivy-fs-enabled`` or ``trivy-image-enabled`` to true.
 
-For image, the ``trivy-image-ref`` parameter is mandatory.
-
 For fs, the ``trivy-fs-ref`` has ``"."`` as default value.
 
-Custom configurations can be set in a ``trivy.yaml`` file stored in the repository. The location should be set in ``trivy-fs-config`` and/or ``trivy-image-config``parameters.
+Custom configurations can be set in a ``trivy.yaml`` file stored in the repository for both types of testing. The location should be set in ``trivy-fs-config`` and/or ``trivy-image-config``parameters.
 
 ## Examples
 
