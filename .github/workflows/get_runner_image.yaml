@@ -2,15 +2,20 @@ name: Get runner image
 
 on:
   workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
     outputs:
       name:
-        description: "Get first occurrence of build-on base name"
+        description: Get first occurrence of build-on base name
         value: ${{ jobs.get-runner-image.outputs.name }}
       channel:
-        description: "Get first occurrence of build-on base channel"
+        description: Get first occurrence of build-on base channel
         value: ${{ jobs.get-runner-image.outputs.channel }}
       runs-on:
-        description: "Get first occurrence of build-on base as image runner"
+        description: Get first occurrence of build-on base as image runner
         value: ${{ jobs.get-runner-image.outputs.runs-on }}
 
 jobs:
@@ -24,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Get build-on value
+        working-directory: ${{ inputs.working-directory }}
         run: |
           name="ubuntu"
           channel="22.04"

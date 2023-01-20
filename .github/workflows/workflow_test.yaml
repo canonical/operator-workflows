@@ -24,6 +24,11 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/test/dockerfile/'
+  integration:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: 'tests/workflows/integration/simple/'
   check:
     runs-on: ubuntu-latest
     needs:
@@ -31,6 +36,7 @@ jobs:
       - pflake8
       - metadata_yaml
       - dockerfile
+      - integration
     steps:
       - run: |
           [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skip' ] || (echo metadata lint failed && false)
