@@ -244,6 +244,8 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
+      - name: Copy kube-config file
+        run: sudo microk8s config > ~/.kube/config
       - name: Enable microk8s registry
         if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
