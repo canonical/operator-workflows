@@ -69,6 +69,10 @@ More information about Trivy testing can be found [here](TRIVY.MD).
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | integration-test-modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for integration tests. |
+| trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
+| trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
+| trivy-fs-ref | string | "." | Target directory to do the Trivy testing |
+| trivy-image-config | string | "" | Trivy YAML configuration for image type |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
