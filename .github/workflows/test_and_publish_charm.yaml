@@ -69,6 +69,13 @@ jobs:
       modules: ${{ inputs.integration-test-modules }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
     secrets: inherit
+  release-charm-libs:
+    name: Release charm libs
+    uses: canonical/charming-actions/release-libraries@2.2.0
+    needs: [ lib-check, tests, integration-tests ]
+    with:
+      credentials: ${{ secrets.CHARMHUB_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
   select-channel:
     name: Select target channel
     runs-on: ubuntu-22.04
@@ -81,7 +88,7 @@ jobs:
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
-    needs: [ tests, integration-tests, select-channel ]
+    needs: [ lib-check, tests, integration-tests, select-channel ]
     with:
       channel: ${{ needs.select-channel.outputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
