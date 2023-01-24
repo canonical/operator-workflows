@@ -36,6 +36,20 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for integration tests.
         type: boolean
         default: false
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+        default: "."
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
 
 jobs:
   lib-check:
@@ -68,6 +82,10 @@ jobs:
       series: ${{ inputs.integration-test-series }}
       modules: ${{ inputs.integration-test-modules }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      trivy-fs-config: ${{ inputs.trivy-fs-config }}
+      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
+      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
     secrets: inherit
   release-charm-libs:
     name: Release charm libs
