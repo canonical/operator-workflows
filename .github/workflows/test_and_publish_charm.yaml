@@ -92,6 +92,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ lib-check, tests, integration-tests ]
     steps:
+      - uses: actions/checkout@v3
       - uses: canonical/charming-actions/release-libraries@2.2.2
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
