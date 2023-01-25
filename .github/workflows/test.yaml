@@ -324,7 +324,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.2.1
+        uses: canonical/charming-actions/check-libraries@2.2.2
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
