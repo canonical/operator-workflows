@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.2.1
+        uses: canonical/charming-actions/check-libraries@2.2.2
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +106,7 @@ jobs:
     steps:
       - name: Select charmhub channel
         id: channel
-        uses: canonical/charming-actions/channel@2.2.1
+        uses: canonical/charming-actions/channel@2.2.2
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
