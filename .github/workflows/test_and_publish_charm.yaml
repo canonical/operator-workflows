@@ -36,6 +36,20 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for integration tests.
         type: boolean
         default: false
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+        default: "."
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
 
 jobs:
   lib-check:
@@ -49,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.1.1
+        uses: canonical/charming-actions/check-libraries@2.2.1
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,7 +82,18 @@ jobs:
       series: ${{ inputs.integration-test-series }}
       modules: ${{ inputs.integration-test-modules }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      trivy-fs-config: ${{ inputs.trivy-fs-config }}
+      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
+      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
     secrets: inherit
+  release-charm-libs:
+    name: Release charm libs
+    uses: canonical/charming-actions/release-libraries@2.2.1
+    needs: [ lib-check, tests, integration-tests ]
+    with:
+      credentials: ${{ secrets.CHARMHUB_TOKEN }}
+      github-token: ${{ secrets.GITHUB_TOKEN }}
   select-channel:
     name: Select target channel
     runs-on: ubuntu-22.04
@@ -77,11 +102,11 @@ jobs:
     steps:
       - name: Select charmhub channel
         id: channel
-        uses: canonical/charming-actions/channel@2.1.1
+        uses: canonical/charming-actions/channel@2.2.1
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
-    needs: [ tests, integration-tests, select-channel ]
+    needs: [ lib-check, tests, integration-tests, select-channel ]
     with:
       channel: ${{ needs.select-channel.outputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}

@@ -324,15 +324,26 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+  lib-check:
+    name: Check libraries
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check libs
+        uses: canonical/charming-actions/check-libraries@2.2.1
+        with:
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   required_status_checks:
     name: Required Test Status Checks
     runs-on: ubuntu-latest
     needs:
-      - inclusive-naming-check
-      - shellcheck-lint
-      - docker-lint
-      - metadata-lint
-      - lint-and-unit-test
       - draft-publish-docs
+      - docker-lint
+      - inclusive-naming-check
+      - lib-check
+      - lint-and-unit-test
+      - metadata-lint
+      - shellcheck-lint
     steps:
       - run: echo required checks passed
