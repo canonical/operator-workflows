@@ -87,13 +87,17 @@ jobs:
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
     secrets: inherit
-  release-charm-libs:
-    name: Release charm libs
-    uses: canonical/charming-actions/release-libraries@2.2.1
-    needs: [ lib-check, tests, integration-tests ]
-    with:
-      credentials: ${{ secrets.CHARMHUB_TOKEN }}
-      github-token: ${{ secrets.GITHUB_TOKEN }}
+  # The following job is causing thises kinds of problems:
+  # https://github.com/canonical/indico-operator/actions/runs/4000676362
+  # A bug has been filed to investigate the issue, until then this job should stay disabled:
+  # https://github.com/canonical/charming-actions/issues/82
+  # release-charm-libs:
+  #   name: Release charm libs
+  #   uses: canonical/charming-actions/release-libraries@2.2.1
+  #   needs: [ lib-check, tests, integration-tests ]
+  #   with:
+  #     credentials: ${{ secrets.CHARMHUB_TOKEN }}
+  #     github-token: ${{ secrets.GITHUB_TOKEN }}
   select-channel:
     name: Select target channel
     runs-on: ubuntu-22.04
