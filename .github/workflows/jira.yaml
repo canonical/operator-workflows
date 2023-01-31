@@ -36,7 +36,7 @@ jobs:
                   --arg title "$ISSUE_TITLE" \
                   --arg url '${{ github.event.issue.html_url }}' \
                   --arg submitter '${{ github.event.issue.user.login }}' \
-                  --arg body "" \
+                  --arg body "$ISSUE_DESCRIPTION" \
                   --arg type "$type" \
                   --arg action '${{ github.event.action }}' \
                   '{title: $title, url: $url, submitter: $submitter, body: $body, type: $type, action: $action}' )
