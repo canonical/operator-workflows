@@ -150,12 +150,12 @@ jobs:
   build-images:
     name: Build image
     uses: ./.github/workflows/build_images.yaml
+    needs: get-runner-image
     with:
       owner: ${{ env.OWNER }}
       registry: ${{ env.REGISTRY }}
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       working-directory: ${{ inputs.working-directory }}
-    needs: get-runner-image
   integration-test:
     name: Integration tests
     strategy:

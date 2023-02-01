@@ -1,4 +1,4 @@
-name: Get runner image
+name: Build images
 
 on:
   workflow_call:
