@@ -155,6 +155,7 @@ jobs:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
   integration-test:
     name: Integration tests

@@ -15,6 +15,9 @@ on:
         type: string
         description: Image runner for building the images
         default: ubuntu-22.04
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
       working-directory:
         type: string
         description: The working directory for jobs
