@@ -152,8 +152,8 @@ jobs:
     uses: ./.github/workflows/build_images.yaml
     needs: get-runner-image
     with:
-      owner: ${{ env.OWNER }}
-      registry: ${{ env.REGISTRY }}
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       working-directory: ${{ inputs.working-directory }}
   integration-test:
