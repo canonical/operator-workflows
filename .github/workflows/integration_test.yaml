@@ -135,7 +135,7 @@ on:
     outputs:
       images:
         description: Pushed docker images
-        value: ${{ jobs.get-images.outputs.images }}
+        value: ${{ jobs.build-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
@@ -147,79 +147,15 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
     with:
       working-directory: ${{ inputs.working-directory }}
-  get-images:
-    name: Get images
-    runs-on: ubuntu-22.04
-    outputs:
-      images: ${{ env.DOCKER_IMAGES }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get dockerfiles
-        working-directory: ${{ inputs.working-directory }}
-        run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
   build-images:
     name: Build image
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-images, get-runner-image]
-    if: ${{ needs.get-images.outputs.images != '[]' }}
-    strategy:
-      matrix:
-        image: ${{ fromJSON(needs.get-images.outputs.images) }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Log in to the Container registry
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push image
-        uses: docker/build-push-action@v3
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
-          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
-      - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
-          trivy-config: ${{ inputs.trivy-image-config }}
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-        env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
-      # so an artifact is published instead
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Build image as tarball
-        uses: docker/build-push-action@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        with:
-          context: .
-          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
-          tags: localhost:32000/${{ matrix.image }}:latest
-          outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        with:
-          name: ${{ matrix.image }}
-          path: /tmp/${{ matrix.image }}.tar
-      - name: Run Github Trivy Image Action
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        uses: aquasecurity/trivy-action@master
-        with:
-          input: /tmp/${{ matrix.image }}.tar
-          trivy-config: ${{ inputs.trivy-image-config }}
-          exit-code: '1'
-          severity: 'CRITICAL,HIGH'
-
+    uses: ./.github/workflows/build_images.yaml
+    with:
+      owner: ${{ env.OWNER }}
+      registry: ${{ env.REGISTRY }}
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      working-directory: ${{ inputs.working-directory }}
+    needs: get-runner-image
   integration-test:
     name: Integration tests
     strategy:
@@ -229,7 +165,7 @@ jobs:
         ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
       fail-fast: false
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-images, get-runner-image, build-images]
+    needs: [get-runner-image, build-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -255,7 +191,7 @@ jobs:
       - name: Push images to microk8s registry
         if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
-          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
+          for image_name in $(echo '${{ needs.build-images.outputs.images }}' | jq -cr '.[]'); do
             docker load --input ${image_name}/${image_name}.tar
             docker push localhost:32000/${image_name}:latest
           done
@@ -283,7 +219,7 @@ jobs:
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
-          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
+          for image_name in $(echo '${{ needs.build-images.outputs.images }}' | jq -cr '.[]'); do
             if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
               args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
             else
