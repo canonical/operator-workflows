@@ -163,9 +163,21 @@ jobs:
     needs: [get-runner-image, build-images]
     if: ${{ !failure() }}
     with:
+      chaos-app-kind: ${{ inputs.chaos-app-kind }}
+      chaos-app-label: ${{ inputs.chaos-app-label }}
+      chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
+      chaos-duration: ${{ inputs.chaos-duration }}
+      chaos-enabled: ${{ inputs.chaos-enabled }}
+      chaos-experiments: ${{ inputs.chaos-experiments }}
+      chaos-interval: ${{ inputs.chaos-interval }}
+      chaos-namespace: ${{ inputs.chaos-namespace }}
+      chaos-status-delay: ${{ inputs.chaos-status-delay }}
+      chaos-status-duration: ${{ inputs.chaos-status-duration }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.build-images.outputs.images }}
+      load-test-enabled: ${{ inputs.load-test-enabled }}
+      load-test-run-args: ${{ inputs.load-test-run-args }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
@@ -178,6 +190,16 @@ jobs:
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+      zap-auth-header: ${{ inputs.zap-auth-header }}
+      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
+      zap-before-command: ${{ inputs.zap-before-command }}
+      zap-cmd-options: ${{ inputs.zap-cmd-options }}
+      zap-enabled: ${{ inputs.zap-enabled }}
+      zap-target: ${{ inputs.zap-target }}
+      zap-target-port: ${{ inputs.zap-target-port }}
+      zap-target-protocol: ${{ inputs.zap-target-protocol }}
+      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
