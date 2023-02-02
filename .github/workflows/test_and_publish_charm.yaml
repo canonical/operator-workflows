@@ -77,10 +77,10 @@ jobs:
     with:
       extra-arguments: ${{ inputs.integration-test-extra-arguments }}
       extra-test-matrix: ${{ inputs.integration-test-extra-test-matrix }}
+      modules: ${{ inputs.integration-test-modules }}
       pre-run-script: ${{ inputs.integration-test-pre-run-script }}
       provider: ${{ inputs.integration-test-provider }}
       series: ${{ inputs.integration-test-series }}
-      modules: ${{ inputs.integration-test-modules }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}

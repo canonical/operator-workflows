@@ -6,8 +6,10 @@ on:
       channel:
         required: true
         type: string
+        description: 'Origin Channel'
       images:
         type: string
+        description: 'Docker images'
 
 env:
   REGISTRY: ghcr.io
