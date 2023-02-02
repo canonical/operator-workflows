@@ -189,7 +189,6 @@ jobs:
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
-      trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
       zap-auth-header: ${{ inputs.zap-auth-header }}
       zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
