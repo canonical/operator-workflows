@@ -165,11 +165,13 @@ jobs:
     with:
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
+      images: ${{ needs.build-images.outputs.images }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
       registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
