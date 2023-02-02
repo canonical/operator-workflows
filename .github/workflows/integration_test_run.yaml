@@ -1,0 +1,292 @@
+name: Run integration tests
+
+on:
+  workflow_call:
+    inputs:
+      chaos-app-kind:
+        type: string
+        description: Application kind
+        default: statefulset
+      chaos-app-label:
+        type: string
+        description: Label for chaos selection
+        default: ""
+      chaos-app-namespace:
+        type: string
+        description: Namespace of chaos tested application
+        default: testing
+      chaos-duration:
+        type: string
+        description: |
+          Duration of the chaos experiment (added to 600s for go test timeout)
+        default: 60
+      chaos-enabled:
+        type: boolean
+        description: Whether Chaos testing is enabled
+        default: false
+      chaos-experiments:
+        type: string
+        description: List of experiments to run
+        default: ""
+      chaos-interval:
+        type: string
+        description: Interval to attempt re-run of an experiment
+        default: 30
+      chaos-namespace:
+        type: string
+        description: Namespace to install Litmus Chaos
+        default: testing
+      chaos-status-delay:
+        type: string
+        description: Delay is the wait(sleep) time on every status retry
+        default: 5
+      chaos-status-duration:
+        type: string
+        description: |
+          Duration used for status check retries
+          Retry is chaos-duration/chaos-delay times and each retry
+          sleeps chaos-delay
+        default: 90
+      extra-arguments:
+        description: Additional arguments to pass to the integration test execution
+        type: string
+      extra-test-matrix:
+        description: |
+          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
+          Each mapping will be injected into the matrix section of the integration-test.
+        type: string
+        default: '{}'
+      load-test-enabled:
+        type: boolean
+        description: Whether load testing is enabled
+        default: false
+      load-test-run-args:
+        type: string
+        description: Command line arguments for the load test execution
+        default: ""
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
+        type: string
+        default: '[""]'
+      owner:
+        type: string
+        description: Registry owner to push the built images
+        default: ""
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
+      provider:
+        description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: microk8s
+      registry:
+        type: string
+        description: Registry to push the built images
+        default: ""
+      series:
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
+        type: string
+        default: '[""]'
+      setup-devstack-swift:
+        description: Use setup-devstack-swift action to prepare a swift server for testing.
+        type: boolean
+        default: false
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+        default: "."
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
+      zap-auth-header:
+        description: If this is defined then its value will be added as a header to all of the ZAP requests
+        type: string
+      zap-auth-header-value:
+        description:  If this is defined then its value will be used as the header name to all of the ZAP requests
+        type: string
+      zap-before-command:
+        description: Command to run before ZAP testing
+        type: string
+      zap-cmd-options:
+        description: Options to be used by ZAP
+        type: string
+        default: "-T 60"
+      zap-enabled:
+        type: boolean
+        description: Whether ZAP testing is enabled
+        default: false
+      zap-target:
+        description:  If this is not set, the unit IP address will be used as ZAP target
+        type: string
+      zap-target-port:
+        description:  ZAP target port
+        type: string
+        default: 80
+      zap-target-protocol:
+        description:  ZAP target protocol
+        type: string
+        default: "http"
+      zap-rules-file-name:
+        description: Rules file to ignore any alerts from the ZAP scan
+        type: string
+
+jobs:
+  integration-test:
+    name: Integration tests
+    strategy:
+      matrix:
+        series: ${{ fromJSON(inputs.series) }}
+        modules: ${{ fromJSON(inputs.modules) }}
+        ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
+      fail-fast: false
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: [get-runner-image, build-images]
+    if: ${{ !failure() }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Devstack Swift
+        if: ${{ inputs.setup-devstack-swift }}
+        id: setup-devstack-swift
+        uses: canonical/setup-devstack-swift@v1
+      - name: Create OpenStack credential file
+        working-directory: ${{ inputs.working-directory }}
+        run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: ${{ inputs.provider }}
+      - name: Enable microk8s registry
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+        run: |
+          sudo microk8s enable registry
+          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+      - name: Push images to microk8s registry
+        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+        run: |
+          for image_name in $(echo '${{ needs.build-images.outputs.images }}' | jq -cr '.[]'); do
+            docker load --input ${image_name}/${image_name}.tar
+            docker push localhost:32000/${image_name}:latest
+          done
+      - name: Configure GHCR in microk8s
+        if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
+        run: |
+          # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
+          # Note: containerd has to be restarted for the changes to take effect
+          # (https://github.com/containerd/cri/blob/master/docs/registry.md)
+          sudo su -c 'echo "
+          [plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"ghcr.io\".auth]
+          username = \"${{ github.actor }}\"
+          password = \"${{ secrets.GITHUB_TOKEN }}\"
+          " >> /var/snap/microk8s/current/args/containerd-template.toml'
+          sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+      - name: Enable microk8s ingress
+        if: ${{ inputs.provider == 'microk8s' }}
+        run: |
+          sudo microk8s enable ingress
+      - name: Pre-run script
+        if: ${{ inputs.pre-run-script != '' }}
+        run: bash ${{ inputs.pre-run-script }}
+      - name: Run integration tests
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          args=""
+          for image_name in $(echo '${{ needs.build-images.outputs.images }}' | jq -cr '.[]'); do
+            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
+              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
+            else
+              args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
+            fi
+          done
+
+          series=""
+          if [ ! -z ${{ matrix.series }} ]; then
+            series="--series ${{ matrix.series }}"
+          fi
+          module=""
+          if [ ! -z ${{ matrix.modules }} ]; then
+            module="-k ${{ matrix.modules }}"
+          fi
+          tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+      - name: Dump logs
+        uses: canonical/charm-logdump-action@main
+        if: failure()
+        with:
+          app: ${{ env.CHARM_NAME }}
+          model: testing
+      - name: Setting up kubeconfig ENV for Github Chaos Action
+        if: ${{ inputs.chaos-enabled }}
+        run: echo "KUBE_CONFIG_DATA=$(sudo microk8s config | base64 -w 0)" >> $GITHUB_ENV
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Setup Litmus
+        if: ${{ inputs.chaos-enabled }}
+        uses: merkata/github-chaos-actions@master
+        env:
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          INSTALL_LITMUS: true
+      - name: Run Litmus Chaos experiments
+        if: ${{ inputs.chaos-enabled }}
+        uses: merkata/github-chaos-actions@feat/run-multiple-scenarios
+        env:
+          APP_KIND: ${{ inputs.chaos-app-kind }}
+          APP_LABEL: ${{ inputs.chaos-app-label }}
+          APP_NS: ${{ inputs.chaos-app-namespace }}
+          CHAOS_INTERVAL: ${{ inputs.chaos-interval }}
+          CHAOS_NAMESPACE: ${{ inputs.chaos-namespace }}
+          DELAY: ${{ inputs.chaos-status-delay }}
+          DURATION: ${{ inputs.chaos-status-duration }}
+          EXPERIMENT_NAME: ${{ inputs.chaos-experiments }}
+          TOTAL_CHAOS_DURATION: ${{ inputs.chaos-duration }}
+          KUBE_CONFIG_DATA: ${{ env.KUBE_CONFIG_DATA }}
+      - name: Install k6s
+        if: ${{ inputs.load-test-enabled }}
+        run: sudo snap install k6
+      - name: Run k6 load tests
+        if: ${{ inputs.load-test-enabled }}
+        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
+      - name: Run Github Trivy FS Action
+        if: ${{ inputs.trivy-fs-enabled }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: ${{ inputs.trivy-fs-ref }}
+          trivy-config: ${{ inputs.trivy-fs-config }}
+      - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
+        if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
+        run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
+      - name: Set Zap target env for Github Zap Action to zap-target value
+        if: ${{ inputs.zap-enabled && inputs.zap-target != '' }}
+        run: echo "ZAP_TARGET=${{ inputs.zap-target }}" >> $GITHUB_ENV
+      - name: Run command before Github Zap Action
+        if: ${{ inputs.zap-enabled && inputs.zap-before-command != '' }}
+        run: ${{ inputs.zap-before-command }}
+        env:
+          ZAP_TARGET: ${{ env.ZAP_TARGET }}
+      - name: Run Github Zap Action
+        if: ${{ inputs.zap-enabled }}
+        uses: zaproxy/action-baseline@v0.7.0
+        env:
+          ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
+          ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
+        with:
+          issue_title: 'OWASP ZAP report'
+          fail_action: false
+          target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
+          cmd_options: ${{ inputs.zap-cmd-options }}
+          rules_file_name: ${{ inputs.zap-rules-file-name }}
