@@ -147,12 +147,14 @@ jobs:
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
       - if: ${{ steps.dockerfiles.outputs.found != '' }}
         name: Run HadoLint
+        id: hado-lint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
       - name: Report
         id: report
-        run: echo "outcome=$([ '${{ steps.dockerfiles.outputs.found }}' = '' ] && echo skip || echo success)" >> $GITHUB_OUTPUT
+        if: always()
+        run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
@@ -164,17 +166,19 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
-        id: metadataYaml
+        id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Run lint
-        if: steps.metadataYaml.outputs.exists == 'true'
+        if: steps.metadata-yaml.outputs.exists == 'true'
+        id: run-lint
         run: |
           python3 -m pip install check-jsonschema
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
       - name: Report
         id: report
-        run: echo "outcome=$([ ${{ steps.metadataYaml.outputs.exists }} = 'true' ] && echo success || echo skip)" >> $GITHUB_OUTPUT
+        if: always()
+        run: echo "outcome=${{ steps.run-lint.conclusion }}" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
@@ -189,6 +193,7 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
+        id: run-tests
         run: |
           # Ensure that stdout appears as normal and redirect to file and exit depends on exit code of first command
           tox --result-json=test-result.json | tee stdout.log ; test ${PIPESTATUS[0]} -eq 0
@@ -297,8 +302,9 @@ jobs:
           name: report
           path: report.json
       - name: Report
+        if: always()
         id: report
-        run: echo "outcome=success" >> $GITHUB_OUTPUT
+        run: echo "outcome=${{ steps.run-tests.conclusion }}" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
@@ -318,8 +324,6 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
-      - run: |
-          false
   lib-check:
     name: Check libraries
     runs-on: ubuntu-22.04
