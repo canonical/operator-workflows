@@ -318,6 +318,8 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+      - run: |
+          false
   lib-check:
     name: Check libraries
     runs-on: ubuntu-22.04
@@ -339,5 +341,13 @@ jobs:
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
+    if: always()
     steps:
-      - run: echo required checks passed
+      - run: |
+          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
+          [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
+          [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
+          [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
+          [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+          [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
+          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)

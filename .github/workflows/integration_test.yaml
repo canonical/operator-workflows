@@ -207,4 +207,4 @@ jobs:
     if: always()
     steps:
       - run: |
-          [ '${{ needs.ntegration-test.outputs.job_status }}' = 'success' ] || (echo integration tests failed && false)
+          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
