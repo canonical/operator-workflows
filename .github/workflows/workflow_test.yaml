@@ -31,6 +31,7 @@ jobs:
       working-directory: 'tests/workflows/integration/simple/'
   check:
     runs-on: ubuntu-latest
+    if: always()
     needs:
       - simple
       - pflake8
@@ -47,3 +48,4 @@ jobs:
           [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
           [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
           [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
+          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
