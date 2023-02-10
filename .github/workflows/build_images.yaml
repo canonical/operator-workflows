@@ -65,6 +65,7 @@ jobs:
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@master
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           image-ref: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
           trivy-config: ${{ inputs.trivy-image-config }}
