@@ -1,1 +1,1 @@
-FROM scratch
+FROM ubuntu:22.04
