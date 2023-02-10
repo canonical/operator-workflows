@@ -182,7 +182,7 @@ jobs:
         if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            docker load --input ${image_name}/${image_name}.tar
+            docker image import ${image_name}/${image_name}.tar localhost:32000/${image_name}:latest
             docker push localhost:32000/${image_name}:latest
           done
       - name: Configure GHCR in microk8s
