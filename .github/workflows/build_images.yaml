@@ -65,6 +65,7 @@ jobs:
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@master
+        if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           image-ref: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
           trivy-config: ${{ inputs.trivy-image-config }}
@@ -92,11 +93,19 @@ jobs:
         with:
           name: ${{ matrix.image }}
           path: /tmp/${{ matrix.image }}.tar
+      # Trivy requires an OCI type tar to run the scan
+      - name: Build image as tarball
+        uses: docker/build-push-action@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          context: .
+          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
+          outputs: type=oci,dest=${{ matrix.image }}.tar
       - name: Run Github Trivy Image Action
         if: ${{ github.event.pull_request.head.repo.fork }}
         uses: aquasecurity/trivy-action@master
         with:
-          input: /tmp/${{ matrix.image }}.tar
+          input: ${{ matrix.image }}.tar
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
