@@ -76,24 +76,27 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Build image as tarball
         uses: docker/build-push-action@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
         with:
           context: .
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
-          outputs: type=oci,dest=/tmp/${{ matrix.image }}.tar
+          outputs: type=oci,dest=${{ matrix.image }}.tar
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
         with:
           name: ${{ matrix.image }}
-          path: /tmp/${{ matrix.image }}.tar
+          path: ${{ matrix.image }}.tar
       - name: Run Github Trivy Image Action
         if: ${{ github.event.pull_request.head.repo.fork }}
         uses: aquasecurity/trivy-action@master
         with:
-          input: /tmp/${{ matrix.image }}.tar
+          input: ${{ matrix.image }}.tar
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
