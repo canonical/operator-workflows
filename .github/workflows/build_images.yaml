@@ -86,7 +86,7 @@ jobs:
           context: .
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
           tags: localhost:32000/${{ matrix.image }}:latest
-          outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
+          outputs: type=oci,dest=/tmp/${{ matrix.image }}.tar
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
