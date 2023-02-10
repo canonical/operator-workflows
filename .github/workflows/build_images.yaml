@@ -79,7 +79,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         if: ${{ github.event.pull_request.head.repo.fork }}
-      # Trivy requires and OCI exporter type to run the scan
+      # Trivy requires an OCI type tar to run the scan
       - name: Build image as tarball
         uses: docker/build-push-action@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
