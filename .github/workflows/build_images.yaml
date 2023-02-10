@@ -76,9 +76,6 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        if: ${{ github.event.pull_request.head.repo.fork }}
       - name: Build image as tarball
         uses: docker/build-push-action@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
