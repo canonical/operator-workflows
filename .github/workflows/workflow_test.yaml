@@ -29,6 +29,7 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/integration/simple/'
+      trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
   check:
     runs-on: ubuntu-latest
     if: always()
