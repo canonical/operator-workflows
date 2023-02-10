@@ -79,6 +79,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         if: ${{ github.event.pull_request.head.repo.fork }}
+      - name: Build image as tarball
+        uses: docker/build-push-action@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          context: .
+          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
+          tags: localhost:32000/${{ matrix.image }}:latest
+          outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          name: ${{ matrix.image }}
+          path: /tmp/${{ matrix.image }}.tar
       # Trivy requires an OCI type tar to run the scan
       - name: Build image as tarball
         uses: docker/build-push-action@v3
@@ -87,12 +101,6 @@ jobs:
           context: .
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
           outputs: type=oci,dest=${{ matrix.image }}.tar
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        with:
-          name: ${{ matrix.image }}
-          path: ${{ matrix.image }}.tar
       - name: Run Github Trivy Image Action
         if: ${{ github.event.pull_request.head.repo.fork }}
         uses: aquasecurity/trivy-action@master
