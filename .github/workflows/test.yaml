@@ -317,7 +317,7 @@ jobs:
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
-        if: steps.docs-exist.outputs.docs_exist == 'True' && ${{ !github.event.pull_request.head.repo.fork }}
+        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
         uses: canonical/upload-charm-docs@main
         with:
           discourse_host: discourse.charmhub.io
@@ -352,7 +352,7 @@ jobs:
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
-          [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false) || ${{ github.event.pull_request.head.repo.fork }}
+          [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
