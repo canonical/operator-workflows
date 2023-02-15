@@ -1,0 +1,105 @@
+name: Build images
+
+on:
+  workflow_call:
+    inputs:
+      owner:
+        type: string
+        description: Registry owner to push the built images
+        default: ""
+      registry:
+        type: string
+        description: Registry to push the built images
+        default: ""
+      runs-on:
+        type: string
+        description: Image runner for building the images
+        default: ubuntu-22.04
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
+    outputs:
+      images:
+        description: List of images built
+        value: ${{ jobs.get-rocks.outputs.rocks }}
+
+jobs:
+  get-rocks:
+    name: Get rocks
+    runs-on: ubuntu-22.04
+    outputs:
+      rock-paths: ${{ env.ROCK_PATHS }}
+      rocks: ${{ env.ROCKS }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get rock paths
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "ROCK_PATHS=$(find . -type f -name rockcraft.yaml | xargs realpath | xargs dirname" >> $GITHUB_ENV
+          echo "ROCKS=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+  build-rocks:
+    name: Build rock
+    runs-on: ${{ inputs.runs-on }}
+    needs: [get-rocks]
+    if: ${{ needs.get-rocks.outputs.rock-paths != '[]' }}
+    strategy:
+      matrix:
+        path: ${{ fromJSON(needs.get-rocks.outputs.rock-paths) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build rock
+        uses: canonical/craft-actions/rockcraft-pack@main
+        with:
+          path: ${{ matrix.path }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Upload ROCK to ghcr.io
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        outputs: 
+        run: |
+          IMAGE_NAME=$(yq '.name' ${{ matrix.path }})
+          IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
+          skopeo --insecure-policy copy oci-archive:$(dirname ${{ matrix.image }})*.rock $IMAGE_REF
+          docker push $IMAGE_REF
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
+      - name: Run Github Trivy Image Action
+        uses: aquasecurity/trivy-action@master
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          image-ref: ${{ env.IMAGE_REF }}
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
+      # so an artifact is published instead
+      - name: Build rock as tarball
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          skopeo copy oci-archive:$(dirname ${{ matrix.image }})*.rock docker-archive::/tmp/$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v3
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        with:
+          name: ${{ matrix.image }}
+          path: /tmp/${{ matrix.image }}.tar
+      # Trivy requires an OCI type tar to run the scan
+      - name: Build rock as tarball
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          skopeo copy oci-archive:$(dirname ${{ matrix.image }})*.rock dir:/tmp/$IMAGE_NAME.tar
+      - name: Run Github Trivy Image Action
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          input: ${{ matrix.image }}.tar
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'

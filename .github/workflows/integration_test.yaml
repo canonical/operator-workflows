@@ -157,10 +157,29 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
+  build-rocks:
+    name: Build rock
+    uses: ./.github/workflows/build_rocks.yaml
+    needs: get-runner-image
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+  all-images:
+    name: Get rocks or Docker images
+    needs: [build-images, build-rocks]
+    run: |
+      if [[ ${{ needs.build-rocks.outputs.images != '[]' }} ]]; then
+        echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
+      else
+        echo "IMAGES=${{ needs.build-images.outputs.images }}" >> $GITHUB_ENV
+      fi
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [get-runner-image, build-images]
+    needs: [get-runner-image, all-images]
     if: ${{ !failure() }}
     with:
       chaos-app-kind: ${{ inputs.chaos-app-kind }}
@@ -175,7 +194,7 @@ jobs:
       chaos-status-duration: ${{ inputs.chaos-status-duration }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
-      images: ${{ needs.build-images.outputs.images }}
+      images: ${{ env.IMAGES }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
       modules: ${{ inputs.modules }}
