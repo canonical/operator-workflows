@@ -170,12 +170,14 @@ jobs:
   all-images:
     name: Get rocks or Docker images
     needs: [build-images, build-rocks]
-    run: |
-      if [[ ${{ needs.build-rocks.outputs.images != '[]' }} ]]; then
-        echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
-      else
-        echo "IMAGES=${{ needs.build-images.outputs.images }}" >> $GITHUB_ENV
-      fi
+    steps:
+      - name: Get rocks or Docker images
+        run: |
+          if [[ ${{ needs.build-rocks.outputs.images != '[]' }} ]]; then
+            echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
+          else
+            echo "IMAGES=${{ needs.build-images.outputs.images }}" >> $GITHUB_ENV
+          fi
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
