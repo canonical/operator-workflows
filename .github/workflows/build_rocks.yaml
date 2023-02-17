@@ -62,7 +62,7 @@ jobs:
         run: |
           IMAGE_NAME=$(yq '.name' ${{ matrix.path }}/rockcraft.yaml)
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
-          skopeo --insecure-policy copy oci-archive:$(dirname ${{ matrix.image }})*.rock $IMAGE_REF
+          skopeo --insecure-policy copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) $IMAGE_REF
           docker push $IMAGE_REF
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
@@ -82,7 +82,7 @@ jobs:
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(dirname ${{ matrix.image }})*.rock docker-archive::/tmp/$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+          skopeo copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) docker-archive::/tmp/$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
@@ -93,7 +93,7 @@ jobs:
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(dirname ${{ matrix.image }})*.rock dir:/tmp/$IMAGE_NAME.tar
+          skopeo copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) dir:/tmp/$IMAGE_NAME.tar
       - name: Run Github Trivy Image Action
         if: ${{ github.event.pull_request.head.repo.fork }}
         uses: aquasecurity/trivy-action@master
