@@ -176,6 +176,8 @@ jobs:
     steps:
       - name: Get rocks or Docker images
         run: |
+          echo ${{ needs.build-rocks.outputs.images }}
+          echo ${{ needs.build-images.outputs.images }}
           if [ ${{ needs.build-rocks.outputs.images != '[]' }} ]; then
             echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
           else
