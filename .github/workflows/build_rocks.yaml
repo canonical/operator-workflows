@@ -32,8 +32,8 @@ jobs:
     name: Get rocks
     runs-on: ubuntu-22.04
     outputs:
-      rock-paths: ${{ env.ROCK_PATHS }}
-      rocks: ${{ env.ROCKS }}
+      rock-paths: "${{ env.ROCK_PATHS }}"
+      rocks: "${{ env.ROCKS }}"
     steps:
       - uses: actions/checkout@v3
       - name: Get rock paths
