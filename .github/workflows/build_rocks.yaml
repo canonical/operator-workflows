@@ -60,7 +60,7 @@ jobs:
       - name: Upload ROCK to ghcr.io
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
-          IMAGE_NAME=$(yq '.name' ${{ matrix.path }})
+          IMAGE_NAME=$(yq '.name' ${{ matrix.path }}/rockcraft.yaml)
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
           skopeo --insecure-policy copy oci-archive:$(dirname ${{ matrix.image }})*.rock $IMAGE_REF
           docker push $IMAGE_REF
