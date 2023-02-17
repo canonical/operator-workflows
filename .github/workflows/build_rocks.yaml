@@ -40,7 +40,8 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           echo "ROCK_PATHS=$(find . -type f -name rockcraft.yaml | xargs realpath | xargs dirname)" >> $GITHUB_ENV
-          echo "ROCKS=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+          ROCKS=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
+          echo "ROCKS=$ROCKS" >> $GITHUB_ENV
   build-rocks:
     name: Build rock
     runs-on: ${{ inputs.runs-on }}
