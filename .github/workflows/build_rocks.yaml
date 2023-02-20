@@ -86,7 +86,7 @@ jobs:
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
           skopeo copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) dir:/tmp/$IMAGE_NAME.tar
-        echo "IMAGE_TAR=${{ matrix.image }}.tar" >> $GITHUB_ENV
+          echo "IMAGE_TAR=${{ matrix.image }}.tar" >> $GITHUB_ENV
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@master
         with:
