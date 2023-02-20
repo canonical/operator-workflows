@@ -176,13 +176,13 @@ jobs:
     steps:
       - name: Get rocks or fallback to Docker images
         run: |
-          echo '${{ needs.build-rocks.outputs.images }}'
-          echo ${{ needs.build-rocks.outputs.images }}
           if [ ${{ needs.build-rocks.outputs.images != '[]' }} ]; then
-            echo "IMAGES='${{ needs.build-rocks.outputs.images }}'" >> $GITHUB_ENV
+            IMAGES='${{ needs.build-rocks.outputs.images }}'
           else
-            echo "IMAGES='${{ needs.build-images.outputs.images }}'" >> $GITHUB_ENV
+            IMAGES='${{ needs.build-images.outputs.images }}'
           fi
+          echo $IMAGES
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
