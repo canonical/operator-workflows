@@ -209,6 +209,8 @@ jobs:
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
+          echo ${{ inputs.images }}
+          echo '${{ inputs.images }}''
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
               args="${args} --${image_name}-image localhost:32000/${image_name}:latest"

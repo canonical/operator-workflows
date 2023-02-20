@@ -172,9 +172,9 @@ jobs:
     needs: [build-images, build-rocks]
     runs-on: ubuntu-latest
     outputs:
-      images: "${{ env.IMAGES }}"
+      images: ${{ env.IMAGES }}
     steps:
-      - name: Get rocks or Docker images
+      - name: Get rocks or fallback to Docker images
         run: |
           if [ ${{ needs.build-rocks.outputs.images != '[]' }} ]; then
             echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
