@@ -177,9 +177,9 @@ jobs:
       - name: Get rocks or fallback to Docker images
         run: |
           if [ ${{ needs.build-rocks.outputs.images != '[]' }} ]; then
-            echo "IMAGES=${{ needs.build-rocks.outputs.images }}" >> $GITHUB_ENV
+            echo "IMAGES='${{ needs.build-rocks.outputs.images }}'" >> $GITHUB_ENV
           else
-            echo "IMAGES=${{ needs.build-images.outputs.images }}" >> $GITHUB_ENV
+            echo "IMAGES='${{ needs.build-images.outputs.images }}'" >> $GITHUB_ENV
           fi
   integration-test:
     name: Integration tests
