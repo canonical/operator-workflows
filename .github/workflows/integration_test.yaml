@@ -134,8 +134,8 @@ on:
         type: string
     outputs:
       images:
-        description: Pushed docker images
-        value: ${{ jobs.build-images.outputs.images }}
+        description: Pushed images
+        value: ${{ jobs.all-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
