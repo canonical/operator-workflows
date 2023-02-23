@@ -176,7 +176,7 @@ jobs:
     steps:
       - name: Get rocks or fallback to Docker images
         run: |
-          if [ ${{ needs.build-rocks.outputs.images != '[]' }} ]; then
+          if [ ${{ needs.build-rocks.outputs.images != '[]' }} = true ]; then
             IMAGES='${{ needs.build-rocks.outputs.images }}'
           else
             IMAGES='${{ needs.build-images.outputs.images }}'
