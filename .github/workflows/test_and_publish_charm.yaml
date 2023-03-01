@@ -50,6 +50,10 @@ on:
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
 
 jobs:
   lib-check:
@@ -71,6 +75,8 @@ jobs:
     name: Run tests
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    with:
+      working-directory: ${{ inputs.working-directory }}
   integration-tests:
     name: Run integration tests
     uses: ./.github/workflows/integration_test.yaml
@@ -86,6 +92,7 @@ jobs:
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
     secrets: inherit
   release-charm-libs:
     name: Release charm libs
@@ -93,6 +100,13 @@ jobs:
     needs: [ lib-check, tests, integration-tests ]
     steps:
       - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
       - uses: canonical/charming-actions/release-libraries@2.2.2
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
@@ -113,4 +127,5 @@ jobs:
     with:
       channel: ${{ needs.select-channel.outputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
+      working-directory: ${{ inputs.working-directory }}
     secrets: inherit
