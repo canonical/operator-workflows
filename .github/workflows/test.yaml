@@ -7,6 +7,10 @@ on:
         type: string
         description: The working directory for jobs
         default: './'
+      publish-docs:
+        description: Publish documentations to Charmhub.
+        type: boolean
+        default: false
     outputs:
       docker-lint-outcome:
         description: |
@@ -308,6 +312,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
+    if: ${{ inputs.publish-docs }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
