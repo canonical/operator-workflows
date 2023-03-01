@@ -354,7 +354,8 @@ jobs:
     if: always()
     steps:
       - run: |
-          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
+          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || [ '${{ needs.draft-publish-docs.result }}' = 'skipped' ] \
+            || (echo draft-publish-docs failed && false)
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
