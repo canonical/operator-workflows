@@ -32,6 +32,10 @@ on:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
+      publish-docs:
+        description: Publish documentations to Charmhub.
+        type: boolean
+        default: false
       setup-devstack-swift:
         description: Use setup-devstack-swift action to prepare a swift server for integration tests.
         type: boolean
@@ -113,4 +117,5 @@ jobs:
     with:
       channel: ${{ needs.select-channel.outputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
+      publish-docs: ${{ inputs.publish-docs }}
     secrets: inherit
