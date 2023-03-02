@@ -14,7 +14,7 @@ The following workflows are available:
 
 
 | Name | Type | Default | Description |
-|--------------------|----------|--------------------|-------------------|
+|--------------------|----------|--------------------|-------------------| 
 | working-directory | string | "./" | Directory where jobs should be executed |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
