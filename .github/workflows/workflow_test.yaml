@@ -9,13 +9,13 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/test/simple/'
-  # pflake8:
-  #   uses: ./.github/workflows/test.yaml
-  #   secrets: inherit
-  #   needs:
-  #     - simple
-  #   with:
-  #     working-directory: 'tests/workflows/test/pflake8/'
+  pflake8:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    needs:
+      - simple
+    with:
+      working-directory: 'tests/workflows/test/pflake8/'
   # metadata_yaml:
   #   uses: ./.github/workflows/test.yaml
   #   secrets: inherit
