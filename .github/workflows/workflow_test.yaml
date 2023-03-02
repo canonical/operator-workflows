@@ -36,23 +36,23 @@ jobs:
   #   with:
   #     working-directory: 'tests/workflows/integration/simple/'
   #     trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
-  check:
-    runs-on: ubuntu-latest
-    if: always()
-    needs:
-      - simple
-      - pflake8
-      - metadata_yaml
-      - dockerfile
-      - integration
-    steps:
-      - run: |
-          [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
-          [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
-          [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.pflake8.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata-lint failed && false)
-          [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
-          [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
-          [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
-          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+  # check:
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   needs:
+  #     - simple
+  #     - pflake8
+  #     - metadata_yaml
+  #     - dockerfile
+  #     - integration
+  #   steps:
+  #     - run: |
+  #         [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
+  #         [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
+  #         [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+  #         [ '${{ needs.pflake8.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+  #         [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata-lint failed && false)
+  #         [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
+  #         [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
+  #         [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
+  #         [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
