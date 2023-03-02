@@ -36,6 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
+        name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
           cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
@@ -67,6 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
+        name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
           cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
