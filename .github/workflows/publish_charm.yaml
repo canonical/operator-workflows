@@ -10,6 +10,10 @@ on:
       images:
         type: string
         description: 'Docker images'
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
 
 env:
   REGISTRY: ghcr.io
@@ -19,6 +23,8 @@ jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
+    with:
+      working-directory: ${{ inputs.working-directory }}
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
@@ -29,6 +35,14 @@ jobs:
         image: ${{ fromJSON(inputs.images) }}
     steps:
       - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: sudo snap install charmcraft --classic
       - name: Log in to the Container registry
@@ -53,6 +67,14 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.2.1
         with:
