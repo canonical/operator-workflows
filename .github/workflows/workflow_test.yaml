@@ -16,13 +16,13 @@ jobs:
       - simple
     with:
       working-directory: 'tests/workflows/test/pflake8/'
-  # metadata_yaml:
-  #   uses: ./.github/workflows/test.yaml
-  #   secrets: inherit
-  #   needs:
-  #     - pflake8
-  #   with:
-  #     working-directory: 'tests/workflows/test/metadata_yaml/'
+  metadata_yaml:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    needs:
+      - pflake8
+    with:
+      working-directory: 'tests/workflows/test/metadata_yaml/'
   # dockerfile:
   #   uses: ./.github/workflows/test.yaml
   #   secrets: inherit
