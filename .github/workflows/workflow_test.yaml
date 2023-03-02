@@ -39,6 +39,8 @@ jobs:
   publish:
     uses: ./.github/workflows/test_and_publish_charm.yaml
     secrets: inherit
+    needs:
+      - integration
     with:
       working-directory: tests/workflows/integration/test-upload-charm/
       trivy-image-config: 'tests/workflows/integration/test-upload-charm/trivy.yaml'
