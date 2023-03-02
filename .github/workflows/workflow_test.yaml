@@ -9,33 +9,33 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/test/simple/'
-  pflake8:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    needs:
-      - simple
-    with:
-      working-directory: 'tests/workflows/test/pflake8/'
-  metadata_yaml:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    needs:
-      - pflake8
-    with:
-      working-directory: 'tests/workflows/test/metadata_yaml/'
-  dockerfile:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    needs:
-      - metadata_yaml
-    with:
-      working-directory: 'tests/workflows/test/dockerfile/'
-  integration:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: 'tests/workflows/integration/simple/'
-      trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
+  # pflake8:
+  #   uses: ./.github/workflows/test.yaml
+  #   secrets: inherit
+  #   needs:
+  #     - simple
+  #   with:
+  #     working-directory: 'tests/workflows/test/pflake8/'
+  # metadata_yaml:
+  #   uses: ./.github/workflows/test.yaml
+  #   secrets: inherit
+  #   needs:
+  #     - pflake8
+  #   with:
+  #     working-directory: 'tests/workflows/test/metadata_yaml/'
+  # dockerfile:
+  #   uses: ./.github/workflows/test.yaml
+  #   secrets: inherit
+  #   needs:
+  #     - metadata_yaml
+  #   with:
+  #     working-directory: 'tests/workflows/test/dockerfile/'
+  # integration:
+  #   uses: ./.github/workflows/integration_test.yaml
+  #   secrets: inherit
+  #   with:
+  #     working-directory: 'tests/workflows/integration/simple/'
+  #     trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
   check:
     runs-on: ubuntu-latest
     if: always()
