@@ -32,7 +32,7 @@ jobs:
       trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
   check:
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ always() }}
     needs:
       - simple
       - pflake8

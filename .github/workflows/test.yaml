@@ -153,7 +153,7 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
       - name: Report
         id: report
-        if: always()
+        if: ${{ always() }}
         run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
@@ -177,7 +177,7 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
       - name: Report
         id: report
-        if: always()
+        if: ${{ always() }}
         run: echo "outcome=${{ steps.run-lint.conclusion }}" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
@@ -243,7 +243,7 @@ jobs:
               fi
           done
       - name: Export test report
-        if: always()
+        if: ${{ always() }}
         uses: actions/github-script@v6
         with:
           script: |
@@ -297,12 +297,12 @@ jobs:
             fs.writeFileSync('report.json', json);
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
-        if: always() && github.event_name == 'pull_request'
+        if: ${{ always() }} && github.event_name == 'pull_request'
         with:
           name: report
           path: report.json
       - name: Report
-        if: always()
+        if: ${{ always() }}
         id: report
         run: echo "outcome=${{ steps.run-tests.conclusion }}" >> $GITHUB_OUTPUT
   draft-publish-docs:
@@ -346,7 +346,7 @@ jobs:
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
-    if: always()
+    if: ${{ always() }}
     steps:
       - run: |
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
