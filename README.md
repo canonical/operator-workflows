@@ -8,7 +8,7 @@ This repository includes several parametrized CI workflows to be used for both k
 
 To use the workflows in your repository, just reuse them including the `secrets: inherit` key. Examples of usage for every workflow can be found at the [indico operator](https://github.com/canonical/indico-operator/blob/main/.github/workflows). Note that you will need a CHARMHUB_TOKEN among your repository secrets to be able to run the workflows that interact with charmhub.
 
-The following workflows are available: 
+The following workflows are available:
 
 * test: executes the default tox targets defined in the `tox.ini` file and generates a plain text report. This requires the `lint`, `unit`, `static` and `coverage-report` `tox` environments to be included in the tox defaults. The following parameters are available for this workflow:
 
