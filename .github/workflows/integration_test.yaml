@@ -141,6 +141,10 @@ env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
+concurrency:
+  group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   get-runner-image:
     name: Get runner image

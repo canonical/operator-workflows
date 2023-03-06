@@ -12,16 +12,22 @@ jobs:
   pflake8:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    needs:
+      - simple
     with:
       working-directory: 'tests/workflows/test/pflake8/'
   metadata_yaml:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    needs:
+      - pflake8
     with:
       working-directory: 'tests/workflows/test/metadata_yaml/'
   dockerfile:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    needs:
+      - metadata_yaml
     with:
       working-directory: 'tests/workflows/test/dockerfile/'
   integration:
@@ -33,6 +39,8 @@ jobs:
   publish:
     uses: ./.github/workflows/test_and_publish_charm.yaml
     secrets: inherit
+    needs:
+      - integration
     with:
       working-directory: tests/workflows/integration/test-upload-charm/
       trivy-image-config: 'tests/workflows/integration/test-upload-charm/trivy.yaml'

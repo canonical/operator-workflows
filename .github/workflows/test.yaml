@@ -23,6 +23,10 @@ on:
           workflow
         value: ${{ jobs.lint-and-unit-test.outputs.outcome }}
 
+concurrency:
+  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
