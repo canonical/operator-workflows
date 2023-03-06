@@ -24,7 +24,7 @@ on:
         value: ${{ jobs.lint-and-unit-test.outputs.outcome }}
 
 concurrency:
-  group: ${{ github.workflow }}-tests-${{ github.ref }}
+  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

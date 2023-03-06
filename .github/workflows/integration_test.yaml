@@ -142,7 +142,7 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 concurrency:
-  group: ${{ github.workflow }}-integration-tests-${{ github.ref }}
+  group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
