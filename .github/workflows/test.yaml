@@ -6,7 +6,7 @@ on:
       working-directory:
         type: string
         description: The working directory for jobs
-        default: './'
+        default: "./"
     outputs:
       docker-lint-outcome:
         description: |
@@ -30,9 +30,8 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: 
-      group: default
-      labels: ubuntu-22.04
+    runs-on:
+      labels: [ubuntu-22.04]
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -67,7 +66,7 @@ jobs:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: '. -c /tmp/config.yml'
+          woke-args: ". -c /tmp/config.yml"
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
