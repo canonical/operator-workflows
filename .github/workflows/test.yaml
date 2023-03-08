@@ -31,7 +31,7 @@ jobs:
   inclusive-naming-check:
     name: Inclusive naming
     runs-on:
-      group: null
+      group: default
       labels: [ubuntu-22.04]
     defaults:
       run:
