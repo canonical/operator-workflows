@@ -14,16 +14,16 @@ on:
     outputs:
       docker-lint-outcome:
         description: |
-          The outcome of the docker linting, mainly for the puposes of the tests for this workflow
+          The outcome of the docker linting, mainly for the purposes of the tests for this workflow
         value: ${{ jobs.docker-lint.outputs.outcome }}
       metadata-lint-outcome:
         description: |
-          The outcome of the metadata.yaml linting, mainly for the puposes of the tests for this
+          The outcome of the metadata.yaml linting, mainly for the purposes of the tests for this
           workflow
         value: ${{ jobs.metadata-lint.outputs.outcome }}
       lint-and-unit-test-outcome:
         description: |
-          The outcome of the linting and unit testing, mainly for the puposes of the tests for this
+          The outcome of the linting and unit testing, mainly for the purposes of the tests for this
           workflow
         value: ${{ jobs.lint-and-unit-test.outputs.outcome }}
 
