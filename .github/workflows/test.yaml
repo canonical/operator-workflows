@@ -10,7 +10,7 @@ on:
       runner-labels:
         type: string
         description: The labels to select the runner in a JSON array.
-        default: '["ubuntu-latest", "X64"]'
+        default: '["ubuntu-latest"]'
     outputs:
       docker-lint-outcome:
         description: |
