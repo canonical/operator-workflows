@@ -30,7 +30,9 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ubuntu-22.04
+    runs-on: 
+      group: default
+      labels: ubuntu-22.04
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
