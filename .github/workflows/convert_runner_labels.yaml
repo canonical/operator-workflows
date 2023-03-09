@@ -24,7 +24,7 @@ on:
 jobs:
   convert-runner-labels:
     name: Convert runner labels
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       labels: ${{ env.LABELS }}
     steps:
