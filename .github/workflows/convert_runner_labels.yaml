@@ -19,7 +19,7 @@ on:
     outputs:
       labels:
         description: The JSON array of labels in GitHub style.
-        value: ${{ jobs.convert-runner-labels.outputs.runs-on }}
+        value: ${{ jobs.convert-runner-labels.outputs.labels }}
 
 jobs:
   convert-runner-labels:
