@@ -71,4 +71,5 @@ jobs:
           [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
           [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.publish.result }}' = 'success' ] || (echo publish failed && false)
