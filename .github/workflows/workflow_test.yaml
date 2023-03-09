@@ -40,8 +40,8 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
-      working-directory: 'tests/workflows/integration/simple/'
-      trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
+      working-directory: 'tests/workflows/integration/test-rock/'
+      trivy-image-config: 'tests/workflows/integration/test-rock/trivy.yaml'
   publish:
     uses: ./.github/workflows/test_and_publish_charm.yaml
     secrets: inherit
