@@ -10,6 +10,5 @@ platforms:
 parts:
   nginx:
     plugin: nil
-    overlay-packages:
+    stage-packages:
       - nginx
-
