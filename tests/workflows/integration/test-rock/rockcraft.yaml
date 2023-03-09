@@ -1,0 +1,16 @@
+name: test
+summary: Test rock.
+description: Test rock.
+version: "1.0"
+base: ubuntu:22.04
+license: Apache-2.0
+cmd: [/usr/bin/hello, -t]
+platforms:
+  amd64:
+
+parts:
+  hello:
+    plugin: nil
+    overlay-packages:
+      - hello
+
