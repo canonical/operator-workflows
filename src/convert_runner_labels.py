@@ -8,6 +8,8 @@ E.g., Github runner charm uses "jammy", while GitHub uses "ubuntu-22.04".
 """
 
 import argparse
+import json
+from typing import Iterable
 
 
 SERIES_MAPPING = {
@@ -28,20 +30,29 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def convert_labels_to_charm(labels: list[str]) -> list[str]:
+def convert_labels_to_charm(labels: Iterable[str]) -> Iterable[str]:
     """Convert the label style from GitHub to GitHub runner charm.
 
+    If the labels contains the "self-hosted" label, convert the label style
+    from GitHub to GitHub runner charm.
+
     Inputs:
-        labels: A list of labels in GitHub style.
+        labels: Labels in GitHub style.
     Returns:
-        A list of labels in GitHub runner charm style converted from `labels`.
+        Labels in GitHub runner charm style converted from `labels`.
     """
-    return [
-        SERIES_MAPPING[label] if label in SERIES_MAPPING else label for label in labels
-    ]
+    if "self-hosted" in labels:
+        return map(
+            lambda label: SERIES_MAPPING[label] if label in SERIES_MAPPING else label,
+            labels,
+        )
+    else:
+        return labels
 
 
 if __name__ == "__main__":
     args = parse_args()
-    converted = convert_labels_to_charm(args.labels)
-    print(converted)
+    labels = json.loads(args.labels)
+    converted = convert_labels_to_charm(labels)
+    labels_str = json.dumps(list(converted))
+    print(labels_str)
