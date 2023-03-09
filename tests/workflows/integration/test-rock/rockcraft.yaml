@@ -5,12 +5,11 @@ version: "1.0"
 base: bare
 build-base: ubuntu:22.04
 license: Apache-2.0
-cmd: [/usr/bin/hello, -t]
 platforms:
   amd64:
 parts:
-  hello:
+  nginx:
     plugin: nil
     overlay-packages:
-      - hello
+      - nginx
 
