@@ -1,0 +1,37 @@
+name: Convert runner labels
+
+# Convert a JSON array of labels to GitHub runner charm style.
+#
+# This a temporary solution.
+#
+# The GitHub runner charm uses different labeling of ubuntu series than GitHub.
+# E.g., Github runner charm uses "jammy", while GitHub uses "ubuntu-22.04".
+# In the future, the GitHub runner charm will be adopting the GitHub style, and
+# this workflow will be removed.
+
+on:
+  workflow_call:
+    inputs:
+      labels:
+        type: string
+        description: The JSON array of labels in GitHub runner charm style.
+        required: true
+    outputs:
+      labels:
+        description: The JSON array of labels in GitHub style.
+        value: ${{ jobs.convert-runner-labels.outputs.runs-on }}
+
+jobs:
+  convert-runner-labels:
+    name: Convert runner labels
+    runs-on: ubuntu-22.04
+    outputs:
+      labels: ${{ env.LABELS }}
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: Convert labels
+        run: |
+          labels=$(python src/convert_runner_labels.py "$INPUT_LABELS")
+          echo "LABELS=$labels" >> $GITHUB_ENV

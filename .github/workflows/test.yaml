@@ -32,9 +32,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  runner-labels:
+    name: Runner labels
+    uses: ./.github/workflows/convert_runner_labels.yaml
+    with:
+      labels: ${{ inputs.runner-label }}
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -78,7 +84,8 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -142,7 +149,8 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     outputs:
       outcome: ${{ steps.report.outputs.outcome }}
     defaults:
@@ -165,7 +173,8 @@ jobs:
         run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -316,7 +325,8 @@ jobs:
         run: echo "outcome=${{ steps.run-tests.conclusion }}" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -335,7 +345,8 @@ jobs:
           dry_run: true
   lib-check:
     name: Check libraries
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    needs: runner-labels
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
