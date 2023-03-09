@@ -10,7 +10,7 @@ on:
       runner-labels:
         type: string
         description: The labels to select the runner in a JSON array.
-        default: '["ubuntu-latest"]'
+        default: '["ubuntu-22.04"]'
     outputs:
       docker-lint-outcome:
         description: |
@@ -36,7 +36,7 @@ jobs:
     name: Runner labels
     uses: ./.github/workflows/convert_runner_labels.yaml
     with:
-      labels: ${{ inputs.runner-label }}
+      labels: ${{ inputs.runner-labels }}
   inclusive-naming-check:
     name: Inclusive naming
     needs: runner-labels
