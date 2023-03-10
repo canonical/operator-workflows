@@ -198,7 +198,6 @@ jobs:
         run: echo "outcome=${{ steps.run-lint.conclusion }}" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
-    # TODO: Deal with this.
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: get-runner-image
     outputs:
