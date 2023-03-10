@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert the runner labels from GitHub runner charm style to Github style.
+"""Convert the runner labels from GitHub style to Github runner charm style.
 
 This a temporary solution.
 
