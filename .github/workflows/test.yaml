@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  runner-labels:
+  convert-runner-labels:
     name: Runner labels
     uses: ./.github/workflows/convert_runner_labels.yaml
     with:
@@ -40,7 +40,7 @@ jobs:
   inclusive-naming-check:
     name: Inclusive naming
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -85,7 +85,7 @@ jobs:
   shellcheck-lint:
     name: Shell scripts lint
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -150,7 +150,7 @@ jobs:
   docker-lint:
     name: Dockerfile lint
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     outputs:
       outcome: ${{ steps.report.outputs.outcome }}
     defaults:
@@ -174,7 +174,7 @@ jobs:
   metadata-lint:
     name: Lint metadata.yaml
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -325,7 +325,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -345,7 +345,7 @@ jobs:
   lib-check:
     name: Check libraries
     needs: runner-labels
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
@@ -356,7 +356,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   required_status_checks:
     name: Required Test Status Checks
-    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
+    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     needs:
       - draft-publish-docs
       - docker-lint

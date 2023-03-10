@@ -16,7 +16,7 @@ on:
         value: ${{ jobs.get-runner-image.outputs.channel }}
       runs-on:
         description: Get first occurrence of build-on base as image runner
-        value: ${{ jobs.runner-labels.outputs.labels }}
+        value: ${{ jobs.convert-runner-labels.outputs.labels }}
 
 jobs:
   get-runner-image:
@@ -41,7 +41,7 @@ jobs:
           echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
           echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
           echo "BUILD_ON=$image" >> $GITHUB_ENV
-  runner-labels:
+  convert-runner-labels:
     name: Runner labels
     needs: get-runner-image
     uses: ./.github/workflows/convert_runner_labels.yaml
