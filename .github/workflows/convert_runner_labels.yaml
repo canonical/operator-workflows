@@ -36,5 +36,5 @@ jobs:
         env: 
           INPUT_LABELS: ${{ inputs.labels }}
         run: |
-          labels=$(python src/convert_runner_labels.py "'$INPUT_LABELS'")
+          labels=$(python src/convert_runner_labels.py "$INPUT_LABELS")
           echo "LABELS=$labels" >> $GITHUB_ENV
