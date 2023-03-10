@@ -10,7 +10,7 @@ on:
       runner-labels:
         type: string
         description: The labels to select the runner in a JSON array.
-        default: '["ubuntu-22.04"]'
+        default: '["self-hosted", "ubuntu-22.04"]'
     outputs:
       docker-lint-outcome:
         description: |
