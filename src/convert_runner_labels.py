@@ -52,6 +52,10 @@ def convert_labels_to_charm(labels: Iterable[str]) -> Iterable[str]:
 
 if __name__ == "__main__":
     args = parse_args()
+    
+    # TODO: Debug
+    print (args.labels)
+
     labels = json.loads(args.labels)
     converted = convert_labels_to_charm(labels)
     labels_str = json.dumps(list(converted))
