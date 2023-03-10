@@ -54,7 +54,8 @@ if __name__ == "__main__":
     args = parse_args()
     
     # TODO: Debug
-    print (args.labels)
+    import sys
+    print(args.labels, file=sys.stderr, flush=True)
 
     labels = json.loads(args.labels)
     converted = convert_labels_to_charm(labels)
