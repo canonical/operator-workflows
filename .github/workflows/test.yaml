@@ -39,7 +39,7 @@ jobs:
       labels: ${{ inputs.runner-labels }}
   inclusive-naming-check:
     name: Inclusive naming
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
@@ -84,7 +84,7 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
@@ -149,7 +149,7 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     outputs:
       outcome: ${{ steps.report.outputs.outcome }}
@@ -173,7 +173,7 @@ jobs:
         run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
@@ -324,7 +324,7 @@ jobs:
         run: echo "outcome=${{ steps.run-tests.conclusion }}" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     defaults:
       run:
@@ -344,7 +344,7 @@ jobs:
           dry_run: true
   lib-check:
     name: Check libraries
-    needs: runner-labels
+    needs: convert-runner-labels
     runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
     steps:
       - uses: actions/checkout@v3
@@ -365,6 +365,7 @@ jobs:
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
+      - convert-runner-labels
     if: always()
     steps:
       - run: |
