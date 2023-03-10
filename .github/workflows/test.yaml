@@ -357,7 +357,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   required_status_checks:
     name: Required Test Status Checks
-    runs-on: ${{ fromJSON(inputs.runner-labels) }}
+    runs-on: ${{ fromJSON(needs.runner-labels.outputs.labels) }}
     needs:
       - draft-publish-docs
       - docker-lint
