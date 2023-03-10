@@ -9,7 +9,11 @@ E.g., Github runner charm uses "jammy", while GitHub uses "ubuntu-22.04".
 
 import argparse
 import json
+import logging
 from typing import Iterable
+
+
+logger = logging.getLogger(__name__)
 
 
 SERIES_MAPPING = {
@@ -52,12 +56,14 @@ def convert_labels_to_charm(labels: Iterable[str]) -> Iterable[str]:
 
 if __name__ == "__main__":
     args = parse_args()
+    labels_str = args.labels
     
-    # TODO: Debug
-    import sys
-    print(args.labels, file=sys.stderr, flush=True)
+    logger.info(f"Input label: {labels_str}")
 
-    labels = json.loads(args.labels)
+    labels = json.loads(labels_str)
     converted = convert_labels_to_charm(labels)
     labels_str = json.dumps(list(converted))
+
+    logger.info(f"Output label: {labels_str}")
+
     print(labels_str)
