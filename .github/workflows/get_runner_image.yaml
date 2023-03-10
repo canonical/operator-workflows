@@ -46,4 +46,4 @@ jobs:
     needs: get-runner-image
     uses: ./.github/workflows/convert_runner_labels.yaml
     with:
-      labels: ${{ needs.get-runner-image.outputs.runs-on }}
+      labels: '["${{ needs.get-runner-image.outputs.runs-on }}"]'
