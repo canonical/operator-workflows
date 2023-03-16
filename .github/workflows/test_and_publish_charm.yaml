@@ -24,6 +24,14 @@ on:
         description: Actions operator provider for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      integration-test-provider-channel:
+        description: Actions operator provider channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 1.26-strict/stable
+      integration-test-juju-channel:
+        description: Actions operator juju channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 2.9/stable
       integration-test-series:
         description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
@@ -86,6 +94,8 @@ jobs:
       modules: ${{ inputs.integration-test-modules }}
       pre-run-script: ${{ inputs.integration-test-pre-run-script }}
       provider: ${{ inputs.integration-test-provider }}
+      channel: ${{ inputs.integration-test-provider-channel }}
+      juju-channel: ${{ inputs.integration-test-juju-channel }}
       series: ${{ inputs.integration-test-series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}

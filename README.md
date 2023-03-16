@@ -66,6 +66,8 @@ More information about Trivy testing can be found [here](TRIVY.MD).
 | integration-test-extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | integration-test-provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| integration-test-provider-channel | string | 1.26-strict/stable | Actions operator provider channel as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| integration-test-juju-channel | string | 2.9/stable | Actions operator juju channel as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | integration-test-modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for integration tests. |
