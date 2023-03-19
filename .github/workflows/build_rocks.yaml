@@ -61,14 +61,16 @@ jobs:
         uses: canonical/craft-actions/rockcraft-pack@main
         with:
           path: ${{ matrix.path }}
-      - name: Upload rock to ghcr.io
-        if: ${{ !github.event.pull_request.head.repo.fork }}
+      - name: Extract rock information
         run: |
           IMAGE_NAME=$(yq '.name' ${{ matrix.path }}/rockcraft.yaml)
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
-          skopeo --insecure-policy copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
+      - name: Upload rock to ghcr.io
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        run: |
+          skopeo --insecure-policy copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
       - name: Build rock as tarball
