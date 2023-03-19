@@ -76,14 +76,14 @@ jobs:
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(ls ${{ matrix.path }}/*.rock) docker-archive:/tmp/$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
-          echo "IMAGE_TAR=/tmp/$IMAGE_NAME.tar" >> $GITHUB_ENV
+          skopeo copy oci-archive:$(ls ${{ matrix.path }}/*.rock) docker-archive:./$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+          echo "IMAGE_TAR=/github/workspace/$IMAGE_NAME.tar" >> $GITHUB_ENV
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
         with:
           name: ${{ env.IMAGE_NAME }}
-          path: /tmp/${{ env.IMAGE_NAME }}.tar
+          path: ${{ env.IMAGE_NAME }}.tar
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@master
         with:
