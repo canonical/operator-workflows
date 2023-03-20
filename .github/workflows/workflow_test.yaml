@@ -9,8 +9,7 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/test/simple/'
-        
-  # TODO: Re-enable this, disable for faster testing.
+  # TODO: Disabled to faster testing. Reenable this.
   # pflake8:
   #   uses: ./.github/workflows/test.yaml
   #   secrets: inherit
@@ -38,33 +37,44 @@ jobs:
   #   with:
   #     working-directory: 'tests/workflows/integration/simple/'
   #     trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
-  # publish:
-  #   uses: ./.github/workflows/test_and_publish_charm.yaml
+  # integration-rock:
+  #   uses: ./.github/workflows/integration_test.yaml
   #   secrets: inherit
   #   needs:
   #     - integration
   #   with:
+  #     working-directory: 'tests/workflows/integration/test-rock/'
+  #     trivy-image-config: 'tests/workflows/integration/test-rock/trivy.yaml'
+  # publish:
+  #   uses: ./.github/workflows/test_and_publish_charm.yaml
+  #   secrets: inherit
+  #   needs:
+  #     - integration-rock
+  #   with:
   #     working-directory: tests/workflows/integration/test-upload-charm/
   #     trivy-image-config: 'tests/workflows/integration/test-upload-charm/trivy.yaml'
-  # check:
-  #   runs-on: ubuntu-latest
-  #   if: always()
-  #   needs:
-  #     - simple
-  #     - pflake8
-  #     - metadata_yaml
-  #     - dockerfile
-  #     - integration
-  #     - publish
-  #   steps:
-  #     - run: |
-  #         [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
-  #         [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
-  #         [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-  #         [ '${{ needs.pflake8.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-  #         [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata-lint failed && false)
-  #         [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
-  #         [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
-  #         [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
-  #         [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
-  #         [ '${{ needs.publish.result }}' = 'success' ] || (echo publish failed && false)
+  check:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - simple
+      # TODO: Disabled to faster testing. Reenable this.
+      # - pflake8
+      # - metadata_yaml
+      # - dockerfile
+      # - integration
+      # - integration-rock
+      # - publish
+    steps:
+      - run: |
+          [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
+          [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
+          [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+#          [ '${{ needs.pflake8.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+#          [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata-lint failed && false)
+#          [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
+#          [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
+#          [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
+#          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+#          [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
+#          [ '${{ needs.publish.result }}' = 'success' ] || (echo publish failed && false)
