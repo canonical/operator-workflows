@@ -63,9 +63,11 @@ jobs:
           echo "date=$(/bin/date -u "+%Y%W")" >> $GITHUB_OUTPUT
       - uses: actions/cache@v3
         id: cache
+        env:
+          ROCK_PATH: ${{ matrix.path }}
         with:
           path: ${{ matrix.path }}
-          key: rock-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles(${{ matrix.path }}/rockcraft.yaml) }}
+          key: rock-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles($ROCK_PATH/rockcraft.yaml) }}
       - name: Build rock
         if: steps.cache.outputs.cache-hit != 'true'
         uses: canonical/craft-actions/rockcraft-pack@main
