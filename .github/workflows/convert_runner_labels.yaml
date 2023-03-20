@@ -32,7 +32,6 @@ jobs:
         with:
           repository: canonical/operator-workflows
           path: operator-workflows
-          # TODO: Remove to change back to using main branch.
           ref: self-hosted-runners
       - uses: actions/setup-python@v4
         with:
