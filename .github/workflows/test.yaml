@@ -82,6 +82,7 @@ jobs:
       # TODO: For debugging.
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
         with:
           limit-access-to-actor: true
   get-runner-image:
@@ -155,6 +156,7 @@ jobs:
       # TODO: For debugging.
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
         with:
           limit-access-to-actor: true
   docker-lint:
@@ -184,6 +186,7 @@ jobs:
       # TODO: For debugging.
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3
+        if: ${{ failure() }}
         with:
           limit-access-to-actor: true
   metadata-lint:
