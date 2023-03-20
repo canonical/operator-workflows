@@ -205,7 +205,7 @@ jobs:
             .tox
             .mypy_cache
             venv
-        key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini') }}-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/pyproject.toml') }}
+          key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini') }}-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/pyproject.toml') }}
       - name: Install tox
         if: steps.cache.outputs.cache-hit != 'true'
         run: python3 -m pip install tox

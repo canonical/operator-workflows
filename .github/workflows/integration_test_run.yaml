@@ -177,7 +177,7 @@ jobs:
             /snap
             /var/snap
             /var/lib/snapd
-        key: snap-cache-${{ steps.get-date.outputs.date }}
+          key: snap-cache-${{ steps.get-date.outputs.date }}
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
@@ -226,7 +226,7 @@ jobs:
           path: |
             '**.charm'
             .tox
-        key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml') }}-${{ hashFiles('**/metadata.yaml') }}
+          key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml') }}-${{ hashFiles('**/metadata.yaml') }}
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
