@@ -49,11 +49,6 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      # TODO: For debugging.
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
       - run: mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
@@ -84,6 +79,11 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
+      # TODO: For debugging.
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
@@ -152,6 +152,11 @@ jobs:
         uses: lumaxis/shellcheck-problem-matchers@v1.1.2
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
+      # TODO: For debugging.
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
   docker-lint:
     name: Dockerfile lint
     needs: convert-runner-labels
@@ -176,6 +181,11 @@ jobs:
         id: report
         if: always()
         run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
+      # TODO: For debugging.
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
   metadata-lint:
     name: Lint metadata.yaml
     needs: convert-runner-labels

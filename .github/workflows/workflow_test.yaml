@@ -1,7 +1,9 @@
 name: Workflow test
 
 on:
-  pull_request:
+  # TODO: Change back to pull_request.
+  workflow_call:
+  # pull_request:
 
 jobs:
   simple:
