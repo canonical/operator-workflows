@@ -207,7 +207,7 @@ jobs:
             venv
             ~/.local/lib
             ~/.local/bin
-          key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini') }}-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/pyproject.toml') }}
+          key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini', '**/requirements.txt', '**/pyproject.toml') }}
       - name: Install tox
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
