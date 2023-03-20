@@ -205,7 +205,6 @@ jobs:
             .tox
             .mypy_cache
             venv
-            /usr/lib/python3/dist-packages
             ~/.local/lib
             ~/.local/bin
           key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini') }}-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/pyproject.toml') }}
