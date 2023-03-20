@@ -166,6 +166,18 @@ jobs:
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%W")" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            /snap
+            /var/snap
+            /var/lib/snapd
+        key: snap-cache-${{ steps.get-date.outputs.date }}
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
@@ -204,6 +216,17 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash ${{ inputs.pre-run-script }}
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%W")" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            '**.charm'
+            .tox
+        key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml') }}-${{ hashFiles('**/metadata.yaml') }}
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
