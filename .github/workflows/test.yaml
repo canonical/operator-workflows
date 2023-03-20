@@ -194,7 +194,20 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
+      - name: Get Date
+        id: get-date
+        run: |
+          echo "date=$(/bin/date -u "+%Y%W")" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            .tox
+            .mypy_cache
+            venv
+        key: unit-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/tox.ini') }}-${{ hashFiles('**/requirements.txt') }}-${{ hashFiles('**/pyproject.toml') }}
       - name: Install tox
+        if: steps.cache.outputs.cache-hit != 'true'
         run: python3 -m pip install tox
       - name: Run tests
         id: run-tests
