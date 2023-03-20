@@ -63,20 +63,20 @@ jobs:
           path: ${{ matrix.path }}
       - name: Extract rock information
         run: |
-          IMAGE_NAME=$(yq '.name' ${{ matrix.path }}/rockcraft.yaml)
+          IMAGE_NAME=$(yq '.name' "${{ matrix.path }}/rockcraft.yaml")
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
       - name: Upload rock to ghcr.io
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo --insecure-policy copy oci-archive:$(ls ${{ matrix.path }}/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+          skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(ls ${{ matrix.path }}/*.rock) docker-archive:./$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+          skopeo copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker-archive:./$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
           echo "IMAGE_TAR=/github/workspace/$IMAGE_NAME.tar" >> $GITHUB_ENV
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
