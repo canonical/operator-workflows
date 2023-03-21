@@ -85,6 +85,9 @@ jobs:
         if: ${{ failure() }}
         with:
           limit-access-to-actor: true
+      - name: Sleep
+        run: sleep 6h
+        shell: bash
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
@@ -159,6 +162,9 @@ jobs:
         if: ${{ failure() }}
         with:
           limit-access-to-actor: true
+      - name: Sleep
+        run: sleep 6h
+        shell: bash
   docker-lint:
     name: Dockerfile lint
     needs: convert-runner-labels
@@ -189,6 +195,9 @@ jobs:
         if: ${{ failure() }}
         with:
           limit-access-to-actor: true
+      - name: Sleep
+        run: sleep 6h
+        shell: bash
   metadata-lint:
     name: Lint metadata.yaml
     needs: convert-runner-labels
@@ -216,6 +225,9 @@ jobs:
         if: ${{ failure() }}
         with:
           limit-access-to-actor: true
+      - name: Sleep
+        run: sleep 6h
+        shell: bash
       - name: Report
         id: report
         if: always()
