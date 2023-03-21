@@ -61,32 +61,29 @@ jobs:
         uses: canonical/craft-actions/rockcraft-pack@main
         with:
           path: ${{ matrix.path }}
+      - name: Extract rock information
+        run: |
+          IMAGE_NAME=$(yq '.name' "${{ matrix.path }}/rockcraft.yaml")
+          IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
+          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
       - name: Upload rock to ghcr.io
         if: ${{ !github.event.pull_request.head.repo.fork }}
         run: |
-          IMAGE_NAME=$(yq '.name' ${{ matrix.path }}/rockcraft.yaml)
-          IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
-          skopeo --insecure-policy copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
-          echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
+          skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
       # so an artifact is published instead
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) docker-archive:/tmp/$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+          skopeo copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker-archive:./$IMAGE_NAME.tar:$IMAGE_NAME:${{ github.run_id }}
+          echo "IMAGE_TAR=/github/workspace/$IMAGE_NAME.tar" >> $GITHUB_ENV
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
         if: ${{ github.event.pull_request.head.repo.fork }}
         with:
-          name: ${{ matrix.image }}
-          path: /tmp/${{ matrix.image }}.tar
-      # Trivy requires an OCI type tar to run the scan
-      - name: Build rock as tarball
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        run: |
-          skopeo copy oci-archive:$(ls ${{ matrix.path }}/${{ matrix.image }}*.rock) dir:/tmp/$IMAGE_NAME.tar
-          echo "IMAGE_TAR=${{ matrix.image }}.tar" >> $GITHUB_ENV
+          name: ${{ env.IMAGE_NAME }}
+          path: ${{ env.IMAGE_NAME }}.tar
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@master
         with:
