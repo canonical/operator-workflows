@@ -218,7 +218,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: |
-            '**.charm'
+            '**/*.charm'
             .tox
           key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml', '**/metadata.yaml') }}
       - name: Run integration tests
