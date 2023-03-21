@@ -75,6 +75,14 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      channel:
+        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 1.26/stable
+      juju-channel:
+        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 2.9/stable
       series:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
@@ -212,6 +220,8 @@ jobs:
       owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
+      channel: ${{ inputs.channel }}
+      juju-channel: ${{ inputs.juju-channel }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
