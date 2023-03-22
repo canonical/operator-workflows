@@ -209,11 +209,16 @@ jobs:
         if: ${{ inputs.pre-run-script != '' }}
         run: bash ${{ inputs.pre-run-script }}
       - uses: actions/cache@v3
+        id: cache-integration
         with:
           path: |
             '**/*.charm'
             .tox
           key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml', '**/metadata.yaml') }}
+      - name: Pack charm
+        if: ${{ steps.cache-integration.outputs.cache-hit != 'true' }}
+        run: |
+          charmcraft pack
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
