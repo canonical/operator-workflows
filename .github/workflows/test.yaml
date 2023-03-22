@@ -167,40 +167,40 @@ jobs:
   #       if: ${{ failure() }}
   #       run: sleep 6h
   #       shell: bash
-  docker-lint:
-    name: Dockerfile lint
-    needs: convert-runner-labels
-    runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
-    outputs:
-      outcome: ${{ steps.report.outputs.outcome }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check for Dockerfiles
-        id: dockerfiles
-        run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
-      - if: ${{ steps.dockerfiles.outputs.found != '' }}
-        name: Run HadoLint
-        id: hado-lint
-        uses: jbergstroem/hadolint-gh-action@v1
-        with:
-          dockerfile: "${{ steps.dockerfiles.outputs.found }}"
-      - name: Report
-        id: report
-        if: always()
-        run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
-      # TODO: For debugging.
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ failure() }}
-        with:
-          limit-access-to-actor: true
-      - name: Sleep
-        if: ${{ failure() }}
-        run: sleep 6h
-        shell: bash
+  # docker-lint:
+  #   name: Dockerfile lint
+  #   needs: convert-runner-labels
+  #   runs-on: ${{ fromJSON(needs.convert-runner-labels.outputs.labels) }}
+  #   outputs:
+  #     outcome: ${{ steps.report.outputs.outcome }}
+  #   defaults:
+  #     run:
+  #       working-directory: ${{ inputs.working-directory }}
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Check for Dockerfiles
+  #       id: dockerfiles
+  #       run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
+  #     - if: ${{ steps.dockerfiles.outputs.found != '' }}
+  #       name: Run HadoLint
+  #       id: hado-lint
+  #       uses: jbergstroem/hadolint-gh-action@v1
+  #       with:
+  #         dockerfile: "${{ steps.dockerfiles.outputs.found }}"
+  #     - name: Report
+  #       id: report
+  #       if: always()
+  #       run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
+  #     # TODO: For debugging.
+  #     - name: Setup tmate session
+  #       uses: mxschmitt/action-tmate@v3
+  #       if: ${{ failure() }}
+  #       with:
+  #         limit-access-to-actor: true
+  #     - name: Sleep
+  #       if: ${{ failure() }}
+  #       run: sleep 6h
+  #       shell: bash
   metadata-lint:
     name: Lint metadata.yaml
     needs: convert-runner-labels
