@@ -214,7 +214,7 @@ jobs:
           path: |
             '**/*.charm'
             .tox
-          key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml', '**/metadata.yaml') }}
+          key: integration-cache-${{ steps.get-date.outputs.date }}-${{ hashFiles('**/charmcraft.yaml', '**/metadata.yaml', '**/actions.yaml', '**/config.yaml', '**/src') }}
       - name: Pack charm
         if: ${{ steps.cache-integration.outputs.cache-hit != 'true' }}
         run: |
