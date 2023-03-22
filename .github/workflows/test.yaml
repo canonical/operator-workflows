@@ -10,7 +10,7 @@ on:
       runner-labels:
         type: string
         description: The labels to select the runner in a JSON array.
-        default: '["self-hosted", "test-runner"]'
+        default: '["self-hosted"]'
     outputs:
       docker-lint-outcome:
         description: |
