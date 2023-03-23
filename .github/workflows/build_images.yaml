@@ -3,6 +3,11 @@ name: Build images
 on:
   workflow_call:
     inputs:
+      build-args:
+        description: |
+          List of build args to pass to the build image job.
+        type: string
+        default: ""
       owner:
         type: string
         description: Registry owner to push the built images
@@ -22,11 +27,10 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-      build-args:
-        description: |
-          List of build args to pass to the build image job.
-        type: string
-        default: ""
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
     outputs:
       images:
         description: List of images built
@@ -101,6 +105,7 @@ jobs:
         run: |
           echo "IMAGE_TAR=${{ matrix.image }}.tar" >> $GITHUB_ENV
       - name: Run Github Trivy Image Action
+        if: ${{ inputs.trivy-fs-enabled }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
