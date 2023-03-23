@@ -56,6 +56,11 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: '{}'
+      image-build-args:
+        description: |
+          List of build args to pass to the build image job.
+        type: string
+        default: ""
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -169,6 +174,7 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
+      build-args: ${{ inputs.image-build-args }}
   build-rocks:
     name: Build rock
     uses: ./.github/workflows/build_rocks.yaml
