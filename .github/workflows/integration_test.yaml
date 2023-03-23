@@ -58,9 +58,9 @@ on:
         default: '{}'
       image-build-args:
         description: |
-          Map of build args to pass to the build image job. This should be supplied in JSON format, i.e. '{"some_arg": "some_value"}'.
+          List of build args to pass to the build image job. This should be supplied in JSON format, i.e. '["some_arg=some_value"]'.
         type: string
-        default: '{}'
+        default: '[""]'
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
