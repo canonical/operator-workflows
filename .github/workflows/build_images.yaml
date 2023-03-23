@@ -22,6 +22,10 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+      build-args:
+        description: Map of build args to pass to the build image job. This should be supplied in JSON format, i.e. '{"some_arg": "some_value"}'
+        type: string
+        default: '{}'
     outputs:
       images:
         description: List of images built
@@ -60,6 +64,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           context: .
+          build-args: ${{ fromJSON(inputs.build-args) }}
           push: true
           tags: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
