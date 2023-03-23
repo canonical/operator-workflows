@@ -173,7 +173,6 @@ jobs:
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
-      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       working-directory: ${{ inputs.working-directory }}
       build-args: ${{ inputs.image-build-args }}
   build-rocks:
