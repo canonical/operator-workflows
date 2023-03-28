@@ -79,11 +79,6 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
-      # TODO: For debugging.
-      - name: Sleep
-        if: ${{ failure() }}
-        run: sleep 6h
-        shell: bash
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
@@ -152,11 +147,6 @@ jobs:
         uses: lumaxis/shellcheck-problem-matchers@v1.1.2
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
-      # TODO: For debugging.
-      - name: Sleep
-        if: ${{ failure() }}
-        run: sleep 6h
-        shell: bash
   docker-lint:
     name: Dockerfile lint
     needs: convert-runner-labels
@@ -181,11 +171,6 @@ jobs:
         id: report
         if: always()
         run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
-      # TODO: For debugging.
-      - name: Sleep
-        if: ${{ failure() }}
-        run: sleep 6h
-        shell: bash
   metadata-lint:
     name: Lint metadata.yaml
     needs: convert-runner-labels
@@ -207,11 +192,6 @@ jobs:
           python3 -m pip install check-jsonschema
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
-      # TODO: For debugging.
-      - name: Sleep
-        if: ${{ failure() }}
-        run: sleep 6h
-        shell: bash
       - name: Report
         id: report
         if: always()
