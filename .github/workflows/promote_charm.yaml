@@ -50,6 +50,7 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+          github_token: ${{ secrets.CHARMHUB_TOKEN }}
   publish-docs:
     if: ${{ github.event.inputs.destination-channel }} == 'latest/stable'
     name: Publish docs
@@ -68,6 +69,7 @@ jobs:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
+          github_token: ${{ secrets.CHARMHUB_TOKEN }}
       - name: Show index page
         if: steps.docs-exist.outputs.docs_exist == 'True'
         run: echo '${{ steps.publishDocumentation.outputs.index_url }}'
