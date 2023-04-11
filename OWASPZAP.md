@@ -119,10 +119,9 @@ def sendingRequest(msg, initiator, helper):  # noqa: N802
         initiator (int): the component that initiated the request
         helper (HttpSender): returns the HttpSender instance used to send the request
     Returns:
-        HttpMessage: returns HttpMessage updated
+        None
     """
     msg.getRequestHeader().setHeader("Some-Header", "Some-Value")
-    return msg
 
 
 def responseReceived(msg, initiator, helper):  # noqa: N802
@@ -168,10 +167,9 @@ def sendingRequest(msg, initiator, helper):  # noqa: N802
         initiator (int): the component that initiated the request
         helper (HttpSender): returns the HttpSender instance used to send the request
     Returns:
-        HttpMessage: returns HttpMessage updated
+        None
     """
     msg.setUserObject({"host": "indico.local"})
-    return msg
 
 
 def responseReceived(msg, initiator, helper):  # noqa: N802
@@ -202,7 +200,7 @@ def sendingRequest(msg, initiator, helper):  # noqa: N802
         initiator (int): the component that initiated the request
         helper (HttpSender): returns the HttpSender instance used to send the request
     Returns:
-        HttpMessage: returns HttpMessage updated
+        None
     """
     host = msg.getRequestHeader().getURI().getHost()
 
@@ -213,7 +211,6 @@ def sendingRequest(msg, initiator, helper):  # noqa: N802
 
     with open(log_filename, 'a') as f:
       f.write(msg.getRequestHeader().toString())
-    return msg
 
 
 def responseReceived(msg, initiator, helper):  # noqa: N802

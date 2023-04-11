@@ -3,6 +3,11 @@ name: Build images
 on:
   workflow_call:
     inputs:
+      build-args:
+        description: |
+          List of build args to pass to the build image job.
+        type: string
+        default: ""
       owner:
         type: string
         description: Registry owner to push the built images
@@ -60,6 +65,7 @@ jobs:
         if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           context: .
+          build-args: ${{ inputs.build-args }}
           push: true
           tags: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile

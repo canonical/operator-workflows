@@ -218,7 +218,7 @@ jobs:
           sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
-        run: bash ${{ inputs.pre-run-script }}
+        run: bash -xe ${{ inputs.pre-run-script }}
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
