@@ -31,7 +31,7 @@ on:
       integration-test-provider-channel:
         description: Actions operator provider channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
-        default: 1.26/stable
+        default: latest/stable
       integration-test-juju-channel:
         description: Actions operator juju channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
