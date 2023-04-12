@@ -24,6 +24,10 @@ on:
         description: Actions operator provider for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      integration-test-microk8s-addons:
+        description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
+        type: string
+        default: "storage dns rbac"
       integration-test-provider-channel:
         description: Actions operator provider channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -94,6 +98,7 @@ jobs:
       modules: ${{ inputs.integration-test-modules }}
       pre-run-script: ${{ inputs.integration-test-pre-run-script }}
       provider: ${{ inputs.integration-test-provider }}
+      microk8s-addons: ${{ inputs.integration-test-microk8s-addons }}
       channel: ${{ inputs.integration-test-provider-channel }}
       juju-channel: ${{ inputs.integration-test-juju-channel }}
       series: ${{ inputs.integration-test-series }}
