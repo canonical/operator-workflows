@@ -331,7 +331,6 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          base_branch: main
   lib-check:
     name: Check libraries
     runs-on: ubuntu-22.04
