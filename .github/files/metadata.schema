@@ -7,8 +7,9 @@
         "description" : {"type" : "string"},
         "docs" : {"type" : "string"},
         "maintainers" : {"type" : "array", "items": {"type": "string"}, "minItems": 1},
+        "source" : {"type" : "string"},
         "issues" : {"type" : "string"},
         "tags" : {"type" : "array", "items": {"type": "string"}}
     },
-    "required": ["name", "display-name", "summary", "description", "docs", "maintainers", "issues"]
+    "required": ["description", "display-name", "docs", "issues", "maintainers", "name", "source", "summary"]
 }
