@@ -20,5 +20,4 @@ header:
     - 'CODEOWNERS'
     - 'icon.svg'
     - 'LICENSE'
-    - 'pyproject.toml'
   comment: on-failure
