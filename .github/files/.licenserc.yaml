@@ -11,6 +11,7 @@ header:
     - '.github/**'
     - '**/*.j2'
     - '**/*.md'
+    - '**/*.txt'
     - '.codespellignore'
     - '.copier-answers.yml'
     - '.flake8'
