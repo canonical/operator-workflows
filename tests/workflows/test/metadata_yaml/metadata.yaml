@@ -1,3 +1,6 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: charm-1
 display-name: charm 1
 summary: summary 1

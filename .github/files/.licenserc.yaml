@@ -20,4 +20,5 @@ header:
     - 'CODEOWNERS'
     - 'icon.svg'
     - 'LICENSE'
+    - 'trivy.yaml'
   comment: on-failure
