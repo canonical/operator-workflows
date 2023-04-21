@@ -18,6 +18,7 @@ header:
     - '.jujuignore'
     - '.gitignore'
     - '.licenserc.yaml'
+    - '.trivyignore'
     - 'CODEOWNERS'
     - 'icon.svg'
     - 'LICENSE'

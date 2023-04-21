@@ -1,3 +1,6 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 FROM ubuntu:latest
 
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections && \
