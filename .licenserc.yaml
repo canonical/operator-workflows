@@ -8,7 +8,6 @@ header:
   paths:
     - '**'
   paths-ignore:
-    - '.github/**'
     - '**/*.j2'
     - '**/*.md'
     - '**/*.txt'
