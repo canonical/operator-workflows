@@ -1,3 +1,6 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Test and publish charm
 
 # On push to a "special" branch, we:

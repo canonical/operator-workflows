@@ -1,3 +1,6 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 # this workflow requires to provide JIRA webhook URL via JIRA_URL GitHub Secret
 # read more: https://support.atlassian.com/cloud-automation/docs/jira-automation-triggers/#Automationtriggers-Incomingwebhook
 # original code source: https://github.com/beliaev-maksim/github-to-jira-automation

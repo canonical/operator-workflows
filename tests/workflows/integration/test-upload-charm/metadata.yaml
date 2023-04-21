@@ -1,25 +1,19 @@
-name: test-upload
- 
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: test-upload 
 display-name: Test Upload Charm
-
 summary: A simple charm for testing charm uploads.
-
 description: A simple charm for testing charm uploads.
-
 docs: ""
-
 maintainers: [""]
-
 issues: ""
-
 charmhub:
   api-url: https://api.staging.charmhub.io
   storage-url: https://storage.staging.snapcraftcontent.com
-
 containers:
   test:
     resource: test-image
-
 resources:
   test-image:
     type: oci-image
