@@ -340,10 +340,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check .licenserc.yaml exists
-        id: metadata-yaml
+        id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Get default license configuration
-        if: steps.metadata-yaml.outputs.exists == 'false'
+        if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
           curl -fLsSo $PWD/.licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
       - name: Check license headers
