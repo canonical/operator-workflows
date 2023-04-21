@@ -349,7 +349,7 @@ jobs:
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
         with:
-          config: $PWD/.licenserc.yaml
+          config: .licenserc.yaml
   lib-check:
     name: Check libraries
     runs-on: ubuntu-22.04
