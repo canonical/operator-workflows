@@ -1,0 +1,53 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Auto-update Charm Libraries
+on:
+  workflow_call:
+    inputs:
+      charm-path:
+        description: "Path to the charm we want to publish. Defaults to the current working directory."
+        default: '.'
+        required: false
+        type: string
+    secrets:
+      CHARMHUB_TOKEN:
+        required: true
+      OBSERVABILITY_NOCTUA_TOKEN:
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-lib:
+    name: Check libraries
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check libs
+        run: |
+          sudo snap install charmcraft --classic --channel latest/stable
+          cd ${{ inputs.charm-path }}
+          charmcraft fetch-lib
+        env:
+          CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
+      - name: Create a PR for local changes
+        uses: peter-evans/create-pull-request@v4.2.3
+        id: cpr
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update charm libraries"
+          committer: "Github Actions <github-actions@github.com>"
+          author: "Github Actions <github-actions@github.com>"
+          title: "Update charm libraries"
+          body: |
+            Automated action to fetch latest version of charm libraries. The branch of this PR 
+            will be wiped during the next check. Unless you really know what you're doing, you 
+            most likely don't want to push any commits to this branch.
+          branch: "chore/auto-libs"
+          delete-branch: true
