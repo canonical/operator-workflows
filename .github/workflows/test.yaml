@@ -345,7 +345,7 @@ jobs:
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
-          curl -fLsSo $PWD/.licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/check-license-headers/.github/files/.licenserc.yaml
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/check-license-headers/.github/files/.licenserc.yaml
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
         with:
