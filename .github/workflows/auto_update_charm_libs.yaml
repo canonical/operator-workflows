@@ -4,17 +4,6 @@
 name: Auto-update Charm Libraries
 on:
   workflow_call:
-    inputs:
-      charm-path:
-        description: "Path to the charm we want to publish. Defaults to the current working directory."
-        default: '.'
-        required: false
-        type: string
-    secrets:
-      CHARMHUB_TOKEN:
-        required: true
-      OBSERVABILITY_NOCTUA_TOKEN:
-        required: true
 
 permissions:
   contents: write
