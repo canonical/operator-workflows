@@ -1,3 +1,6 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Tests
 
 on:
@@ -331,6 +334,25 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+  license-headers-check:
+    name: Check license headers
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check .licenserc.yaml exists
+        id: licenserc-yaml
+        run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+      - name: Get default license configuration
+        if: steps.licenserc-yaml.outputs.exists == 'false'
+        run: |
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
+      - name: Check license headers
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: .licenserc.yaml
   lib-check:
     name: Check libraries
     runs-on: ubuntu-22.04
@@ -353,6 +375,7 @@ jobs:
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
+      - license-headers-check
     if: always()
     steps:
       - run: |
@@ -363,3 +386,4 @@ jobs:
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
+          [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
