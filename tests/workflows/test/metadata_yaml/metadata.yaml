@@ -6,6 +6,7 @@ display-name: charm 1
 summary: summary 1
 description: description 1
 docs: docs 1
+source: ""
 maintainers:
   - maintainer 1
 issues: issues 1
