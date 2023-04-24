@@ -23,9 +23,11 @@ header:
     - '.gitignore'
     - '.licenserc.yaml'
     - '.trivyignore'
+    - '.woke.yaml'
     - '.woke.yml'
     - 'CODEOWNERS'
     - 'icon.svg'
     - 'LICENSE'
     - 'trivy.yaml'
+    - 'zap_rules.tsv'
   comment: on-failure
