@@ -8,6 +8,7 @@ header:
       - 'lib/**'
     comment: on-failure
   - license:
+    spdx-id: Apache-2.0
     copyright-owner: Canonical Ltd.
     content: |
       Copyright [year] [owner]
