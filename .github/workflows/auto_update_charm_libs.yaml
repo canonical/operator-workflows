@@ -21,7 +21,6 @@ jobs:
       - name: Check libs
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
-          cd ${{ inputs.charm-path }}
           charmcraft fetch-lib
         env:
           CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
