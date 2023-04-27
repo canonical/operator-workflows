@@ -28,7 +28,7 @@ jobs:
         uses: peter-evans/create-pull-request@v4.2.3
         id: cpr
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.REPO_SCOPED_TOKEN }}
           commit-message: "chore: update charm libraries"
           committer: "Github Actions <github-actions@github.com>"
           author: "Github Actions <github-actions@github.com>"
