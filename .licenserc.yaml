@@ -5,22 +5,22 @@ header:
     content: |
       Copyright [year] [owner]
       See LICENSE file for licensing details.
-    paths:
-      - '**'
-    paths-ignore:
-      - '.github/files/**'
-      - '**/*.j2'
-      - '**/*.md'
-      - '**/*.txt'
-      - '**/.codespellignore'
-      - '**/.dockerignore'
-      - '**/.flake8'
-      - '**/.jujuignore'
-      - '**/.gitignore'
-      - '**/.licenserc.yaml'
-      - '**/.trivyignore'
-      - '**/CODEOWNERS'
-      - '**/icon.svg'
-      - '**/LICENSE'
-      - '**/trivy.yaml'
-    comment: on-failure
+  paths:
+    - '**'
+  paths-ignore:
+    - '.github/files/**'
+    - '**/*.j2'
+    - '**/*.md'
+    - '**/*.txt'
+    - '**/.codespellignore'
+    - '**/.dockerignore'
+    - '**/.flake8'
+    - '**/.jujuignore'
+    - '**/.gitignore'
+    - '**/.licenserc.yaml'
+    - '**/.trivyignore'
+    - '**/CODEOWNERS'
+    - '**/icon.svg'
+    - '**/LICENSE'
+    - '**/trivy.yaml'
+  comment: on-failure
