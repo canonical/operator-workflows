@@ -32,4 +32,5 @@ header:
     - 'LICENSE'
     - 'trivy.yaml'
     - 'zap_rules.tsv'
+    - 'lib/**'
   comment: on-failure
