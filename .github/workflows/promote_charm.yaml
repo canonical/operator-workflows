@@ -35,24 +35,6 @@ jobs:
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
           fi
-          sudo snap install charmcraft --classic --channel latest/stable
-          name=$(cat metadata.yaml | yq .name)
-          track_statuses=$(charmcraft status $name --format json)
-
-          is_channel_open() {
-            track=$(echo $1 | cut -d "/" -f 1)
-            status=$(echo $track_statuses | jq -r ".[] | select(.track == \"$track\") | .mappings[] | \
-              select(.base.name == \"${{ needs.get-runner-image.outputs.name }}\" and .base.channel == \"${{ needs.get-runner-image.outputs.channel }}\" and .base.architecture == \"${{ inputs.base-architecture }}\") | \
-              .releases[] | select(.channel == \"$1\").status")
-            if [ "$status" != "open" ]; then
-              echo "::error::Channel $1 does not exist or is not open"
-              return 1
-            fi
-            return 0
-          }
-
-          is_channel_open ${{ inputs.origin-channel }}
-          is_channel_open ${{ inputs.destination-channel }}
         env:
           CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
   promote-charm:
