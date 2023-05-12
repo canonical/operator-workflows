@@ -3,13 +3,6 @@
 
 name: Test and publish charm
 
-# On push to a "special" branch, we:
-# * always publish to charmhub at latest/edge/branchname
-# * always run tests
-# where a "special" branch is one of main/master or track/**, as
-# by convention these branches are the source for a corresponding
-# charmhub edge channel.
-
 on:
   workflow_call:
     inputs:
