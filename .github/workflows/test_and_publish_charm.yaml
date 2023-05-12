@@ -13,6 +13,10 @@ name: Test and publish charm
 on:
   workflow_call:
     inputs:
+      channel:
+        description: Destination channel to push the charm to
+        type: string
+        default: 'latest/edge'
       integration-test-extra-arguments:
         description: Additional arguments to pass to the integration tests
         type: string
@@ -130,21 +134,12 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  select-channel:
-    name: Select target channel
-    runs-on: ubuntu-22.04
-    outputs:
-      channel: ${{ steps.channel.outputs.name }}
-    steps:
-      - name: Select charmhub channel
-        id: channel
-        uses: canonical/charming-actions/channel@2.2.2
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
-    needs: [ lib-check, tests, integration-tests, select-channel ]
+    needs: [ lib-check, tests, integration-tests ]
     with:
-      channel: ${{ needs.select-channel.outputs.channel }}
+      channel: ${{ inputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
       working-directory: ${{ inputs.working-directory }}
     secrets: inherit
