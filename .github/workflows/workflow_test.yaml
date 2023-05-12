@@ -8,24 +8,28 @@ on:
 
 jobs:
   simple:
+    strategy:
+      matrix:
+        self-hosted-runner: [true, false]
     uses: ./.github/workflows/test.yaml
     secrets: inherit
     with:
-      working-directory: 'tests/workflows/integration/test-upload-charm/'
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      self-hosted-runner: ${{ matrix.version }
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
-      working-directory: 'tests/workflows/integration/test-upload-charm/'
-      trivy-image-config: 'tests/workflows/integration/test-upload-charm/trivy.yaml'
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     needs:
       - integration
     with:
-      working-directory: 'tests/workflows/integration/test-rock/'
-      trivy-image-config: 'tests/workflows/integration/test-rock/trivy.yaml'
+      working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
   publish:
     if: ${{ !github.event.pull_request.head.repo.fork }}
     uses: ./.github/workflows/publish_charm.yaml
