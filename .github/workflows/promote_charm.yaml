@@ -21,10 +21,44 @@ jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
+  validate-channels:
+    name: Validate channels
+    needs: get-runner-image
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          set -e
+          origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
+          destination_track=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 1)
+          if [ $origin_track != $destination_track ]; then
+            echo "::error::Destination track $destination_track does not match origin track $origin_track"
+            exit 1
+          fi
+          sudo snap install charmcraft --classic --channel latest/stable
+          name=$(cat metadata.yaml | yq .name)
+          track_statuses=$(charmcraft status $name --format json)
+
+          is_channel_open() {
+            track=$(echo $1 | cut -d "/" -f 1)
+            status=$(echo $track_statuses | jq -r ".[] | select(.track == \"$track\") | .mappings[] | \
+              select(.base.name == \"${{ needs.get-runner-image.outputs.name }}\" and .base.channel == \"${{ needs.get-runner-image.outputs.channel }}\" and .base.architecture == \"${{ inputs.base-architecture }}\") | \
+              .releases[] | select(.channel == \"$1\").status")
+            if [ "$status" != "open" ]; then
+              echo "::error::Channel $1 does not exist or is not open"
+              return 1
+            fi
+            return 0
+          }
+
+          is_channel_open ${{ inputs.origin-channel }}
+          is_channel_open ${{ inputs.destination-channel }}
+        env:
+          CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
   promote-charm:
     name: Promote charm
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: get-runner-image
+    needs: [validate-channels, get-runner-image]
     steps:
       - uses: actions/checkout@v3
       - name: Release charm to channel
