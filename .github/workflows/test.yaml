@@ -9,7 +9,11 @@ on:
       working-directory:
         type: string
         description: The working directory for jobs
-        default: './'
+        default: "./"
+      self-hosted-runner:
+        type: boolean
+        description: Whether to use self-hosted runners to run the jobs.
+        default: false
 
 concurrency:
   group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
@@ -18,7 +22,7 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -53,7 +57,7 @@ jobs:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: '. -c /tmp/config.yml'
+          woke-args: ". -c /tmp/config.yml"
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
@@ -62,7 +66,7 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -126,7 +130,7 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -143,7 +147,7 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -161,7 +165,7 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || needs.get-runner-image.outputs.runs-on }}
     needs: get-runner-image
     defaults:
       run:
@@ -283,7 +287,7 @@ jobs:
           path: report.json
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -303,7 +307,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
   license-headers-check:
     name: Check license headers
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -322,7 +326,7 @@ jobs:
           config: .licenserc.yaml
   lib-check:
     name: Check libraries
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
@@ -333,7 +337,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   required_status_checks:
     name: Required Test Status Checks
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.self-hosted-runner && 'self-hosted' || 'ubuntu-22.04' }}
     needs:
       - draft-publish-docs
       - docker-lint
