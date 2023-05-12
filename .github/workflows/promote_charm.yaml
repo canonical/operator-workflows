@@ -35,8 +35,6 @@ jobs:
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
           fi
-        env:
-          CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
   promote-charm:
     name: Promote charm
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
