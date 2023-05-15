@@ -36,3 +36,4 @@ jobs:
             will be wiped during the next check. Unless you really know what you're doing, you 
             most likely don't want to push any commits to this branch.
           upsert: true
+          ignore-no-changes: true
