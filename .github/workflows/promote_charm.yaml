@@ -21,10 +21,24 @@ jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
+  validate-channels:
+    name: Validate channels
+    needs: get-runner-image
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          set -e
+          origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
+          destination_track=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 1)
+          if [ $origin_track != $destination_track ]; then
+            echo "::error::Destination track $destination_track does not match origin track $origin_track"
+            exit 1
+          fi
   promote-charm:
     name: Promote charm
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: get-runner-image
+    needs: [validate-channels, get-runner-image]
     steps:
       - uses: actions/checkout@v3
       - name: Release charm to channel
