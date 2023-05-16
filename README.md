@@ -65,6 +65,7 @@ More information about Trivy testing can be found [here](TRIVY.MD).
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| channel | string | latest/edge | Destination channel to push the charm to
 | integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | integration-test-extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
@@ -88,6 +89,7 @@ The runner image will be set to the value of `bases[0].build-on[0]` in the `char
 |--------------------|----------|--------------------|-------------------|
 | destination-channel | string | "" | Destination channel |
 | origin-channel | string | "" | Origin channel |
+| architecture | string | amd64 | Charm architecture |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
