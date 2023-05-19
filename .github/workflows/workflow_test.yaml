@@ -15,7 +15,7 @@ jobs:
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
-      self-hosted-runner: ${{ matrix.version }
+      self-hosted-runner: ${{ matrix.self-hosted-runner}
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
