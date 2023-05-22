@@ -9,6 +9,7 @@ on:
 jobs:
   simple:
     strategy:
+      max-parallel: 1
       matrix:
         self-hosted-runner: [true, false]
     uses: ./.github/workflows/test.yaml
