@@ -42,6 +42,7 @@ The following workflows are available:
 | juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| tmate-debugging | bool | false | Enable tmate debugging after integration test failure. |
 | trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
 | trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
 | trivy-fs-ref | string | "." | Target directory to do the Trivy testing |

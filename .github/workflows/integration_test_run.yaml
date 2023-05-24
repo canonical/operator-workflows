@@ -114,6 +114,10 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      tmate-debugging:
+        description: Use tmate debugging session on failure.
+        type: boolean
+        default: false
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -244,6 +248,10 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+      - name: Tmate debugging session
+        if: ${{ failure() &&  }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 30
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()

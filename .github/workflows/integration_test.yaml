@@ -103,6 +103,10 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      tmate-debugging:
+        description: Use tmate debugging session on failure.
+        type: boolean
+        default: false
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -240,6 +244,7 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      tmate-debugging: ${{ inputs.tmate-debugging }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
