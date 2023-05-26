@@ -84,7 +84,7 @@ jobs:
           echo "External Images: $IMAGES"
           echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   publish-external-images:
-    name: Push Externam Images to Charmhub
+    name: Push External Images to Charmhub
     runs-on: ubuntu:latest
     needs: [ lookup-external-images ]
     if: ${{ needs.lookup-external-images.outputs.images != '[]' }}
