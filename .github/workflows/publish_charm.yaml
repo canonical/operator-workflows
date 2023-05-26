@@ -63,6 +63,52 @@ jobs:
           docker pull $image
           imageId=$(docker images $image --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=trace
+  lookup-external-images:
+    name: Lookup External Images
+    runs-on: ubuntu:latest
+    outputs:
+      images: ${{ env.IMAGES }}
+    steps:
+      - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+      - name: Extract External Images
+        run: |
+          IMAGES=$(yq -c '.resources | to_entries | map(select(.value.type == "oci-image" and .value."upstream-source")) | map(.key)' metadata.yaml)
+          echo "External Images: $IMAGES"
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+  publish-external-images:
+    name: Push Externam Images to Charmhub
+    needs: [ lookup-external-images ]
+    if: ${{ needs.lookup-external-images.outputs.images != '[]' }}
+    strategy:
+      matrix:
+        image: ${{ fromJSON(needs.lookup-external-images.outputs.images) }}
+    steps:
+      - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+      - name: Publish image
+        env:
+          CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
+        run: |
+          image=${{ matrix.image }}
+          charmName=$(yq '.name' metadata.yaml)
+          docker pull $image
+          imageId=$(docker images $image --format "{{.ID}}")
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=trace
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}

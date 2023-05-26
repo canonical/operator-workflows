@@ -19,3 +19,8 @@ resources:
   test-image:
     type: oci-image
     description: Test image
+  external-image:
+    type: oci-image
+    description: Test external image
+    auto-fetch: true
+    upstream-source: ubuntu:latest
