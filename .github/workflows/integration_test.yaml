@@ -103,10 +103,14 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
-      tmate-debugging:
-        description: Use tmate debugging session on failure.
+      tmate-debug:
+        description: Use tmate debugging session on integration test failure.
         type: boolean
         default: false
+      tmate-timeout:
+        description: Timeout in minutes to keep tmate debugging session.
+        type: number
+        default: 30
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -244,7 +248,8 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
-      tmate-debugging: ${{ inputs.tmate-debugging }}
+      tmate-debug: ${{ inputs.tmate-debug }}
+      tmate-timeout: ${{ inputs.tmate-timeout }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
