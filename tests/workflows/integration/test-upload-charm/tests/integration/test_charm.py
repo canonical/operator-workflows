@@ -16,7 +16,10 @@ async def test_build_and_deploy(ops_test: OpsTest, pytestconfig):
     app_name = "test"
     assert ops_test.model
     charm = await ops_test.build_charm(".")
-    resources = {"test-image": pytestconfig.getoption("--test-image")}
+    resources = {
+        "test-image": pytestconfig.getoption("--test-image"),
+        "external-image": "ubuntu:latest"
+    }
 
     await asyncio.gather(
         ops_test.model.deploy(

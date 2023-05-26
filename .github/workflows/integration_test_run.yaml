@@ -201,7 +201,8 @@ jobs:
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             docker load < ${image_name}/${image_name}.tar
-            docker push localhost:32000/${image_name}:latest
+            docker tag ${image_name}:${{ github.run_id }} localhost:32000/${image_name}:${{ github.run_id }}
+            docker push localhost:32000/${image_name}:${{ github.run_id }}
           done
       - name: Configure GHCR in microk8s
         if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
@@ -229,7 +230,7 @@ jobs:
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
-              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
+              args="${args} --${image_name}-image localhost:32000/${image_name}:${{ github.run_id }}"
             else
               args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
             fi
