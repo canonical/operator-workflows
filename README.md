@@ -61,7 +61,7 @@ More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 More information about Trivy testing can be found [here](TRIVY.MD).
 
-* test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
+* test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel). External OCI image resources (resources with `upstream-source` defined) will also be downloaded from the upstream source and uploaded to the Charmhub. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
