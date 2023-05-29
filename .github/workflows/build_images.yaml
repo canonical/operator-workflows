@@ -83,7 +83,7 @@ jobs:
         with:
           context: .
           file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
-          tags: localhost:32000/${{ matrix.image }}:latest
+          tags: localhost:32000/${{ matrix.image }}:${{ github.run_id }}
           outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
       - name: Upload image artifact
         uses: actions/upload-artifact@v3

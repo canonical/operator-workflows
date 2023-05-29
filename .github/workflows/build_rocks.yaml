@@ -79,7 +79,7 @@ jobs:
       - name: Build rock as tarball
         if: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          skopeo copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker-archive:./$IMAGE_NAME.tar:localhost:32000/$IMAGE_NAME:latest
+          skopeo copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker-archive:./$IMAGE_NAME.tar:localhost:32000/$IMAGE_NAME:${{ github.run_id }}
           echo "IMAGE_TAR=/github/workspace/$IMAGE_NAME.tar" >> $GITHUB_ENV
       - name: Upload image artifact
         uses: actions/upload-artifact@v3
