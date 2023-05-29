@@ -12,6 +12,7 @@ header:
     - '**/*.j2'
     - '**/*.md'
     - '**/*.txt'
+    - '**/*.xml'
     - '**/.codespellignore'
     - '**/.dockerignore'
     - '**/.flake8'
