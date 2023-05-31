@@ -79,7 +79,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.2.2
+        uses: canonical/charming-actions/check-libraries@2.3.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -123,7 +123,8 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.2.2
+      - uses: canonical/charming-actions/release-libraries@2.3.0
+        name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
