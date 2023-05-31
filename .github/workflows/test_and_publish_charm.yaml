@@ -68,6 +68,22 @@ on:
         default: "./"
 
 jobs:
+  branch-up-to-date-check-enabled:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get_branch_protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+          repo: indico-operator
+          owner: canonical
+          branch: main
+      - run: |
+          if [ ${{ fromJson(steps.get_branch_protection.outputs.data).strict }} != "true" ]; then
+            exit 1
+          fi
   lib-check:
     # This job is the precondition of all jobs that need the Charmhub token.
     # By disabling this job on forked repositories, we can achieve
@@ -112,7 +128,7 @@ jobs:
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-22.04
-    needs: [ lib-check, tests, integration-tests ]
+    needs: [ branch-up-to-date-check-enabled, lib-check, tests, integration-tests ]
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
@@ -131,7 +147,7 @@ jobs:
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
-    needs: [ lib-check, tests, integration-tests ]
+    needs: [ branch-up-to-date-check-enabled, lib-check, tests, integration-tests ]
     with:
       channel: ${{ inputs.channel }}
       images: ${{ needs.integration-tests.outputs.images }}
