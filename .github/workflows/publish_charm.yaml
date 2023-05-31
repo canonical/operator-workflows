@@ -18,10 +18,6 @@ on:
         description: The working directory for jobs
         default: "./"
 
-env:
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-
 jobs:
   get-runner-image:
     name: Get runner image
@@ -48,21 +44,15 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: sudo snap install charmcraft --classic
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
+          imageFile=${image_name}/${image_name}.tar
           charmName=$(yq '.name' metadata.yaml)
-          docker pull $image
-          imageId=$(docker images $image --format "{{.ID}}")
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=trace
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=$imageFile --verbosity=trace
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
