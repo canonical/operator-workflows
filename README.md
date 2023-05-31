@@ -63,25 +63,12 @@ More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 More information about Trivy testing can be found [here](TRIVY.MD).
 
-* test_and_publish_charm: Builds and publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
+* test_and_publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
-| channel | string | latest/edge | Destination channel to push the charm to
-| integration-test-extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
-| integration-test-extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
-| integration-test-pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
-| integration-test-provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| integration-test-microk8s-addons | string | "storage dns rbac" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
-| integration-test-provider-channel | string | latest/stable | Actions operator provider channel as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| integration-test-juju-channel | string | 2.9/stable | Actions operator juju channel as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| integration-test-series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
-| integration-test-modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
-| setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for integration tests. |
-| trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
-| trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
-| trivy-fs-ref | string | "." | Target directory to do the Trivy testing |
-| trivy-image-config | string | "" | Trivy YAML configuration for image type |
+| channel | string | latest/edge | Destination channel to push the charm to |
+| working-directory | string | "./" | Directory where jobs should be executed |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 

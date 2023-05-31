@@ -10,58 +10,6 @@ on:
         description: Destination channel to push the charm to
         type: string
         default: 'latest/edge'
-      integration-test-extra-arguments:
-        description: Additional arguments to pass to the integration tests
-        type: string
-      integration-test-extra-test-matrix:
-        description: Additional mapping of test matrices to pass to the integration tests in JSON format, i.e. '{"extras":["foo","bar"]}'
-        type: string
-        default: '{}'
-      integration-test-pre-run-script:
-        description: Path to the bash script to be run before the integration tests
-        type: string
-      integration-test-provider:
-        description: Actions operator provider for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: microk8s
-      integration-test-microk8s-addons:
-        description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
-        type: string
-        default: "storage dns rbac"
-      integration-test-provider-channel:
-        description: Actions operator provider channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: latest/stable
-      integration-test-juju-channel:
-        description: Actions operator juju channel for the integration tests as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: 2.9/stable
-      integration-test-series:
-        description: List of series to run the integration tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
-        type: string
-        default: '[""]'
-      integration-test-modules:
-        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
-        type: string
-        default: '[""]'
-      setup-devstack-swift:
-        description: Use setup-devstack-swift action to prepare a swift server for integration tests.
-        type: boolean
-        default: false
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
-      trivy-fs-enabled:
-        type: boolean
-        description: Whether Trivy testing of type fs is enabled
-        default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
-      trivy-image-config:
-        type: string
-        description: Trivy YAML configuration for image testing that is checked in as part of the repo
       working-directory:
         type: string
         description: The working directory for jobs
@@ -84,47 +32,6 @@ jobs:
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
             exit 1
           fi
-  lib-check:
-    # This job is the precondition of all jobs that need the Charmhub token.
-    # By disabling this job on forked repositories, we can achieve
-    # disabling the publishing to Charmhub action on forked repositories
-    # while still running tests on push events
-    if: github.repository_owner == 'canonical'
-    name: Check libraries
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v3
-      - name: Check libs
-        uses: canonical/charming-actions/check-libraries@2.3.0
-        with:
-          credentials: ${{ secrets.CHARMHUB_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-  tests:
-    name: Run tests
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    with:
-      working-directory: ${{ inputs.working-directory }}
-  integration-tests:
-    name: Run integration tests
-    uses: ./.github/workflows/integration_test.yaml
-    with:
-      extra-arguments: ${{ inputs.integration-test-extra-arguments }}
-      extra-test-matrix: ${{ inputs.integration-test-extra-test-matrix }}
-      modules: ${{ inputs.integration-test-modules }}
-      pre-run-script: ${{ inputs.integration-test-pre-run-script }}
-      provider: ${{ inputs.integration-test-provider }}
-      microk8s-addons: ${{ inputs.integration-test-microk8s-addons }}
-      channel: ${{ inputs.integration-test-provider-channel }}
-      juju-channel: ${{ inputs.integration-test-juju-channel }}
-      series: ${{ inputs.integration-test-series }}
-      setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
-      trivy-fs-config: ${{ inputs.trivy-fs-config }}
-      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
-      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
-      trivy-image-config: ${{ inputs.trivy-image-config }}
-      working-directory: ${{ inputs.working-directory }}
-    secrets: inherit
   publish-charm:
     name: Publish
     uses: ./.github/workflows/publish_charm.yaml
