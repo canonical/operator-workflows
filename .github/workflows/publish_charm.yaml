@@ -24,6 +24,24 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
     with:
       working-directory: ${{ inputs.working-directory }}
+  release-charm-libs:
+    name: Release charm libs
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+      - uses: canonical/charming-actions/release-libraries@2.3.0
+        name: Release libs
+        with:
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
@@ -44,8 +62,10 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: sudo snap install charmcraft --classic
-      - name: Download all artifacts
+      - name: Download artifact
         uses: actions/download-artifact@v3
+        with:
+          name: ${image_name}.tar
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -68,9 +88,17 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
+      - name: Get charm name
+        id: get-charm-name
+        run: echo "charm_name=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
         with:
+          built-charm-path: ${{ steps.get-charm-name.outputs.charm_name }}.tar
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}
