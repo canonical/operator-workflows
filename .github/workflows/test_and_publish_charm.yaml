@@ -30,6 +30,7 @@ jobs:
           branch: main
       - run: |
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
+            echo "::error::Strict checks are not enabled for this repository"
             exit 1
           fi
   publish-charm:
