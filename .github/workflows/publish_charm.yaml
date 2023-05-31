@@ -17,6 +17,8 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+    permissions:
+      contents: read
 
 jobs:
   get-runner-image:
@@ -42,10 +44,25 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+  get-pr-number:
+    name: Get PR triggering the change
+    runs-on: ubuntu-22.04
+    outputs:
+      pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get-issue-number
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
+          repo: context.repo.repo
+          owner: context.repo.owner
+          commit_sha: context.sha
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: get-runner-image
+    needs: [get-pr-number, get-runner-image]
     if: ${{ inputs.images != '[]' }}
     strategy:
       matrix:
@@ -62,10 +79,24 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: sudo snap install charmcraft --classic
-      - name: Download artifact
-        uses: actions/download-artifact@v3
+      - name: Download docker artifacts
+        uses: dawidd6/action-download-artifact@v2
         with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          if_no_artifact_found: warn
           name: ${image_name}.tar
+          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          workflow: build_images.yaml
+          workflow_conclusion: success
+      - name: Download rock artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          if_no_artifact_found: warn
+          name: ${image_name}.tar
+          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          workflow: build_rocks.yaml
+          workflow_conclusion: success
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -76,7 +107,7 @@ jobs:
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-runner-image, publish-images]
+    needs: [get-pr-number, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -91,10 +122,14 @@ jobs:
       - name: Get charm name
         id: get-charm-name
         run: echo "charm_name=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
-      - name: Download artifact
-        uses: actions/download-artifact@v3
+      - name: Download charm artifact
+        uses: dawidd6/action-download-artifact@v2
         with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
           name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
+          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          workflow: build_rintegration_test.yaml
+          workflow_conclusion: success
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
         with:
