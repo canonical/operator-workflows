@@ -299,5 +299,5 @@ jobs:
       - name: Upload charm artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.integration-tests.outputs.CHARM_NAME }}
-          path: ${{ steps.integration-tests.outputs.CHARM_FILE }}
+          name: ${{ env.CHARM_NAME }}
+          path: ${{ env.CHARM_FILE }}
