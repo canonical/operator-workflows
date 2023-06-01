@@ -198,7 +198,6 @@ jobs:
           ls
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             cat ${image_name}/${image_name}.tar | docker import - localhost:32000/${image_name}:latest
-            docker images ls
             docker push localhost:32000/${image_name}:latest
           done
           sudo microk8s enable ingress
