@@ -54,6 +54,7 @@ jobs:
     needs:
       - integration-rock
     with:
+      channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
   check:
     runs-on: ubuntu-latest
