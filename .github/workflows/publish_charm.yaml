@@ -10,9 +10,6 @@ on:
         required: true
         type: string
         description: 'Origin Channel'
-      images:
-        type: string
-        description: 'Docker images'
       working-directory:
         type: string
         description: The working directory for jobs
@@ -21,6 +18,24 @@ on:
       contents: read
 
 jobs:
+  jobs:
+  branch-up-to-date-check-enabled:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get-branch-protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+          repo: context.repo.repo
+          owner: context.repo.owner
+          branch: main
+      - run: |
+          if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
+            echo "::error::Strict checks are not enabled for this repository"
+            exit 1
+          fi
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
@@ -28,6 +43,7 @@ jobs:
       working-directory: ${{ inputs.working-directory }}
   release-charm-libs:
     name: Release charm libs
+    needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
@@ -46,6 +62,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   get-pr-number:
     name: Get PR triggering the change
+    needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     outputs:
       pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number
@@ -59,14 +76,31 @@ jobs:
           repo: context.repo.repo
           owner: context.repo.owner
           commit_sha: context.sha
+  get-images:
+    name: Get images
+    runs-on: ubuntu-22.04
+    outputs:
+      images: ${{ env.IMAGES }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get images
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          lines=$(find . -type f -name rockcraft.yaml | wc -l)
+          if [ $lines -ne 0 ]; then
+            IMAGES=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
+          else
+            IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
+          fi
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-pr-number, get-runner-image]
-    if: ${{ inputs.images != '[]' }}
+    needs: [ get-images, get-pr-number, get-runner-image]
+    if: ${{ jobs.get-images.outputs.images != '[]' }}
     strategy:
       matrix:
-        image: ${{ fromJSON(inputs.images) }}
+        image: ${{ fromJSON(jobs.get-images.outputs.images) }}
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
