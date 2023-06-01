@@ -222,7 +222,9 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+          tree .
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
+          ls
           echo "CHARM_FILE=$(find .tox/integration/tmp/pytest -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
