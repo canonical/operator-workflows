@@ -223,6 +223,9 @@ jobs:
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
+          ls
+          find . -name *.charm
+          find . -name *.charm | sed "s/.*\///"
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
