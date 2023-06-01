@@ -14,8 +14,6 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-    permissions:
-      contents: read
 
 jobs:
   branch-up-to-date-check-enabled:
@@ -64,7 +62,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     outputs:
-      pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number
+      pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number }}
     steps:
       - uses: octokit/request-action@v2.x
         id: get-issue-number
