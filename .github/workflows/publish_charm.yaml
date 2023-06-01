@@ -94,10 +94,10 @@ jobs:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [ get-images, get-pr-number, get-runner-image]
-    if: ${{ jobs.get-images.outputs.images != '[]' }}
+    if: ${{ needs.get-images.outputs.images != '[]' }}
     strategy:
       matrix:
-        image: ${{ fromJSON(jobs.get-images.outputs.images) }}
+        image: ${{ fromJSON(needs.get-images.outputs.images) }}
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
@@ -116,7 +116,7 @@ jobs:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
           name: ${image_name}.tar
-          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_images.yaml
           workflow_conclusion: success
       - name: Download rock artifacts
@@ -125,7 +125,7 @@ jobs:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
           name: ${image_name}.tar
-          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_rocks.yaml
           workflow_conclusion: success
       - name: Publish image
@@ -158,7 +158,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
-          pr: ${{ jobs.get-issue-number.outputs.pr-number }}
+          pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_rintegration_test.yaml
           workflow_conclusion: success
       - name: Upload charm to charmhub
