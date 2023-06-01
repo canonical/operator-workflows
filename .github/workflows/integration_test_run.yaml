@@ -195,8 +195,9 @@ jobs:
         run: |
           sudo microk8s enable registry
           sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
+          ls
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            docker load < ${image_name}/${image_name}.tar
+            docker import < ${image_name}/${image_name}.tar
             docker images ls
             docker push localhost:32000/${image_name}:${{ github.run_id }}
           done
