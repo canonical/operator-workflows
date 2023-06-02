@@ -22,7 +22,7 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
-            console.log(${{ github.event }})
+            console.log(${{ fromJson(github.event) }})
       - uses: octokit/request-action@v2.x
         id: get-branch-protection
         env:
@@ -32,6 +32,10 @@ jobs:
           repo: ${{ github.event.repository.name }}
           owner: ${{ github.event.repository.owner }}
           branch: main
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            console.log(${{ steps.get-branch-protection.outputs.data }})
       - run: |
           echo ${{ steps.get-branch-protection.outputs.data }}
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
