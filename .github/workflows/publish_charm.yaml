@@ -19,8 +19,10 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
-      - run: |
-          echo ${{ github.event }}
+      - uses: actions/github-script@v6
+        with:
+          script: |
+            console.log(${{ github.event }})
       - uses: octokit/request-action@v2.x
         id: get-branch-protection
         env:
