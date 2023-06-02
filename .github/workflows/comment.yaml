@@ -50,9 +50,6 @@ jobs:
             const fs = require('fs');
             const comments = JSON.parse(fs.readFileSync('${{ env.ARTIFACT_NAME }}.json'));
 
-            const owner = context.payload.workflow_run.repository.owner.login;
-            const repo = context.payload.workflow_run.repository.name;
-
             const pull = (await github.rest.pulls.list({
               owner : context.repo.owner,
               repo : context.repo.repo,
@@ -61,8 +58,8 @@ jobs:
 
             const createComment = async (body) => {
                 await github.rest.issues.createComment({
-                    owner: owner,
-                    repo: repo,
+                    owner : context.repo.owner,
+                    repo : context.repo.repo,
                     issue_number: issue_number,
                     body,
                 });
@@ -70,8 +67,8 @@ jobs:
 
             const deleteGithubActionsComments = async () => {
                 const existingComments = await github.rest.issues.listComments({
-                    owner: owner,
-                    repo: repo,
+                    owner : context.repo.owner,
+                    repo : context.repo.repo,
                     issue_number: issue_number,
                 });
                 const githubActionsComments = existingComments.data.filter(
@@ -79,8 +76,8 @@ jobs:
                 );
                 for (const comment of githubActionsComments) {
                     await github.rest.issues.deleteComment({
-                        owner: owner,
-                        repo: repo,
+                        owner : context.repo.owner,
+                        repo : context.repo.repo,
                         comment_id: comment.id,
                     });
                 }
