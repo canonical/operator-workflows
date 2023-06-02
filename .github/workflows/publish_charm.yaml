@@ -29,6 +29,7 @@ jobs:
           owner: ${{ github.event.repository.owner }}
           branch: main
       - run: |
+          echo steps.get-branch-protection.outputs.data
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
             echo "::error::Strict checks are not enabled for this repository"
             exit 1
