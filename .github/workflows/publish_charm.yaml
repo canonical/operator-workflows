@@ -22,7 +22,8 @@ jobs:
       - uses: actions/github-script@v6
         with:
           script: |
-            console.log(${{ fromJson(github.event) }})
+            console.log(${{ github.event.repository.name }})
+            console.log(${{ github.event.repository.owner }})
       - uses: octokit/request-action@v2.x
         id: get-branch-protection
         env:
