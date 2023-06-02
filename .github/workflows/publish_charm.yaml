@@ -21,7 +21,7 @@ jobs:
     steps:
       - run: |
           echo ${{ github.event.repository.name }}
-          echo ${{ github.event.repository.owner }}
+          echo ${{ github.event.repository.owner.login }}
       - uses: octokit/request-action@v2.x
         id: get-branch-protection
         env:
@@ -29,7 +29,7 @@ jobs:
         with:
           route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
           repo: ${{ github.event.repository.name }}
-          owner: ${{ github.event.repository.owner }}
+          owner: ${{ github.event.repository.owner.login }}
           branch: main
       - run: |
           echo ${{ steps.get-branch-protection.outputs.data }}
