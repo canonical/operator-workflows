@@ -197,9 +197,11 @@ jobs:
           sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
           ls
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            cat ${image_name}/${image_name}.tar | docker import - localhost:32000/${image_name}:latest
+            microk8s ctr images import - < ${image_name}/${image_name}.tar
+            # cat ${image_name}/${image_name}.tar | docker import - localhost:32000/${image_name}:latest
             docker push localhost:32000/${image_name}:latest
           done
+          microk8s ctr images ls
           sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
