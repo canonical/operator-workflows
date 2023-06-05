@@ -136,13 +136,15 @@ jobs:
           [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
           [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
           RUN_ID=$(echo $RUN_IDS | jq ".[0]")
-          gh run download $RUN_ID -R ${{ github.repository }} -n ${image_name}
+          gh run download $RUN_ID -R ${{ github.repository }} -n ${ matrix.image }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           tree
-          imageFile=${image_name}/${image_name}.tar
+          imageFile=${matrix.image}/${matrix.image}.tar
           charmName=$(yq '.name' metadata.yaml)
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=$imageFile --verbosity=trace
   publish-charm:
