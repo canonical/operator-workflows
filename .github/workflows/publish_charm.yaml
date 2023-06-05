@@ -122,15 +122,21 @@ jobs:
         run: |
           echo ${{ needs.get-issue-number.outputs.pr-number }}
           sudo snap install charmcraft --classic
-      - name: Download artifacts
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{secrets.GITHUB_TOKEN}}
-          if_no_artifact_found: warn
-          # name: ${matrix.image}
-          pr: ${{ needs.get-issue-number.outputs.pr-number }}
-          workflow: integration_test.yaml
-          workflow_conclusion: success
+      - name: Download image artifacts
+        run: |
+          gh api \
+            --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/canonical/${{ github.repository }}/actions/runs \
+            -f status=success \
+            -f head_sha=$COMMIT_SHA \
+            -f event=pull_request \
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml") | .id]' | read -r RUN_IDS
+          [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
+          [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
+          RUN_ID=$(echo $RUN_IDS | jq ".[0]")
+          gh run download $RUN_ID -R ${{ github.repository }} -n ${image_name}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -163,7 +169,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
-          workflow: build_integration_test.yaml
+          workflow: integration_test.yaml
           workflow_conclusion: success
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
