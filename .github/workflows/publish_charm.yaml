@@ -57,12 +57,12 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  get-pr-number:
-    name: Get PR triggering the change
+  get-commit-sha:
+    name: Get commit SHA
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     outputs:
-      pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number }}
+      sha: ${{ env.LAST_COMMIT_SHA }}
     steps:
       - name: Setup Environment (PR)  
         if: ${{ github.event_name == 'pull_request' }}  
@@ -74,17 +74,6 @@ jobs:
         shell: bash  
         run: |  
           echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
-      - uses: octokit/request-action@v2.x
-        id: get-issue-number
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        with:
-          route: GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
-          repo: ${{ github.event.repository.name }}
-          owner: ${{ github.event.repository.owner.login }}
-          commit_sha: ${{ env.LAST_COMMIT_SHA }}
-      - run: |
-          echo ${{ steps.get-issue-number.outputs.data }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
@@ -105,7 +94,7 @@ jobs:
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [ get-images, get-pr-number, get-runner-image]
+    needs: [ get-images, get-commit-sha, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     strategy:
       matrix:
@@ -122,29 +111,25 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: |
-          echo ${{ needs.get-issue-number.outputs.pr-number }}
+          echo ${{ needs.get-commit-sha.outputs.sha }}
           sudo snap install charmcraft --classic
       - name: Download image artifacts
         run: |
-          echo $SHA
-          echo ${{ env.LAST_COMMIT_SHA }}
-          echo 
           gh api \
             --method GET \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/canonical/${{ github.repository }}/actions/runs \
             -f status=success \
-            -f head_sha=$LAST_COMMIT_SHA \
+            -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
             -f event=pull_request \
             --jq '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml") | .id]' | read -r RUN_IDS
           [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
           [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
           RUN_ID=$(echo $RUN_IDS | jq ".[0]")
-          gh run download $RUN_ID -R ${{ github.repository }}
+          gh run download $RUN_ID -R ${{ github.repository }} -n ${{ matrix.image }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SHA: ${{ env.LAST_COMMIT_SHA }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -156,7 +141,7 @@ jobs:
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-pr-number, get-runner-image, publish-images]
+    needs: [get-pr-number, get-commit-sha, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -172,13 +157,22 @@ jobs:
         id: get-charm-name
         run: echo "charm_name=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
       - name: Download charm artifact
-        uses: dawidd6/action-download-artifact@v2
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
-          pr: ${{ needs.get-issue-number.outputs.pr-number }}
-          workflow: integration_test.yaml
-          workflow_conclusion: success
+        run: |
+          gh api \
+            --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/canonical/${{ github.repository }}/actions/runs \
+            -f status=success \
+            -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
+            -f event=pull_request \
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml") | .id]' | read -r RUN_IDS
+          [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
+          [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
+          RUN_ID=$(echo $RUN_IDS | jq ".[0]")
+          gh run download $RUN_ID -R ${{ github.repository }} -n ${{ steps.get-charm-name.outputs.charm_name }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
         with:
