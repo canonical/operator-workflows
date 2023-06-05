@@ -125,7 +125,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
-          name: ${matrix.image}.tar
+          name: ${matrix.image}
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_images.yaml
           workflow_conclusion: success
@@ -134,7 +134,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
-          name: ${matrix.image}.tar
+          name: ${matrix.image}
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_rocks.yaml
           workflow_conclusion: success
@@ -142,6 +142,7 @@ jobs:
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
+          ls
           imageFile=${image_name}/${image_name}.tar
           charmName=$(yq '.name' metadata.yaml)
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=$imageFile --verbosity=trace
@@ -169,7 +170,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           name: ${{ steps.get-charm-name.outputs.charm_name }}.tar
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
-          workflow: build_rintegration_test.yaml
+          workflow: build_integration_test.yaml
           workflow_conclusion: success
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
