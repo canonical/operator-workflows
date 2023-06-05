@@ -141,7 +141,7 @@ jobs:
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-charm-name, get-commit-sha, get-runner-image, publish-images]
+    needs: [get-commit-sha, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
