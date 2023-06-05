@@ -68,7 +68,6 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}  
         shell: bash  
         run: |
-          echo ${{ github.event.pull_request.head.sha }}
           echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}  
       - name: Setup Environment (Push)  
         if: ${{ github.event_name == 'push' }}  
@@ -85,7 +84,7 @@ jobs:
           owner: ${{ github.event.repository.owner.login }}
           commit_sha: ${{ env.LAST_COMMIT_SHA }}
       - run: |
-          echo ${{ fromJson(steps.get-issue-number.outputs.data)[0] }}
+          echo ${{ steps.get-issue-number.outputs.data }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
