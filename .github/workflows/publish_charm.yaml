@@ -119,13 +119,15 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
       - name: Install charmcraft
-        run: sudo snap install charmcraft --classic
+        run: |
+          echo ${{ needs.get-issue-number.outputs.pr-number }}
+          sudo snap install charmcraft --classic
       - name: Download docker artifacts
         uses: dawidd6/action-download-artifact@v2
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
-          name: ${matrix.image}
+          # name: ${matrix.image}
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_images.yaml
           workflow_conclusion: success
@@ -135,7 +137,7 @@ jobs:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
           name: ${matrix.image}
-          pr: ${{ needs.get-issue-number.outputs.pr-number }}
+          # pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_rocks.yaml
           workflow_conclusion: success
       - name: Publish image
