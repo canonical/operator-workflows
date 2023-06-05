@@ -72,7 +72,7 @@ jobs:
           route: GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
           repo: ${{ github.event.repository.name }}
           owner: ${{ github.event.repository.owner.login }}
-          commit_sha: ${{ GITHUB_SHA }}
+          commit_sha: ${{ github.GITHUB_SHA }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
