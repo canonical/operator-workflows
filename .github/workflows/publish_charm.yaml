@@ -125,7 +125,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
-          name: ${image_name}.tar
+          name: ${matrix.image}.tar
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_images.yaml
           workflow_conclusion: success
@@ -134,7 +134,7 @@ jobs:
         with:
           github_token: ${{secrets.GITHUB_TOKEN}}
           if_no_artifact_found: warn
-          name: ${image_name}.tar
+          name: ${matrix.image}.tar
           pr: ${{ needs.get-issue-number.outputs.pr-number }}
           workflow: build_rocks.yaml
           workflow_conclusion: success
