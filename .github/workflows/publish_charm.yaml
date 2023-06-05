@@ -67,7 +67,8 @@ jobs:
       - name: Setup Environment (PR)  
         if: ${{ github.event_name == 'pull_request' }}  
         shell: bash  
-        run: |  
+        run: |
+          echo ${{ github.event.pull_request.head.sha }}
           echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}  
       - name: Setup Environment (Push)  
         if: ${{ github.event_name == 'push' }}  
@@ -84,7 +85,7 @@ jobs:
           owner: ${{ github.event.repository.owner.login }}
           commit_sha: ${{ env.LAST_COMMIT_SHA }}
       - run: |
-          echo ${{ fromJson(steps.get-issue-number.outputs.data) }}
+          echo ${{ fromJson(steps.get-issue-number.outputs.data)[0] }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
@@ -126,7 +127,8 @@ jobs:
           sudo snap install charmcraft --classic
       - name: Download image artifacts
         run: |
-          echo $LAST_COMMIT_SHA
+          echo $SHA
+          echo ${{ env.LAST_COMMIT_SHA }}
           echo 
           gh api \
             --method GET \
@@ -143,6 +145,7 @@ jobs:
           gh run download $RUN_ID -R ${{ github.repository }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ env.LAST_COMMIT_SHA }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
