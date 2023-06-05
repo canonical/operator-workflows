@@ -70,9 +70,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         with:
           route: GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
-          repo: context.repo.repo
-          owner: context.repo.owner
-          commit_sha: context.sha
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.event.repository.owner.login }}
+          commit_sha: ${{ GITHUB_SHA }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
