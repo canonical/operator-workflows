@@ -64,6 +64,16 @@ jobs:
     outputs:
       pr-number: ${{ fromJson(steps.get-issue-number.outputs.data)[0].number }}
     steps:
+      - name: Setup Environment (PR)  
+        if: ${{ github.event_name == 'pull_request' }}  
+        shell: bash  
+        run: |  
+          echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}  
+      - name: Setup Environment (Push)  
+        if: ${{ github.event_name == 'push' }}  
+        shell: bash  
+        run: |  
+          echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
       - uses: octokit/request-action@v2.x
         id: get-issue-number
         env:
@@ -72,7 +82,7 @@ jobs:
           route: GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls
           repo: ${{ github.event.repository.name }}
           owner: ${{ github.event.repository.owner.login }}
-          commit_sha: ${{ github.sha }}
+          commit_sha: ${{ env.LAST_COMMIT_SHA }}
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
