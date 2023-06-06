@@ -117,7 +117,6 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: |
-          echo ${{ needs.get-commit-sha.outputs.sha }}
           sudo snap install charmcraft --classic
       - name: Download image artifacts
         run: |

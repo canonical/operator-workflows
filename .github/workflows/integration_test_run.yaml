@@ -190,15 +190,12 @@ jobs:
           juju-channel: ${{ inputs.juju-channel }}
       - name: Download all artifacts
         uses: actions/download-artifact@v3
-      - name: Enable microk8s registry and push images
+      - name: Import images
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          sudo microk8s enable registry
-          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
           done
-          sudo microk8s ctr images ls
           sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
@@ -224,8 +221,6 @@ jobs:
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
           ls
-          find . -name *.charm
-          find . -name *.charm | sed "s/.*\///"
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
