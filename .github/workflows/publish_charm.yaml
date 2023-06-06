@@ -128,7 +128,8 @@ jobs:
             /repos/${{ github.repository }}/actions/runs \
             -f status=${{ needs.get-commit-sha.outputs.wf-status }} \
             -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
-            -f event=pull_request
+            -f event=pull_request \
+            --jq '[.workflow_runs[] | select(.path == ${{ needs.get-commit-sha.outputs.wf-path }})]'
           gh api \
             --method GET \
             -H "Accept: application/vnd.github+json" \
