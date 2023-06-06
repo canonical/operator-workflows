@@ -71,14 +71,14 @@ jobs:
         shell: bash  
         run: |
           echo "WF_STATUS=in_progress" >> ${GITHUB_ENV}
-          echo "WF_PATH=.github/workflows/integration_test.yaml" >> ${GITHUB_ENV}
+          echo "WF_PATH=.github/workflows/workflow_test.yaml" >> ${GITHUB_ENV}
           echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}  
       - name: Setup Environment (Push)  
         if: ${{ github.event_name == 'push' }}  
         shell: bash  
         run: |
           echo "WF_STATUS=success" >> ${GITHUB_ENV}
-          echo "WF_PATH=.github/workflows/workflow_test.yaml" >> ${GITHUB_ENV}
+          echo "WF_PATH=.github/workflows/integration_test.yaml" >> ${GITHUB_ENV}
           echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
   get-images:
     name: Get images
