@@ -128,7 +128,7 @@ jobs:
             -f status=${{ needs.get-commit-sha.outputs.wf-status }} \
             -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | select(.path == "./.github/workflows/integration_test.yaml") | .id]')
+            --jq '[.workflow_runs[] | select(.path == "${{ needs.get-commit-sha.outputs.wf-path }}") | .id]')
           [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
           [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
           RUN_ID=$(echo $RUN_IDS | jq ".[0]")

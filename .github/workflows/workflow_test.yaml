@@ -47,15 +47,6 @@ jobs:
     with:
       working-directory: 'tests/workflows/integration/test-rock/'
       trivy-image-config: 'tests/workflows/integration/test-rock/trivy.yaml'
-  publish:
-    if: ${{ !github.event.pull_request.head.repo.fork }}
-    uses: ./.github/workflows/publish_charm.yaml
-    secrets: inherit
-    needs:
-      - integration-rock
-    with:
-      channel: latest/edge
-      working-directory: tests/workflows/integration/test-upload-charm/
   check:
     runs-on: ubuntu-latest
     if: always()
@@ -66,7 +57,6 @@ jobs:
       - dockerfile
       - integration
       - integration-rock
-      - publish
     steps:
       - run: |
           [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
@@ -79,4 +69,4 @@ jobs:
           [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
-          [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
+          gh workflow run workflow_test_publish.yaml
