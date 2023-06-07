@@ -142,7 +142,6 @@ jobs:
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          tree
           imageFile=${matrix.image}/${matrix.image}.tar
           charmName=$(yq '.name' metadata.yaml)
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=$imageFile --verbosity=trace
