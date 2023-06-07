@@ -70,6 +70,6 @@ jobs:
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
       - uses: actions/checkout@v3
-      - run: gh workflow run workflow_test_publish.yaml
+      - run: gh workflow run .github/workflows/comment.yaml
     env:
       GH_TOKEN: ${{ github.token }}
