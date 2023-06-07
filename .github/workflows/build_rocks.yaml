@@ -73,7 +73,7 @@ jobs:
           name: ${{ env.IMAGE_NAME }}
           path: ${{ env.IMAGE_NAME }}.tar
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.10.0
         with:
           input: ${{ env.IMAGE_TAR }}
           trivy-config: ${{ inputs.trivy-image-config }}

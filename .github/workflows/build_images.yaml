@@ -75,7 +75,7 @@ jobs:
         run: |
           echo "IMAGE_TAR=${{ matrix.image }}.tar" >> $GITHUB_ENV
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.10.0
         with:
           input: ${{ env.IMAGE_TAR }}
           trivy-config: ${{ inputs.trivy-image-config }}
