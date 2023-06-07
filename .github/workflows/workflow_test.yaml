@@ -69,6 +69,7 @@ jobs:
           [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
-          gh workflow run workflow_test_publish.yaml
+      - uses: actions/checkout@v3
+      - run: gh workflow run workflow_test_publish.yaml
     env:
       GH_TOKEN: ${{ github.token }}
