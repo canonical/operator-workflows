@@ -108,7 +108,7 @@ jobs:
         run: |
           sudo snap install charmcraft --classic
       - name: Download image artifacts
-      if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: |
           RUN_IDS=$(gh api \
             --method GET \
@@ -159,7 +159,7 @@ jobs:
         id: get-charm-name
         run: echo "charm_name=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
       - name: Download charm artifact
-      if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: |
           RUN_IDS=$(gh api \
             --method GET \
