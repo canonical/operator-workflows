@@ -63,22 +63,11 @@ jobs:
     runs-on: ubuntu-22.04
     outputs:
       sha: ${{ env.LAST_COMMIT_SHA }}
-      wf-path: ${{ env.WF_PATH }}
-      wf-status: ${{ env.WF_STATUS }}
     steps:
-      - name: Setup Environment (PR)  
-        if: ${{ github.event_name == 'pull_request' }}  
-        shell: bash  
-        run: |
-          echo "WF_STATUS=in_progress" >> ${GITHUB_ENV}
-          echo "WF_PATH=.github/workflows/workflow_test.yaml" >> ${GITHUB_ENV}
-          echo "LAST_COMMIT_SHA=${{ github.event.pull_request.head.sha }}" >> ${GITHUB_ENV}  
       - name: Setup Environment (Push)  
-        if: ${{ github.event_name == 'push' }}  
+        if: ${{ github.event_name == 'push' }}
         shell: bash  
         run: |
-          echo "WF_STATUS=success" >> ${GITHUB_ENV}
-          echo "WF_PATH=.github/workflows/integration_test.yaml" >> ${GITHUB_ENV}
           echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
   get-images:
     name: Get images
@@ -119,16 +108,17 @@ jobs:
         run: |
           sudo snap install charmcraft --classic
       - name: Download image artifacts
+      if: ${{ github.event_name == 'push' }}
         run: |
           RUN_IDS=$(gh api \
             --method GET \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/actions/runs \
-            -f status=${{ needs.get-commit-sha.outputs.wf-status }} \
+            -f status=success }} \
             -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | select(.path == "${{ needs.get-commit-sha.outputs.wf-path }}") | .id]')
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml") | .id]')
           [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
           [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
           RUN_ID=$(echo $RUN_IDS | jq ".[0]")
@@ -138,6 +128,11 @@ jobs:
           gh run download $RUN_ID -R ${{ github.repository }} -n ${{ matrix.image }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Down image artifacts
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ matrix.image }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -164,6 +159,7 @@ jobs:
         id: get-charm-name
         run: echo "charm_name=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
       - name: Download charm artifact
+      if: ${{ github.event_name == 'push' }}
         run: |
           RUN_IDS=$(gh api \
             --method GET \
@@ -173,13 +169,18 @@ jobs:
             -f status=${{ needs.get-commit-sha.outputs.wf-status }} \
             -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | select(.path == ${{ needs.get-commit-sha.outputs.wf-path }}) | .id]')
+            --jq '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml") | .id]')
           [[ $(echo $RUN_IDS | jq length) -eq 0 ]] && echo no workflow found && exit 1
           [[ $(echo $RUN_IDS | jq length) -gt 1 ]] && echo multiple workflows found && exit 1
           RUN_ID=$(echo $RUN_IDS | jq ".[0]")
           gh run download $RUN_ID -R ${{ github.repository }} -n ${{ steps.get-charm-name.outputs.charm_name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Down charm artifact
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ steps.get-charm-name.outputs.charm_name }}
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
         with:
