@@ -128,7 +128,7 @@ jobs:
           gh run download $RUN_ID -R ${{ github.repository }} -n ${{ matrix.image }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Down image artifacts
+      - name: Download image artifacts
         uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -176,7 +176,7 @@ jobs:
           gh run download $RUN_ID -R ${{ github.repository }} -n ${{ steps.get-charm-name.outputs.charm_name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Down charm artifact
+      - name: Download charm artifact
         uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
