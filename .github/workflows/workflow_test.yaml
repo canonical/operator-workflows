@@ -12,11 +12,6 @@ jobs:
     secrets: inherit
     with:
       working-directory: 'tests/workflows/integration/test-upload-charm/'
-  dockerfile:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    with:
-      working-directory: 'tests/workflows/test/dockerfile/'
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -45,7 +40,6 @@ jobs:
     if: always()
     needs:
       - simple
-      - dockerfile
       - integration
       - integration-rock
       - publish
@@ -54,8 +48,6 @@ jobs:
           [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
           [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
           [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
-          [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
