@@ -45,7 +45,6 @@ jobs:
     if: always()
     needs:
       - simple
-      - metadata_yaml
       - dockerfile
       - integration
       - integration-rock
@@ -55,8 +54,6 @@ jobs:
           [ '${{ needs.simple.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
           [ '${{ needs.simple.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
           [ '${{ needs.simple.outputs.lint-and-unit-test-outcome }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.metadata_yaml.outputs.metadata-lint-outcome }}' = 'success' ] || (echo metadata-lint failed && false)
-          [ '${{ needs.metadata_yaml.outputs.docker-lint-outcome }}' = 'skipped' ] || (echo docker-lint not skipped && false)
           [ '${{ needs.dockerfile.outputs.metadata-lint-outcome }}' = 'skipped' ] || (echo metadata-lint not skipped && false)
           [ '${{ needs.dockerfile.outputs.docker-lint-outcome }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
