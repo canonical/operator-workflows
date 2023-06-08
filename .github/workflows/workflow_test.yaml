@@ -15,8 +15,6 @@ jobs:
   dockerfile:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
-    needs:
-      - metadata_yaml
     with:
       working-directory: 'tests/workflows/test/dockerfile/'
   integration:
