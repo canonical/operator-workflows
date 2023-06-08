@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
     with:
-      working-directory: 'tests/workflows/test/simple/'
+      working-directory: 'tests/workflows/test/test-upload-charm/'
   pflake8:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -37,8 +37,8 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
-      working-directory: 'tests/workflows/integration/simple/'
-      trivy-image-config: 'tests/workflows/integration/simple/trivy.yaml'
+      working-directory: 'tests/workflows/integration/test-upload-charm/'
+      trivy-image-config: 'tests/workflows/integration/test-upload-charm/trivy.yaml'
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
