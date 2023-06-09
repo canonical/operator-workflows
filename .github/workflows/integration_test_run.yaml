@@ -224,6 +224,7 @@ jobs:
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
           # The charm is sometimes not stored in the .tox tmp dir so we need to rebuild.
           # Not ideal, but better than rebuilding later
+          tree
           charmcraft pack
           echo "packed"
           CHARM_FILE=$(ls *.charm)
