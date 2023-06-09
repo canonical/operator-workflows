@@ -222,7 +222,7 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
-          # The charm is sometimes not stored in the .tox temp dir so we need to rebuild.
+          # The charm is sometimes not stored in the .tox tmp dir so we need to rebuild.
           # Not ideal, but better than rebuilding later
           charmcraft pack
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
