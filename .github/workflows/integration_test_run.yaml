@@ -219,8 +219,6 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
-          tree -a .tox/integration
-          echo $(find .tox/integration -name *.charm)
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
