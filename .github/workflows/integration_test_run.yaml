@@ -226,9 +226,9 @@ jobs:
           # Not ideal, but better than rebuilding later
           charmcraft pack
           echo "packed"
-          CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")
+          CHARM_FILE=$(ls *.charm)
           echo "env stored $CHARM_FILE"
-          echo "CHARM_FILE=$CHARM_FILE" >> $GITHUB_ENV
+          echo "CHARM_FILE=$(ls *.charm)" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
