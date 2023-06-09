@@ -225,7 +225,9 @@ jobs:
           # The charm is sometimes not stored in the .tox tmp dir so we need to rebuild.
           # Not ideal, but better than rebuilding later
           charmcraft pack
+          echo "packed"
           CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")
+          echo "env stored $CHARM_FILE"
           echo "CHARM_FILE=$CHARM_FILE" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
