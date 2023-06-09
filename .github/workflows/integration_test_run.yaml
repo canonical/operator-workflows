@@ -220,7 +220,6 @@ jobs:
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
-          tree
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
@@ -298,4 +297,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.CHARM_NAME }}
-          path: ${{ env.CHARM_FILE }}
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error
