@@ -197,9 +197,6 @@ jobs:
             sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
           done
           sudo microk8s enable ingress
-      - name: Install charmcraft
-        run: |
-          sudo snap install charmcraft --classic
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
@@ -222,14 +219,10 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
-          # The charm is sometimes not stored in the .tox tmp dir so we need to rebuild.
-          # Not ideal, but better than rebuilding later
-          tree
-          charmcraft pack
-          echo "packed"
-          CHARM_FILE=$(ls *.charm)
-          echo "env stored $CHARM_FILE"
-          echo "CHARM_FILE=$(ls *.charm)" >> $GITHUB_ENV
+          tree -a .tox/integration
+          echo $(find .tox/integration -name *.charm)
+          mv $(find .tox/integration/tmp/pytest -name *.charm) .
+          echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
