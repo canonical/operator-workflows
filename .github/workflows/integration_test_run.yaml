@@ -219,7 +219,7 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
-          tree
+          tree -a
           echo $(find .tox/integration/tmp/pytest -name *.charm)
           mv $(find .tox/integration/tmp/pytest -name *.charm) .
           echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
