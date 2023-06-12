@@ -9,7 +9,7 @@ on:
       channel:
         required: true
         type: string
-        description: 'Origin Channel'
+        description: 'Destination Channel'
       working-directory:
         type: string
         description: The working directory for jobs
