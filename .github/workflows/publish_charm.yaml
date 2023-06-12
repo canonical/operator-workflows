@@ -135,7 +135,7 @@ jobs:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq '.name' metadata.yaml)
-          skopeo copy docker-archive:./${{ matrix.image }}.tar.gz:image1:tag1 oci:/tmp/oci-test:${{ matrix.image }}:latest
+          skopeo copy docker-archive:./${{ matrix.image }}.tar oci:/tmp/oci-test:${{ matrix.image }}:latest
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=/tmp/oci-test:${{ matrix.image }}:latest --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
