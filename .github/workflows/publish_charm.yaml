@@ -107,7 +107,7 @@ jobs:
       - name: Install charmcraft and skopeo
         run: |
           sudo snap install charmcraft --classic
-          sudo apt-get install docker
+          sudo snap install docker
       - name: Download image artifacts
         if: ${{ github.event_name == 'push' }}
         run: |
