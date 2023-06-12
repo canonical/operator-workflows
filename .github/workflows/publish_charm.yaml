@@ -104,9 +104,10 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - name: Install charmcraft
+      - name: Install charmcraft and skopeo
         run: |
           sudo snap install charmcraft --classic
+          sudo apt-get install skopeo
       - name: Download image artifacts
         if: ${{ github.event_name == 'push' }}
         run: |
@@ -134,7 +135,8 @@ jobs:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq '.name' metadata.yaml)
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=${{ matrix.image }}.tar --verbosity=brief
+          kopeo copy docker-archive:./${{ matrix.image }}.tar.gz:image1:tag1 oci:/tmp/oci-test:${{ matrix.image }}:latest
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --filepath=/tmp/oci-test:${{ matrix.image }}:latest --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
