@@ -294,6 +294,7 @@ jobs:
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
       - name: Upload charm artifact
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.CHARM_NAME }}
