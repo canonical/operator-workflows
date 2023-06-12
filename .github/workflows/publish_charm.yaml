@@ -107,7 +107,6 @@ jobs:
       - name: Install charmcraft and skopeo
         run: |
           sudo snap install charmcraft --classic
-          sudo apt-get install skopeo
           sudo apt-get install docker
       - name: Download image artifacts
         if: ${{ github.event_name == 'push' }}
@@ -136,8 +135,8 @@ jobs:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq '.name' metadata.yaml)
-          skopeo copy docker-archive:./${{ matrix.image }}.tar oci:/tmp/${{ matrix.image }}:${{ matrix.image }}:latest
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=/tmp/oci-test:sha$(ls ls /tmp/${{ matrix.image }}/blobs/sha256) --verbosity=brief
+          cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=${{ matrix.image }}:latest --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
