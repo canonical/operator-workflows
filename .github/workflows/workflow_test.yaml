@@ -45,7 +45,7 @@ jobs:
       - publish
     steps:
       - run: |
-          [ '${{ needs.simple.oresult }}' = 'success' ] || (echo simple failed && false)
+          [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
