@@ -207,7 +207,7 @@ jobs:
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
+            args="${args} --${image_name}-image ${image_name}:latest"
           done
 
           series=""
