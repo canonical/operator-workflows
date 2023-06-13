@@ -194,7 +194,7 @@ jobs:
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            sudo microk8s ctr images import - --base-name ${image_name}/${image_name} < ${image_name}/${image_name}.tar
+            sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
           done
           sudo microk8s ctr images ls
           sudo microk8s enable ingress
