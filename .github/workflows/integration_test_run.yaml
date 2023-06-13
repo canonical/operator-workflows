@@ -196,7 +196,6 @@ jobs:
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
           done
-          sudo microk8s ctr images ls
           sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
