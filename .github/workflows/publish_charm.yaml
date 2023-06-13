@@ -57,18 +57,27 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  get-commit-sha:
-    name: Get commit SHA
+  get-run-id:
+    name: Get workflow run if
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     outputs:
-      sha: ${{ env.LAST_COMMIT_SHA }}
+      run-id: ${{ env.RUN_ID }}
     steps:
-      - name: Setup Environment (Push)  
+      - name: Get workflow run id
         if: ${{ github.event_name == 'push' }}
         shell: bash  
         run: |
-          echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
+          RUN_ID=$(gh api \
+            --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/actions/runs \
+            -f status=success }} \
+            -f head_sha=${GITHUB_SHA} \
+            -f event=pull_request \
+            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
@@ -89,7 +98,7 @@ jobs:
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [ get-images, get-commit-sha, get-runner-image]
+    needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     strategy:
       matrix:
@@ -111,16 +120,7 @@ jobs:
       - name: Download image artifacts
         if: ${{ github.event_name == 'push' }}
         run: |
-          RUN_ID=$(gh api \
-            --method GET \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/runs \
-            -f status=success }} \
-            -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
-            -f event=pull_request \
-            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
-          gh run download $RUN_ID -R ${{ github.repository }} -n ${{ matrix.image }}
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ matrix.image }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download image artifacts
@@ -134,14 +134,12 @@ jobs:
         run: |
           charmName=$(yq '.name' metadata.yaml)
           cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
-          echo ${{ matrix.image }}
-          docker image ls
           imageId=$(docker images ${{ matrix.image }}:latest --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-commit-sha, get-runner-image, publish-images]
+    needs: [get-run-id, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -159,16 +157,7 @@ jobs:
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
-          RUN_ID=$(gh api \
-            --method GET \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/runs \
-            -f status=success \
-            -f head_sha=${{ needs.get-commit-sha.outputs.sha }} \
-            -f event=pull_request \
-            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
-          gh run download $RUN_ID -R ${{ github.repository }} -n ${{ steps.get-charm-name.outputs.charm_name }}
+          gh run download $${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ steps.get-charm-name.outputs.charm_name }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download charm artifact
