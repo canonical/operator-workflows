@@ -135,10 +135,11 @@ jobs:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq '.name' metadata.yaml)
-          image_sha=$(cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest)
+          cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
           echo ${{ matrix.image }}
           docker image ls
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$image_sha --verbosity=brief
+          imageId=$(docker images ${{ matrix.image }}:latest --format "{{.ID}}")
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
