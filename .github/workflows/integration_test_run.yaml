@@ -201,7 +201,6 @@ jobs:
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
       - name: Run integration tests
-        id: integration-tests
         working-directory: ${{ inputs.working-directory }}
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
@@ -219,10 +218,6 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
-          mv $(find .tox/integration/tmp/pytest -name *.charm) .
-          echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
-          tree
-          echo $CHARM_FILE
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
@@ -295,6 +290,14 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+      - name: Pack charm
+        if: always()
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          # Not ideal, but the charm doesn't get always packed during the integration tests step
+          sudo snap install charmcraft
+          charmcraft pack
+          echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
       - name: Upload charm artifact
         if: always()
         uses: actions/upload-artifact@v3
