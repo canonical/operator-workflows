@@ -295,9 +295,8 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           # Not ideal, but the charm doesn't get always packed during the integration tests step
-          sudo snap install charmcraft
           charmcraft pack
-          echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
+          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
       - name: Upload charm artifact
         if: always()
         uses: actions/upload-artifact@v3
