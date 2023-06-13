@@ -10,21 +10,6 @@ on:
         type: string
         description: The working directory for jobs
         default: './'
-    outputs:
-      docker-lint-outcome:
-        description: |
-          The outcome of the docker linting, mainly for the puposes of the tests for this workflow
-        value: ${{ jobs.docker-lint.outputs.outcome }}
-      metadata-lint-outcome:
-        description: |
-          The outcome of the metadata.yaml linting, mainly for the puposes of the tests for this
-          workflow
-        value: ${{ jobs.metadata-lint.outputs.outcome }}
-      lint-and-unit-test-outcome:
-        description: |
-          The outcome of the linting and unit testing, mainly for the puposes of the tests for this
-          workflow
-        value: ${{ jobs.lint-and-unit-test.outputs.outcome }}
 
 concurrency:
   group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
@@ -142,8 +127,6 @@ jobs:
   docker-lint:
     name: Dockerfile lint
     runs-on: ubuntu-22.04
-    outputs:
-      outcome: ${{ steps.report.outputs.outcome }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -158,18 +141,12 @@ jobs:
         uses: jbergstroem/hadolint-gh-action@v1
         with:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
-      - name: Report
-        id: report
-        if: always()
-        run: echo "outcome=${{ steps.hado-lint.conclusion }}" >> $GITHUB_OUTPUT
   metadata-lint:
     name: Lint metadata.yaml
     runs-on: ubuntu-22.04
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
-    outputs:
-      outcome: ${{ steps.report.outputs.outcome }}
     steps:
       - uses: actions/checkout@v3
       - name: Check file existence
@@ -182,16 +159,10 @@ jobs:
           python3 -m pip install check-jsonschema
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
-      - name: Report
-        id: report
-        if: always()
-        run: echo "outcome=${{ steps.run-lint.conclusion }}" >> $GITHUB_OUTPUT
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: get-runner-image
-    outputs:
-      outcome: ${{ steps.report.outputs.outcome }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -310,10 +281,6 @@ jobs:
         with:
           name: report
           path: report.json
-      - name: Report
-        if: always()
-        id: report
-        run: echo "outcome=${{ steps.run-tests.conclusion }}" >> $GITHUB_OUTPUT
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
