@@ -19,21 +19,20 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
-      # - uses: octokit/request-action@v2.x
-      #   id: get-branch-protection
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-      #   with:
-      #     route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
-      #     repo: ${{ github.event.repository.name }}
-      #     owner: ${{ github.event.repository.owner.login }}
-      #     branch: main
+      - uses: octokit/request-action@v2.x
+        id: get-branch-protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.event.repository.owner.login }}
+          branch: main
       - run: |
-          echo "skipped"
-      # if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
-      #   echo "::error::Strict checks are not enabled for this repository"
-      #   exit 1
-      # fi
+          if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
+            echo "::error::Strict checks are not enabled for this repository"
+            exit 1
+          fi
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
