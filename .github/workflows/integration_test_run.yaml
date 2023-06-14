@@ -204,6 +204,7 @@ jobs:
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             IMAGE_SHA=$(sudo microk8s ctr images import - < ${image_name}/${image_name}.tar)
+            echo $IMAGE_SHA
             args="${args} --${image_name}-image $IMAGE_SHA"
           done
           sudo microk8s ctr images ls
