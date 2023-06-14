@@ -2,3 +2,21 @@
 # See LICENSE file for licensing details.
 
 name: integration-test-charm-1
+display-name: Some Charm
+summary: A simple charm for testing 
+description: A simple charm for testing.
+docs: ""
+maintainers: [""]
+issues: ""
+source: ""
+charmhub:
+  api-url: https://api.staging.charmhub.io
+  storage-url: https://storage.staging.snapcraftcontent.com
+containers:
+  test:
+    resource: test-image
+resources:
+  test-image:
+    type: oci-image
+    description: Test image
+
