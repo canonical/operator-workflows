@@ -199,6 +199,7 @@ jobs:
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
+          tree
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
