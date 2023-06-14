@@ -69,26 +69,22 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash  
         run: |
-          echo "${GITHUB_SHA}"
-          gh api \
-            --method GET \
+          # Get commit info
+          TREE_SHA=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/runs \
-            -f status=success \
-            -f head_sha=${GITHUB_SHA} \
-            -f event=pull_request \
-            --jq '[.workflow_runs[] | sort_by(.updated_at) | reverse]'
-          echo "__________________________________________________________________________________________"
+            /repos/arturo-seijas/indico-operator/commits/${GITHUB_SHA} \
+             --jq '.commit.tree.sha')
           RUN_ID=$(gh api \
             --method GET \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/runs \
-            -f status=success \
-            -f head_sha=${GITHUB_SHA} \
+            /repos/arturo-seijas/indico-operator/actions/runs \
+            -f path=.github/workflows/integration_test.yaml \
+            -f tree_id=c5dafc35af124b2c75460388fa537d1738c0db76 \
+            -f status=completed \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | sort_by(.updated_at) | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
+            --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
   get-images:
     name: Get images
