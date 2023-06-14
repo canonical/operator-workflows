@@ -78,7 +78,7 @@ jobs:
             -f status=success }} \
             -f head_sha=${GITHUB_SHA} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse]')
+            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse]'
           echo "__________________________________________________________________________________________"
           RUN_ID=$(gh api \
             --method GET \
