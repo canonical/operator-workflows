@@ -69,7 +69,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash  
         run: |
-          echo "__________________________________________________________________________________________"
+          echo "${GITHUB_SHA}"
           gh api \
             --method GET \
             -H "Accept: application/vnd.github+json" \
