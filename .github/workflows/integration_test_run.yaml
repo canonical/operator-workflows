@@ -255,7 +255,7 @@ jobs:
           if [ ! -z ${{ matrix.modules }} ]; then
             module="-k ${{ matrix.modules }}"
           fi
-          tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+          tox -e integration -- --keep-models $series $module $args ${{ inputs.extra-arguments }}
         env:
           LXD_CONTROLLER: ${{ steps.lxd-controller.outputs.name }}
       - name: Tmate debugging session
