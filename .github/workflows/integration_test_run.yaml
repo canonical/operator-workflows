@@ -194,6 +194,7 @@ jobs:
           path: ${{ inputs.working-directory }}
       - name: Enable ingress and import images
         if: ${{ inputs.provider == 'microk8s' }}
+        working-directory: ${{ inputs.working-directory }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
