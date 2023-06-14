@@ -190,6 +190,8 @@ jobs:
           juju-channel: ${{ inputs.juju-channel }}
       - name: Download all artifacts
         uses: actions/download-artifact@v3
+        with:
+          path: ${{ inputs.working-directory }}
       - name: Enable ingress
         if: ${{ inputs.provider == 'microk8s' }}
         run: sudo microk8s enable ingress

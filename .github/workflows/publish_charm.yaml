@@ -128,6 +128,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ matrix.image }}
+          path: ${{ inputs.working-directory }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -165,6 +166,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ steps.get-charm-name.outputs.charm_name }}
+          path: ${{ inputs.working-directory }}
       - name: Get charm file
         id: get-charm-file
         run: echo "charm_file=$(ls ${{ steps.get-charm-name.outputs.charm_name }}_*.charm)" >> $GITHUB_OUTPUT
