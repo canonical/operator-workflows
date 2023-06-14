@@ -59,7 +59,7 @@ jobs:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
   get-run-id:
-    name: Get workflow run if
+    name: Get workflow run id
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     outputs:
@@ -78,7 +78,7 @@ jobs:
             -f status=success \
             -f head_sha=${GITHUB_SHA} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse]'
+            --jq '[.workflow_runs[] | sort_by(.updated_at) | reverse]'
           echo "__________________________________________________________________________________________"
           RUN_ID=$(gh api \
             --method GET \
@@ -88,7 +88,7 @@ jobs:
             -f status=success \
             -f head_sha=${GITHUB_SHA} \
             -f event=pull_request \
-            --jq '[.workflow_runs[] | 'sort_by(.updated_at)' | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
+            --jq '[.workflow_runs[] | sort_by(.updated_at) | reverse | select(.path == ".github/workflows/integration_test.yaml") | .id].[0]')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
   get-images:
     name: Get images
