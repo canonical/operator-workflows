@@ -205,7 +205,8 @@ jobs:
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            IMAGE_SHA=$(sudo microk8s ctr images import - < ${image_name}/${image_name}.tar)
+            sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
+            IMAGE_SHA=$(sudo microk8s ctr image ls | grep ${image_name} | tr -s ' ' | cut -d ' ' -f3)
             echo $IMAGE_SHA
             args="${args} --${image_name}-image $IMAGE_SHA"
           done
