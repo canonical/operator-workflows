@@ -30,10 +30,10 @@ jobs:
       #     branch: main
       - run: |
           echo "skipped"
-          # if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
-          #   echo "::error::Strict checks are not enabled for this repository"
-          #   exit 1
-          # fi
+      # if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
+      #   echo "::error::Strict checks are not enabled for this repository"
+      #   exit 1
+      # fi
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
