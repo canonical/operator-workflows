@@ -230,6 +230,10 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+      - name: Save lxd controller name
+        id: lxd-controller
+        # The `CONTROLLER_NAME` envvar is set by this action
+        run: echo "name=$CONTROLLER_NAME" >> $GITHUB_OUTPUT
       - name: Run integration tests
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -252,6 +256,8 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+        env:
+          LXD_CONTROLLER: ${{ steps.lxd-controller.outputs.name }}
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
