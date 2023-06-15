@@ -230,52 +230,39 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+      - name: Integration tests variable setting
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          args=""
+          for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
+              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
+            else
+              args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
+            fi
+          done
+          echo "ARGS=$args" >> $GITHUB_ENV
+          series=""
+          if [ ! -z ${{ matrix.series }} ]; then
+            series="--series ${{ matrix.series }}"
+          fi
+          echo "SERIES=$series" >> $GITHUB_ENV
+          module=""
+          if [ ! -z ${{ matrix.modules }} ]; then
+            module="-k ${{ matrix.modules }}"
+          fi
+          echo "MODULE=$module" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
-          args=""
-          for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
-              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
-            else
-              args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
-            fi
-          done
-
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-          fi
-          module=""
-          if [ ! -z ${{ matrix.modules }} ]; then
-            module="-k ${{ matrix.modules }}"
-          fi
-          tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+          tox -e integration -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
-          args=""
-          for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
-              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
-            else
-              args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
-            fi
-          done
-
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-          fi
-          module=""
-          if [ ! -z ${{ matrix.modules }} ]; then
-            module="-k ${{ matrix.modules }}"
-          fi
-          tox -e integration -- --keep-models $series $module $args ${{ inputs.extra-arguments }}
+          tox -e integration -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
         env:
           LXD_CONTROLLER: ${{ steps.lxd-controller.outputs.name }}
       - name: Tmate debugging session
