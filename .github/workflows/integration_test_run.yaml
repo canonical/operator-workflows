@@ -222,6 +222,11 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           tox -e integration -- --model testing --keep-models $series $module $args ${{ inputs.extra-arguments }}
+          CURRENT_CHARM_PATH=$(find .tox/integration/tmp/pytest -name *.charm)
+          if [ -z "$CURRENT_CHARM_PATH" ]; then
+            mv $CURRENT_CHARM_PATH .
+            echo "CHARM_FILE=$(find . -name *.charm | sed "s/.*\///")" >> $GITHUB_ENV
+          fi
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
@@ -299,12 +304,14 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           # Not ideal, but the charm doesn't get always packed during the integration tests step
-          charmcraft pack
-          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
+          if [ -z "$CHARM_FILE" ]; then
+            charmcraft pack
+            echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
+          done
       - name: Upload charm artifact
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.CHARM_NAME }}
+          name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
           if-no-files-found: error

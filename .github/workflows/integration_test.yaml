@@ -209,7 +209,7 @@ jobs:
           echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   integration-test:
     name: Integration tests
-    uses: canonical/operator-workflows/.github/workflows/integration_test_run.yaml@reuse-images-from-pr-checks
+    uses: .github/workflows/integration_test_run.yaml
     needs: [get-runner-image, all-images]
     if: ${{ !failure() }}
     with:
