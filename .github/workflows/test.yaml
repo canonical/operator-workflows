@@ -22,7 +22,7 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ${{ inputs.self-hosted-runner && '[self-hosted, xlarge]' || 'ubuntu-22.04' }}
+    runs-on: [self-hosted, xlarge]
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
