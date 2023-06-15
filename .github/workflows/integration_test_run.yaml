@@ -263,8 +263,6 @@ jobs:
         if: ${{ inputs.provider == 'lxd' }}
         run: |
           tox -e integration -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
-        env:
-          LXD_CONTROLLER: ${{ steps.lxd-controller.outputs.name }}
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
