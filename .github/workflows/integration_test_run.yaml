@@ -301,7 +301,7 @@ jobs:
           if [ -z "$CHARM_FILE" ]; then
             charmcraft pack
             echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
-          done
+          fi
       - name: Upload charm artifact
         if: always()
         uses: actions/upload-artifact@v3
