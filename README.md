@@ -79,6 +79,7 @@ The runner image will be set to the value of `bases[0].build-on[0]` in the `char
 | destination-channel | string | "" | Destination channel |
 | origin-channel | string | "" | Origin channel |
 | architecture | string | amd64 | Charm architecture |
+| doc-automation-disabled | boolean | true | Whether the documentation automation is disabled |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
