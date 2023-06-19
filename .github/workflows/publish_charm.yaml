@@ -162,10 +162,7 @@ jobs:
       - name: Get charm name
         id: get-charm-name
         run: |
-          cat metadata.yaml
-          echo "------------------"
-          yq '.name' metadata.yaml
-          echo "CHARM_NAME=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
