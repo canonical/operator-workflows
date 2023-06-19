@@ -120,7 +120,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - name: Install charmcraft and skopeo
+      - name: Install charmcraft and docker
         run: |
           sudo snap install charmcraft --classic
           sudo snap install docker
@@ -161,7 +161,7 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Get charm name
         id: get-charm-name
-        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml)" >> $GITHUB_ENV
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
