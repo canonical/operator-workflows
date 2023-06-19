@@ -161,8 +161,7 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Get charm name
         id: get-charm-name
-        run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
