@@ -165,6 +165,7 @@ jobs:
           tree
           pwd
           echo "CHARM_NAME=$(yq '.name' metadata.yaml)" >> $GITHUB_OUTPUT
+          echo $CHARM_NAME
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
