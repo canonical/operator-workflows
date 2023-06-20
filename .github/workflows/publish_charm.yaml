@@ -158,7 +158,7 @@ jobs:
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          charmName=$(yq '.name' metadata.yaml)
+          charmName=$(yq -e '.name' metadata.yaml)
           cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
           imageId=$(docker images ${{ matrix.image }}:latest --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
@@ -179,7 +179,7 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Get charm name
         id: get-charm-name
-        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml)" >> $GITHUB_ENV
+        run: echo "CHARM_NAME=$(yq -e '.name' metadata.yaml)" >> $GITHUB_ENV
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
