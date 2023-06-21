@@ -85,7 +85,7 @@ on:
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
-        default: "storage dns rbac"
+        default: "dns ingress rbac storage"
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -192,14 +192,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           path: ${{ inputs.working-directory }}
-      - name: Enable ingress and import images
+      - name: Import images
         if: ${{ inputs.provider == 'microk8s' }}
         working-directory: ${{ inputs.working-directory }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
+            sudo microk8s ctr images import ${image_name}/${image_name}.tar
           done
-          sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
