@@ -75,10 +75,6 @@ on:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
-      owner:
-        type: string
-        description: Registry owner to push the built images
-        default: ""
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -98,10 +94,6 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
-      registry:
-        type: string
-        description: Registry to push the built images
-        default: ""
       runs-on:
         type: string
         description: Image runner for building the images
@@ -196,36 +188,17 @@ jobs:
           microk8s-addons: ${{ inputs.microk8s-addons }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
-      - name: Enable microk8s registry
-        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
-        run: |
-          sudo microk8s enable registry
-          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
       - name: Download all artifacts
         uses: actions/download-artifact@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Push images to microk8s registry
-        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
+        with:
+          path: ${{ inputs.working-directory }}
+      - name: Enable ingress and import images
+        if: ${{ inputs.provider == 'microk8s' }}
+        working-directory: ${{ inputs.working-directory }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            docker load < ${image_name}/${image_name}.tar
-            docker push localhost:32000/${image_name}:latest
+            sudo microk8s ctr images import - < ${image_name}/${image_name}.tar
           done
-      - name: Configure GHCR in microk8s
-        if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
-        run: |
-          # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
-          # Note: containerd has to be restarted for the changes to take effect
-          # (https://github.com/containerd/cri/blob/master/docs/registry.md)
-          sudo su -c 'echo "
-          [plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"ghcr.io\".auth]
-          username = \"${{ github.actor }}\"
-          password = \"${{ secrets.GITHUB_TOKEN }}\"
-          " >> /var/snap/microk8s/current/args/containerd-template.toml'
-          sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
-      - name: Enable microk8s ingress
-        if: ${{ inputs.provider == 'microk8s' }}
-        run: |
           sudo microk8s enable ingress
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
@@ -236,11 +209,7 @@ jobs:
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
-              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
-            else
-              args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
-            fi
+            args="${args} --${image_name}-image ${image_name}:latest"
           done
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
@@ -329,3 +298,23 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+      - name: Pack charm
+        if: always()
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          # Not ideal, but the charm doesn't get always packed during the integration tests step
+          CURRENT_CHARM_PATH=$(find .tox/integration/tmp/pytest -name *.charm)
+          if [ -z "$CURRENT_CHARM_PATH" ]; then
+            mv $CURRENT_CHARM_PATH .
+          fi
+          if [ -z "$CHARM_FILE" ]; then
+            charmcraft pack
+          fi
+          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
+      - name: Upload charm artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error

@@ -9,33 +9,57 @@ on:
       channel:
         required: true
         type: string
-        description: 'Origin Channel'
-      images:
-        type: string
-        description: 'Docker images'
+        description: 'Destination Channel'
       working-directory:
         type: string
         description: The working directory for jobs
         default: "./"
 
-env:
-  REGISTRY: ghcr.io
-  OWNER: ${{ github.repository_owner }}
-
 jobs:
+  branch-up-to-date-check-enabled:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: octokit/request-action@v2.x
+        id: get-branch-protection
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+        with:
+          route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.event.repository.owner.login }}
+          branch: main
+      - run: |
+          if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
+            echo "::error::Strict checks are not enabled for this repository"
+            exit 1
+          fi
+  draft-publish-docs:
+    name: Draft publish docs
+    needs: [ branch-up-to-date-check-enabled ]
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Search for docs folder
+        id: docs-exist
+        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
+      - name: Publish documentation
+        if: steps.docs-exist.outputs.docs_exist == 'True'
+        uses: canonical/upload-charm-docs@main
+        with:
+          discourse_host: discourse.charmhub.io
+          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
+          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
+          dry_run: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
     with:
       working-directory: ${{ inputs.working-directory }}
-  publish-images:
-    name: Publish images to charmhub
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: get-runner-image
-    if: ${{ inputs.images != '[]' }}
-    strategy:
-      matrix:
-        image: ${{ fromJSON(inputs.images) }}
+  release-charm-libs:
+    name: Release charm libs
+    needs: [ branch-up-to-date-check-enabled ]
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
@@ -46,27 +70,102 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - name: Install charmcraft
-        run: sudo snap install charmcraft --classic
-      - name: Log in to the Container registry
-        uses: docker/login-action@v2
+      - uses: canonical/charming-actions/release-libraries@2.3.0
+        name: Release libs
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  get-run-id:
+    name: Get workflow run id
+    needs: [ branch-up-to-date-check-enabled ]
+    runs-on: ubuntu-22.04
+    outputs:
+      run-id: ${{ env.RUN_ID }}
+    steps:
+      - name: Get workflow run id
+        if: ${{ github.event_name == 'push' }}
+        shell: bash  
+        run: |
+          # Get commit info
+          TREE_SHA=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/commits/${GITHUB_SHA} \
+             --jq '.commit.tree.sha')
+          RUN_ID=$(gh api \
+            --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/actions/runs \
+            -f path=.github/workflows/integration_test.yaml \
+            -f tree_id=$TREE_SHA \
+            -f status=completed \
+            -f event=pull_request \
+            --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+  get-images:
+    name: Get images
+    runs-on: ubuntu-22.04
+    outputs:
+      images: ${{ env.IMAGES }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get images
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          lines=$(find . -type f -name rockcraft.yaml | wc -l)
+          if [ $lines -ne 0 ]; then
+            IMAGES=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
+          else
+            IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
+          fi
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+  publish-images:
+    name: Publish images to charmhub
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    needs: [ get-images, get-run-id, get-runner-image]
+    if: ${{ needs.get-images.outputs.images != '[]' }}
+    strategy:
+      matrix:
+        image: ${{ fromJSON(needs.get-images.outputs.images) }}
+    steps:
+      - uses: actions/checkout@v3
+      - if: inputs.working-directory != './'
+        name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+      - name: Install charmcraft and docker
+        run: |
+          sudo snap install charmcraft --classic
+          sudo snap install docker
+      - name: Download image artifacts
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ matrix.image }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download image artifacts
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ matrix.image }}
+          path: ${{ inputs.working-directory }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
-          charmName=$(yq '.name' metadata.yaml)
-          docker pull $image
-          imageId=$(docker images $image --format "{{.ID}}")
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=trace
+          charmName=$(yq -e '.name' metadata.yaml)
+          cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
+          imageId=$(docker images ${{ matrix.image }}:latest --format "{{.ID}}")
+          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-runner-image, publish-images]
+    needs: [get-run-id, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v3
@@ -78,9 +177,27 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
+      - name: Get charm name
+        id: get-charm-name
+        run: echo "CHARM_NAME=$(yq -e '.name' metadata.yaml)" >> $GITHUB_ENV
+      - name: Download charm artifact
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh run download $${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download charm artifact
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}
+      - name: Get charm file
+        run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.3.0
         with:
+          built-charm-path: ${{ env.CHARM_FILE }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}

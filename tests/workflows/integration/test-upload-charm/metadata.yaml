@@ -1,7 +1,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: test-upload 
+name: test-upload
 display-name: Test Upload Charm
 summary: A simple charm for testing charm uploads.
 description: A simple charm for testing charm uploads.

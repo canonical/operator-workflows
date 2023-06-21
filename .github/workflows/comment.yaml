@@ -49,13 +49,12 @@ jobs:
           script: |
             const fs = require('fs');
             const comments = JSON.parse(fs.readFileSync('${{ env.ARTIFACT_NAME }}.json'));
-
             const owner = context.payload.workflow_run.repository.owner.login;
             const repo = context.payload.workflow_run.repository.name;
 
             const pull = (await github.rest.pulls.list({
-              owner : context.repo.owner,
-              repo : context.repo.repo,
+                owner: owner,
+                repo: repo,
             })).data.filter(pr => pr.head.sha == context.payload.workflow_run.head_sha)[0];
             const issue_number = pull.number;
 
