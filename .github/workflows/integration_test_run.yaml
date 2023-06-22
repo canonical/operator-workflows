@@ -199,6 +199,7 @@ jobs:
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             docker load < ${image_name}/${image_name}.tar
             docker tag ${image_name}:latest localhost:32000/${image_name}:latest
+            docker images ls
             docker push localhost:32000/${image_name}:latest
           done
       - name: Pre-run script
@@ -227,6 +228,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
+          sudo microk8s ctr images ls
           tox -e integration -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
