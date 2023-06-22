@@ -196,7 +196,6 @@ jobs:
         if: ${{ inputs.provider == 'microk8s' }}
         working-directory: ${{ inputs.working-directory }}
         run: |
-          sudo 
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             docker load < ${image_name}/${image_name}.tar
             docker tag ${image_name}:latest localhost:32000/${image_name}:latest
