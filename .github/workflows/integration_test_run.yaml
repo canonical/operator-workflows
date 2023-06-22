@@ -198,8 +198,8 @@ jobs:
         run: |
           sudo 
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            docker save -o ${image_name}/${image_name}.tar localhost:32000/${image_name}:latest
             docker load < ${image_name}/${image_name}.tar
+            docker tag ${image_name}:latest localhost:32000/${image_name}:latest
             docker push localhost:32000/${image_name}:latest
           done
       - name: Pre-run script
