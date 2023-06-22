@@ -298,7 +298,7 @@ jobs:
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
       - name: Pack charm
-        if: always()
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' }}
         working-directory: ${{ inputs.working-directory }}
         run: |
           # Not ideal, but the charm doesn't get always packed during the integration tests step
@@ -311,7 +311,7 @@ jobs:
           fi
           echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
       - name: Upload charm artifact
-        if: always()
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.CHARM_NAME }}-charm
