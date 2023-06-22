@@ -85,7 +85,7 @@ on:
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
-        default: "dns ingress rbac storage"
+        default: "dns ingress rbac registry storage"
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -197,7 +197,9 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            sudo microk8s ctr images import ${image_name}/${image_name}.tar
+            docker load < ${image_name}/${image_name}.tar
+            docker tag ${image_name}:latest localhost:32000/${image_name}:latest
+            docker push localhost:32000/${image_name}:latest
           done
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
@@ -208,7 +210,7 @@ jobs:
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${image_name}:latest"
+            args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
           done
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
