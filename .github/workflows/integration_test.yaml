@@ -6,6 +6,10 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      channel:
+        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: latest/stable
       chaos-app-kind:
         type: string
         description: Application kind
@@ -61,9 +65,13 @@ on:
         default: '{}'
       image-build-args:
         description: |
-          List of build args to pass to the build image job.
+          List of build args to pass to the build image job
         type: string
         default: ""
+      juju-channel:
+        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 2.9/stable
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -86,15 +94,7 @@ on:
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
-        default: "dns ingress rbac registry storage"
-      channel:
-        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: latest/stable
-      juju-channel:
-        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: 2.9/stable
+        default: "dns ingress rbac storage"
       series:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
@@ -165,6 +165,10 @@ on:
         description: Pushed images
         value: ${{ jobs.all-images.outputs.images }}
 
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
 concurrency:
   group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}
   cancel-in-progress: true
@@ -180,6 +184,8 @@ jobs:
     uses: ./.github/workflows/build_images.yaml
     needs: get-runner-image
     with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
@@ -189,6 +195,8 @@ jobs:
     uses: ./.github/workflows/build_rocks.yaml
     needs: get-runner-image
     with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
@@ -213,6 +221,7 @@ jobs:
     needs: [get-runner-image, all-images]
     if: ${{ !failure() }}
     with:
+      channel: ${{ inputs.channel }}
       chaos-app-kind: ${{ inputs.chaos-app-kind }}
       chaos-app-label: ${{ inputs.chaos-app-label }}
       chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
@@ -226,14 +235,15 @@ jobs:
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.all-images.outputs.images }}
+      juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
       modules: ${{ inputs.modules }}
+      owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
-      channel: ${{ inputs.channel }}
-      juju-channel: ${{ inputs.juju-channel }}
+      registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
