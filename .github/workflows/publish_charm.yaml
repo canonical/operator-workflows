@@ -156,7 +156,7 @@ jobs:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq -e '.name' metadata.yaml)
-          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:$${{ needs.get-run-id.outputs.run-id }}
+          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ needs.get-run-id.outputs.run-id }}
           docker pull $image
           imageId=$(docker images $image --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
