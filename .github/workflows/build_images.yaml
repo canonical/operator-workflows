@@ -64,7 +64,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push image
         uses: docker/build-push-action@v3
-        if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
           context: .
           build-args: ${{ inputs.build-args }}
