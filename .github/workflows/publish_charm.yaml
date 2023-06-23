@@ -108,7 +108,7 @@ jobs:
             --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
       - name: Get current run id
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'pull_request' }}
         shell: bash  
         run: |
           echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
@@ -147,7 +147,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - name: Install charmcraft and docker
+      - name: Install charmcraft
         run: |
           sudo snap install charmcraft --classic
       - name: Log in to the Container registry
