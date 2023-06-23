@@ -107,6 +107,11 @@ jobs:
             -f event=pull_request \
             --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+      - name: Get current run id
+        if: ${{ github.event_name == 'push' }}
+        shell: bash  
+        run: |
+          echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
