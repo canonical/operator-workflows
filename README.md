@@ -23,6 +23,7 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | chaos-enabled  | bool | false | Whether Chaos testing is enabled |
 | chaos-experiments | string | "" | List of experiments to run |
 | chaos-namespace | string | testing | Namespace to install Litmus Chaos |
@@ -32,14 +33,14 @@ The following workflows are available:
 | chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
+| image-build-args | string | "" | List of build args to pass to the build image job |
+| juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
 | load-test-run-args | string | "" | Command line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| microk8s-addons | string | "dns ingress rbac registry storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
-| channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
 | tmate-debug | bool | false | Enable tmate debugging after integration test failure. |

@@ -15,6 +15,10 @@ on:
         description: The working directory for jobs
         default: "./"
 
+env:
+  REGISTRY: ghcr.io
+  OWNER: ${{ github.repository_owner }}
+
 jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
@@ -141,26 +145,20 @@ jobs:
       - name: Install charmcraft and docker
         run: |
           sudo snap install charmcraft --classic
-          sudo snap install docker
-      - name: Download image artifacts
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ matrix.image }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download image artifacts
-        uses: actions/download-artifact@v3
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
         with:
-          name: ${{ matrix.image }}
-          path: ${{ inputs.working-directory }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq -e '.name' metadata.yaml)
-          cat ${{ matrix.image }}.tar | docker import - ${{ matrix.image }}:latest
-          imageId=$(docker images ${{ matrix.image }}:latest --format "{{.ID}}")
+          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:$${{ needs.get-run-id.outputs.run-id }}
+          docker pull $image
+          imageId=$(docker images $image --format "{{.ID}}")
           charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
