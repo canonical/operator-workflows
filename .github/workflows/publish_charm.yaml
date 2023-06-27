@@ -105,7 +105,7 @@ jobs:
             -f tree_id=$TREE_SHA \
             -f status=completed \
             -f event=pull_request \
-            --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
+            --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at) | .id')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
