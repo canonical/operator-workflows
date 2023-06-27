@@ -107,6 +107,8 @@ jobs:
             -f event=pull_request \
             --jq  '[.workflow_runs[] | select(.path == ".github/workflows/integration_test.yaml")] | max_by(.updated_at)')
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
       - name: Get current run id
         if: ${{ github.event_name == 'pull_request' }}
         shell: bash  
