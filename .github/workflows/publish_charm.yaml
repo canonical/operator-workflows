@@ -188,7 +188,7 @@ jobs:
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
-          gh run download $${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download charm artifact
