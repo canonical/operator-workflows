@@ -15,10 +15,9 @@ on:
         description: Whether to use self-hosted runners to run the jobs.
         default: false
 
-# TODO: Enable this after debugging.
-# concurrency:
-#   group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   inclusive-naming-check:
