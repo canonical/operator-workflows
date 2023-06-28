@@ -17,7 +17,6 @@ on:
 
 concurrency:
   group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   inclusive-naming-check:
