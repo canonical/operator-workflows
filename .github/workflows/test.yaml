@@ -23,7 +23,7 @@ on:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: [self-hosted, large]
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
