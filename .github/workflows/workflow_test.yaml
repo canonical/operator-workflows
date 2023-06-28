@@ -6,18 +6,18 @@ name: Workflow test
 on:
   pull_request:
 
-
 jobs:
   simple:
-    strategy:
-      max-parallel: 1
-      matrix:
-        self-hosted-runner: [true, false]
     uses: ./.github/workflows/test.yaml
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
-      self-hosted-runner: ${{ matrix.self-hosted-runner}
+  simple-self-hosted:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      self-hosted-runner: true
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
