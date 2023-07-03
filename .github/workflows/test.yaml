@@ -62,6 +62,7 @@ jobs:
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
       - name: Tmate debugging session
+        if: ${{ failure() }}
         uses: mxschmitt/action-tmate@v3
         timeout-minutes: 30
   get-runner-image:
