@@ -61,6 +61,9 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
+      - name: Tmate debugging session
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 30
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
