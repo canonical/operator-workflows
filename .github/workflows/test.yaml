@@ -31,10 +31,14 @@ jobs:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
       - name: Copy files to tmp working directory
-        run: cp -r . /tmp
+        run: |
+          pwd
+          cp -r . /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
+          pwd
+          ls
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
@@ -61,10 +65,6 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
-      - name: Tmate debugging session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 30
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
