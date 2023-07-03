@@ -39,6 +39,7 @@ jobs:
         run: |
           pwd
           ls -la
+          sleep 120
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
