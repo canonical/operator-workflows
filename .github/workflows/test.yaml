@@ -30,25 +30,24 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      - name: Copy files to tmp directory
-        run: |
-          pwd
-          cp -r . /tmp
+      - run: mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
           pwd
           ls -la
-          sleep 120
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
           if [ -f .woke.yaml ]; then
             woke_file=".woke.yaml"
+            cat $woke_file
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
           if [ ! -z "$woke_file" ]; then
+            echo "$woke_file"
+            cat "$woke_file"
             yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
