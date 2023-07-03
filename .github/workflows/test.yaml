@@ -30,7 +30,10 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      - run: mv * /tmp
+      - name: Copy files to tmp working directory
+        run: |
+          mv * /tmp
+          mv .* /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
