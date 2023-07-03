@@ -30,7 +30,7 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      - run: mv * /tmp
+      - run: cp -R * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
@@ -46,13 +46,11 @@ jobs:
             woke_file=".woke.yml"
           fi
           if [ ! -z "$woke_file" ]; then
-            echo "$woke_file"
-            cat "$woke_file"
-            yq eval-all '
+            cat $woke_file | yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' $woke_file /tmp/config.yml | tee /tmp/merged.yml
+            ' /tmp/config.yml - | tee /tmp/merged.yml
             mv /tmp/merged.yml /tmp/config.yml
           fi
           sleep 300
