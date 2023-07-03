@@ -30,7 +30,7 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      - name: Copy files to tmp working directory
+      - name: Copy files to tmp directory
         run: |
           pwd
           cp -r . /tmp
@@ -38,7 +38,7 @@ jobs:
       - name: Merge configuration files
         run: |
           pwd
-          ls
+          ls -la
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
