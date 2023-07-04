@@ -30,10 +30,10 @@ jobs:
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
-      - run: |
-          ls -la
-          mv ./* /tmp/
-          ls -la /tmp
+      - name: Make tmp directory in $HOME and move inclusive naming files.
+        run: |
+          mkdir ~/tmp
+          mv ./* ~/tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
         run: |
@@ -46,13 +46,12 @@ jobs:
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
-          sleep 300
           if [ ! -z "$woke_file" ]; then
             cat $woke_file | sudo yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' /tmp/config.yml - | tee /tmp/merged.yml
+            ' ~/config.yml - | tee /tmp/merged.yml
             mv /tmp/merged.yml /tmp/config.yml
           fi
       - name: Run inclusive naming check
