@@ -48,7 +48,7 @@ jobs:
           fi
           sleep 300
           if [ ! -z "$woke_file" ]; then
-            cat $woke_file | yq eval-all '
+            cat $woke_file | sudo yq eval-all '
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
