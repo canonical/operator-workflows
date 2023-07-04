@@ -46,6 +46,7 @@ jobs:
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
+          sleep 300
           if [ ! -z "$woke_file" ]; then
             cat $woke_file | yq eval-all '
             (
