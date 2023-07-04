@@ -42,7 +42,6 @@ jobs:
           woke_file=""
           if [ -f .woke.yaml ]; then
             woke_file=".woke.yaml"
-            cat $woke_file
           elif [ -f .woke.yml ]; then
             woke_file=".woke.yml"
           fi
@@ -51,7 +50,7 @@ jobs:
             (
               . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
             ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' ~/tmp/config.yml - | tee /tmp/merged.yml
+            ' - ~/tmp/config.yml | tee /tmp/merged.yml
             mv /tmp/merged.yml /tmp/config.yml
           fi
       - name: Run inclusive naming check
