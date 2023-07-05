@@ -267,7 +267,8 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - integration-test
-    if: always()
+    if: always() && !cancelled()
+    timeout-minutes: 5
     steps:
       - run: |
           [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
