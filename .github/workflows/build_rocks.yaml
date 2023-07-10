@@ -76,7 +76,7 @@ jobs:
           IMAGE_BUILD_BASE=$(yq '.["build-base"] // .base' "${{ matrix.path }}/rockcraft.yaml")
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ github.run_id }}
           INODE_NUM=$(ls -id ${{ matrix.path }} | cut -f 1 -d " ")
-          ROCKCRAFT_CONTAINER_NAME=rockcraft-${{ env.IMAGE_NAME }}-$INODE_NUM
+          ROCKCRAFT_CONTAINER_NAME=rockcraft-$IMAGE_NAME-$INODE_NUM
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "IMAGE_BASE=$IMAGE_BASE" >> $GITHUB_ENV
           echo "IMAGE_BUILD_BASE=$IMAGE_BUILD_BASE" >> $GITHUB_ENV
@@ -104,7 +104,7 @@ jobs:
       - name: Generate rockcraft container cache
         if: inputs.cache-action == 'save'
         run: |
-          sudo lxc --project rockcraft ${{ env.ROCKCRAFT_CONTAINER_NAME }} --compression none ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar
+          sudo lxc --project rockcraft export ${{ env.ROCKCRAFT_CONTAINER_NAME }} --compression none ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar
       - name: Save rockcraft container cache
         if: inputs.cache-action == 'save'
         uses: actions/cache/save@v3
