@@ -87,7 +87,7 @@ jobs:
           ROCKCRAFT_CACHE_KEY='rockcraft-cache+name:${{ env.IMAGE_NAME }}+base:${{ env.IMAGE_BUILD_BASE }}+build-base:${{ env.IMAGE_BUILD_BASE }}'
           echo "ROCKCRAFT_CACHE_KEY=$ROCKCRAFT_CACHE_KEY" >> $GITHUB_ENV
       - name: Restore rockcraft container cache
-        if: ${{ inputs.cache-action }} == "restore" 
+        if: inputs.cache-action == 'restore' 
         uses: actions/cache/restore@v3
         id: rockcraft-cache
         with:
@@ -102,11 +102,11 @@ jobs:
         with:
           path: ${{ matrix.path }}
       - name: Generate rockcraft container cache
-        if: ${{ inputs.cache-action }} == "save"
+        if: inputs.cache-action == 'save'
         run: |
           sudo lxc --project rockcraft ${{ env.ROCKCRAFT_CONTAINER_NAME }} --compression none ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar
       - name: Save rockcraft container cache
-        if: ${{ inputs.cache-action }} == "save"
+        if: inputs.cache-action == 'save'
         uses: actions/cache/save@v3
         with:
           path: ${{ matrix.path }}
