@@ -28,6 +28,7 @@ on:
       cache-action:
         type: string
         description: The cache action can either be "save" or "restore".
+        default: restore
     outputs:
       images:
         description: List of images built
