@@ -1,0 +1,23 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Workflow Self-Test (Rockcraft Cache)
+
+on:
+  pull_request:
+  
+jobs:
+  save-cache:
+    uses: ./.github/workflows/build_rocks.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      cache-action: save
+  
+  restore-cache:
+    needs: [ save-cache ]
+    uses: ./.github/workflows/build_rocks.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      cache-action: restore
