@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: Validate inputs
         run: |
-          if [ "${{ inputs.cache-action }}" != "save" ] && [ "${{ inputs.cache-action }}}" != "restore" ]; then
+          if [ "${{ inputs.cache-action }}" != "save" ] && [ "${{ inputs.cache-action }}" != "restore" ]; then
             echo "Invalid value for cache-action. It must be 'save' or 'restore'"
             exit 1
           fi
