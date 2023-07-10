@@ -104,12 +104,13 @@ jobs:
       - name: Generate rockcraft container cache
         if: inputs.cache-action == 'save'
         run: |
+          mkdir -p ~/.rockcraft-cache
           sudo lxc --project rockcraft export ${{ env.ROCKCRAFT_CONTAINER_NAME }} --compression none ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar
       - name: Save rockcraft container cache
         if: inputs.cache-action == 'save'
         uses: actions/cache/save@v3
         with:
-          path: ${{ matrix.path }}
+          path: ~/.rockcraft-cache
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
       - name: Upload rock to ghcr.io
         run: |
