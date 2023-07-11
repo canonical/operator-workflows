@@ -117,7 +117,7 @@ jobs:
             --method DELETE \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/OWNER/REPO/actions/caches?key=$(printf %s "${{ env.ROCKCRAFT_CACHE_KEY }}"|jq -sRr @uri)
+            /repos/${{ github.repository }}/actions/caches?key=$(printf %s "${{ env.ROCKCRAFT_CACHE_KEY }}"|jq -sRr @uri)
       - name: Save rockcraft container cache
         if: inputs.cache-action == 'save'
         uses: actions/cache/save@v3
