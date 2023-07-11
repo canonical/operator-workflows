@@ -94,6 +94,8 @@ jobs:
         with:
           path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
+      - name: Setup lxd
+        uses: canonical/setup-lxd
       - name: Import rockcraft container cache
         if: steps.rockcraft-cache.outputs.cache-hit == 'true'
         run: |
