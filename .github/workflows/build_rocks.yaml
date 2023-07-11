@@ -85,7 +85,9 @@ jobs:
           echo "ROCKCRAFT_CONTAINER_NAME=$ROCKCRAFT_CONTAINER_NAME" >> $GITHUB_ENV
       - name: Generate rockcraft cache key          
         run: |
-          ROCKCRAFT_CACHE_KEY='rockcraft-cache?name=${{ env.IMAGE_NAME }}&base=${{ env.IMAGE_BUILD_BASE }}&build-base=${{ env.IMAGE_BUILD_BASE }}'
+          ROCKCRAFT_PATH="${{ matrix.path }}"
+          ROCKCRAFT_PATH="${ROCKCRAFT_PATH%/}"
+          ROCKCRAFT_CACHE_KEY='$ROCKCRAFT_PATH/rockcraft-cache?name=${{ env.IMAGE_NAME }}&base=${{ env.IMAGE_BUILD_BASE }}&build-base=${{ env.IMAGE_BUILD_BASE }}'
           echo "ROCKCRAFT_CACHE_KEY=$ROCKCRAFT_CACHE_KEY" >> $GITHUB_ENV
       - name: Restore rockcraft container cache
         if: inputs.cache-action == 'restore' 

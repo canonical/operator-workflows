@@ -13,7 +13,7 @@ jobs:
     with:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
-      working-directory: "tests/workflows/integration/test-rock/"
+      working-directory: "tests/workflows/integration/test-indico-rock/"
       cache-action: save
   
   restore-cache:
@@ -23,5 +23,5 @@ jobs:
     with:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
-      working-directory: "tests/workflows/integration/test-rock/"
+      working-directory: "tests/workflows/integration/test-indico-rock/"
       cache-action: restore
