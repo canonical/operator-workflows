@@ -1,7 +1,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: indico-nginx
+name: indico-nginx-test
 summary: Indico nginx rock
 description: Nginx OCI image for the Indico charm
 version: "1.0"

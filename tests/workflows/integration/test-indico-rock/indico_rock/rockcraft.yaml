@@ -1,7 +1,7 @@
 # Copyright 2023 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: indico
+name: indico-test
 summary: Indico rock
 description: Indico OCI image for the Indico charm
 version: "1.0"
