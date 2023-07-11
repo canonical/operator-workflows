@@ -226,7 +226,7 @@ jobs:
               fi
           done
       - name: Export test report
-        if: always()
+        if: always() && !cancelled()
         uses: actions/github-script@v6
         with:
           script: |
@@ -280,7 +280,7 @@ jobs:
             fs.writeFileSync('report.json', json);
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: report
           path: report.json
@@ -346,7 +346,8 @@ jobs:
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
-    if: always()
+    if: always() && !cancelled()
+    timeout-minutes: 5
     steps:
       - run: |
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
