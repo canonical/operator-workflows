@@ -111,7 +111,7 @@ jobs:
         if: inputs.cache-action == 'save'
         uses: actions/cache/save@v3
         with:
-          path: ~/.rockcraft-cache
+          path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
       - name: Upload rock to ghcr.io
         run: |
