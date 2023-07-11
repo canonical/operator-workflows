@@ -95,10 +95,12 @@ jobs:
           path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
       - name: Setup lxd
+        if: steps.rockcraft-cache.outputs.cache-hit == 'true'
         uses: canonical/setup-lxd@v0.1.1
       - name: Import rockcraft container cache
         if: steps.rockcraft-cache.outputs.cache-hit == 'true'
         run: |
+          sudo lxc project create rockcraft
           sudo lxc --project rockcraft import ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar ${{ env.ROCKCRAFT_CONTAINER_NAME }}
       - name: Build rock
         uses: canonical/craft-actions/rockcraft-pack@main
