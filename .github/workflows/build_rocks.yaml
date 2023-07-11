@@ -105,7 +105,7 @@ jobs:
       - name: Import rockcraft container cache
         if: steps.rockcraft-cache.outputs.cache-hit == 'true'
         run: |
-          sudo lxc project create rockcraft
+          sudo lxc project create rockcraft -c features.images=false -c features.profiles=false
           sudo lxc --project rockcraft import ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar ${{ env.ROCKCRAFT_CONTAINER_NAME }}
       - name: Build rock
         uses: canonical/craft-actions/rockcraft-pack@main
