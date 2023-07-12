@@ -86,7 +86,7 @@ jobs:
         run: |
           sudo lxc project create charmcraft -c features.images=false -c features.profiles=false
           INODE_NUM=$(ls -id . | cut -f 1 -d " ")
-          for $FILE in $(ls ~/.charmcraft-cache)
+          for FILE in $(ls ~/.charmcraft-cache)
             do sudo lxc --project charmcraft import ~/.charmcraft-cache/$FILE $(echo $FILE | sed s/INODE/$INODE_NUM/g | sed s/.tar//g)
           done
       - name: Build Charm
