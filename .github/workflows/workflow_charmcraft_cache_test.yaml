@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
-          name: canonical/indico-operator    
+          repository: canonical/indico-operator    
       - name: Generate charmcraft cache key          
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
@@ -57,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
         with:
-          name: canonical/indico-operator    
+          repository: canonical/indico-operator    
       - name: Generate charmcraft cache key          
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
