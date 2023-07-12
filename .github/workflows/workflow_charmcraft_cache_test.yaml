@@ -1,0 +1,91 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Workflow Self-Test (Charmcraft Cache)
+
+on:
+  pull_request:
+  
+jobs:
+  save-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          name: canonical/indico-operator    
+      - name: Generate charmcraft cache key          
+        run: |
+          CHARM_NAME=$(yq .name ./metadata.yaml)
+          CHARMCRAFT_CACHE_KEY="charmcraft-cache?name=$CHARM_NAME&base=$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
+          echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
+      - name: Setup lxd
+        run: |
+          sudo groupadd --force --system lxd
+          sudo usermod --append --groups lxd runner
+          sudo snap refresh lxd --channel latest/stable
+          sudo lxd init --auto
+          sudo iptables -P FORWARD ACCEPT
+      - name: Build Charm
+        run: |
+          sudo snap install charmcraft --classic
+          sudo charmcraft pack
+      - name: Generate charmcraft container cache
+        run: |
+          mkdir -p ~/.charmcraft-cache
+          INODE_NUM=$(ls -id . | cut -f 1 -d " ")
+          for CONTAINER in $(sudo lxc list --project charmcraft -f table | grep charmcraft | cut -f 2 -d " ")
+            do sudo lxc --project charmcraft export $CONTAINER --compression none ~/.charmcraft-cache/$(echo $CONTAINER | sed s/$INODE_NUM/INODE/g).tar 
+          done
+      - name: Delete charmcraft container cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/actions/caches?key=$(printf %s "${{ env.CHARMCRAFT_CACHE_KEY }}"|jq -sRr @uri) || :
+      - name: Save charmcraft container cache
+        uses: actions/cache/save@v3
+        with:
+          path: ~/.charmcraft-cache/
+          key: ${{ env.CHARMCRAFT_CACHE_KEY }}
+  
+  restore-cache:
+    needs: [ save-cache ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          name: canonical/indico-operator    
+      - name: Generate charmcraft cache key          
+        run: |
+          CHARM_NAME=$(yq .name ./metadata.yaml)
+          CHARMCRAFT_CACHE_KEY="charmcraft-cache?name=$CHARM_NAME&base=$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
+          echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
+      - name: Restore charmcraft container cache
+        uses: actions/cache/restore@v3
+        id: charmcraft-cache
+        with:
+          path: ~/.charmcraft-cache/
+          key: ${{ env.CHARMCRAFT_CACHE_KEY }}
+      - name: Setup lxd
+        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo groupadd --force --system lxd
+          sudo usermod --append --groups lxd runner
+          sudo snap refresh lxd --channel latest/stable
+          sudo lxd init --auto
+          sudo iptables -P FORWARD ACCEPT
+      - name: Import charmcraft container cache
+        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo lxc project create charmcraft -c features.images=false -c features.profiles=false
+          INODE_NUM=$(ls -id . | cut -f 1 -d " ")
+          for $FILE in $(ls ~/.charmcraft-cache)
+            do sudo lxc --project charmcraft import ~/.charmcraft-cache/$FILE $(echo $FILE | sed s/INODE/$INODE_NUM/g | sed s/.tar//g)
+          done
+      - name: Build Charm
+        run: |
+          sudo snap install charmcraft --classic
+          sudo charmcraft pack
