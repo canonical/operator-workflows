@@ -16,7 +16,7 @@ jobs:
       - name: Generate charmcraft cache key          
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
-          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..) | @uri' ./charmcraft.yaml)"
+          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
           CHARMCRAFT_CACHE_KEY="charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
@@ -63,7 +63,7 @@ jobs:
       - name: Generate charmcraft cache key          
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
-          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..) | @uri' ./charmcraft.yaml)"
+          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
           CHARMCRAFT_CACHE_KEY="charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
