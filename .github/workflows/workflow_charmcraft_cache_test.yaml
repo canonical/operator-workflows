@@ -9,10 +9,13 @@ on:
 jobs:
   save-cache:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        charm: [ indico-operator, github-runner-operator ]
     steps:
       - uses: actions/checkout@master
         with:
-          repository: canonical/indico-operator    
+          repository: canonical/${{ matrix.charm }}    
       - name: Generate charmcraft cache key          
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
@@ -56,7 +59,13 @@ jobs:
   restore-cache:
     needs: [ save-cache ]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        charm: [ indico-operator, github-runner-operator ]
     steps:
+      - uses: actions/checkout@master
+        with:
+          repository: canonical/${{ matrix.charm }}    
       - uses: actions/checkout@master
         with:
           repository: canonical/indico-operator    
