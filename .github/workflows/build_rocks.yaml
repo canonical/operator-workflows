@@ -103,10 +103,20 @@ jobs:
         run: |
           ROCKCRAFT_PATH="${{ matrix.path }}"
           ROCKCRAFT_PATH="${ROCKCRAFT_PATH%/}"
-          ROCKCRAFT_CACHE_KEY="$ROCKCRAFT_PATH/rockcraft-cache?name=${{ env.IMAGE_NAME }}&base=${{ env.IMAGE_BUILD_BASE }}&build-base=${{ env.IMAGE_BUILD_BASE }}"
-          ROCK_CACHE_KEY="$ROCKCRAFT_PATH/${{ env.IMAGE_NAME }}.rock?filehash=${{ hashFiles(format('{0}/{1}', matrix.path, '**')) }}"
-          echo "ROCKCRAFT_CACHE_KEY=$ROCKCRAFT_CACHE_KEY" >> $GITHUB_ENV
-          echo "ROCK_CACHE_KEY=$ROCK_CACHE_KEY" >> $GITHUB_ENV
+          ROCKCRAFT_CACHE_KEY_BASE="$ROCKCRAFT_PATH/rockcraft-cache?name=${{ env.IMAGE_NAME }}&base=${{ env.IMAGE_BUILD_BASE }}&build-base=${{ env.IMAGE_BUILD_BASE }}"
+          ROCK_CACHE_KEY_BASE="$ROCKCRAFT_PATH/${{ env.IMAGE_NAME }}.rock?filehash=${{ hashFiles(format('{0}/{1}', matrix.path, '**')) }}"
+          echo "ROCKCRAFT_CACHE_KEY=$ROCKCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo 'ROCKCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          for d in {1..2}
+            do echo "$ROCKCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
+          done
+          echo 'EOF' >> $GITHUB_ENV
+          echo "ROCK_CACHE_KEY=$ROCK_CACHE_KEY_BASE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo 'ROCK_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          for d in {1..2}
+            do echo "$ROCK_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
+          done
+          echo 'EOF' >> $GITHUB_ENV
       - name: Restore rock cache
         if: inputs.cache-action == 'restore'
         uses: actions/cache/restore@v3
@@ -114,6 +124,7 @@ jobs:
         with:
           path: ~/.rock-cache
           key: ${{ env.ROCK_CACHE_KEY }}
+          restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Restore rockcraft container cache
         if: steps.rock-cache.outputs.cache-hit == 'false' && inputs.cache-action == 'restore' 
         uses: actions/cache/restore@v3
@@ -121,6 +132,7 @@ jobs:
         with:
           path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
+          restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Setup lxd
         if: steps.rockcraft-cache.outputs.cache-hit == 'true'
         run: |

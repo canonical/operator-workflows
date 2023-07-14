@@ -90,8 +90,8 @@ jobs:
           CHARMCRAFT_CACHE_KEY_BASE="charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
           CHARMCRAFT_CACHE_KEY="$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)"
           echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
-          for d in ${1..2}
-            do CHARMCRAFT_CACHE_ALT_KEYS="$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)"
+          for d in  >> $GITHUB_ENV 
+            do echo "$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
           done
           echo 'EOF' >> $GITHUB_ENV
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
