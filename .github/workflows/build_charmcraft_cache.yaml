@@ -35,8 +35,7 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
       - name: Build Charm
         run: |
-          sudo snap install charmcraft --classic
-          sudo charmcraft pack
+          charmcraft pack
       - name: Generate charmcraft container cache
         run: |
           mkdir -p ~/.charmcraft-cache
