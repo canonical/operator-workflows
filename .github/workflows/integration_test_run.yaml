@@ -216,8 +216,8 @@ jobs:
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
-          for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
+          for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+            args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
