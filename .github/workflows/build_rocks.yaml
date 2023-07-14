@@ -167,7 +167,7 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ~/.rock-cache
-          kwy: ${{ env.ROCK_CACHE_KEY }}
+          key: ${{ env.ROCK_CACHE_KEY }}
       - name: Upload rock to ghcr.io
         if: steps.rock-cache.outputs.cache-hit == 'false' || inputs.cache-action == 'save'
         run: |
