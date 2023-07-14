@@ -8,14 +8,11 @@ on:
   
 jobs:
   save-cache:
-    uses: ./.github/workflows/build_rocks.yaml
+    uses: ./.github/workflows/build_rockcraft_cache.yaml
     secrets: inherit
     with:
-      owner: ${{ github.repository_owner }}
-      registry: ghcr.io
       working-directory: "tests/workflows/integration/test-indico-rock/"
-      cache-action: save
-  
+
   restore-cache:
     needs: [ save-cache ]
     uses: ./.github/workflows/build_rocks.yaml
@@ -24,4 +21,3 @@ jobs:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
       working-directory: "tests/workflows/integration/test-indico-rock/"
-      cache-action: restore

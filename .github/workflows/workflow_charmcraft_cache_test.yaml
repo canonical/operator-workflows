@@ -82,7 +82,7 @@ jobs:
       - uses: actions/checkout@master
         with:
           repository: canonical/indico-operator    
-      - name: Generate charmcraft cache key          
+      - name: Generate charmcraft cache key
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
           CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
