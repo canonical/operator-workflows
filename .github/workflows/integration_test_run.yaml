@@ -197,6 +197,7 @@ jobs:
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
       - name: Generate charmcraft cache key
+        working-directory: ${{ inputs.working-directory }}
         run: |
           CHARM_NAME=$(yq .name ./metadata.yaml)
           CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
