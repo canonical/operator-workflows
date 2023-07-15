@@ -68,7 +68,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Restore dockerfile name
         run: |
-          echo DOCKERFILE=$(echo '${{ matrix.image }}' | awk -F '/' '{print $NF}' | cut -d ':' -f 1) >> $GITHUB_ENV
+          WORKING_DIRECTORY='${{ inputs.working-directory }}'
+          WORKING_DIRECTORY=${WORKING_DIRECTORY%/}
+          echo DOCKERFILE=$WORKING_DIRECTORY/$(echo '${{ matrix.image }}' | awk -F '/' '{print $NF}' | cut -d ':' -f 1).Dockerfile >> $GITHUB_ENV
       - name: Build and push image
         uses: docker/build-push-action@v3
         with:
@@ -76,7 +78,7 @@ jobs:
           build-args: ${{ inputs.build-args }}
           push: true
           tags: ${{ matrix.image }}
-          file: ${{ inputs.working-directory }}/${{ env.DOCKERFILE }}
+          file: ${{ env.DOCKERFILE }}
       # Trivy requires an OCI type tar to run the scan
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.10.0
