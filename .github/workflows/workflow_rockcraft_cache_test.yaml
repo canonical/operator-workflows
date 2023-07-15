@@ -11,7 +11,7 @@ jobs:
     uses: ./.github/workflows/build_rockcraft_cache.yaml
     secrets: inherit
     with:
-      working-directory: "tests/workflows/integration/test-indico-rock/"
+      working-directory: "tests/workflows/integration/test-rock/"
 
   restore-cache:
     needs: [ save-cache ]
@@ -20,4 +20,4 @@ jobs:
     with:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
-      working-directory: "tests/workflows/integration/test-indico-rock/"
+      working-directory: "tests/workflows/integration/test-rock/"
