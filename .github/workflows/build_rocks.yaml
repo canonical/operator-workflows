@@ -143,9 +143,11 @@ jobs:
           sudo iptables -P FORWARD ACCEPT
       - name: Import rockcraft container cache
         if: steps.rockcraft-cache.outputs.cache-hit == 'true'
+        working-directory: ${{ inputs.working-directory }}
         run: |
           sudo lxc project create rockcraft -c features.images=false -c features.profiles=false
           sudo lxc --project rockcraft import ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar ${{ env.ROCKCRAFT_CONTAINER_NAME }}
+          find . -exec touch '{}' ';'
       - name: Build rock
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         uses: canonical/craft-actions/rockcraft-pack@main
