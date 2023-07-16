@@ -126,7 +126,7 @@ jobs:
           key: ${{ env.ROCK_CACHE_KEY }}
           restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Restore rockcraft container cache
-        if: steps.rock-cache.outputs.cache-hit == 'false' && inputs.cache-action == 'restore' 
+        if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore' 
         uses: actions/cache/restore@v3
         id: rockcraft-cache
         with:
@@ -147,7 +147,7 @@ jobs:
           sudo lxc project create rockcraft -c features.images=false -c features.profiles=false
           sudo lxc --project rockcraft import ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar ${{ env.ROCKCRAFT_CONTAINER_NAME }}
       - name: Build rock
-        if: steps.rock-cache.outputs.cache-hit == 'false' || inputs.cache-action == 'save'
+        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         uses: canonical/craft-actions/rockcraft-pack@main
         with:
           path: ${{ matrix.path }}
@@ -205,12 +205,12 @@ jobs:
           path: ~/.rock-cache
           key: ${{ env.ROCK_CACHE_KEY }}
       - name: Upload rock to ghcr.io
-        if: steps.rock-cache.outputs.cache-hit == 'false' || inputs.cache-action == 'save'
+        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         run: |
           skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.10.0
-        if: steps.rock-cache.outputs.cache-hit == 'false' || inputs.cache-action == 'save'
+        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         with:
           image-ref: ${{ env.IMAGE_REF }}
           trivy-config: ${{ inputs.trivy-image-config }}
