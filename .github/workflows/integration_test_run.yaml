@@ -199,10 +199,12 @@ jobs:
       - name: Generate charmcraft cache key
         working-directory: ${{ inputs.working-directory }}
         run: |
+          WORKING_DIR="${{ inputs.working-directory }}"
+          WORKING_DIR=${WORKING_DIR%/}
           CHARM_NAME=$(yq .name ./metadata.yaml)
           CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
-          CHARMCRAFT_CACHE_KEY_BASE="charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
+          CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
           echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
           for d in {1..2}
