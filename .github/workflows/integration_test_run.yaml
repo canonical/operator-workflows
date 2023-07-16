@@ -356,6 +356,7 @@ jobs:
           if-no-files-found: error
       - name: Save image names
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
         run: |
           echo "$(echo '${{ inputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
       - name: Upload image artifact
