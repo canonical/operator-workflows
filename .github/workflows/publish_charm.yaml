@@ -201,7 +201,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download charm artifact
         uses: actions/download-artifact@v3
-        if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}
