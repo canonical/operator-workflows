@@ -215,10 +215,31 @@ jobs:
             IMAGES='${{ needs.build-images.outputs.images }}'
           fi
           echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+  build-charm:
+    name: Build and push charm
+    needs: get-runner-image
+    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    outputs:
+      charm-file: ${{ env.CHARM_FILE }}
+    steps:
+      - name: Pack charm
+        if: ${{ !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          charmcraft pack -v
+          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
+      - name: Upload charm artifact
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [get-runner-image, all-images]
+    needs: [all-images, build-charm, get-runner-image]
     if: ${{ !failure() }}
     with:
       channel: ${{ inputs.channel }}
@@ -232,6 +253,7 @@ jobs:
       chaos-namespace: ${{ inputs.chaos-namespace }}
       chaos-status-delay: ${{ inputs.chaos-status-delay }}
       chaos-status-duration: ${{ inputs.chaos-status-duration }}
+      charm-file: ${{ needs.build-charm.outputs.charm-file }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.all-images.outputs.images }}
