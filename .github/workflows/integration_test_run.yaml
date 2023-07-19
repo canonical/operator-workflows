@@ -54,6 +54,9 @@ on:
           Retry is chaos-duration/chaos-delay times and each retry
           sleeps chaos-delay
         default: 90
+      charm-file:
+        type: string
+        description: Charm file
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -219,6 +222,9 @@ jobs:
           for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
           done
+          if [ ! -z ${{ inputs.charm-file }} ]; then
+            args="${args} --charm-file ./${{ inputs.charm-file }}"
+          fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
           if [ ! -z ${{ matrix.series }} ]; then
@@ -230,6 +236,12 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
+      - name: Download charm artifact
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
@@ -306,23 +318,3 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
-      - name: Pack charm
-        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ inputs.working-directory }}
-        run: |
-          # Not ideal, but the charm doesn't get always packed during the integration tests step
-          CURRENT_CHARM_PATH=$(find .tox/integration/tmp/pytest -name *.charm)
-          if [ -z "$CURRENT_CHARM_PATH" ]; then
-            mv $CURRENT_CHARM_PATH .
-          fi
-          if [ -z "$CHARM_FILE" ]; then
-            charmcraft pack
-          fi
-          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
-      - name: Upload charm artifact
-        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
-          if-no-files-found: error
