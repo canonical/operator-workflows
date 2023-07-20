@@ -255,7 +255,7 @@ jobs:
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
           if [ ! -z ${{ inputs.charm-file }} ]; then
-            args="${args} --charm-file ./${{ inputs.charm-file }}"
+            args="${args} --charm-file ${{ inputs.charm-file }}"
           fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
