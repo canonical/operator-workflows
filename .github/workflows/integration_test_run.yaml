@@ -223,7 +223,7 @@ jobs:
             args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
           done
           if [ ! -z ${{ inputs.charm-file }} ]; then
-            args="${args} --charm-file ./${{ inputs.charm-file }}"
+            args="${args} --charm-file ${{ inputs.charm-file }}"
           fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
