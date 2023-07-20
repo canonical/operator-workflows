@@ -65,6 +65,10 @@ More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 More information about Trivy testing can be found [here](TRIVY.MD).
 
+When writing integration tests, the following posargs will be automatically passed to the `integration` target:
+- --charm-file: The name of the charm artifact generated prior to the integration tests run
+- One parameter per resource defined in the `metadata.yaml` of the charm, containing a reference to the built image
+
 * publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
