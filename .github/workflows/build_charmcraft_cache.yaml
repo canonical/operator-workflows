@@ -21,10 +21,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
       - uses: actions/checkout@v3
-      - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          channel: latest/stable
+      - uses: canonical/setup-lxd@v0.1.1
       - name: Generate charmcraft cache key
         run: |
           WORKING_DIR="${{ inputs.working-directory }}"
