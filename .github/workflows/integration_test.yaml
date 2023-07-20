@@ -225,6 +225,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: canonical/setup-lxd@v0.1.1
       - name: Get charm name
+        working-directory: ${{ inputs.working-directory }}
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Pack charm
