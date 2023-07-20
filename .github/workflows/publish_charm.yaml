@@ -159,6 +159,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download images artifact
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download images artifact (for testing)
         uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
@@ -199,8 +205,9 @@ jobs:
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download charm artifact
+      - name: Download charm artifact (for testing)
         uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}
