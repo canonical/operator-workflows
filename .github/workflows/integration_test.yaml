@@ -224,12 +224,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: canonical/setup-lxd@v0.1.1
+      - name: Get charm name
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Pack charm
-        if: ${{ !cancelled() }}
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm)" >> $GITHUB_ENV
       - name: Upload charm artifact
