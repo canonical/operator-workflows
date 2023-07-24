@@ -229,7 +229,7 @@ jobs:
         run: |
           WORKING_DIR="${{ inputs.working-directory }}"
           WORKING_DIR=${WORKING_DIR%/}
-          CHARM_NAME=$(yq .name ./metadata.yaml)
+          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
           CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
@@ -257,11 +257,10 @@ jobs:
           done
           find . -exec touch '{}' ';'
       - name: Pack charm
-        if: ${{ !cancelled() }}
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm)" >> $GITHUB_ENV
       - name: Upload charm artifact
