@@ -54,6 +54,9 @@ on:
           Retry is chaos-duration/chaos-delay times and each retry
           sleeps chaos-delay
         default: 90
+      charm-file:
+        type: string
+        description: Charm file
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -196,6 +199,38 @@ jobs:
           microk8s-addons: ${{ inputs.microk8s-addons }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
+      - name: Generate charmcraft cache key
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          WORKING_DIR="${{ inputs.working-directory }}"
+          WORKING_DIR=${WORKING_DIR%/}
+          CHARM_NAME=$(yq .name ./metadata.yaml)
+          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
+          CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
+          CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
+          echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          for d in {1..2}
+            do echo "$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
+          done
+          echo 'EOF' >> $GITHUB_ENV
+      - name: Restore charmcraft container cache
+        uses: actions/cache/restore@v3
+        id: charmcraft-cache
+        with:
+          path: ~/.charmcraft-cache/
+          key: ${{ env.CHARMCRAFT_CACHE_KEY }}
+          restore-keys: ${{ env.CHARMCRAFT_CACHE_ALT_KEYS }}
+      - name: Import charmcraft container cache
+        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sudo lxc project create charmcraft -c features.images=false -c features.profiles=false
+          INODE_NUM=$(ls -id . | cut -f 1 -d " ")
+          for FILE in $(ls ~/.charmcraft-cache)
+            do sudo lxc --project charmcraft import ~/.charmcraft-cache/$FILE $(echo $FILE | sed s/INODE/$INODE_NUM/g | sed s/.tar//g)
+          done
+          find . -exec touch '{}' ';'
       - name: Configure GHCR in microk8s
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
@@ -216,9 +251,12 @@ jobs:
         run: |
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           args=""
-          for image_name in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --${image_name}-image ${{ inputs.registry }}/${{ inputs.owner }}/${image_name}:${{ github.run_id }}"
+          for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+            args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
+          if [ ! -z ${{ inputs.charm-file }} ]; then
+            args="${args} --charm-file ${{ inputs.charm-file }}"
+          fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
           if [ ! -z ${{ matrix.series }} ]; then
@@ -230,6 +268,13 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
+      - name: Download charm artifact
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
@@ -306,23 +351,15 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
-      - name: Pack charm
+      - name: Save image names
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
         run: |
-          # Not ideal, but the charm doesn't get always packed during the integration tests step
-          CURRENT_CHARM_PATH=$(find .tox/integration/tmp/pytest -name *.charm)
-          if [ -z "$CURRENT_CHARM_PATH" ]; then
-            mv $CURRENT_CHARM_PATH .
-          fi
-          if [ -z "$CHARM_FILE" ]; then
-            charmcraft pack
-          fi
-          echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_ENV
-      - name: Upload charm artifact
+          echo "$(echo '${{ inputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
+      - name: Upload image artifact
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          name: ${{ env.CHARM_NAME }}-images
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error

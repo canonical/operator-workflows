@@ -16,6 +16,7 @@ The following workflows are available:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | working-directory | string | "./" | Directory where jobs should be executed |
+| self-hosted-runner | bool | true | Whether self-hosted-runner should be enabled |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
@@ -63,6 +64,25 @@ The following workflows are available:
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 More information about Trivy testing can be found [here](TRIVY.MD).
+
+When running the integration tests, the following posargs will be automatically passed to the `integration` target:
+- --charm-file [charm_file_name]: The name of the charm artifact generated prior to the integration tests run
+- --series [series]: As defined in the `series` configuration described option above
+- -k [module]: As defined in the `modules` configuration option described above
+- --keep-models
+- --model testing: Only for tests running on a microk8s substrate
+- One parameter per resource defined in the `metadata.yaml` of the charm, containing a reference to the built image
+
+For instance, for pytest you can leverage this by adding a conftest.py file
+```
+def pytest_addoption(parser):
+    """Add test arguments."""
+    parser.addoption("--charm-file", action="store")
+```
+and then use the argument value
+```
+charm = pytestconfig.getoption("--charm-file")
+```
 
 * publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
 
