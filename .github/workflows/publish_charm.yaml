@@ -136,9 +136,6 @@ jobs:
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
-    strategy:
-      matrix:
-        image: ${{ fromJSON(needs.get-images.outputs.images) }}
     steps:
       - uses: actions/checkout@v3
       - if: inputs.working-directory != './'
@@ -152,21 +149,38 @@ jobs:
       - name: Install charmcraft
         run: |
           sudo snap install charmcraft --classic
+      - name: Get charm name
+        id: get-charm-name
+        run: echo "CHARM_NAME=$(yq -e '.name' metadata.yaml)" >> $GITHUB_ENV
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download images artifact
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download images artifact (for testing)
+        uses: actions/download-artifact@v3
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ env.CHARM_NAME }}-images
+          path: ${{ inputs.working-directory }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charmName=$(yq -e '.name' metadata.yaml)
-          image=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ needs.get-run-id.outputs.run-id }}
-          docker pull $image
-          imageId=$(docker images $image --format "{{.ID}}")
-          charmcraft upload-resource $charmName ${{ matrix.image }}-image --image=$imageId --verbosity=brief
+          for image in $(cat ${{ env.CHARM_NAME }}-images)
+          do
+            docker pull $image
+            imageId=$(docker images $image --format "{{.ID}}")
+            charmcraft upload-resource $charmName $(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image --image=$imageId --verbosity=brief
+          done
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
@@ -191,7 +205,7 @@ jobs:
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download charm artifact
+      - name: Download charm artifact (for testing)
         uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:

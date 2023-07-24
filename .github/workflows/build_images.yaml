@@ -45,7 +45,11 @@ jobs:
       - uses: actions/checkout@v3
       - name: Get dockerfiles
         working-directory: ${{ inputs.working-directory }}
-        run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+        run: >
+          echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | 
+          sed 's/\.Dockerfile/:${{ github.run_id }}/' | 
+          sed 's/^/${{inputs.registry}}\/${{ inputs.owner }}\//g' | 
+          jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
   build-images:
     name: Build image
     runs-on: ${{ inputs.runs-on }}
@@ -62,19 +66,24 @@ jobs:
           registry: ${{ inputs.registry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Restore dockerfile name
+        run: |
+          WORKING_DIRECTORY='${{ inputs.working-directory }}'
+          WORKING_DIRECTORY=${WORKING_DIRECTORY%/}
+          echo DOCKERFILE=$WORKING_DIRECTORY/$(echo '${{ matrix.image }}' | awk -F '/' '{print $NF}' | cut -d ':' -f 1).Dockerfile >> $GITHUB_ENV
       - name: Build and push image
         uses: docker/build-push-action@v3
         with:
           context: .
           build-args: ${{ inputs.build-args }}
           push: true
-          tags: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
-          file: ${{ inputs.working-directory }}/${{ matrix.image }}.Dockerfile
+          tags: ${{ matrix.image }}
+          file: ${{ env.DOCKERFILE }}
       # Trivy requires an OCI type tar to run the scan
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.10.0
         with:
-          image-ref: ${{ inputs.registry }}/${{ inputs.owner }}/${{ matrix.image }}:${{ github.run_id }}
+          image-ref: ${{ matrix.image }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
