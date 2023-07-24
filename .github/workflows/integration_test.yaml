@@ -224,10 +224,38 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: canonical/setup-lxd@v0.1.1
-      - name: Get charm name
+      - name: Generate charmcraft cache key
         working-directory: ${{ inputs.working-directory }}
         run: |
+          WORKING_DIR="${{ inputs.working-directory }}"
+          WORKING_DIR=${WORKING_DIR%/}
           echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
+          CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
+          CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
+          echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          for d in {1..2}
+            do echo "$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
+          done
+          echo 'EOF' >> $GITHUB_ENV
+      - name: Restore charmcraft container cache
+        uses: actions/cache/restore@v3
+        id: charmcraft-cache
+        with:
+          path: ~/.charmcraft-cache/
+          key: ${{ env.CHARMCRAFT_CACHE_KEY }}
+          restore-keys: ${{ env.CHARMCRAFT_CACHE_ALT_KEYS }}
+      - name: Import charmcraft container cache
+        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sudo lxc project create charmcraft -c features.images=false -c features.profiles=false
+          INODE_NUM=$(ls -id . | cut -f 1 -d " ")
+          for FILE in $(ls ~/.charmcraft-cache)
+            do sudo lxc --project charmcraft import ~/.charmcraft-cache/$FILE $(echo $FILE | sed s/INODE/$INODE_NUM/g | sed s/.tar//g)
+          done
+          find . -exec touch '{}' ';'
       - name: Pack charm
         if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
@@ -242,6 +270,19 @@ jobs:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
           if-no-files-found: error
+      - name: Save image names for charm OCI resources
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "$(echo '${{ needs.all-images.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
+      - name: Upload image artifact
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CHARM_NAME }}-images
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          if-no-files-found: error
+
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
