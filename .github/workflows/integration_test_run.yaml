@@ -309,7 +309,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.7.0
+        uses: zaproxy/action-baseline@v0.8.2
         env:
           ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
