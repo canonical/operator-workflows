@@ -1,0 +1,15 @@
+{
+    "type" : "object",
+    "properties" : {
+        "name" : {"type" : "string"},
+        "display-name" : {"type" : "string"},
+        "summary" : {"type" : "string", "maxLength": 50},
+        "description" : {"type" : "string"},
+        "docs" : {"type" : "string"},
+        "maintainers" : {"type" : "array", "items": {"type": "string"}, "minItems": 1},
+        "source" : {"type" : "string"},
+        "issues" : {"type" : "string"},
+        "tags" : {"type" : "array", "items": {"type": "string"}}
+    },
+    "required": ["description", "display-name", "docs", "issues", "maintainers", "name", "source", "summary"]
+}

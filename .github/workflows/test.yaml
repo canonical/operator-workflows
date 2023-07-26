@@ -1,16 +1,35 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Tests
 
 on:
   workflow_call:
+    inputs:
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
+      self-hosted-runner:
+        type: boolean
+        description: Whether to use self-hosted runners to run the jobs.
+        default: true
+
+concurrency:
+  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
 
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
         with:
           repository: canonical/Inclusive-naming
+          path: ${{ inputs.working-directory }}
       - run: mv * /tmp
       - uses: actions/checkout@v3
       - name: Merge configuration files
@@ -37,44 +56,178 @@ jobs:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: '. -c /tmp/config.yml'
+          woke-args: ". -c /tmp/config.yml"
           filter-mode: nofilter
+          workdir: ${{ inputs.working-directory }}
+          woke-version: latest
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
-      - name: Shellcheck Problem Matchers
+      - name: Gather files to scan
+        shell: bash
+        id: gather
+        run: |
+          declare -a filepaths
+          shebangregex="^#! */[^ ]*/(env *)?[abk]*sh"
+
+          set -f # temporarily disable globbing so that globs in inputs aren't expanded
+
+          while IFS= read -r -d '' file; do
+          filepaths+=("$file")
+          done < <(find . \
+                        -type f \
+                        '(' \
+                        -name '*.bash' \
+                        -o -name '.bashrc' \
+                        -o -name 'bashrc' \
+                        -o -name '.bash_aliases' \
+                        -o -name '.bash_completion' \
+                        -o -name '.bash_login' \
+                        -o -name '.bash_logout' \
+                        -o -name '.bash_profile' \
+                        -o -name 'bash_profile' \
+                        -o -name '*.ksh' \
+                        -o -name 'suid_profile' \
+                        -o -name '*.zsh' \
+                        -o -name '.zlogin' \
+                        -o -name 'zlogin' \
+                        -o -name '.zlogout' \
+                        -o -name 'zlogout' \
+                        -o -name '.zprofile' \
+                        -o -name 'zprofile' \
+                        -o -name '.zsenv' \
+                        -o -name 'zsenv' \
+                        -o -name '.zshrc' \
+                        -o -name 'zshrc' \
+                        -o -name '*.sh' \
+                        -o -path '*/.profile' \
+                        -o -path '*/profile' \
+                        -o -name '*.shlib' \
+                        ')' \
+                        -print0)
+
+          while IFS= read -r -d '' file; do
+          head -n1 "$file" | grep -Eqs "$shebangregex" || continue
+          filepaths+=("$file")
+          done < <(find . \
+                        -type f ! -name '*.*' -perm /111 \
+                        -print0)
+          echo "filepaths=${filepaths[@]}" >> $GITHUB_OUTPUT
+          set +f # re-enable globbing
+      - if: ${{ steps.gather.outputs.filepaths != '' }}
+        name: Shellcheck Problem Matchers
         uses: lumaxis/shellcheck-problem-matchers@v1.1.2
-      - run: shellcheck -f gcc $(find . -name "*.sh" -type f)
+      - if: ${{ steps.gather.outputs.filepaths != '' }}
+        run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    runs-on: ubuntu-22.04
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Check for Dockerfiles
-        run: echo Dockerfiles=$(find . -name "*Dockerfile") >> $GITHUB_ENV
-      - if: ${{ env.Dockerfiles != '' }}
+        id: dockerfiles
+        run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
+      - if: ${{ steps.dockerfiles.outputs.found != '' }}
         name: Run HadoLint
+        id: hado-lint
         uses: jbergstroem/hadolint-gh-action@v1
         with:
-          dockerfile: "${{ env.Dockerfiles }}"
+          dockerfile: "${{ steps.dockerfiles.outputs.found }}"
+  metadata-lint:
+    name: Lint metadata.yaml
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check file existence
+        id: metadata-yaml
+        run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+      - name: Run lint
+        if: steps.metadata-yaml.outputs.exists == 'true'
+        id: run-lint
+        run: |
+          python3 -m pip install check-jsonschema
+          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+          check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
     needs: get-runner-image
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v3
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
-        run: tox --result-json=test-result.json
+        id: run-tests
+        run: |
+          # Ensure that stdout appears as normal and redirect to file and exit depends on exit code of first command
+          STDOUT_LOG=$(mktemp --suffix=stdout.log)
+          echo STDOUT_LOG=$STDOUT_LOG >> $GITHUB_ENV
+          tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
+      - name: Check lint and test stdout
+        run: |
+          # Check dependencies
+          EXPECTED_LINT_DEPS="\
+              mypy \
+              isort \
+              black \
+              flake8-docstrings \
+              flake8-docstrings-complete \
+              flake8-builtins \
+              flake8-test-docs \
+              pep8-naming \
+              codespell \
+              pylint \
+              pydocstyle \
+              "
+          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
+              # Check that there is a `lint...<dependency>` line for each of the expected dependencies
+              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
+              if ! grep -q "$DEP_REGEX" $STDOUT_LOG ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
+
+          # Check commands
+          EXPECTED_LINT_CMDS="\
+              pydocstyle \
+              codespell \
+              flake8 \
+              isort \
+              black \
+              mypy \
+              pylint \
+              "
+          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
+              # Check that there is a `lint...commands...<command>` line for each of the expected commands
+              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
+              if ! grep -q "$CMD_REGEX" $STDOUT_LOG ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
       - name: Export test report
-        if: always()
-        uses: actions/github-script@v6.2.0
+        if: always() && !cancelled()
+        uses: actions/github-script@v6
         with:
           script: |
             const no_color = (text) => {
@@ -83,7 +236,7 @@ jobs:
 
             const sha = '${{ github.event.pull_request.head.sha }}';
             const fs = require('fs');
-            const result = JSON.parse(fs.readFileSync('test-result.json')).testenvs;
+            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}test-result.json')).testenvs;
 
             let lint_result = result.lint.test;
             let lint_success = true;
@@ -127,7 +280,81 @@ jobs:
             fs.writeFileSync('report.json', json);
       - name: Upload coverage report
         uses: actions/upload-artifact@v3
-        if: always() && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: report
           path: report.json
+  draft-publish-docs:
+    name: Draft publish docs
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Search for docs folder
+        id: docs-exist
+        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
+      - name: Publish documentation
+        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
+        uses: canonical/upload-charm-docs@main
+        with:
+          discourse_host: discourse.charmhub.io
+          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
+          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
+          dry_run: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+  license-headers-check:
+    name: Check license headers
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check .licenserc.yaml exists
+        id: licenserc-yaml
+        run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+      - name: Get default license configuration
+        if: steps.licenserc-yaml.outputs.exists == 'false'
+        run: |
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
+      - name: Check license headers
+        uses: apache/skywalking-eyes/header@main
+        with:
+          config: .licenserc.yaml
+  lib-check:
+    name: Check libraries
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check libs
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        uses: canonical/charming-actions/check-libraries@2.3.0
+        with:
+          credentials: ${{ secrets.CHARMHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+  required_status_checks:
+    name: Required Test Status Checks
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
+    needs:
+      - draft-publish-docs
+      - docker-lint
+      - inclusive-naming-check
+      - lib-check
+      - lint-and-unit-test
+      - metadata-lint
+      - shellcheck-lint
+      - license-headers-check
+    if: always() && !cancelled()
+    timeout-minutes: 5
+    steps:
+      - run: |
+          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
+          [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
+          [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
+          [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
+          [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
+          [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
+          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
+          [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)

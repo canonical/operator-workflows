@@ -1,11 +1,89 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Integration tests
 
 on:
   workflow_call:
     inputs:
+      channel:
+        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: latest/stable
+      chaos-app-kind:
+        type: string
+        description: Application kind
+        default: statefulset
+      chaos-app-label:
+        type: string
+        description: Label for chaos selection
+        default: ""
+      chaos-app-namespace:
+        type: string
+        description: Namespace of chaos tested application
+        default: testing
+      chaos-duration:
+        type: string
+        description: |
+          Duration of the chaos experiment (added to 600s for go test timeout)
+        default: 60
+      chaos-enabled:
+        type: boolean
+        description: Whether Chaos testing is enabled
+        default: false
+      chaos-experiments:
+        type: string
+        description: List of experiments to run
+        default: ""
+      chaos-interval:
+        type: string
+        description: Interval to attempt re-run of an experiment
+        default: 30
+      chaos-namespace:
+        type: string
+        description: Namespace to install Litmus Chaos
+        default: testing
+      chaos-status-delay:
+        type: string
+        description: Delay is the wait(sleep) time on every status retry
+        default: 5
+      chaos-status-duration:
+        type: string
+        description: |
+          Duration used for status check retries
+          Retry is chaos-duration/chaos-delay times and each retry
+          sleeps chaos-delay
+        default: 90
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
+      extra-test-matrix:
+        description: |
+          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
+          Each mapping will be injected into the matrix section of the integration-test.
+        type: string
+        default: '{}'
+      image-build-args:
+        description: |
+          List of build args to pass to the build image job
+        type: string
+        default: ""
+      juju-channel:
+        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 2.9/stable
+      load-test-enabled:
+        type: boolean
+        description: Whether load testing is enabled
+        default: false
+      load-test-run-args:
+        type: string
+        description: Command line arguments for the load test execution
+        default: ""
+      modules:
+        description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
+        type: string
+        default: '[""]'
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -13,156 +91,257 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      microk8s-addons:
+        description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
+        type: string
+        default: "dns ingress rbac storage"
       series:
-        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to tox as --series argument
+        description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
         default: '[""]'
       setup-devstack-swift:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      tmate-debug:
+        description: Use tmate debugging session on integration test failure.
+        type: boolean
+        default: false
+      tmate-timeout:
+        description: Timeout in minutes to keep tmate debugging session.
+        type: number
+        default: 30
+      trivy-fs-config:
+        type: string
+        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled
+        default: false
+      trivy-fs-ref:
+        type: string
+        description: Target directory to do the Trivy testing
+        default: "."
+      trivy-image-config:
+        type: string
+        description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
+      zap-auth-header:
+        description: If this is defined then its value will be added as a header to all of the ZAP requests
+        type: string
+      zap-auth-header-value:
+        description:  If this is defined then its value will be used as the header name to all of the ZAP requests
+        type: string
+      zap-before-command:
+        description: Command to run before ZAP testing
+        type: string
+      zap-cmd-options:
+        description: Options to be used by ZAP
+        type: string
+        default: "-T 60"
+      zap-enabled:
+        type: boolean
+        description: Whether ZAP testing is enabled
+        default: false
+      zap-target:
+        description:  If this is not set, the unit IP address will be used as ZAP target
+        type: string
+      zap-target-port:
+        description:  ZAP target port
+        type: string
+        default: 80
+      zap-target-protocol:
+        description:  ZAP target protocol
+        type: string
+        default: "http"
+      zap-rules-file-name:
+        description: Rules file to ignore any alerts from the ZAP scan
+        type: string
     outputs:
       images:
-        description: Pushed docker images
-        value: ${{ jobs.get-images.outputs.images }}
+        description: Pushed images
+        value: ${{ jobs.all-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
+concurrency:
+  group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
-  get-images:
-    name: Get images
-    runs-on: ubuntu-22.04
-    outputs:
-      images: ${{ env.DOCKER_IMAGES }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Get dockerfiles
-        run: echo "DOCKER_IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+    with:
+      working-directory: ${{ inputs.working-directory }}
   build-images:
     name: Build image
+    uses: ./.github/workflows/build_images.yaml
+    needs: get-runner-image
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+      build-args: ${{ inputs.image-build-args }}
+  build-rocks:
+    name: Build rock
+    uses: ./.github/workflows/build_rocks.yaml
+    needs: get-runner-image
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+  all-images:
+    name: Get rocks or Docker images
+    needs: [build-images, build-rocks]
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ env.IMAGES }}
+    steps:
+      - name: Get rocks or fallback to Docker images
+        run: |
+          if [ ${{ needs.build-rocks.outputs.images != '[]' }} = true ]; then
+            IMAGES='${{ needs.build-rocks.outputs.images }}'
+          else
+            IMAGES='${{ needs.build-images.outputs.images }}'
+          fi
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+  build-charm:
+    name: Build and push charm
+    needs: get-runner-image
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-images, get-runner-image]
-    if: ${{ needs.get-images.outputs.images != '[]' }}
-    strategy:
-      matrix:
-        image: ${{ fromJSON(needs.get-images.outputs.images) }}
+    outputs:
+      charm-file: ${{ env.CHARM_FILE }}
     steps:
       - uses: actions/checkout@v3
-      - name: Log in to the Container registry
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: docker/login-action@v2
+      - uses: canonical/setup-lxd@v0.1.1
+      - name: Extract charm name
+        working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+      - name: Generate charmcraft cache key
+        working-directory: ${{ inputs.working-directory }}
+        if: env.CHARM_NAME != 'UNKNOWN'
+        run: |
+          WORKING_DIR="${{ inputs.working-directory }}"
+          WORKING_DIR=${WORKING_DIR%/}
+          CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
+          CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
+          CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
+          echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+          echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          for d in {1..2}
+            do echo "$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
+          done
+          echo 'EOF' >> $GITHUB_ENV
+      - name: Restore charmcraft container cache
+        uses: actions/cache/restore@v3
+        id: charmcraft-cache
+        if: env.CHARM_NAME != 'UNKNOWN'
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build and push image
-        uses: docker/build-push-action@v3
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        with:
-          context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.image }}:${{ github.run_id }}
-          file: ${{ matrix.image }}.Dockerfile
-      # GitHub doesn't currently support pushing images in the Docker registry when opening a PR from a fork
-      # so an artifact is published instead
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Build image as tarball
-        uses: docker/build-push-action@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-        with:
-          context: .
-          file: ${{ matrix.image }}.Dockerfile
-          tags: localhost:32000/${{ matrix.image }}:latest
-          outputs: type=docker,dest=/tmp/${{ matrix.image }}.tar
-      - name: Upload image artifact
+          path: ~/.charmcraft-cache/
+          key: ${{ env.CHARMCRAFT_CACHE_KEY }}
+          restore-keys: ${{ env.CHARMCRAFT_CACHE_ALT_KEYS }}
+      - name: Import charmcraft container cache
+        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sudo lxc project create charmcraft -c features.images=false -c features.profiles=false
+          INODE_NUM=$(ls -id . | cut -f 1 -d " ")
+          for FILE in $(ls ~/.charmcraft-cache)
+            do sudo lxc --project charmcraft import ~/.charmcraft-cache/$FILE $(echo $FILE | sed s/INODE/$INODE_NUM/g | sed s/.tar//g)
+          done
+          find . -exec touch '{}' ';'
+      - name: Pack charm
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sudo snap install charmcraft --classic --channel latest/stable
+          charmcraft pack -v
+          echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm)" >> $GITHUB_ENV
+      - name: Upload charm artifact
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         uses: actions/upload-artifact@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
         with:
-          name: ${{ matrix.image }}
-          path: /tmp/${{ matrix.image }}.tar
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error
+      - name: Save image names for charm OCI resources
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "$(echo '${{ needs.all-images.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
+      - name: Upload image artifact
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.CHARM_NAME }}-images
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          if-no-files-found: error
 
   integration-test:
     name: Integration tests
-    strategy:
-      matrix:
-        series: ${{ fromJSON(inputs.series) }}
-      fail-fast: false
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-images, get-runner-image, build-images]
+    uses: ./.github/workflows/integration_test_run.yaml
+    needs: [all-images, build-charm, get-runner-image]
     if: ${{ !failure() }}
+    with:
+      channel: ${{ inputs.channel }}
+      chaos-app-kind: ${{ inputs.chaos-app-kind }}
+      chaos-app-label: ${{ inputs.chaos-app-label }}
+      chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
+      chaos-duration: ${{ inputs.chaos-duration }}
+      chaos-enabled: ${{ inputs.chaos-enabled }}
+      chaos-experiments: ${{ inputs.chaos-experiments }}
+      chaos-interval: ${{ inputs.chaos-interval }}
+      chaos-namespace: ${{ inputs.chaos-namespace }}
+      chaos-status-delay: ${{ inputs.chaos-status-delay }}
+      chaos-status-duration: ${{ inputs.chaos-status-duration }}
+      charm-file: ${{ needs.build-charm.outputs.charm-file }}
+      extra-arguments: ${{ inputs.extra-arguments }}
+      extra-test-matrix: ${{ inputs.extra-test-matrix }}
+      images: ${{ needs.all-images.outputs.images }}
+      juju-channel: ${{ inputs.juju-channel }}
+      load-test-enabled: ${{ inputs.load-test-enabled }}
+      load-test-run-args: ${{ inputs.load-test-run-args }}
+      modules: ${{ inputs.modules }}
+      owner: ${{ github.repository_owner }}
+      pre-run-script: ${{ inputs.pre-run-script }}
+      provider: ${{ inputs.provider }}
+      microk8s-addons: ${{ inputs.microk8s-addons }}
+      registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      series: ${{ inputs.series }}
+      setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      tmate-debug: ${{ inputs.tmate-debug }}
+      tmate-timeout: ${{ inputs.tmate-timeout }}
+      trivy-fs-config: ${{ inputs.trivy-fs-config }}
+      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
+      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      working-directory: ${{ inputs.working-directory }}
+      zap-auth-header: ${{ inputs.zap-auth-header }}
+      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
+      zap-before-command: ${{ inputs.zap-before-command }}
+      zap-cmd-options: ${{ inputs.zap-cmd-options }}
+      zap-enabled: ${{ inputs.zap-enabled }}
+      zap-target: ${{ inputs.zap-target }}
+      zap-target-port: ${{ inputs.zap-target-port }}
+      zap-target-protocol: ${{ inputs.zap-target-protocol }}
+      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
+  required_status_checks:
+    name: Required Integration Test Status Checks
+    runs-on: ubuntu-latest
+    needs:
+      - integration-test
+    if: always() && !cancelled()
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Devstack Swift
-        if: ${{ inputs.setup-devstack-swift }}
-        id: setup-devstack-swift
-        uses: canonical/setup-devstack-swift@v1
-      - name: Create OpenStack credential file
-        run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
-      - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: ${{ inputs.provider }}
-      - name: Enable microk8s registry
-        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
-        run: |
-          sudo microk8s enable registry
-          sudo microk8s kubectl -n container-registry rollout status -w deployment/registry
-      - name: Download all artifacts
-        uses: actions/download-artifact@v3
-        if: ${{ github.event.pull_request.head.repo.fork }}
-      - name: Push images to microk8s registry
-        if: ${{ inputs.provider == 'microk8s' && github.event.pull_request.head.repo.fork }}
-        run: |
-          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            docker load --input ${image_name}/${image_name}.tar
-            docker push localhost:32000/${image_name}:latest
-          done
-      - name: Configure GHCR in microk8s
-        if: ${{ inputs.provider == 'microk8s' && !github.event.pull_request.head.repo.fork }}
-        run: |
-          # Adding authentication for ghcr.io for containerd as per https://microk8s.io/docs/registry-private
-          # Note: containerd has to be restarted for the changes to take effect
-          # (https://github.com/containerd/cri/blob/master/docs/registry.md)
-          sudo su -c 'echo "
-          [plugins.\"io.containerd.grpc.v1.cri\".registry.configs.\"ghcr.io\".auth]
-          username = \"${{ github.actor }}\"
-          password = \"${{ secrets.GITHUB_TOKEN }}\"
-          " >> /var/snap/microk8s/current/args/containerd-template.toml'
-          sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
-      - name: Enable microk8s ingress
-        if: ${{ inputs.provider == 'microk8s' }}
-        run: |
-          sudo microk8s enable ingress
-      - name: Pre-run script
-        if: ${{ inputs.pre-run-script != '' }}
-        run: bash ${{ inputs.pre-run-script }}
-      - name: Run integration tests
-        run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
-          args=""
-          for image_name in $(echo '${{ needs.get-images.outputs.images }}' | jq -cr '.[]'); do
-            if [ ${{ github.event.pull_request.head.repo.fork }} = "true" ]; then
-              args="${args} --${image_name}-image localhost:32000/${image_name}:latest"
-            else
-              args="${args} --${image_name}-image ${{ env.REGISTRY }}/${{ env.OWNER }}/${image_name}:${{ github.run_id }}"
-            fi
-          done
-
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-          fi
-          tox -e integration -- --model testing $series $args ${{ inputs.extra-arguments }}
-      - name: Dump logs
-        uses: canonical/charm-logdump-action@main
-        if: failure()
-        with:
-          app: ${{ env.CHARM_NAME }}
-          model: testing
+      - run: |
+          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)

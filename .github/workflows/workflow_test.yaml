@@ -1,0 +1,59 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Workflow test
+
+on:
+  pull_request:
+
+jobs:
+  simple:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      self-hosted-runner: false
+  simple-self-hosted:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      self-hosted-runner: true
+  integration:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+  integration-rock:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    needs:
+      - integration
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+  publish:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    uses: ./.github/workflows/publish_charm.yaml
+    secrets: inherit
+    needs:
+      - integration-rock
+    with:
+      channel: latest/edge
+      working-directory: tests/workflows/integration/test-upload-charm/
+  check:
+    runs-on: ubuntu-latest
+    if: always() && !cancelled()
+    timeout-minutes: 5
+    needs:
+      - simple
+      - integration
+      - integration-rock
+      - publish
+    steps:
+      - run: |
+          [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
+          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
+          [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
