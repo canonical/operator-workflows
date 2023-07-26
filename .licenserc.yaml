@@ -10,6 +10,7 @@ header:
   paths-ignore:
     - '.github/files/**'
     - '**/*.j2'
+    - '**/*.json'
     - '**/*.md'
     - '**/*.txt'
     - '**/*.xml'
