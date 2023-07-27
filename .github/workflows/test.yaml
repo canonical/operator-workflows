@@ -16,7 +16,8 @@ on:
         default: true
 
 concurrency:
-  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}
+  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
+  cancel-in-progress: true
 
 jobs:
   inclusive-naming-check:
