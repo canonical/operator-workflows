@@ -125,7 +125,7 @@ jobs:
           set +f # re-enable globbing
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         name: Shellcheck Problem Matchers
-        uses: lumaxis/shellcheck-problem-matchers@v1.1.2
+        uses: lumaxis/shellcheck-problem-matchers@v2.1.0
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
