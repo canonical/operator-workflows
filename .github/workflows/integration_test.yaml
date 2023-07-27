@@ -222,7 +222,7 @@ jobs:
     outputs:
       charm-file: ${{ env.CHARM_FILE }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - uses: canonical/setup-lxd@v0.1.1
       - name: Extract charm name
         working-directory: ${{ inputs.working-directory }}
@@ -243,7 +243,7 @@ jobs:
           done
           echo 'EOF' >> $GITHUB_ENV
       - name: Restore charmcraft container cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v3.3.1
         id: charmcraft-cache
         if: env.CHARM_NAME != 'UNKNOWN'
         with:

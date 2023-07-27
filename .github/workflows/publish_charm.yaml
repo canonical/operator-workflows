@@ -23,7 +23,7 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
-      - uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@v2.1.9
         id: get-branch-protection
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
@@ -42,7 +42,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -120,7 +120,7 @@ jobs:
     outputs:
       images: ${{ env.IMAGES }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Get images
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -137,7 +137,7 @@ jobs:
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -187,7 +187,7 @@ jobs:
     needs: [get-run-id, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
