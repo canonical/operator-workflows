@@ -224,12 +224,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: canonical/setup-lxd@v0.1.1
+      - name: Extract charm name
+        working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Generate charmcraft cache key
         working-directory: ${{ inputs.working-directory }}
+        if: env.CHARM_NAME != 'UNKNOWN'
         run: |
           WORKING_DIR="${{ inputs.working-directory }}"
           WORKING_DIR=${WORKING_DIR%/}
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
           CHARMCRAFT_BASE="$(yq -o=j -I=0 '.bases | sort_keys(..)' ./charmcraft.yaml)"
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
           CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
@@ -242,6 +245,7 @@ jobs:
       - name: Restore charmcraft container cache
         uses: actions/cache/restore@v3
         id: charmcraft-cache
+        if: env.CHARM_NAME != 'UNKNOWN'
         with:
           path: ~/.charmcraft-cache/
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}
