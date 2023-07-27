@@ -20,7 +20,7 @@ jobs:
     name: Build Charmcraft Cache
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - uses: canonical/setup-lxd@v0.1.1
       - name: Generate charmcraft cache key
         run: |
@@ -63,7 +63,7 @@ jobs:
               /repos/${{ github.repository }}/actions/caches?key=$(printf %s "$key"|jq -sRr @uri) || :
           done
       - name: Save charmcraft container cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v3.3.1
         with:
           path: ~/.charmcraft-cache/
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}

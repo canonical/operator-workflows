@@ -27,12 +27,12 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
       - run: mv * /tmp
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
@@ -71,7 +71,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -135,7 +135,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -152,7 +152,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -171,7 +171,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
@@ -228,7 +228,7 @@ jobs:
           done
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v6.4.1
         with:
           script: |
             const no_color = (text) => {
@@ -292,7 +292,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -312,7 +312,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -328,7 +328,7 @@ jobs:
     name: Check libraries
     runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.5.3
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork }}
         uses: canonical/charming-actions/check-libraries@2.3.0
