@@ -68,7 +68,7 @@ The following secrets are available for this workflow:
 
 | Name | Description |
 |--------------------|-------------------|
-| INTERGRATION_TEST_ARGS | Additional arguments to pass to the integration test execution that contains secrets |
+| INTERGRATION_TEST_ARGS | Additional arguments to pass to the integration test execution that contain secrets |
 
 When running the integration tests, the following posargs will be automatically passed to the `integration` target:
 
