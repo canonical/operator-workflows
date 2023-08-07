@@ -5,10 +5,10 @@ name: integration-test-charm-1
 display-name: Some Charm
 summary: A simple charm for testing 
 description: A simple charm for testing.
-docs: ""
+docs: "http://example.com"
 maintainers: [""]
-issues: ""
-source: ""
+issues: "http://example.com"
+source: "http://example.com"
 charmhub:
   api-url: https://api.staging.charmhub.io
   storage-url: https://storage.staging.snapcraftcontent.com
