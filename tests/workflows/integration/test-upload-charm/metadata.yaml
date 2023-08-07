@@ -5,10 +5,10 @@ name: test-upload
 display-name: Test Upload Charm
 summary: A simple charm for testing charm uploads.
 description: A simple charm for testing charm uploads.
-docs: ""
+docs: "https://example.com"
 maintainers: [""]
-issues: ""
-source: ""
+issues: "https://example.com"
+source: "https://example.com"
 charmhub:
   api-url: https://api.staging.charmhub.io
   storage-url: https://storage.staging.snapcraftcontent.com
