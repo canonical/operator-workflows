@@ -20,7 +20,7 @@ jobs:
     name: Build Charmcraft Cache
     runs-on: ${{ inputs.runs-on }}
     steps:
-      - uses: actions/checkout@v3.5.3
+      - uses: actions/checkout@v3.6.0
       - uses: canonical/setup-lxd@v0.1.1
       - name: Generate charmcraft cache key
         run: |
