@@ -85,7 +85,11 @@ and then use the argument value
 charm = pytestconfig.getoption("--charm-file")
 ```
 
-* publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).  The following parameters are available for this workflow:
+* publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).
+
+This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token with package-manage and package-view permissions for the charm and the destination channel. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth) and a `REPO_ACCESS_TOKEN` secret containg a classic PAT with full repository permissions. See how to generate it [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
+
+The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
@@ -94,7 +98,11 @@ charm = pytestconfig.getoption("--charm-file")
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
-* promote_charm: Promotes a charm from the selected origin channel to the selected target channel. . The following parameters are available for this workflow:
+* promote_charm: Promotes a charm from the selected origin channel to the selected target channel.
+
+This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token with package-manage and package-view permissions for the charm and the origin and destination channels. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth).
+
+The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
@@ -105,4 +113,6 @@ The runner image will be set to the value of `bases[0].build-on[0]` in the `char
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
-* auto_update_charm_libs: Checks if updates to the charm libraries are available and, of necessary,  opens a pull request to update them. This workflow requires `pull_request` and `content` write permissions.
+* auto_update_charm_libs: Checks if updates to the charm libraries are available and, of necessary,  opens a pull request to update them.
+
+This workflow requires `pull_request` and `content` write permissions and a `CHARMHUB_TOKEN` secret containing a charmhub token. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth).
