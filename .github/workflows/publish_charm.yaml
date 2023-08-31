@@ -48,7 +48,7 @@ jobs:
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/upload-charm-docs@main
+        uses: canonical/upload-charm-docs@stable
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
