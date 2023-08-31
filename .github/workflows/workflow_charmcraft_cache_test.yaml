@@ -103,7 +103,6 @@ jobs:
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}
           restore-keys: ${{ env.CHARMCRAFT_CACHE_ALT_KEYS }}
       - name: Setup lxd
-        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
         run: |
           sudo groupadd --force --system lxd
           sudo usermod --append --groups lxd runner
