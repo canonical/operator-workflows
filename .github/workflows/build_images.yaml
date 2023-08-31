@@ -42,7 +42,7 @@ jobs:
     outputs:
       images: ${{ env.DOCKER_IMAGES }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Get dockerfiles
         working-directory: ${{ inputs.working-directory }}
         run: >
@@ -59,9 +59,9 @@ jobs:
       matrix:
         image: ${{ fromJSON(needs.get-images.outputs.images) }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Log in to the Container registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v2.2.0
         with:
           registry: ${{ inputs.registry }}
           username: ${{ github.actor }}
@@ -72,7 +72,7 @@ jobs:
           WORKING_DIRECTORY=${WORKING_DIRECTORY%/}
           echo DOCKERFILE=$WORKING_DIRECTORY/$(echo '${{ matrix.image }}' | awk -F '/' '{print $NF}' | cut -d ':' -f 1).Dockerfile >> $GITHUB_ENV
       - name: Build and push image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4.1.1
         with:
           context: .
           build-args: ${{ inputs.build-args }}
@@ -81,7 +81,7 @@ jobs:
           file: ${{ env.DOCKERFILE }}
       # Trivy requires an OCI type tar to run the scan
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.10.0
+        uses: aquasecurity/trivy-action@0.11.2
         with:
           image-ref: ${{ matrix.image }}
           trivy-config: ${{ inputs.trivy-image-config }}

@@ -14,6 +14,9 @@ on:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
         default: true
+      pre-run-script:
+        description: Path to the bash script to be run before the integration tests
+        type: string
 
 concurrency:
   group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
@@ -27,12 +30,12 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
       - run: mv * /tmp
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
@@ -71,7 +74,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -125,7 +128,7 @@ jobs:
           set +f # re-enable globbing
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         name: Shellcheck Problem Matchers
-        uses: lumaxis/shellcheck-problem-matchers@v1.1.2
+        uses: lumaxis/shellcheck-problem-matchers@v2.1.0
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
@@ -135,7 +138,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -152,7 +155,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -171,7 +174,10 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
+      - name: Pre-run script
+        if: ${{ inputs.pre-run-script != '' }}
+        run: bash -xe ${{ inputs.pre-run-script }}
       - name: Install tox
         run: python3 -m pip install tox
       - name: Run tests
@@ -228,7 +234,7 @@ jobs:
           done
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v6.4.1
         with:
           script: |
             const no_color = (text) => {
@@ -292,13 +298,13 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
-        uses: canonical/upload-charm-docs@main
+        uses: canonical/upload-charm-docs@stable
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
@@ -312,7 +318,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -328,10 +334,10 @@ jobs:
     name: Check libraries
     runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', ''large'']') || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: canonical/charming-actions/check-libraries@2.3.0
+        uses: canonical/charming-actions/check-libraries@2.4.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

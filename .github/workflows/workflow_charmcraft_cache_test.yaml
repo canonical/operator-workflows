@@ -64,7 +64,7 @@ jobs:
               /repos/${{ github.repository }}/actions/caches?key=$(printf %s "$key"|jq -sRr @uri) || :
           done
       - name: Save charmcraft container cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v3.3.1
         with:
           path: ~/.charmcraft-cache/
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}
@@ -96,14 +96,13 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY" >> $GITHUB_ENV
       - name: Restore charmcraft container cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v3.3.1
         id: charmcraft-cache
         with:
           path: ~/.charmcraft-cache/
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}
           restore-keys: ${{ env.CHARMCRAFT_CACHE_ALT_KEYS }}
       - name: Setup lxd
-        if: steps.charmcraft-cache.outputs.cache-hit == 'true'
         run: |
           sudo groupadd --force --system lxd
           sudo usermod --append --groups lxd runner

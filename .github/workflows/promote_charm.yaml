@@ -30,7 +30,7 @@ jobs:
     needs: get-runner-image
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - run: |
           set -e
           origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
@@ -44,9 +44,9 @@ jobs:
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [validate-channels, get-runner-image]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Release charm to channel
-        uses: canonical/charming-actions/release-charm@2.3.0
+        uses: canonical/charming-actions/release-charm@2.4.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -59,13 +59,13 @@ jobs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/upload-charm-docs@main
+        uses: canonical/upload-charm-docs@stable
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
@@ -77,13 +77,13 @@ jobs:
     name: Publish docs
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/upload-charm-docs@main
+        uses: canonical/upload-charm-docs@stable
         id: publishDocumentation
         with:
           discourse_host: discourse.charmhub.io

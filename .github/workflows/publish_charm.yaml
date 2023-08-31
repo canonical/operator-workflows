@@ -23,7 +23,7 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
-      - uses: octokit/request-action@v2.x
+      - uses: octokit/request-action@v2.1.9
         id: get-branch-protection
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
@@ -42,13 +42,13 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/upload-charm-docs@main
+        uses: canonical/upload-charm-docs@stable
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
@@ -65,7 +65,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -74,7 +74,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.3.0
+      - uses: canonical/charming-actions/release-libraries@2.4.0
         name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
@@ -120,7 +120,7 @@ jobs:
     outputs:
       images: ${{ env.IMAGES }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - name: Get images
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -137,7 +137,7 @@ jobs:
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -187,7 +187,7 @@ jobs:
     needs: [get-run-id, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.6.0
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -214,7 +214,7 @@ jobs:
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.3.0
+        uses: canonical/charming-actions/upload-charm@2.4.0
         with:
           built-charm-path: ${{ env.CHARM_FILE }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
