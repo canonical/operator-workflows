@@ -65,7 +65,7 @@ on:
           Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
-        default: '{}'
+        default: "{}"
       images:
         description: Existing docker images
         type: string
@@ -144,7 +144,7 @@ on:
         description: If this is defined then its value will be added as a header to all of the ZAP requests
         type: string
       zap-auth-header-value:
-        description:  If this is defined then its value will be used as the header name to all of the ZAP requests
+        description: If this is defined then its value will be used as the header name to all of the ZAP requests
         type: string
       zap-before-command:
         description: Command to run before ZAP testing
@@ -158,14 +158,14 @@ on:
         description: Whether ZAP testing is enabled
         default: false
       zap-target:
-        description:  If this is not set, the unit IP address will be used as ZAP target
+        description: If this is not set, the unit IP address will be used as ZAP target
         type: string
       zap-target-port:
-        description:  ZAP target port
+        description: ZAP target port
         type: string
         default: 80
       zap-target-protocol:
-        description:  ZAP target protocol
+        description: ZAP target protocol
         type: string
         default: "http"
       zap-rules-file-name:
@@ -247,12 +247,12 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          tox -e integration -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
+          tox -e integration -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          tox -e integration -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
+          tox -e integration -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
         uses: mxschmitt/action-tmate@v3
@@ -293,7 +293,7 @@ jobs:
         if: ${{ inputs.trivy-fs-enabled }}
         uses: aquasecurity/trivy-action@0.11.2
         with:
-          scan-type: 'fs'
+          scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
@@ -311,10 +311,10 @@ jobs:
         if: ${{ inputs.zap-enabled }}
         uses: zaproxy/action-baseline@v0.9.0
         env:
-          ZAP_AUTH_HEADER:  ${{ inputs.zap-auth-header }}
-          ZAP_AUTH_HEADER_VALUE:  ${{ inputs.zap-auth-header-value  }}
+          ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
+          ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
         with:
-          issue_title: 'OWASP ZAP report'
+          issue_title: "OWASP ZAP report"
           fail_action: false
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}

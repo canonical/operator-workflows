@@ -62,7 +62,7 @@ on:
           Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
-        default: '{}'
+        default: "{}"
       image-build-args:
         description: |
           List of build args to pass to the build image job
@@ -133,7 +133,7 @@ on:
         description: If this is defined then its value will be added as a header to all of the ZAP requests
         type: string
       zap-auth-header-value:
-        description:  If this is defined then its value will be used as the header name to all of the ZAP requests
+        description: If this is defined then its value will be used as the header name to all of the ZAP requests
         type: string
       zap-before-command:
         description: Command to run before ZAP testing
@@ -147,14 +147,14 @@ on:
         description: Whether ZAP testing is enabled
         default: false
       zap-target:
-        description:  If this is not set, the unit IP address will be used as ZAP target
+        description: If this is not set, the unit IP address will be used as ZAP target
         type: string
       zap-target-port:
-        description:  ZAP target port
+        description: ZAP target port
         type: string
         default: 80
       zap-target-protocol:
-        description:  ZAP target protocol
+        description: ZAP target protocol
         type: string
         default: "http"
       zap-rules-file-name:
@@ -237,7 +237,7 @@ jobs:
           CHARMCRAFT_BASE=$(printf %s "$CHARMCRAFT_BASE"|jq -sRr @uri)
           CHARMCRAFT_CACHE_KEY_BASE="$WORKING_DIR/charmcraft-cache?name=$CHARM_NAME&bases=$CHARMCRAFT_BASE"
           echo "CHARMCRAFT_CACHE_KEY=$CHARMCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
-          echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
+          echo 'CHARMCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV
           for d in {1..2}
             do echo "$CHARMCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
           done
@@ -292,6 +292,7 @@ jobs:
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [all-images, build-charm, get-runner-image]
     if: ${{ !failure() }}
+    secrets: inherit
     with:
       channel: ${{ inputs.channel }}
       chaos-app-kind: ${{ inputs.chaos-app-kind }}
