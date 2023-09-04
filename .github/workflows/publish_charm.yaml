@@ -169,7 +169,6 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-images
-          path: ${{ inputs.working-directory }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
@@ -187,10 +186,10 @@ jobs:
           done
           
           for image in "${images[@]}"; do
-            docker pull $image
-            image_id=$(docker images $image --format "{{.ID}}")
             resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
             if [[ " ${resources[@]} " =~ " $resource " ]]; then
+              docker pull $image
+              image_id=$(docker images $image --format "{{.ID}}")
               charmcraft upload-resource $charm $resource --image=$image_id --verbosity=brief
             fi
           done
