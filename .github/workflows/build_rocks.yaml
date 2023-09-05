@@ -48,7 +48,7 @@ jobs:
             echo "Invalid value for cache-action. It must be 'save' or 'restore'"
             exit 1
           fi
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.0.0
       - name: Generate rock paths and images
         id: gen-rock-paths-and-images
         uses: actions/github-script@v6.4.1
@@ -85,7 +85,7 @@ jobs:
       matrix:
         path: ${{ fromJSON(needs.get-rocks.outputs.rock-paths) }}
     steps:
-      - uses: actions/checkout@v3.6.0
+      - uses: actions/checkout@v4.0.0
       - name: Extract rock information
         run: |
           IMAGE_NAME=$(yq '.name' "${{ matrix.path }}/rockcraft.yaml")
