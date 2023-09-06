@@ -169,17 +169,29 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-images
-          path: ${{ inputs.working-directory }}
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          charmName=$(yq -e '.name' metadata.yaml)
-          for image in $(cat ${{ env.CHARM_NAME }}-images)
-          do
-            docker pull $image
-            imageId=$(docker images $image --format "{{.ID}}")
-            charmcraft upload-resource $charmName $(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image --image=$imageId --verbosity=brief
+          charm=$(yq -e '.name' metadata.yaml)
+          declare -a resources
+          declare -a images
+
+          for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' metadata.yaml); do
+            resources+=("$resource")
+          done
+
+          for image in $(cat ${{ env.CHARM_NAME }}-images); do
+            images+=("$image")
+          done
+          
+          for image in "${images[@]}"; do
+            resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
+            if [[ " ${resources[@]} " =~ " $resource " ]]; then
+              docker pull $image
+              image_id=$(docker images $image --format "{{.ID}}")
+              charmcraft upload-resource $charm $resource --image=$image_id --verbosity=brief
+            fi
           done
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
