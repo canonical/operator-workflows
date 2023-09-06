@@ -25,5 +25,4 @@ header:
     - '**/icon.svg'
     - '**/LICENSE'
     - '**/trivy.yaml'
-    - 'tests/workflows/integration/test-indico-rock/**'
   comment: on-failure
