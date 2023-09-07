@@ -25,6 +25,4 @@ header:
     - '**/icon.svg'
     - '**/LICENSE'
     - '**/trivy.yaml'
-    - 'pyproject.toml'
-    - 'zap_rules.tsv'
   comment: on-failure
