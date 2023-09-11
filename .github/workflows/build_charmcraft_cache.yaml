@@ -63,7 +63,7 @@ jobs:
               /repos/${{ github.repository }}/actions/caches?key=$(printf %s "$key"|jq -sRr @uri) || :
           done
       - name: Save charmcraft container cache
-        uses: actions/cache/save@v3.3.1
+        uses: actions/cache/save@v3.3.2
         with:
           path: ~/.charmcraft-cache/
           key: ${{ env.CHARMCRAFT_CACHE_KEY }}
