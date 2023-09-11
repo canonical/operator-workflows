@@ -243,7 +243,7 @@ jobs:
           done
           echo 'EOF' >> $GITHUB_ENV
       - name: Restore charmcraft container cache
-        uses: actions/cache/restore@v3.3.1
+        uses: actions/cache/restore@v3.3.2
         id: charmcraft-cache
         if: env.CHARM_NAME != 'UNKNOWN'
         with:
