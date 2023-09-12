@@ -72,7 +72,7 @@ jobs:
           WORKING_DIRECTORY=${WORKING_DIRECTORY%/}
           echo DOCKERFILE=$WORKING_DIRECTORY/$(echo '${{ matrix.image }}' | awk -F '/' '{print $NF}' | cut -d ':' -f 1).Dockerfile >> $GITHUB_ENV
       - name: Build and push image
-        uses: docker/build-push-action@v4.2.1
+        uses: docker/build-push-action@v5.0.0
         with:
           context: .
           build-args: ${{ inputs.build-args }}
