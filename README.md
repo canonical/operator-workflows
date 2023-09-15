@@ -36,6 +36,7 @@ The following workflows are available:
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | image-build-args | string | "" | List of build args to pass to the build image job |
 | juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
+| microk8s-channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
 | load-test-run-args | string | "" | Command line arguments for the load test execution. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |

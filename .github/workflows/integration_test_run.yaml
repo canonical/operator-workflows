@@ -74,6 +74,10 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
+      microk8s-channel:
+        description: Actions operator microk8s channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: latest/stable
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -199,6 +203,7 @@ jobs:
           microk8s-addons: ${{ inputs.microk8s-addons }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
+          channel: ${{ inputs.microk8s-channel }}
       - name: Configure GHCR in microk8s
         if: ${{ inputs.provider == 'microk8s' }}
         run: |

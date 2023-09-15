@@ -72,6 +72,10 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
+      microk8s-channel:
+        description: Actions operator microk8s channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: latest/stable
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -310,6 +314,7 @@ jobs:
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.all-images.outputs.images }}
       juju-channel: ${{ inputs.juju-channel }}
+      microk8s-channel: ${{ inputs.microk8s-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
       modules: ${{ inputs.modules }}
