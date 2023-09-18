@@ -19,6 +19,7 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
+      self-hosted-runner-label: "edge"
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
