@@ -29,7 +29,7 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -73,7 +73,7 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -137,7 +137,7 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -154,7 +154,7 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -172,7 +172,7 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     needs: get-runner-image
     defaults:
       run:
@@ -297,7 +297,7 @@ jobs:
           path: report.json
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -317,7 +317,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
   license-headers-check:
     name: Check license headers
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -336,7 +336,7 @@ jobs:
           config: .licenserc.yaml
   lib-check:
     name: Check libraries
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@v4.0.0
       - name: Check libs
@@ -347,7 +347,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   required_status_checks:
     name: Required Test Status Checks
-    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', 'inputs.self-hosted-runner-label']') || 'ubuntu-22.04' }}
+    runs-on: ${{ inputs.self-hosted-runner && fromJson('[''self-hosted'', inputs.self-hosted-runner-label]') || 'ubuntu-22.04' }}
     needs:
       - draft-publish-docs
       - docker-lint
