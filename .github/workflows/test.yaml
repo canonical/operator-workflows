@@ -42,7 +42,12 @@ jobs:
   inclusive-naming-check:
     name: Inclusive naming
     needs: runs-on-labels
-    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
