@@ -42,7 +42,7 @@ jobs:
   inclusive-naming-check:
     name: Inclusive naming
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -87,7 +87,7 @@ jobs:
   shellcheck-lint:
     name: Shell scripts lint
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -152,7 +152,7 @@ jobs:
   docker-lint:
     name: Dockerfile lint
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -170,7 +170,7 @@ jobs:
   metadata-lint:
     name: Lint metadata.yaml
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -191,7 +191,7 @@ jobs:
     needs: 
       - runs-on-labels
       - get-runner-image
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -316,7 +316,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -337,7 +337,7 @@ jobs:
   license-headers-check:
     name: Check license headers
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -357,7 +357,7 @@ jobs:
   lib-check:
     name: Check libraries
     needs: runs-on-labels
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     steps:
       - uses: actions/checkout@v4.0.0
       - name: Check libs
@@ -378,7 +378,7 @@ jobs:
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
-    runs-on: ${{ needs.runs-on-labels.outputs.labels }}
+    runs-on: ${{ fromJson(needs.runs-on-labels.outputs.labels) }}
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
