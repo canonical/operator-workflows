@@ -16,6 +16,7 @@ The following workflows are available:
 |--------------------|----------|--------------------|-------------------|
 | working-directory | string | "./" | Directory where jobs should be executed |
 | self-hosted-runner | bool | true | Whether self-hosted-runner should be enabled |
+| self-hosted-runner-label| string | large | Label used to select the self-hosted runner if enabled |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
