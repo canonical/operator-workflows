@@ -37,7 +37,7 @@ jobs:
           if ${{ inputs.self-hosted-runner }}; then
             echo "LABELS=['self-hosted', '${{ inputs.self-hosted-runner-label }}']" >> "$GITHUB_OUTPUT"
           else
-            echo "LABELS=ubuntu-22.04" >> "$GITHUB_OUTPUT"
+            echo "LABELS=['ubuntu-22.04']" >> "$GITHUB_OUTPUT"
           fi
   inclusive-naming-check:
     name: Inclusive naming
