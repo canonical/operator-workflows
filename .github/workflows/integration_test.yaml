@@ -222,7 +222,7 @@ jobs:
     outputs:
       charm-file: ${{ env.CHARM_FILE }}
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - uses: canonical/setup-lxd@v0.1.1
       - name: Extract charm name
         working-directory: ${{ inputs.working-directory }}
