@@ -30,7 +30,7 @@ jobs:
     needs: get-runner-image
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - run: |
           set -e
           origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
@@ -44,7 +44,7 @@ jobs:
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
     needs: [validate-channels, get-runner-image]
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.4.0
         with:
@@ -59,7 +59,7 @@ jobs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -77,7 +77,7 @@ jobs:
     name: Publish docs
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
