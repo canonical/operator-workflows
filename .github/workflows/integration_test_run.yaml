@@ -188,7 +188,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     if: ${{ !failure() }}
     steps:
-      - uses: actions/checkout@v4.0.0
+      - uses: actions/checkout@v4.1.0
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
