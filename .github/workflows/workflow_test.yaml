@@ -33,7 +33,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       juju-channel: 3.1/stable
-      test-env-name-postfix: "-juju3.1"
+      test-tox-env: "integration-juju3.1"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit

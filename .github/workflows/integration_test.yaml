@@ -103,10 +103,10 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
-      test-env-name-postfix:
-        description: Postfix to the tox environment name for the integration test. The tox environment name used must begins with "integration" and this input will be append at the end.
+      test-tox-env:
+        description: The tox environment name for the integration test.
         type: string
-        default: ""
+        default: "integration"
       tmate-debug:
         description: Use tmate debugging session on integration test failure.
         type: boolean
@@ -325,7 +325,7 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
-      test-env-name-postfix: $${{ inputs.test-env-name-postfix }}
+      test-tox-env: $${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
       tmate-timeout: ${{ inputs.tmate-timeout }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
