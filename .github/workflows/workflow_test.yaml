@@ -57,12 +57,16 @@ jobs:
     timeout-minutes: 5
     needs:
       - simple
+      - simple-self-hosted
       - integration
+      - integration-juju3
       - integration-rock
       - publish
     steps:
       - run: |
           [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
+          [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
