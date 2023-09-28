@@ -21,7 +21,7 @@ The following workflows are available:
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. This workflow also supports running addtional load and chaos tests. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. This workflow also supports running addtional load and chaos tests. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
@@ -45,6 +45,7 @@ The following workflows are available:
 | microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| test-tox-env | string| "integration" | The tox environment name for the integration test. |
 | tmate-debug | bool | false | Enable tmate debugging after integration test failure. |
 | tmate-timeout | number | 30 | Timeout in minutes to keep tmate debugging session. |
 | trivy-fs-config | string | "" | Trivy YAML configuration for fs type |

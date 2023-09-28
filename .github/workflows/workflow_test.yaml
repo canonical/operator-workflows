@@ -26,11 +26,22 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-  integration-rock:
+  integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     needs:
       - integration
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      juju-channel: 3.1/stable
+      provider: lxd
+      test-tox-env: "integration-juju3.1"
+  integration-rock:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    needs:
+      - integration-juju3
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
@@ -49,12 +60,16 @@ jobs:
     timeout-minutes: 5
     needs:
       - simple
+      - simple-self-hosted
       - integration
+      - integration-juju3
       - integration-rock
       - publish
     steps:
       - run: |
           [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
+          [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
