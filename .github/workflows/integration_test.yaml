@@ -325,7 +325,7 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
-      test-tox-env: $${{ inputs.test-tox-env }}
+      test-tox-env: ${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
       tmate-timeout: ${{ inputs.tmate-timeout }}
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
