@@ -29,6 +29,8 @@ jobs:
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
+    needs:
+      - integration
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
@@ -38,7 +40,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     needs:
-      - integration
+      - integration-juju3
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
