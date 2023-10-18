@@ -42,7 +42,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -120,7 +120,7 @@ jobs:
     outputs:
       images: ${{ env.IMAGES }}
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - name: Get images
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -137,7 +137,7 @@ jobs:
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
@@ -199,7 +199,7 @@ jobs:
     needs: [get-run-id, get-runner-image, publish-images]
     if: ${{ !failure() }}
     steps:
-      - uses: actions/checkout@v4.1.0
+      - uses: actions/checkout@v4.1.1
       - if: inputs.working-directory != './'
         name: Change directory
         run: |
