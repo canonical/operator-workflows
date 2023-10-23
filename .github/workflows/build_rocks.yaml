@@ -79,6 +79,9 @@ jobs:
   build-rocks:
     name: Build rock
     runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+      packages: write
     needs: [get-rocks]
     if: ${{ needs.get-rocks.outputs.rock-paths != '[]' }}
     strategy:
