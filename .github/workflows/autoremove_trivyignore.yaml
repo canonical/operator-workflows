@@ -6,7 +6,7 @@ on:
   workflow_call:
 
 jobs:
-  autoremove-cves:
+  update:lib:
     permissions:
       id-token: write  # Enable OIDC
       pull-requests: write
