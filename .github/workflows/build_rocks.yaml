@@ -224,3 +224,43 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check trivyignore
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
+          if [ -f ".trivyignore" ]
+          then
+            output=$(trivy image ${{ env.IMAGE_REG }} --severity HIGH,CRITICAL . -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            newTrivyIgnore=()
+            for CVE in $(cat .trivyignore)
+            do
+              if [[ "$output" != *"$CVE"* ]]
+              then
+                echo "$CVE not present anymore, moving out of trivyignore file"
+                newTrivyIgnore+=( $CVE )
+              else
+                echo "$CVE still present"
+              fi
+            done
+            echo "Removing entries from trivyignore"
+            for IgnoredCVE in ${newTrivyIgnore[@]}
+            do
+              sed -i "/$IgnoredCVE/d" .trivyignore
+            done
+          fi
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create pull request
+        uses: canonical/create-pull-request@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: auto-remove ignored CVEs"
+          branch-name: "chore/autoremove-cves"
+          title: Auto-remote ignored CVEs
+          body: |
+            Automated action to remove ignored CVEs that are fixed.
+            The branch of this PR will be wiped during the next check.
+            Unless you really know what you're doing, you most likely don't want
+            to push any commits to this branch.
+          upsert: true
+          ignore-no-changes: true
