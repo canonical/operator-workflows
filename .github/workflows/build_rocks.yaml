@@ -229,7 +229,7 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
           if [ -f ".trivyignore" ]
           then
-            output=$(trivy image ${{ env.IMAGE_REF }} --severity HIGH,CRITICAL . -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
             newTrivyIgnore=()
             for CVE in $(cat .trivyignore)
             do
@@ -250,6 +250,7 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          ROCK_IMAGE: ${{ env.IMAGE_REF }}
       - name: Create pull request
         uses: canonical/create-pull-request@main
         with:
