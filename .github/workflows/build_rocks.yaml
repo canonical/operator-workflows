@@ -226,7 +226,7 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       - name: Check trivyignore
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.18.3
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
           if [ -f ".trivyignore" ]
           then
             output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
