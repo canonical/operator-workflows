@@ -252,16 +252,15 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ env.IMAGE_REF }}
       - name: Create pull request
-        uses: canonical/create-pull-request@main
+        uses: peter-evans/create-pull-request@v5
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: auto-remove ignored CVEs"
-          branch-name: "chore/autoremove-cves"
-          title: Auto-remote ignored CVEs
+          branch: "chore/remove-ignored-cves"
+          delete-branch: true
+          base: main
+          title: Auto-remove ignored CVEs
           body: |
             Automated action to remove ignored CVEs that are fixed.
             The branch of this PR will be wiped during the next check.
             Unless you really know what you're doing, you most likely don't want
             to push any commits to this branch.
-          upsert: true
-          ignore-no-changes: true
