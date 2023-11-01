@@ -89,6 +89,8 @@ jobs:
         path: ${{ fromJSON(needs.get-rocks.outputs.rock-paths) }}
     steps:
       - uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
       - name: Extract rock information
         run: |
           IMAGE_NAME=$(yq '.name' "${{ matrix.path }}/rockcraft.yaml")
