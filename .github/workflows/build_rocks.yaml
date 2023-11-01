@@ -252,11 +252,11 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ env.IMAGE_REF }}
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v5
+        uses: canonical/create-pull-request@main
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: auto-remove ignored CVEs"
-          branch: "chore/remove-ignored-cves"
-          delete-branch: true
+          branch-name: "chore/remove-ignored-cves"
           base: main
           title: Auto-remove ignored CVEs
           body: |
@@ -264,3 +264,4 @@ jobs:
             The branch of this PR will be wiped during the next check.
             Unless you really know what you're doing, you most likely don't want
             to push any commits to this branch.
+          ignore-no-changes: true
