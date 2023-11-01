@@ -231,7 +231,7 @@ jobs:
           then
             output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
             newTrivyIgnore=()
-            for CVE in $(cat .trivyignore)
+            for CVE in $(sed '/^#/d' .trivyignore)
             do
               if [[ "$output" != *"$CVE"* ]]
               then
