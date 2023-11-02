@@ -232,35 +232,17 @@ jobs:
           if [ -f ".trivyignore" ]
           then
             output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
-            newTrivyIgnore=()
-            for CVE in $(sed '/^#/d' .trivyignore)
+            line=0
+            while read CVE;
             do
-              if [[ "$output" != *"$CVE"* ]]
+              line=$(( line + 1 ))
+              if [[ "$output" != *"$CVE"* ]] && [[ ! "$CVE" =~ ^#.* ]]
               then
-                echo "$CVE not present anymore, moving out of trivyignore file"
-                newTrivyIgnore+=( $CVE )
-              else
-                echo "$CVE still present"
+              echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
               fi
-            done
-            echo "Removing entries from trivyignore"
-            for IgnoredCVE in ${newTrivyIgnore[@]}
-            do
-              sed -i "/$IgnoredCVE/d" .trivyignore
             done
           fi
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ env.IMAGE_REF }}
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install suggestion bot
-        run: yarn add suggestion-bot --dev
-      - name: Create suggestions
-        if: ${{ github.event_name == 'pull_request' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: yarn suggestion-bot "$(git diff)"
