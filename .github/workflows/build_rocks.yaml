@@ -253,17 +253,16 @@ jobs:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ env.IMAGE_REF }}
-      - name: Create pull request
-        uses: canonical/create-pull-request@main
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: auto-remove ignored CVEs"
-          branch-name: "chore/remove-ignored-cves"
-          base: main
-          title: Auto-remove ignored CVEs
-          body: |
-            Automated action to remove ignored CVEs that are fixed.
-            The branch of this PR will be wiped during the next check.
-            Unless you really know what you're doing, you most likely don't want
-            to push any commits to this branch.
-          ignore-no-changes: true
+          node-version: 12
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install suggestion bot
+        run: yarn add suggestion-bot --dev
+      - name: Create suggestions
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: yarn suggestion-bot "$(git diff)"
