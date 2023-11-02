@@ -240,7 +240,7 @@ jobs:
               then
               echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
               fi
-            done
+            done < .trivyignore
           fi
         env:
           TRIVY_USERNAME: ${{ github.actor }}
