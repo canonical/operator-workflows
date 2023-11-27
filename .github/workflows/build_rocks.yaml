@@ -98,7 +98,7 @@ jobs:
           IMAGE_BUILD_BASE=$(yq '.["build-base"] // .base' "${{ matrix.path }}/rockcraft.yaml")
           IMAGE_REF=${{ inputs.registry }}/${{ inputs.owner }}/$IMAGE_NAME:${{ hashFiles(format('{0}/{1}', matrix.path, '**')) }}
           INODE_NUM=$(ls -id ${{ matrix.path }} | cut -f 1 -d " ")
-          ROCKCRAFT_CONTAINER_NAME=rockcraft-$IMAGE_NAME-$INODE_NUM
+          ROCKCRAFT_CONTAINER_NAME=rockcraft-$IMAGE_NAME-on-amd64-for-amd64-$INODE_NUM
           echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
           echo "IMAGE_BASE=$IMAGE_BASE" >> $GITHUB_ENV
           echo "IMAGE_BUILD_BASE=$IMAGE_BUILD_BASE" >> $GITHUB_ENV
@@ -131,7 +131,7 @@ jobs:
           key: ${{ env.ROCK_CACHE_KEY }}
           restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Restore rockcraft container cache
-        if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore' 
+        if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore'
         uses: actions/cache/restore@v3.3.2
         id: rockcraft-cache
         with:
