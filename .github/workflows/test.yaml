@@ -23,7 +23,7 @@ on:
         type: string
 
 concurrency:
-  group: operator-workflows-${{ github.workflow }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
+  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
   cancel-in-progress: true
 
 jobs:
