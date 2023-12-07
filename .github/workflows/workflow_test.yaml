@@ -26,14 +26,6 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-  integration-self-hosted:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      self-hosted-runner: true
-      self-hosted-runner-label: "edge"
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -45,6 +37,16 @@ jobs:
       juju-channel: 3.1/stable
       provider: lxd
       test-tox-env: "integration-juju3.1"
+  integration-self-hosted:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    needs:
+      - integration-juju3
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      self-hosted-runner: true
+      self-hosted-runner-label: "edge"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
