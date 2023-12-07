@@ -17,7 +17,7 @@ on:
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
-        default: "edge"
+        default: "large"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string

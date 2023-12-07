@@ -116,7 +116,7 @@ on:
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
-        default: "edge"
+        default: "large"
       series:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
