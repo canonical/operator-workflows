@@ -311,7 +311,7 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.13.0
+        uses: aquasecurity/trivy-action@0.14.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
@@ -329,7 +329,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.9.0
+        uses: zaproxy/action-baseline@v0.10.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
