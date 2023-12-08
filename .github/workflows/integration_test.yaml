@@ -298,6 +298,8 @@ jobs:
       microk8s-addons: ${{ inputs.microk8s-addons }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      self-hosted-runner: ${{ inputs.self-hosted-runner }}
+      self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       test-tox-env: ${{ inputs.test-tox-env }}
