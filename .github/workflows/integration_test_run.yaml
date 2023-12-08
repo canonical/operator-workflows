@@ -109,6 +109,14 @@ on:
         type: string
         description: Image runner for building the images
         default: ubuntu-22.04
+      self-hosted-runner:
+        type: boolean
+        description: Whether to use self-hosted runners to run the jobs.
+        default: true
+      self-hosted-runner-label:
+        type: string
+        description: Label for selecting the self-hosted runners.
+        default: "large"
       series:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string
@@ -185,7 +193,13 @@ jobs:
         modules: ${{ fromJSON(inputs.modules) }}
         ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
       fail-fast: false
-    runs-on: ${{ inputs.runs-on }}
+    runs-on: >-
+      ${{
+        inputs.runs-on == 'ubuntu-22.04' &&
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        inputs.runs-on
+      }}
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1

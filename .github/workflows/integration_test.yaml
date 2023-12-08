@@ -95,6 +95,14 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      self-hosted-runner:
+        type: boolean
+        description: Whether to use self-hosted runners to run the jobs.
+        default: false
+      self-hosted-runner-label:
+        type: string
+        description: Label for selecting the self-hosted runners.
+        default: "large"
       series:
         description: List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument
         type: string

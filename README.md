@@ -43,9 +43,11 @@ The following workflows are available:
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
+| self-hosted-runner| bool | false | Whether to use self-hosted runner for tests. |
+| self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
-| test-tox-env | string| "integration" | The tox environment name for the integration test. |
+| test-tox-env | string | "integration" | The tox environment name for the integration test. |
 | tmate-debug | bool | false | Enable tmate debugging after integration test failure. |
 | tmate-timeout | number | 30 | Timeout in minutes to keep tmate debugging session. |
 | trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
