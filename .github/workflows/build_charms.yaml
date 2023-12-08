@@ -1,0 +1,66 @@
+# Copyright 2023 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Build Charms
+
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        type: string
+        description: Image runner for building the images
+        default: ubuntu-22.04
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
+    outputs:
+      charms:
+        description: List of charms built
+        value: ${{ jobs.get-charms.outputs.charms }}
+
+jobs:
+  get-charm-names:
+    name: Get charms
+    runs-on: ${{ inputs.runs-on }}
+    outputs:
+      charms: ${{ env.CHARM_NAMES }}
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Find charm paths
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_PATHS=$(find . -name metadata.yaml 2> /dev/null) |
+          sed 's:[^/]*$::' |
+          jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
+      - name: Extract charm names
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "CHARM_NAMES=$(for path in $(jq -cr '.[]' ); do
+            echo "{\"name\":\"$(yq '.name' $path/metadata.yaml)\", \"path\":\"$path\}"
+          done <<< $CHARM_PATHS |
+          jq -Rsc '.')" >> $GITHUB_ENV
+  build-charms:
+    name: Build and push charms
+    runs-on: ${{ inputs.runs-on }}
+    needs: [get-charm-names]
+    strategy:
+      matrix:
+        include: ${{ fromJSON(needs.get-charm-names.outputs.charms) }}
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - uses: canonical/setup-lxd@v0.1.1
+      - name: Pack charm
+        if: ${{ !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}/${{ matrix.path }}
+        run: |
+          sudo snap install charmcraft --classic --channel latest/stable
+          charmcraft pack -v
+          echo "CHARM_FILE=$(ls ${{matrix.name}}_*.charm)" >> $GITHUB_ENV
+      - name: Upload charm artifact
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: charm-artifacts
+          path: ${{ inputs.working-directory }}/${{ matrix.path }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error

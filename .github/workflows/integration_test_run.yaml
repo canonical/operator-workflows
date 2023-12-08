@@ -242,9 +242,6 @@ jobs:
           for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
-          if [ ! -z ${{ inputs.charm-file }} ]; then
-            args="${args} --charm-file=${{ inputs.charm-file }}"
-          fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
           if [ ! -z ${{ matrix.series }} ]; then
@@ -261,8 +258,16 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         continue-on-error: true
         with:
-          name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}
+          name: charm-artifacts
+          path: ${{ inputs.working-directory }}/_charms
+      - name: Add charm-file arguments
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          args=${{ env.ARGS }}
+          for charm in $(ls _charms/*.charm); do
+            args="${args} --charm-file=${charm}"
+          done
+          echo "ARGS=$args" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
@@ -279,7 +284,7 @@ jobs:
         timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
-        if: failure()
+        if: ${{ failure() && inputs.provider == 'microk8s' && env.CHARM_NAME != 'UNKNOWN' }}
         with:
           app: ${{ env.CHARM_NAME }}
           model: testing
@@ -317,7 +322,7 @@ jobs:
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
-        if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
+        if: ${{ inputs.zap-enabled && inputs.zap-target == '' && env.CHARM_NAME != 'UNKNOWN' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
       - name: Set Zap target env for Github Zap Action to zap-target value
         if: ${{ inputs.zap-enabled && inputs.zap-target != '' }}

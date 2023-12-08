@@ -250,7 +250,7 @@ jobs:
         if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ env.CHARM_NAME }}-charm
+          name: charm-artifacts
           path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
           if-no-files-found: error
       - name: Save image names for charm OCI resources
@@ -265,11 +265,19 @@ jobs:
           name: ${{ env.CHARM_NAME }}-images
           path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
+  build-charms:
+    name: Build and push charms from subdirectories
+    needs: [get-runner-image, build-charm]
+    uses: ./.github/workflows/build_charms.yaml
+    if: ${{ always() && needs.build-charm.outputs.charm-file == 'UNKNOWN' && !cancelled() }}
+    with:
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      working-directory: ${{ inputs.working-directory }}
 
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [all-images, build-charm, get-runner-image]
+    needs: [all-images, build-charm, build-charms, get-runner-image]
     if: ${{ !failure() }}
     secrets: inherit
     with:
