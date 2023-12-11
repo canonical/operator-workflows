@@ -30,16 +30,16 @@ jobs:
       - name: Find charm paths
         working-directory: ${{ inputs.working-directory }}
         run: |
-          echo "CHARM_PATHS=$(find . -name metadata.yaml 2> /dev/null |
+          echo "CHARM_PATHS=$(find * -type f -name metadata.yaml 2> /dev/null |
           sed 's:[^/]*$::' |
           jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
       - name: Extract charm names
         working-directory: ${{ inputs.working-directory }}
         run: |
           echo "CHARM_NAMES=$(for path in $(jq -cr '.[]' ); do
-            echo "{\"name\":\"$(yq '.name' $path/metadata.yaml)\", \"path\":\"$path\}"
+            echo {\"name\":\"$(yq '.name' $path/metadata.yaml)\", \"path\":\"$path\"}
           done <<< $CHARM_PATHS |
-          jq -Rsc '.')" >> $GITHUB_ENV
+          jq -sc '.')" >> $GITHUB_ENV
   build-charms:
     name: Build and push charms
     runs-on: ${{ inputs.runs-on }}
@@ -62,5 +62,5 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: charm-artifacts
-          path: ${{ inputs.working-directory }}/${{ matrix.path }}/${{ env.CHARM_FILE }}
+          path: ${{ inputs.working-directory }}/${{ matrix.path }}${{ env.CHARM_FILE }}
           if-no-files-found: error

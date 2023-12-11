@@ -259,12 +259,11 @@ jobs:
         continue-on-error: true
         with:
           name: charm-artifacts
-          path: ${{ inputs.working-directory }}/_charms
       - name: Add charm-file arguments
         working-directory: ${{ inputs.working-directory }}
         run: |
           args=${{ env.ARGS }}
-          for charm in $(ls _charms/*.charm); do
+          for charm in $(ls *.charm); do
             args="${args} --charm-file=${charm}"
           done
           echo "ARGS=$args" >> $GITHUB_ENV
