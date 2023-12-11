@@ -271,7 +271,7 @@ jobs:
     name: Build and push charms from subdirectories
     needs: [get-runner-image, build-charm]
     uses: ./.github/workflows/build_charms.yaml
-    if: ${{ always() && needs.build-charm.outputs.charm-file == 'UNKNOWN' && !cancelled() }}
+#    if: ${{ always() && needs.build-charm.outputs.charm-file == 'UNKNOWN' && !cancelled() }}
     with:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       working-directory: ${{ inputs.working-directory }}
