@@ -386,6 +386,7 @@ jobs:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-on-pr: false
+          use-labels: false
   required_status_checks:
     name: Required Test Status Checks
     needs:
