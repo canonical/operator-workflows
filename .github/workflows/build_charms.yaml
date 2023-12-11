@@ -30,7 +30,7 @@ jobs:
       - name: Find charm paths
         working-directory: ${{ inputs.working-directory }}
         run: |
-          echo "CHARM_PATHS=$(find . -name metadata.yaml 2> /dev/null) |
+          echo "CHARM_PATHS=$(find . -name metadata.yaml 2> /dev/null |
           sed 's:[^/]*$::' |
           jq -Rsc '. / "\n" - [""]')" >> $GITHUB_ENV
       - name: Extract charm names
