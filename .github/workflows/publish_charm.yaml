@@ -218,14 +218,14 @@ jobs:
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n charm-artifacts
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download charm artifact (for testing)
         uses: actions/download-artifact@v3
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          name: ${{ env.CHARM_NAME }}-charm
+          name: charm-artifacts
           path: ${{ inputs.working-directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
