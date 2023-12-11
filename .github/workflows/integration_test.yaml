@@ -202,21 +202,19 @@ jobs:
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
       build-args: ${{ inputs.image-build-args }}
-  # build-rocks:
-  #   name: Build rock
-  #   uses: ./.github/workflows/build_rocks.yaml
-  #   needs: get-runner-image
-  #   with:
-  #     owner: ${{ github.repository_owner }}
-  #     registry: ghcr.io
-  #     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-  #     trivy-image-config: ${{ inputs.trivy-image-config }}
-  #     working-directory: ${{ inputs.working-directory }}
+  build-rocks:
+    name: Build rock
+    uses: ./.github/workflows/build_rocks.yaml
+    needs: get-runner-image
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
   all-images:
     name: Get rocks or Docker images
-    needs: 
-      - build-images
-  #    - build-rocks
+    needs: [build-images, build-rocks]
     runs-on: ubuntu-latest
     outputs:
       images: ${{ env.IMAGES }}
@@ -267,8 +265,8 @@ jobs:
           name: ${{ env.CHARM_NAME }}-images
           path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
-  build-charms:
-    name: Build and push charms from subdirectories
+  build-multiple-charms:
+    name: Build and push multiple charms out of subdirectories
     needs: [get-runner-image, build-charm]
     if: ${{ needs.build-charm.outputs.charm-file == '' && !cancelled() }}
     uses: ./.github/workflows/build_charms.yaml
@@ -279,7 +277,7 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [all-images, build-charm, build-charms, get-runner-image]
+    needs: [all-images, build-charm, build-multiple-charms, get-runner-image]
     if: ${{ !failure() }}
     secrets: inherit
     with:
