@@ -245,7 +245,7 @@ jobs:
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
           python -m pip install tox
-          tox -e pack -- -v | charmcraft pack -v
+          tox -e pack -- -v || charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Upload charm artifact
         if: ${{ env.CHARM_FILE != 'UNKNOWN' && !cancelled() }}
