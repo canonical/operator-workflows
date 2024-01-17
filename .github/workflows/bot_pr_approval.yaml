@@ -12,5 +12,15 @@ jobs:
     runs-on: [self-hosted, edge]
     steps:
       - name: Approve bot PR
-        run: |
-          echo hi
+        env:
+          GITHUB_TOKEN: ${{ secrets.IS_DEVOPS_BOT_GITHUB_TOKEN }}
+        if: contains(['jdkandersson', 'renovate', 'github-actions'], github.actor)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.createReview({
+              owner: context.payload.repository.full_name.split('/')[0],
+              repo: context.payload.repository.full_name.split('/')[1],
+              pull_number: context.payload.number,
+              event: 'APPROVE'
+            })
