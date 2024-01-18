@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Approve bot PR
         env:
-          GITHUB_TOKEN: ${{ secrets.IS_DEVOPS_BOT_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: contains(fromJSON('["jdkandersson", "renovate", "github-actions"]'), github.actor)
         uses: actions/github-script@v7
         with:
