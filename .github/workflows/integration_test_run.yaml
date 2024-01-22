@@ -346,8 +346,9 @@ jobs:
           echo "$(echo '${{ inputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
       - name: Upload image artifact
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-images
           path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
+          overwrite: true
