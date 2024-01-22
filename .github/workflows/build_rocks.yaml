@@ -38,7 +38,7 @@ on:
         description: List of images built
         value: ${{ jobs.get-rocks.outputs.images }}
       rock-metas:
-        description: List of maps featuring the built {path, arch, image}
+        description: List of maps featuring the built {name, version, path, arch, image}
         value: ${{ jobs.get-rocks.outputs.rock-metas }}
 
 jobs:
@@ -122,7 +122,7 @@ jobs:
       - name: Extract rock information
         run: |
           IMAGE_ARCH="${{ matrix.rock.arch }}"
-          IMAGE_NAME=$(yq '.name' "${{ matrix.rock.path }}/rockcraft.yaml")
+          IMAGE_NAME="${{ matrix.rock.name }}"
           IMAGE_BASE=$(yq '.base' "${{ matrix.rock.path }}/rockcraft.yaml")
           IMAGE_BUILD_BASE=$(yq '.["build-base"] // .base' "${{ matrix.rock.path }}/rockcraft.yaml")
           IMAGE_REF=${{ matrix.rock.image }}
