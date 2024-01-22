@@ -11,6 +11,9 @@ jobs:
     name: Approve bot PR
     runs-on: [self-hosted, edge]
     steps:
+      - name: Show actor
+        run: |
+          echo ${{ github.actor }}
       - name: Approve bot PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
