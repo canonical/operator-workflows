@@ -102,7 +102,7 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/${{ github.repository }}/actions/runs \
-            -f path=.github/workflows/integration_test.yaml \
+            --paginate \
             -f status=completed \
             -f event=pull_request \
             --jq "[
