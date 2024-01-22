@@ -315,11 +315,12 @@ jobs:
             let json = JSON.stringify(reports);
             fs.writeFileSync('report.json', json);
       - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: report
           path: report.json
+          overwrite: true
   draft-publish-docs:
     name: Draft publish docs
     runs-on: >-
