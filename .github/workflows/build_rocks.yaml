@@ -78,9 +78,9 @@ jobs:
               const rockPath = path.relative('.', path.dirname(rockcraftFile))
               core.info(`found rockcraft.yaml in ${rockPath}`)
               const fileHash = await glob.hashFiles(path.join(rockPath, '**'))
-              const rockName = (
-                await exec.getExecOutput('yq', ['.name', rockcraftFile])
-              ).stdout.trim()
+              const [rockName, rockVersion] = (
+                await exec.getExecOutput('yq', ['.name,.version', rockcraftFile])
+              ).stdout.trim().split("\n")
               const platforms = (
                 await exec.getExecOutput('yq', ['.platforms | keys', '-o=json', rockcraftFile])
               ).stdout.trim()
@@ -90,13 +90,13 @@ jobs:
                   const image = `${{ inputs.registry }}/${{ inputs.owner }}/${rockName}:${fileHash}-${arch}`
                   core.info(`generate multi-arch image name: ${image}`)
                   images.push(image)
-                  rockMetas.push({'path': rockPath, 'arch': arch, 'image': image})
+                  rockMetas.push({name: rockName, version: rockVersion, path: rockPath, arch: arch, image: image})
                 }
               } else {
                 const image = `${{ inputs.registry }}/${{ inputs.owner }}/${rockName}:${fileHash}`
                 core.info(`generate image name: ${image}`)
                 images.push(image)
-                rockMetas.push({'path': rockPath, 'arch': defaultArch, 'image': image})
+                rockMetas.push({name: rockName, version: rockVersion, path: rockPath, arch: defaultArch, image: image})
               }
               rockPaths.push(rockPath)
             }
