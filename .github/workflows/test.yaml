@@ -326,10 +326,10 @@ jobs:
           path: report.json
           overwrite: true
   lint-and-unit-test-arm64:
-    name: Lint and unit tests
+    name: Lint and unit tests arm64
     if: inputs.arm64
     needs: get-runner-image
-    runs-on: self-hosted-arm64-larg
+    runs-on: self-hosted-arm64-large
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
