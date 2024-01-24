@@ -21,6 +21,10 @@ on:
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
+      arm64:
+        type: boolean
+        description: Whether to run arm64 tests.
+        default: false
 
 concurrency:
   group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
@@ -29,7 +33,12 @@ concurrency:
 jobs:
   inclusive-naming-check:
     name: Inclusive naming
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -73,7 +82,12 @@ jobs:
     uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -137,7 +151,12 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -154,7 +173,12 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -173,7 +197,139 @@ jobs:
   lint-and-unit-test:
     name: Lint and unit tests
     needs: get-runner-image
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Pre-run script
+        if: ${{ inputs.pre-run-script != '' }}
+        run: bash -xe ${{ inputs.pre-run-script }}
+      - name: Install tox
+        run: python3 -m pip install tox
+      - name: Run tests
+        id: run-tests
+        run: |
+          # Ensure that stdout appears as normal and redirect to file and exit depends on exit code of first command
+          STDOUT_LOG=$(mktemp --suffix=stdout.log)
+          echo STDOUT_LOG=$STDOUT_LOG >> $GITHUB_ENV
+          tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
+      - name: Check lint and test stdout
+        run: |
+          # Check dependencies
+          EXPECTED_LINT_DEPS="\
+              mypy \
+              isort \
+              black \
+              flake8-docstrings \
+              flake8-docstrings-complete \
+              flake8-builtins \
+              flake8-test-docs \
+              pep8-naming \
+              codespell \
+              pylint \
+              pydocstyle \
+              "
+          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
+              # Check that there is a `lint...<dependency>` line for each of the expected dependencies
+              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
+              if ! grep -q "$DEP_REGEX" $STDOUT_LOG ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
+
+          # Check commands
+          EXPECTED_LINT_CMDS="\
+              pydocstyle \
+              codespell \
+              flake8 \
+              isort \
+              black \
+              mypy \
+              pylint \
+              "
+          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
+              # Check that there is a `lint...commands...<command>` line for each of the expected commands
+              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
+              if ! grep -q "$CMD_REGEX" $STDOUT_LOG ; then
+                  # Write to stderr
+                  >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
+                  exit 1
+              fi
+          done
+      - name: Export test report
+        if: always() && !cancelled()
+        uses: actions/github-script@v7.0.1
+        with:
+          script: |
+            const no_color = (text) => {
+                return text.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '');
+            }
+
+            const sha = '${{ github.event.pull_request.head.sha }}';
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}test-result.json')).testenvs;
+
+            let lint_result = result.lint.test;
+            let lint_success = true;
+            let lint_output = '';
+            for (let lint_test_result of lint_result) {
+              if (lint_test_result.retcode != 0) {
+                lint_success = false;
+              }
+              if (lint_test_result.output) {
+                lint_output += lint_test_result.output;
+              }
+            }
+            let unit_result = result.unit.test;
+            let unit_success = unit_result[0].retcode == 0;
+            let unit_output = unit_result[0].output;
+            let static_result = result.static.test;
+            let static_output = static_result[0].output;
+            let coverage_result = result["coverage-report"].test;
+            let coverage_output = coverage_result[0].output;
+
+            let reports = [];
+            if (!lint_success) {
+              reports.push(
+                `Lint checks failed for ${sha}\n
+                \`\`\`\n${no_color(lint_output).trim()}\n\`\`\``
+              );
+            }
+            if (!unit_success) {
+              reports.push(
+                `Unit tests failed for ${sha}\n
+                \`\`\`\n${no_color(unit_output).trim()}\n\`\`\``
+              );
+            }
+            reports.push(
+              `Test coverage for ${sha}\n
+              \`\`\`\n${no_color(coverage_output).trim()}\n\`\`\`
+              Static code analysis report\n
+              \`\`\`\n${no_color(static_output).trim()}\n\`\`\``
+            );
+            let json = JSON.stringify(reports);
+            fs.writeFileSync('report.json', json);
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always() && github.event_name == 'pull_request' && !cancelled()
+        with:
+          name: report
+          path: report.json
+          overwrite: true
+  lint-and-unit-test-arm64:
+    name: Lint and unit tests
+    if: inputs.arm64
+    needs: get-runner-image
+    runs-on: self-hosted-arm64-larg
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -298,7 +454,12 @@ jobs:
           overwrite: true
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -318,7 +479,12 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
   license-headers-check:
     name: Check license headers
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -337,7 +503,12 @@ jobs:
           config: .licenserc.yaml
   lib-check:
     name: Check libraries
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Check libs
@@ -357,7 +528,12 @@ jobs:
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
-    runs-on: self-hosted-arm64-large
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        'ubuntu-22.04'
+      }}
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
