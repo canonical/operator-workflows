@@ -172,6 +172,10 @@ on:
       zap-rules-file-name:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
+      arm64:
+        type: boolean
+        description: Whether to run arm64 tests.
+        default: false
     outputs:
       images:
         description: Pushed images
@@ -202,14 +206,35 @@ jobs:
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
       build-args: ${{ inputs.image-build-args }}
+  build-images-arm64:
+    name: Build arm64 image
+    if: inputs.arm64
+    uses: ./.github/workflows/build_images.yaml
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: self-hosted-arm64-large
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+      build-args: ${{ inputs.image-build-args }}
   build-rocks:
-    name: Build rock
+    name: Build arm64 rock
     uses: ./.github/workflows/build_rocks.yaml
     needs: get-runner-image
     with:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+      trivy-image-config: ${{ inputs.trivy-image-config }}
+      working-directory: ${{ inputs.working-directory }}
+  build-rocks-arm64:
+    name: Build rock
+    uses: ./.github/workflows/build_rocks.yaml
+    if: inputs.arm64
+    with:
+      owner: ${{ github.repository_owner }}
+      registry: ghcr.io
+      runs-on: self-hosted-arm64-large
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
   all-images:
@@ -225,6 +250,22 @@ jobs:
             IMAGES='${{ needs.build-rocks.outputs.images }}'
           else
             IMAGES='${{ needs.build-images.outputs.images }}'
+          fi
+          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
+  all-images-arm64:
+    name: Get arm64 rocks or Docker images
+    needs: [build-images-arm64, build-rocks-arm64]
+    if: inputs.arm64
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ env.IMAGES }}
+    steps:
+      - name: Get rocks or fallback to Docker images
+        run: |
+          if [ ${{ needs.build-rocks-arm64.outputs.images != '[]' }} = true ]; then
+            IMAGES='${{ needs.build-rocks.outputs.images }}'
+          else
+            IMAGES='${{ needs.build-images-arm64.outputs.images }}'
           fi
           echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   build-charm:
@@ -267,6 +308,46 @@ jobs:
           path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
           overwrite: true
+  build-charm-arm64:
+    name: Build and push arm64 charm
+    if: inputs.arm64
+    runs-on: self-hosted-arm64-large
+    outputs:
+      charm-file: ${{ env.CHARM_FILE }}
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - uses: canonical/setup-lxd@v0.1.1
+      - name: Extract charm name
+        working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+      - name: Pack charm
+        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          sudo snap install charmcraft --classic --channel latest/stable
+          charmcraft pack -v
+          echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
+      - name: Upload charm artifact
+        if: ${{ env.CHARM_FILE != 'UNKNOWN' && !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHARM_NAME }}-charm-arm64
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          if-no-files-found: error
+          overwrite: true
+      - name: Save image names for charm OCI resources
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          echo "$(echo '${{ needs.all-images-arm64.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-arm64-images
+      - name: Upload image artifact
+        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHARM_NAME }}-arm64-images
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          if-no-files-found: error
+          overwrite: true
 
   integration-test:
     name: Integration tests
@@ -302,6 +383,56 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       self-hosted-runner: ${{ inputs.self-hosted-runner }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
+      series: ${{ inputs.series }}
+      setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
+      test-tox-env: ${{ inputs.test-tox-env }}
+      tmate-debug: ${{ inputs.tmate-debug }}
+      tmate-timeout: ${{ inputs.tmate-timeout }}
+      trivy-fs-config: ${{ inputs.trivy-fs-config }}
+      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
+      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      working-directory: ${{ inputs.working-directory }}
+      zap-auth-header: ${{ inputs.zap-auth-header }}
+      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
+      zap-before-command: ${{ inputs.zap-before-command }}
+      zap-cmd-options: ${{ inputs.zap-cmd-options }}
+      zap-enabled: ${{ inputs.zap-enabled }}
+      zap-target: ${{ inputs.zap-target }}
+      zap-target-port: ${{ inputs.zap-target-port }}
+      zap-target-protocol: ${{ inputs.zap-target-protocol }}
+      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
+  integration-test-arm64:
+    name: Integration tests
+    uses: ./.github/workflows/integration_test_run.yaml
+    needs: [all-images-arm64, build-charm-arm64]
+    if: ${{ !failure() }}
+    secrets: inherit
+    with:
+      channel: ${{ inputs.channel }}
+      chaos-app-kind: ${{ inputs.chaos-app-kind }}
+      chaos-app-label: ${{ inputs.chaos-app-label }}
+      chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
+      chaos-duration: ${{ inputs.chaos-duration }}
+      chaos-enabled: ${{ inputs.chaos-enabled }}
+      chaos-experiments: ${{ inputs.chaos-experiments }}
+      chaos-interval: ${{ inputs.chaos-interval }}
+      chaos-namespace: ${{ inputs.chaos-namespace }}
+      chaos-status-delay: ${{ inputs.chaos-status-delay }}
+      chaos-status-duration: ${{ inputs.chaos-status-duration }}
+      charm-file: ${{ needs.build-charm.outputs.charm-file }}
+      extra-arguments: ${{ inputs.extra-arguments }}
+      extra-test-matrix: ${{ inputs.extra-test-matrix }}
+      images: ${{ needs.all-images.outputs.images }}
+      juju-channel: ${{ inputs.juju-channel }}
+      load-test-enabled: ${{ inputs.load-test-enabled }}
+      load-test-run-args: ${{ inputs.load-test-run-args }}
+      modules: ${{ inputs.modules }}
+      owner: ${{ github.repository_owner }}
+      pre-run-script: ${{ inputs.pre-run-script }}
+      provider: ${{ inputs.provider }}
+      microk8s-addons: ${{ inputs.microk8s-addons }}
+      registry: ghcr.io
+      runs-on: self-hosted-arm64-large
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       test-tox-env: ${{ inputs.test-tox-env }}
