@@ -225,7 +225,7 @@ jobs:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-      trivy-image-config: ${{ inputs.trivy-image-config }}
+      trivy-enabled: false
       working-directory: ${{ inputs.working-directory }}
   build-rocks-arm64:
     name: Build arm64 rock

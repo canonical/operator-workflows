@@ -21,6 +21,10 @@ on:
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      trivy-enabled:
+        type: boolean
+        description: Whether trivy is enabled
+        default: true
       working-directory:
         type: string
         description: The working directory for jobs
@@ -216,6 +220,7 @@ jobs:
         run: |
           skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       - name: Run Github Trivy Image Action
+        if: inputs.trivy-enabled
         uses: aquasecurity/trivy-action@0.16.1
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         with:
@@ -227,6 +232,7 @@ jobs:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       - name: Check trivyignore
+        if: inputs.trivy-enabled
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
           if [ -f ".trivyignore" ]
