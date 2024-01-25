@@ -208,8 +208,8 @@ jobs:
       build-args: ${{ inputs.image-build-args }}
   build-images-arm64:
     name: Build arm64 image
-    if: inputs.arm64
     uses: ./.github/workflows/build_images.yaml
+    if: inputs.arm64
     with:
       owner: ${{ github.repository_owner }}
       registry: ghcr.io
@@ -255,15 +255,15 @@ jobs:
   all-images-arm64:
     name: Get arm64 rocks or Docker images
     needs: [build-images-arm64, build-rocks-arm64]
-    if: inputs.arm64
     runs-on: ubuntu-latest
+    if: inputs.arm64
     outputs:
       images: ${{ env.IMAGES }}
     steps:
       - name: Get rocks or fallback to Docker images
         run: |
           if [ ${{ needs.build-rocks-arm64.outputs.images != '[]' }} = true ]; then
-            IMAGES='${{ needs.build-rocks.outputs.images }}'
+            IMAGES='${{ needs.build-rocks-arm64.outputs.images }}'
           else
             IMAGES='${{ needs.build-images-arm64.outputs.images }}'
           fi
@@ -310,8 +310,8 @@ jobs:
           overwrite: true
   build-charm-arm64:
     name: Build and push arm64 charm
-    if: inputs.arm64
     runs-on: self-hosted-arm64-large
+    if: inputs.arm64
     outputs:
       charm-file: ${{ env.CHARM_FILE }}
     steps:
@@ -339,13 +339,13 @@ jobs:
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
         run: |
-          echo "$(echo '${{ needs.all-images-arm64.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-arm64-images
+          echo "$(echo '${{ needs.all-images-arm64.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images-arm64
       - name: Upload image artifact
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.CHARM_NAME }}-arm64-images
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          name: ${{ env.CHARM_NAME }}-images-arm64
+          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images-arm64
           if-no-files-found: error
           overwrite: true
 
@@ -405,27 +405,17 @@ jobs:
     name: arm64 integration tests
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [all-images-arm64, build-charm-arm64]
-    if: ${{ !failure() }}
+    if: ${{ !failure() && inputs.arm64 }}
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
-      chaos-app-kind: ${{ inputs.chaos-app-kind }}
-      chaos-app-label: ${{ inputs.chaos-app-label }}
-      chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
-      chaos-duration: ${{ inputs.chaos-duration }}
-      chaos-enabled: ${{ inputs.chaos-enabled }}
-      chaos-experiments: ${{ inputs.chaos-experiments }}
-      chaos-interval: ${{ inputs.chaos-interval }}
-      chaos-namespace: ${{ inputs.chaos-namespace }}
-      chaos-status-delay: ${{ inputs.chaos-status-delay }}
-      chaos-status-duration: ${{ inputs.chaos-status-duration }}
-      charm-file: ${{ needs.build-charm.outputs.charm-file }}
+      chaos-enabled: false
+      charm-file: ${{ needs.build-charm-arm64.outputs.charm-file }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
-      images: ${{ needs.all-images.outputs.images }}
+      images: ${{ needs.all-images-arm64.outputs.images }}
       juju-channel: ${{ inputs.juju-channel }}
-      load-test-enabled: ${{ inputs.load-test-enabled }}
-      load-test-run-args: ${{ inputs.load-test-run-args }}
+      load-test-enabled: false
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
@@ -433,7 +423,6 @@ jobs:
       microk8s-addons: ${{ inputs.microk8s-addons }}
       registry: ghcr.io
       runs-on: self-hosted-arm64-large
-      series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       test-tox-env: ${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
@@ -442,15 +431,7 @@ jobs:
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       working-directory: ${{ inputs.working-directory }}
-      zap-auth-header: ${{ inputs.zap-auth-header }}
-      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
-      zap-before-command: ${{ inputs.zap-before-command }}
-      zap-cmd-options: ${{ inputs.zap-cmd-options }}
-      zap-enabled: ${{ inputs.zap-enabled }}
-      zap-target: ${{ inputs.zap-target }}
-      zap-target-port: ${{ inputs.zap-target-port }}
-      zap-target-protocol: ${{ inputs.zap-target-protocol }}
-      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
+      zap-enabled: false
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest
