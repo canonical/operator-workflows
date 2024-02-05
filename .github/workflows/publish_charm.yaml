@@ -14,6 +14,11 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+      tag-prefix:
+        type: string
+        required: false
+        description: |
+          Tag prefix, useful when bundling multiple charms in the same repo.
 
 env:
   REGISTRY: ghcr.io
@@ -277,4 +282,5 @@ jobs:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}
+          tag-prefix: ${{ inputs.tag-prefix }}
           upload-image: false
