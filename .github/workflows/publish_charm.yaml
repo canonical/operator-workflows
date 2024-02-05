@@ -180,7 +180,12 @@ jobs:
           sudo snap install charmcraft --classic
       - name: Get charm name
         id: get-charm-name
-        run: echo "CHARM_NAME=$(yq -e '.name' metadata.yaml)" >> $GITHUB_ENV
+        run: |
+          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
+          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
+            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
+          fi
+          echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -202,13 +207,19 @@ jobs:
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
-          charm=$(yq -e '.name' metadata.yaml)
+          charm=${{ env.CHARM_NAME }}
           declare -a resources
           declare -a images
 
-          for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' metadata.yaml); do
-            resources+=("$resource")
-          done
+          if [ -f metadata.yaml ]; then
+            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' metadata.yaml); do
+              resources+=("$resource")
+            done
+          else;
+            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' charmcraft.yaml); do
+              resources+=("$resource")
+            done
+          fi
 
           for image in $(cat ${{ env.CHARM_NAME }}-images); do
             images+=("$image")
@@ -239,7 +250,12 @@ jobs:
           rm -rf $TEMP_DIR
       - name: Get charm name
         id: get-charm-name
-        run: echo "CHARM_NAME=$(yq -e '.name' metadata.yaml)" >> $GITHUB_ENV
+        run: |
+          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
+          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
+            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
+          fi
+          echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
