@@ -234,6 +234,14 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+      - name: Download charm artifact
+        uses: actions/download-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        continue-on-error: true
+        with:
+          path: ${{ inputs.working-directory }}
+          pattern: '*-charm'
+          merge-multiple: true
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -267,14 +275,6 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
-      - name: Download charm artifact
-        uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
-        continue-on-error: true
-        with:
-          path: ${{ inputs.working-directory }}
-          pattern: '*-charm'
-          merge-multiple: true
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
