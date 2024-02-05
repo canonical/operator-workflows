@@ -256,7 +256,7 @@ jobs:
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
           charms_artifacts=(`find ${{ inputs.working-directory }} -maxdepth 1 -name "*.charm"`)
-          if [ ! -z ${{ inputs.charm-file }} ]; then
+          if [ ! -e ${{ inputs.charm-file }} ]; then
             args="${args} --charm-file=${{ inputs.charm-file }}"
           elif [ ${#charms_artifacts[@]} -gt 0 ]; then
             # iterate across any local *.charm files
