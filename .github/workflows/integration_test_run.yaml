@@ -237,7 +237,12 @@ jobs:
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}
         run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
+          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
+            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
+          fi
+          echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
+
           args=""
           for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
