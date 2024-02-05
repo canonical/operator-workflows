@@ -247,8 +247,14 @@ jobs:
           for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
+          charms_artifacts=(`find ${{ inputs.working-directory }} -maxdepth 1 -name "*.charm"`)
           if [ ! -z ${{ inputs.charm-file }} ]; then
             args="${args} --charm-file=${{ inputs.charm-file }}"
+          elif [ ${#charms_artifacts[@]} -gt 0 ]; then
+            # iterate across any local *.charm files
+            for charm in "${charms_artifacts[@]}"; do
+              args="${args} --charm-file=${charm}"
+            done
           fi
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
@@ -266,8 +272,9 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         continue-on-error: true
         with:
-          name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}
+          pattern: '*-charm'
+          merge-multiple: true
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
