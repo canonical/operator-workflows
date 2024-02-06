@@ -220,7 +220,7 @@ jobs:
             for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' metadata.yaml); do
               resources+=("$resource")
             done
-          else;
+          else
             for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' charmcraft.yaml); do
               resources+=("$resource")
             done
