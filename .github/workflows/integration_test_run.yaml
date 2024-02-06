@@ -237,7 +237,12 @@ jobs:
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}
         run: |
-          echo "CHARM_NAME=$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)" >> $GITHUB_ENV
+          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
+          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
+            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
+          fi
+          echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
+
           args=""
           for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
@@ -315,7 +320,7 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.16.1
+        uses: aquasecurity/trivy-action@0.17.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
@@ -333,7 +338,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.10.0
+        uses: zaproxy/action-baseline@v0.11.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
