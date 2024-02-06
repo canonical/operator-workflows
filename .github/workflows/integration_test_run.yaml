@@ -236,7 +236,6 @@ jobs:
         run: bash -xe ${{ inputs.pre-run-script }}
       - name: Download charm artifact
         uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
         continue-on-error: true
         with:
           path: ${{ inputs.working-directory }}
