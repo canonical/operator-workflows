@@ -263,6 +263,12 @@ jobs:
         with:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}
+      - name: Tmate debugging session
+        if: ${{ failure() && inputs.tmate-debug }}
+        uses: canonical/action-tmate@main
+#        with:
+#          detached: true
+        timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
@@ -273,10 +279,10 @@ jobs:
         if: ${{ inputs.provider == 'lxd' }}
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
-      - name: Tmate debugging session
-        if: ${{ failure() && inputs.tmate-debug }}
-        uses: canonical/action-tmate@main
-        timeout-minutes: ${{ inputs.tmate-timeout }}
+#      - name: Tmate debugging session
+#        if: ${{ failure() && inputs.tmate-debug }}
+#        uses: canonical/action-tmate@main
+#        timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
         if: failure()
