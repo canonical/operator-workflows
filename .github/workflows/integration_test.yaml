@@ -252,7 +252,7 @@ jobs:
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Upload charm artifact
-        if: ${{ env.CHARM_FILE != 'UNKNOWN' && !cancelled() }}
+        if: ${{ !contains(fromJson('["", "UNKNOWN"]'), env.CHARM_FILE) && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-charm
