@@ -264,7 +264,7 @@ jobs:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ inputs.working-directory }}
       - name: Tmate debugging session
-        if: ${{ failure() && inputs.tmate-debug }}
+        if: ${{ inputs.tmate-debug }}
         uses: canonical/action-tmate@main
 #        with:
 #          detached: true
