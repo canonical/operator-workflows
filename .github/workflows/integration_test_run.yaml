@@ -275,7 +275,7 @@ jobs:
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Tmate debugging session
         if: ${{ failure() && inputs.tmate-debug }}
-        uses: mxschmitt/action-tmate@v3
+        uses: ${{ inputs.self-hosted-runner && canonical/action-tmate@main || mxschmitt/action-tmate@v3 }}
         timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Dump logs
         uses: canonical/charm-logdump-action@main
