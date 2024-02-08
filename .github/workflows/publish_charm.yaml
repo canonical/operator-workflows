@@ -79,7 +79,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.4.0
+      - uses: canonical/charming-actions/release-libraries@2.5.0-rc
         name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
@@ -276,7 +276,7 @@ jobs:
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.4.0
+        uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
           built-charm-path: ${{ env.CHARM_FILE }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
