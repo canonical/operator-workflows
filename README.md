@@ -21,18 +21,11 @@ The following workflows are available:
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
-* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. This workflow also supports running addtional load and chaos tests. The following parameters are available for this workflow:
+* integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| chaos-enabled  | bool | false | Whether Chaos testing is enabled |
-| chaos-experiments | string | "" | List of experiments to run |
-| chaos-namespace | string | testing | Namespace to install Litmus Chaos |
-| chaos-app-namespace | string | testing | Namespace of chaos tested application |
-| chaos-app-label | string | "" | Label for chaos selection |
-| chaos-app-kind | string | statefulset | Application kind |
-| chaos-duration | string | 60 | Duration of the chaos experiment |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | image-build-args | string | "" | List of build args to pass to the build image job |
