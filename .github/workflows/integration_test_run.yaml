@@ -254,7 +254,7 @@ jobs:
           for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
             args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
           done
-          charm_artifacts=(`find ${{ inputs.working-directory }} -maxdepth 1 -name "*.charm"`)
+          charm_artifacts=(`find . -maxdepth 1 -name "*.charm"`)
           if [ ! -e ${{ inputs.charm-file }} ]; then
             args="${args} --charm-file=${{ inputs.charm-file }}"
           elif [ ${#charm_artifacts[@]} -gt 0 ]; then
