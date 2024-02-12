@@ -10,50 +10,6 @@ on:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
-      chaos-app-kind:
-        type: string
-        description: Application kind
-        default: statefulset
-      chaos-app-label:
-        type: string
-        description: Label for chaos selection
-        default: ""
-      chaos-app-namespace:
-        type: string
-        description: Namespace of chaos tested application
-        default: testing
-      chaos-duration:
-        type: string
-        description: |
-          Duration of the chaos experiment (added to 600s for go test timeout)
-        default: 60
-      chaos-enabled:
-        type: boolean
-        description: Whether Chaos testing is enabled
-        default: false
-      chaos-experiments:
-        type: string
-        description: List of experiments to run
-        default: ""
-      chaos-interval:
-        type: string
-        description: Interval to attempt re-run of an experiment
-        default: 30
-      chaos-namespace:
-        type: string
-        description: Namespace to install Litmus Chaos
-        default: testing
-      chaos-status-delay:
-        type: string
-        description: Delay is the wait(sleep) time on every status retry
-        default: 5
-      chaos-status-duration:
-        type: string
-        description: |
-          Duration used for status check retries
-          Retry is chaos-duration/chaos-delay times and each retry
-          sleeps chaos-delay
-        default: 90
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -281,16 +237,6 @@ jobs:
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
-      chaos-app-kind: ${{ inputs.chaos-app-kind }}
-      chaos-app-label: ${{ inputs.chaos-app-label }}
-      chaos-app-namespace: ${{ inputs.chaos-app-namespace }}
-      chaos-duration: ${{ inputs.chaos-duration }}
-      chaos-enabled: ${{ inputs.chaos-enabled }}
-      chaos-experiments: ${{ inputs.chaos-experiments }}
-      chaos-interval: ${{ inputs.chaos-interval }}
-      chaos-namespace: ${{ inputs.chaos-namespace }}
-      chaos-status-delay: ${{ inputs.chaos-status-delay }}
-      chaos-status-duration: ${{ inputs.chaos-status-duration }}
       charm-file: ${{ needs.build-charm.outputs.charm-file }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
