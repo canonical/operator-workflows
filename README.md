@@ -91,6 +91,8 @@ and then use the argument value
 charm = pytestconfig.getoption("--charm-file")
 ```
 
+tmate can be run on failed tests either by setting the `tmate-debug` input to 'true' or by re-running a job with the "Enable debug logging" checkbox checked.
+
 * publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).
 
 This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token with package-manage and package-view permissions for the charm and the destination channel. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth) and a `REPO_ACCESS_TOKEN` secret containg a classic PAT with full repository permissions. See how to generate it [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
