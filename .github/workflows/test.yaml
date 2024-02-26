@@ -210,7 +210,9 @@ jobs:
       - name: Install tox
         run: python3 -m pip install tox
       - name: Install poetry
-        run: python3 -m pip install poetry
+        run: |
+          python3 -m pip install poetry
+          poetry self add poetry-plugin-export
       - name: Run tests
         id: run-tests
         run: |
