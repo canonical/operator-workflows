@@ -205,6 +205,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
+          python3 -m pip install tox
           tox -e pack -- -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Upload charm artifact
