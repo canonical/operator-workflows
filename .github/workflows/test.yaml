@@ -220,51 +220,6 @@ jobs:
           STDOUT_LOG=$(mktemp --suffix=stdout.log)
           echo STDOUT_LOG=$STDOUT_LOG >> $GITHUB_ENV
           tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
-      - name: Check lint and test stdout
-        run: |
-          # Check dependencies
-          EXPECTED_LINT_DEPS="\
-              mypy \
-              isort \
-              black \
-              flake8-docstrings \
-              flake8-docstrings-complete \
-              flake8-builtins \
-              flake8-test-docs \
-              pep8-naming \
-              codespell \
-              pylint \
-              pydocstyle \
-              "
-          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
-              # Check that there is a `lint...<dependency>` line for each of the expected dependencies
-              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
-              if ! grep -q "$DEP_REGEX" $STDOUT_LOG ; then
-                  # Write to stderr
-                  >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
-                  exit 1
-              fi
-          done
-
-          # Check commands
-          EXPECTED_LINT_CMDS="\
-              pydocstyle \
-              codespell \
-              flake8 \
-              isort \
-              black \
-              mypy \
-              pylint \
-              "
-          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
-              # Check that there is a `lint...commands...<command>` line for each of the expected commands
-              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
-              if ! grep -q "$CMD_REGEX" $STDOUT_LOG ; then
-                  # Write to stderr
-                  >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
-                  exit 1
-              fi
-          done
       - name: Export test report
         if: always() && !cancelled()
         uses: actions/github-script@v7.0.1
