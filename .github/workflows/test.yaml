@@ -212,7 +212,7 @@ jobs:
       - name: Install poetry
         run: |
           python3 -m pip install poetry
-          poetry self add poetry-plugin-export
+          python3 -m pip install poetry-plugin-export
       - name: Run tests
         id: run-tests
         run: |
