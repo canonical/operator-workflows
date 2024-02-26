@@ -209,6 +209,8 @@ jobs:
         run: bash -xe ${{ inputs.pre-run-script }}
       - name: Install tox
         run: python3 -m pip install tox
+      - name: Install poetry
+        run: python3 -m pip install poetry
       - name: Run tests
         id: run-tests
         run: |
