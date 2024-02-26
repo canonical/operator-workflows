@@ -124,7 +124,7 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
       - name: Restore rock cache
         if: inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v3.3.3
+        uses: actions/cache/restore@v4.0.0
         id: rock-cache
         with:
           path: ~/.rock-cache
@@ -132,7 +132,7 @@ jobs:
           restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Restore rockcraft container cache
         if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v3.3.3
+        uses: actions/cache/restore@v4.0.0
         id: rockcraft-cache
         with:
           path: ~/.rockcraft-cache/
@@ -184,7 +184,7 @@ jobs:
           done
       - name: Save rockcraft container cache
         if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v3.3.3
+        uses: actions/cache/save@v4.0.0
         with:
           path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
@@ -207,7 +207,7 @@ jobs:
           done
       - name: Save rock cache
         if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v3.3.3
+        uses: actions/cache/save@v4.0.0
         with:
           path: ~/.rock-cache
           key: ${{ env.ROCK_CACHE_KEY }}
@@ -216,7 +216,7 @@ jobs:
         run: |
           skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.16.1
+        uses: aquasecurity/trivy-action@0.17.0
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         with:
           image-ref: ${{ env.IMAGE_REF }}
