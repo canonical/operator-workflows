@@ -206,6 +206,8 @@ jobs:
         run: |
           sudo snap install charmcraft --classic --channel latest/stable
           python3 -m pip install tox
+          python3 -m pip install poetry
+          python3 -m pip install poetry-plugin-export
           tox -e pack -- -v || charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
       - name: Upload charm artifact
