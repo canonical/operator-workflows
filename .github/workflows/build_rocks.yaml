@@ -158,6 +158,7 @@ jobs:
         if: inputs.rockcraft-repository != ''
         env:
           ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
+        working-directory: ${{ matrix.path }}
         run: rockcraft pack --verbosity trace
       - name: Upload rock to ghcr.io
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
