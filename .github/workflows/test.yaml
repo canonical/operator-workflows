@@ -209,10 +209,6 @@ jobs:
         run: bash -xe ${{ inputs.pre-run-script }}
       - name: Install tox
         run: python3 -m pip install tox
-      - name: Install poetry
-        run: |
-          python3 -m pip install poetry
-          python3 -m pip install poetry-plugin-export
       - name: Run tests
         id: run-tests
         run: |
