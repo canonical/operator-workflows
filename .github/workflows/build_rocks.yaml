@@ -46,12 +46,6 @@ jobs:
       rock-paths: ${{ steps.gen-rock-paths-and-images.outputs.rock-paths }}
       images: "${{ steps.gen-rock-paths-and-images.outputs.images }}"
     steps:
-      - name: Validate inputs
-        run: |
-          if [ "${{ inputs.cache-action }}" != "save" ] && [ "${{ inputs.cache-action }}" != "restore" ]; then
-            echo "Invalid value for cache-action. It must be 'save' or 'restore'"
-            exit 1
-          fi
       - uses: actions/checkout@v4.1.1
       - name: Generate rock paths and images
         id: gen-rock-paths-and-images
