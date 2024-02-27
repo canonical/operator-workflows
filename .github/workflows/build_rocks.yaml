@@ -25,10 +25,6 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-      cache-action:
-        type: string
-        description: The cache action can either be "save" or "restore".
-        default: restore
       rockcraft-ref:
         description: Used in conjunction with rockcraft_repo to pull and build rockcraft from source instead of using snapstore version.
         type: string
@@ -131,11 +127,6 @@ jobs:
         with:
           path: ./rockcraft*.snap
           key: ${{ steps.restore-rockcraft.outputs.cache-primary-key }}
-      - uses: actions/upload-artifact@v4
-        if: inputs.rockcraft-repository != ''
-        with:
-          name: rockcraft-snap
-          path: "rockcraft*.snap"
       - name: Install Rockcraft
         if: inputs.rockcraft-repository != ''
         run: sudo snap install --dangerous --classic rockcraft*.snap
@@ -158,49 +149,8 @@ jobs:
           echo "IMAGE_BUILD_BASE=$IMAGE_BUILD_BASE" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
           echo "ROCKCRAFT_CONTAINER_NAME=$ROCKCRAFT_CONTAINER_NAME" >> $GITHUB_ENV
-      - name: Generate rockcraft cache key
-        run: |
-          ROCKCRAFT_PATH="${{ matrix.path }}"
-          ROCKCRAFT_PATH="${ROCKCRAFT_PATH%/}"
-          ROCKCRAFT_CACHE_KEY_BASE="$ROCKCRAFT_PATH/rockcraft-cache?name=${{ env.IMAGE_NAME }}&base=${{ env.IMAGE_BUILD_BASE }}&build-base=${{ env.IMAGE_BUILD_BASE }}"
-          ROCK_CACHE_KEY_BASE="$ROCKCRAFT_PATH/${{ env.IMAGE_NAME }}.rock?filehash=${{ hashFiles(format('{0}/{1}', matrix.path, '**')) }}"
-          echo "ROCKCRAFT_CACHE_KEY=$ROCKCRAFT_CACHE_KEY_BASE&date=$(date +%Y-%m-%d)" >> $GITHUB_ENV
-          echo 'ROCKCRAFT_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
-          for d in {1..2}
-            do echo "$ROCKCRAFT_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
-          done
-          echo 'EOF' >> $GITHUB_ENV
-          echo "ROCK_CACHE_KEY=$ROCK_CACHE_KEY_BASE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
-          echo 'ROCK_CACHE_ALT_KEYS<<EOF' >> $GITHUB_ENV 
-          for d in {1..2}
-            do echo "$ROCK_CACHE_KEY_BASE&date=$(date -d"-$d days" +%Y-%m-%d)" >> $GITHUB_ENV
-          done
-          echo 'EOF' >> $GITHUB_ENV
-      - name: Restore rock cache
-        if: inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v4.0.0
-        id: rock-cache
-        with:
-          path: ~/.rock-cache
-          key: ${{ env.ROCK_CACHE_KEY }}
-          restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
-      - name: Restore rockcraft container cache
-        if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v4.0.0
-        id: rockcraft-cache
-        with:
-          path: ~/.rockcraft-cache/
-          key: ${{ env.ROCKCRAFT_CACHE_KEY }}
-          restore-keys: ${{ env.ROCKCRAFT_CACHE_ALT_KEYS }}
-      - name: Import rockcraft container cache
-        if: steps.rockcraft-cache.outputs.cache-hit == 'true'
-        working-directory: ${{ inputs.working-directory }}
-        run: |
-          sudo lxc project create rockcraft -c features.images=false -c features.profiles=false
-          sudo lxc --project rockcraft import ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar ${{ env.ROCKCRAFT_CONTAINER_NAME }}
-          find . -exec touch '{}' ';'
       - name: Build rock
-        if: (steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save') && inputs.rockcraft-repository == ''
+        if: inputs.rockcraft-repository == ''
         uses: canonical/craft-actions/rockcraft-pack@main
         with:
           path: ${{ matrix.path }}
@@ -209,59 +159,6 @@ jobs:
         env:
           ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         run: rockcraft pack --verbosity trace
-      - name: Generate rockcraft container cache
-        if: inputs.cache-action == 'save'
-        run: |
-          mkdir -p ~/.rockcraft-cache
-          mkdir -p ~/.rock-cache
-          touch ~/.rock-cache/.gitkeep
-          sudo lxc --project rockcraft export ${{ env.ROCKCRAFT_CONTAINER_NAME }} --compression none ~/.rockcraft-cache/${{ env.IMAGE_NAME }}.tar
-      - name: Delete rockcraft container cache
-        if: inputs.cache-action == 'save'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api \
-            --method DELETE \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/caches?key=$(printf %s "${{ env.ROCKCRAFT_CACHE_KEY }}"|jq -sRr @uri) || :
-          for key in $(echo $ROCKCRAFT_CACHE_ALT_KEYS)
-            do gh api \
-              --method DELETE \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              /repos/${{ github.repository }}/actions/caches?key=$(printf %s "$key"|jq -sRr @uri) || :
-          done
-      - name: Save rockcraft container cache
-        if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v4.0.0
-        with:
-          path: ~/.rockcraft-cache/
-          key: ${{ env.ROCKCRAFT_CACHE_KEY }}
-      - name: Delete rock cache
-        if: inputs.cache-action == 'save'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api \
-            --method DELETE \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/caches?key=$(printf %s "${{ env.ROCKC_CACHE_KEY }}"|jq -sRr @uri) || :
-          for key in $(echo $ROCK_CACHE_ALT_KEYS)
-            do gh api \
-              --method DELETE \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              /repos/${{ github.repository }}/actions/caches?key=$(printf %s "$key"|jq -sRr @uri) || :
-          done
-      - name: Save rock cache
-        if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v4.0.0
-        with:
-          path: ~/.rock-cache
-          key: ${{ env.ROCK_CACHE_KEY }}
       - name: Upload rock to ghcr.io
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         run: |
