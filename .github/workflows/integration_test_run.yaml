@@ -6,6 +6,14 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
+      charmcraft-ref:
+        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
+        type: string
+        default: ""
+      charmcraft-repository:
+        description: Pull and build charmcraft from source instead of using snapstore version.
+        type: string
+        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -158,6 +166,53 @@ jobs:
       }}
     if: ${{ !failure() }}
     steps:
+      - name: Setup operator environment
+        uses: charmed-kubernetes/actions-operator@main
+        with:
+          provider: ${{ inputs.provider }}
+          microk8s-addons: ${{ inputs.microk8s-addons }}
+          channel: ${{ inputs.channel }}
+          juju-channel: ${{ inputs.juju-channel }}
+      - uses: actions/checkout@v4
+        if: inputs.charmcraft-repository != ''
+        with:
+          repository: ${{ inputs.charmcraft-repository }}
+          ref: ${{ inputs.charmcraft-ref }}
+          path: ./charmcraft
+          fetch-depth: 0
+      - name: Get Charmcraft SHA
+        if: inputs.charmcraft-repository != ''
+        id: charmcraft-sha
+        working-directory: ./charmcraft
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Restore Charmcraft Cache
+        if: inputs.charmcraft-repository != ''
+        id: restore-charmcraft
+        uses: actions/cache/restore@v4
+        with:
+          path: ./charmcraft*.snap
+          key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
+      - name: Install Snapcraft
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        run: sudo snap install snapcraft --classic
+      - name: Build Charmcraft
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        working-directory: ./charmcraft
+        run: |
+          snapcraft --use-lxd
+          cp charmcraft*.snap ../
+      - name: Save Charmcraft Cache
+        uses: actions/cache/save@v4
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        with:
+          path: ./charmcraft*.snap
+          key: ${{ steps.restore-charmcraft.outputs.cache-primary-key }}
+      - name: Install charmcraft
+        if: inputs.charmcraft-repository != ''
+        run: sudo snap install --dangerous --classic charmcraft*.snap
+      - name: Clean up
+        if: inputs.charmcraft-repository != ''
+        run: rm -rf *
       - uses: actions/checkout@v4.1.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
@@ -168,13 +223,6 @@ jobs:
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
-      - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
-        with:
-          provider: ${{ inputs.provider }}
-          microk8s-addons: ${{ inputs.microk8s-addons }}
-          channel: ${{ inputs.channel }}
-          juju-channel: ${{ inputs.juju-channel }}
       - name: Configure GHCR in microk8s
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
