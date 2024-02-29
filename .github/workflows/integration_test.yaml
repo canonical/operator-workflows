@@ -281,6 +281,8 @@ jobs:
       - name: Pack charm
         if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ env.CHARM_DIR }}
+        env:
+          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         run: |
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
