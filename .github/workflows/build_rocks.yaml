@@ -124,7 +124,7 @@ jobs:
           echo 'EOF' >> $GITHUB_ENV
       - name: Restore rock cache
         if: inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v4.0.0
+        uses: actions/cache/restore@v4.0.1
         id: rock-cache
         with:
           path: ~/.rock-cache
@@ -132,7 +132,7 @@ jobs:
           restore-keys: ${{ env.ROCK_CACHE_ALT_KEYS }}
       - name: Restore rockcraft container cache
         if: steps.rock-cache.outputs.cache-hit != 'true' && inputs.cache-action == 'restore'
-        uses: actions/cache/restore@v4.0.0
+        uses: actions/cache/restore@v4.0.1
         id: rockcraft-cache
         with:
           path: ~/.rockcraft-cache/
@@ -184,7 +184,7 @@ jobs:
           done
       - name: Save rockcraft container cache
         if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v4.0.0
+        uses: actions/cache/save@v4.0.1
         with:
           path: ~/.rockcraft-cache/
           key: ${{ env.ROCKCRAFT_CACHE_KEY }}
@@ -207,7 +207,7 @@ jobs:
           done
       - name: Save rock cache
         if: inputs.cache-action == 'save'
-        uses: actions/cache/save@v4.0.0
+        uses: actions/cache/save@v4.0.1
         with:
           path: ~/.rock-cache
           key: ${{ env.ROCK_CACHE_KEY }}
