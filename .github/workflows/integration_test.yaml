@@ -265,8 +265,12 @@ jobs:
 
       - uses: actions/checkout@v4.1.1
 
-      - name: Extract charm name
+      - name: Get charm dir
         working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_DIR=$([ -d charm ] && realpath charm || realpath .)">> $GITHUB_ENV
+
+      - name: Extract charm name
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
@@ -276,7 +280,7 @@ jobs:
 
       - name: Pack charm
         if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
@@ -286,13 +290,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_FILE }}
           if-no-files-found: error
           overwrite: true
 
       - name: Save image names for charm OCI resources
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           echo "$(echo '${{ needs.all-images.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
 
@@ -301,7 +305,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-images
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
           overwrite: true
 
