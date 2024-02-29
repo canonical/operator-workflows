@@ -60,7 +60,10 @@ jobs:
             const rockPaths = []
             const images = []
             for (const rockcraftFile of await rockcraftGlobber.glob()) {
-              const rockPath = path.relative('.', path.dirname(rockcraftFile))
+              let rockPath = path.relative('.', path.dirname(rockcraftFile))
+              if (rockPath === '') {
+                rockPath = '.'
+              }
               rockPaths.push(rockPath)
               core.info(`found rockcraft.yaml in ${rockPath}`)
               const fileHash = await glob.hashFiles(path.join(rockPath, '**'))
