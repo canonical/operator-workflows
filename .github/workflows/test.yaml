@@ -6,6 +6,9 @@ name: Tests
 on:
   workflow_call:
     inputs:
+      docs-working-directory:
+        type: string
+        description: The working directory for the docs
       working-directory:
         type: string
         description: The working directory for jobs
@@ -334,7 +337,7 @@ jobs:
       }}
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.docs-working-directory || inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
