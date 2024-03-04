@@ -6,6 +6,14 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      charmcraft-ref:
+        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
+        type: string
+        default: ""
+      charmcraft-repository:
+        description: Pull and build charmcraft from source instead of using snapstore version.
+        type: string
+        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -47,6 +55,14 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      rockcraft-ref:
+        description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
+        type: string
+        default: ""
+      rockcraft-repository:
+        description: Pull and build rockcraft from source instead of using snapstore version.
+        type: string
+        default: ""
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -168,9 +184,11 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
+      rockcraft-repository: ${{ inputs.rockcraft-repository }}
+      rockcraft-ref: ${{ inputs.rockcraft-ref }}
   all-images:
     name: Get rocks or Docker images
-    needs: [build-images, build-rocks]
+    needs: [ build-images, build-rocks ]
     runs-on: ubuntu-latest
     outputs:
       images: ${{ env.IMAGES }}
@@ -190,52 +208,118 @@ jobs:
     outputs:
       charm-file: ${{ env.CHARM_FILE }}
     steps:
-      - uses: actions/checkout@v4.1.1
       - uses: canonical/setup-lxd@v0.1.1
-      - name: Extract charm name
+
+      - uses: actions/checkout@v4
+        if: inputs.charmcraft-repository != ''
+        with:
+          repository: ${{ inputs.charmcraft-repository }}
+          ref: ${{ inputs.charmcraft-ref }}
+          path: ./charmcraft
+          fetch-depth: 0
+
+      - name: Get Charmcraft SHA
+        if: inputs.charmcraft-repository != ''
+        id: charmcraft-sha
+        working-directory: ./charmcraft
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Restore Charmcraft Cache
+        if: inputs.charmcraft-repository != ''
+        id: restore-charmcraft
+        uses: actions/cache/restore@v4
+        with:
+          path: ./charmcraft*.snap
+          key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
+
+      - name: Install Snapcraft
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        run: sudo snap install snapcraft --classic
+
+      - name: Build Charmcraft
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        working-directory: ./charmcraft
+        run: |
+          snapcraft --use-lxd
+          cp charmcraft*.snap ../
+
+      - name: Save Charmcraft Cache
+        uses: actions/cache/save@v4
+        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+        with:
+          path: ./charmcraft*.snap
+          key: ${{ steps.restore-charmcraft.outputs.cache-primary-key }}
+
+      - name: Install charmcraft
+        if: inputs.charmcraft-repository != ''
+        run: sudo snap install --dangerous --classic charmcraft*.snap
+
+      - name: Clean up
+        if: inputs.charmcraft-repository != ''
+        run: rm -rf *
+
+      - name: Install charmcraft
+        if: inputs.charmcraft-repository == ''
+        run: |
+          sudo snap install charmcraft --classic --channel latest/stable
+
+      - uses: actions/checkout@v4.1.1
+
+      - name: Get charm dir
         working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_DIR=$([ -d charm ] && realpath charm || realpath .)">> $GITHUB_ENV
+
+      - name: Extract charm name
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
           fi
           echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
+
       - name: Pack charm
         if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ env.CHARM_DIR }}
+        env:
+          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         run: |
-          sudo snap install charmcraft --classic --channel latest/stable
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
+
       - name: Upload charm artifact
         if: ${{ !contains(fromJson('["", "UNKNOWN"]'), env.CHARM_FILE) && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_FILE }}
+          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_FILE }}
           if-no-files-found: error
           overwrite: true
+
       - name: Save image names for charm OCI resources
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           echo "$(echo '${{ needs.all-images.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
+
       - name: Upload image artifact
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.CHARM_NAME }}-images
-          path: ${{ inputs.working-directory }}/${{ env.CHARM_NAME }}-images
+          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_NAME }}-images
           if-no-files-found: error
           overwrite: true
 
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [all-images, build-charm, get-runner-image]
+    needs: [ all-images, build-charm, get-runner-image ]
     if: ${{ !failure() }}
     secrets: inherit
     with:
+      charmcraft-repository: ${{ inputs.charmcraft-repository }}
+      charmcraft-ref: ${{ inputs.charmcraft-ref }}
       channel: ${{ inputs.channel }}
       charm-file: ${{ needs.build-charm.outputs.charm-file }}
       extra-arguments: ${{ inputs.extra-arguments }}
