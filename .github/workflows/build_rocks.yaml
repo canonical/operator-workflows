@@ -26,7 +26,7 @@ on:
         description: The working directory for jobs
         default: "./"
       rockcraft-ref:
-        description: Used in conjunction with rockcraft_repo to pull and build rockcraft from source instead of using snapstore version.
+        description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
         type: string
         default: ""
       rockcraft-repository:
