@@ -348,6 +348,7 @@ jobs:
         run: |
           echo "JAVI"
           echo working-directory: ${{env.working-directory}}
+          echo pwd:
           pwd
           echo $GITHUB_OUTPUT
           ls
