@@ -353,7 +353,7 @@ jobs:
           cat $GITHUB_OUTPUT
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
-        uses: canonical/discourse-gatekeeper@92d6d80220c2652fb305142dda47a70b0ee30e14
+        uses: canonical/discourse-gatekeeper@ISD-1620-NetBox-Build-all-missing-documentation-required-for-a-production-charm
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
