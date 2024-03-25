@@ -347,6 +347,7 @@ jobs:
         id: java-tests
         run: |
           echo "JAVI"
+          echo working-directory: ${{env.working-directory}}
           pwd
           echo $GITHUB_OUTPUT
           ls
