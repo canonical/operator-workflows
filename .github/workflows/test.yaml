@@ -343,6 +343,14 @@ jobs:
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
+      - name: Javi tests
+        id: java-tests
+        run: |
+          echo "JAVI"
+          pwd
+          echo $GITHUB_OUTPUT
+          ls
+          cat $GITHUB_OUTPUT
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
         uses: canonical/discourse-gatekeeper@92d6d80220c2652fb305142dda47a70b0ee30e14
