@@ -289,7 +289,7 @@ jobs:
 
       - name: Upload charm artifact
         if: ${{ !contains(fromJson('["", "UNKNOWN"]'), env.CHARM_FILE) && !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: yanksyoon/upload-artifact@main
         with:
           name: ${{ env.CHARM_NAME }}-charm
           path: ${{ env.CHARM_DIR }}/${{ env.CHARM_FILE }}
