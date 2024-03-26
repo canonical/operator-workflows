@@ -151,6 +151,7 @@ on:
 jobs:
   integration-test:
     name: Integration tests
+    timeout-minutes: 120
     strategy:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
