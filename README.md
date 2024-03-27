@@ -40,6 +40,7 @@ The following workflows are available:
 | self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
+| test-timeout | number | 360 | The timeout in minutes for the integration test |
 | test-tox-env | string | "integration" | The tox environment name for the integration test. |
 | tmate-debug | bool | false | Enable tmate debugging after integration test failure. |
 | tmate-timeout | number | 30 | Timeout in minutes to keep tmate debugging session. |

@@ -89,6 +89,10 @@ on:
         description: Use setup-devstack-swift action to prepare a swift server for testing.
         type: boolean
         default: false
+      test-timeout:
+        description: Timeout in minutes for the integration test.
+        type: number
+        default: 360
       test-tox-env:
         description: The tox environment name for the integration test.
         type: string
@@ -151,6 +155,7 @@ on:
 jobs:
   integration-test:
     name: Integration tests
+    timeout-minutes: ${{ inputs.test-timeout }}
     strategy:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
