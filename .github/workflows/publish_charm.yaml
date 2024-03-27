@@ -10,6 +10,9 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
+      docs-working-directory:
+        type: string
+        description: The working directory for the docs
       working-directory:
         type: string
         description: The working directory for jobs
@@ -46,6 +49,9 @@ jobs:
     name: Draft publish docs
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.docs-working-directory || inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
@@ -53,13 +59,14 @@ jobs:
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/discourse-gatekeeper@stable
+        uses: canonical/discourse-gatekeeper@ISD-1620-NetBox-Build-all-missing-documentation-required-for-a-production-charm
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          charm_dir:  ${{ inputs.docs-working-directory || inputs.working-directory }}
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
