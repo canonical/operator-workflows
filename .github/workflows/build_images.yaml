@@ -81,7 +81,7 @@ jobs:
           file: ${{ env.DOCKERFILE }}
       # Trivy requires an OCI type tar to run the scan
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.18.0
+        uses: aquasecurity/trivy-action@0.19.0
         with:
           image-ref: ${{ matrix.image }}
           trivy-config: ${{ inputs.trivy-image-config }}
