@@ -159,9 +159,6 @@ jobs:
           ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         working-directory: ${{ matrix.path }}
         run: rockcraft pack --verbosity trace
-      - name: Tmate
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
       - name: Upload rock to ghcr.io
         if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         run: |
