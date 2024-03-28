@@ -131,6 +131,10 @@ jobs:
       - name: Install Rockcraft
         if: inputs.rockcraft-repository != ''
         run: sudo snap install --dangerous --classic rockcraft*.snap
+      - name: Install rockcraft
+        if: inputs.rockcraft-repository == ''
+        run: |
+          sudo snap install rockcraft --classic --channel ${{ inputs.rockcraft-channel }}
       - name: Cleanup Rockcraft
         if: inputs.rockcraft-repository != ''
         run: rm -rf rockcraft*
@@ -150,10 +154,6 @@ jobs:
           echo "IMAGE_BUILD_BASE=$IMAGE_BUILD_BASE" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
           echo "ROCKCRAFT_CONTAINER_NAME=$ROCKCRAFT_CONTAINER_NAME" >> $GITHUB_ENV
-      - name: Install rockcraft
-        if: inputs.rockcraft-repository == ''
-        run: |
-          sudo snap install rockcraft --classic --channel ${{ inputs.charmcraft-channel }}
       - name: Build rock
         env:
           ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
