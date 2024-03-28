@@ -24,8 +24,10 @@ The following workflows are available:
 * integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. The following parameters are available for this workflow:
 
 | Name                     | Type | Default | Description                                                                                                                                       |
-|--------------------------|----------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+|--------------------------|----------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | charmcraft-channel       | string | latest/stable | Charmcraft channel to use for the integration test                                                                                                |
+| charmcraft-ref           | string | "" | Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.                       |
+| charmcraft-repository    | string | "" | Pull and build charmcraft from source instead of using snapstore version.                                                                         |
 | channel                  | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage)                                         |
 | extra-arguments          | string | "" | Additional arguments to pass to the integration test execution                                                                                    |
 | extra-test-matrix        | string | '{}' | Additional test matrices to run the integration test combinations                                                                                 |
@@ -38,6 +40,8 @@ The following workflows are available:
 | provider                 | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage)                                         |
 | microk8s-addons          | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.                                                       |
 | rockcraft-channel        | string | latest/stable | Rockcraft channel to use for the integration test                                                                                                 |
+| rockcraft-ref            | string | "" | Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.                         |
+| rockcraft-repository     | string | "" | Pull and build rockcraft from source instead of using snapstore version.                                                                          |
 | self-hosted-runner       | bool | false | Whether to use self-hosted runner for tests.                                                                                                      |
 | self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used.                                                                      |
 | series                   | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
