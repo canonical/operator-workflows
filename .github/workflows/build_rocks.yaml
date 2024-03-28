@@ -25,6 +25,10 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+      rockcraft-channel:
+        type: string
+        description: Rockcraft channel to use for the integration test
+        default: "latest/stable"
       rockcraft-ref:
         description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
         type: string
@@ -146,13 +150,11 @@ jobs:
           echo "IMAGE_BUILD_BASE=$IMAGE_BUILD_BASE" >> $GITHUB_ENV
           echo "IMAGE_REF=$IMAGE_REF" >> $GITHUB_ENV
           echo "ROCKCRAFT_CONTAINER_NAME=$ROCKCRAFT_CONTAINER_NAME" >> $GITHUB_ENV
-      - name: Build rock
+      - name: Install rockcraft
         if: inputs.rockcraft-repository == ''
-        uses: canonical/craft-actions/rockcraft-pack@main
-        with:
-          path: ${{ matrix.path }}
+        run: |
+          sudo snap install rockcraft --classic --channel ${{ inputs.charmcraft-channel }}
       - name: Build rock
-        if: inputs.rockcraft-repository != ''
         env:
           ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         working-directory: ${{ matrix.path }}

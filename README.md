@@ -23,41 +23,43 @@ The following workflows are available:
 
 * integration_test: Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. The following parameters are available for this workflow:
 
-| Name | Type | Default | Description |
-|--------------------|----------|--------------------|-------------------|
-| channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
-| extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
-| image-build-args | string | "" | List of build args to pass to the build image job |
-| juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
-| load-test-run-args | string | "" | Command line arguments for the load test execution. |
-| modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
-| pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
-| provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
-| self-hosted-runner| bool | false | Whether to use self-hosted runner for tests. |
-| self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used. |
-| series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
-| setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
-| test-timeout | number | 360 | The timeout in minutes for the integration test |
-| test-tox-env | string | "integration" | The tox environment name for the integration test. |
-| tmate-debug | bool | false | Enable tmate debugging after integration test failure. |
-| tmate-timeout | number | 30 | Timeout in minutes to keep tmate debugging session. |
-| trivy-fs-config | string | "" | Trivy YAML configuration for fs type |
-| trivy-fs-enabled | boolean | false | Whether Trivy testing of type fs is enabled |
-| trivy-fs-ref | string | "." | Target directory to do the Trivy testing |
-| trivy-image-config | string | "" | Trivy YAML configuration for image type |
-| working-directory | string | "./" | Custom working directory for jobs to run on |
-| zap-auth-header | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests |
-| zap-auth-header-value | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests |
-| zap-before-command | string | "" | Command to run before ZAP testing |
-| zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
-| zap-enabled | boolean | false | Whether ZAP testing is enabled |
-| zap-target | string | "" | If this is not set, the unit IP address will be used as ZAP target |
-| zap-target-protocol | string | "http" | ZAP target protocol |
-| zap-target-port | string | 80 | ZAP target port |
-| zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
+| Name                     | Type | Default | Description                                                                                                                                       |
+|--------------------------|----------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| charmcraft-channel       | string | latest/stable | Charmcraft channel to use for the integration test                                                                                                |
+| channel                  | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage)                                         |
+| extra-arguments          | string | "" | Additional arguments to pass to the integration test execution                                                                                    |
+| extra-test-matrix        | string | '{}' | Additional test matrices to run the integration test combinations                                                                                 |
+| image-build-args         | string | "" | List of build args to pass to the build image job                                                                                                 |
+| juju-channel             | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage)                                         |
+| load-test-enabled        | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run.                                 |
+| load-test-run-args       | string | "" | Command line arguments for the load test execution.                                                                                               |
+| modules                  | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument        |
+| pre-run-script           | string | "" | Path to the bash script to be run before the integration tests                                                                                    |
+| provider                 | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage)                                         |
+| microk8s-addons          | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.                                                       |
+| rockcraft-channel        | string | latest/stable | Rockcraft channel to use for the integration test                                                                                                 |
+| self-hosted-runner       | bool | false | Whether to use self-hosted runner for tests.                                                                                                      |
+| self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used.                                                                      |
+| series                   | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
+| setup-devstack-swift     | bool | false | Use setup-devstack-swift action to prepare a swift server for testing.                                                                            |
+| test-timeout             | number | 360 | The timeout in minutes for the integration test                                                                                                   |
+| test-tox-env             | string | "integration" | The tox environment name for the integration test.                                                                                                |
+| tmate-debug              | bool | false | Enable tmate debugging after integration test failure.                                                                                            |
+| tmate-timeout            | number | 30 | Timeout in minutes to keep tmate debugging session.                                                                                               |
+| trivy-fs-config          | string | "" | Trivy YAML configuration for fs type                                                                                                              |
+| trivy-fs-enabled         | boolean | false | Whether Trivy testing of type fs is enabled                                                                                                       |
+| trivy-fs-ref             | string | "." | Target directory to do the Trivy testing                                                                                                          |
+| trivy-image-config       | string | "" | Trivy YAML configuration for image type                                                                                                           |
+| working-directory        | string | "./" | Custom working directory for jobs to run on                                                                                                       |
+| zap-auth-header          | string | "" | If this is defined then its value will be added as a header to all of the ZAP requests                                                            |
+| zap-auth-header-value    | string | "" | If this is defined then its value will be used as the header name to all of the ZAP requests                                                      |
+| zap-before-command       | string | "" | Command to run before ZAP testing                                                                                                                 |
+| zap-cmd-options          | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes                                                                       |
+| zap-enabled              | boolean | false | Whether ZAP testing is enabled                                                                                                                    |
+| zap-target               | string | "" | If this is not set, the unit IP address will be used as ZAP target                                                                                |
+| zap-target-protocol      | string | "http" | ZAP target protocol                                                                                                                               |
+| zap-target-port          | string | 80 | ZAP target port                                                                                                                                   |
+| zap-rules-file-name      | string | "" | Rules file to ignore any alerts from the ZAP scan                                                                                                 |
 
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
