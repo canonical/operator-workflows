@@ -196,9 +196,9 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
+      rockcraft-channel: ${{ inputs.rockcraft-channel }}
       rockcraft-repository: ${{ inputs.rockcraft-repository }}
       rockcraft-ref: ${{ inputs.rockcraft-ref }}
-      rockcraft-channel: ${{ inputs.rockcraft-channel }}
   all-images:
     name: Get rocks or Docker images
     needs: [ build-images, build-rocks ]
