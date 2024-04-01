@@ -103,7 +103,7 @@ jobs:
       run-id: ${{ env.RUN_ID }}
     steps:
       - name: Get workflow run id
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
         shell: bash  
         run: |
           set -x
