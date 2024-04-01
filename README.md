@@ -115,10 +115,12 @@ The following parameters are available for this workflow:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| base-architecture | string | amd64 | Charm architecture |
 | destination-channel | string | "" | Destination channel |
-| origin-channel | string | "" | Origin channel |
-| architecture | string | amd64 | Charm architecture |
 | doc-automation-disabled | boolean | true | Whether the documentation automation is disabled |
+| doc-working-directory | string | Null | The working directory for the docs |
+| origin-channel | string | "" | Origin channel |
+| working-directory | string | "./" | The working directory for the job |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
