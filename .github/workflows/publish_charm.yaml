@@ -10,6 +10,9 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
+      charm-working-directory:
+        type: string
+        description: The working directory for the charm
       docs-working-directory:
         type: string
         description: The working directory for the docs
@@ -71,7 +74,7 @@ jobs:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
     with:
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
   release-charm-libs:
     name: Release charm libs
     needs: [ branch-up-to-date-check-enabled ]
