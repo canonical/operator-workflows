@@ -182,20 +182,23 @@ jobs:
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.working-directory != './'
+      - if: inputs.charm-working-directory != ''
         name: Change directory
         run: |
+          set -x
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: |
+          set -x
           sudo snap install charmcraft --classic
       - name: Get charm name
         id: get-charm-name
         run: |
+          set -x
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
@@ -210,6 +213,7 @@ jobs:
       - name: Download images artifact
         if: ${{ github.event_name == 'push' }}
         run: |
+          set -x
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -222,6 +226,7 @@ jobs:
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
+          set -x
           charm=${{ env.CHARM_NAME }}
           declare -a resources
           declare -a images
@@ -255,17 +260,19 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.working-directory != './'
+      - if: inputs.charm-working-directory != './'
         name: Change directory
         run: |
+          set -x
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
       - name: Get charm name
         id: get-charm-name
         run: |
+          set -x
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
@@ -274,6 +281,7 @@ jobs:
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
+          set -x
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -282,7 +290,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}
+          path: ${{ inputs.charm-working-directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
