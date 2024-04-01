@@ -84,6 +84,7 @@ jobs:
       - if: inputs.charm-working-directory != ''
         name: Change directory
         run: |
+          set -x
           TEMP_DIR=$(mktemp -d)
           cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
@@ -105,6 +106,7 @@ jobs:
         if: ${{ github.event_name == 'push' }}
         shell: bash  
         run: |
+          set -x
           # Get commit info
           TREE_SHA=$(gh api \
             -H "Accept: application/vnd.github+json" \
@@ -168,6 +170,7 @@ jobs:
       - name: Get images
         working-directory: ${{ inputs.working-directory }}
         run: |
+          set -x
           lines=$(find . -type f -name rockcraft.yaml | wc -l)
           if [ $lines -ne 0 ]; then
             IMAGES=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
