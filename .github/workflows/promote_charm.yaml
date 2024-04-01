@@ -72,7 +72,7 @@ jobs:
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/discourse-gatekeeper@ISD-1620-NetBox-Build-all-missing-documentation-required-for-a-production-charm
+        uses: canonical/discourse-gatekeeper@main
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
@@ -94,7 +94,7 @@ jobs:
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: steps.docs-exist.outputs.docs_exist == 'True'
-        uses: canonical/discourse-gatekeeper@ISD-1620-NetBox-Build-all-missing-documentation-required-for-a-production-charm
+        uses: canonical/discourse-gatekeeper@main
         id: publishDocumentation
         with:
           discourse_host: discourse.charmhub.io
