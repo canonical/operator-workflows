@@ -329,12 +329,17 @@ jobs:
             echo image: "$image"
             echo resource: "$resource"
             echo resources: "${resources[@]}"
+
+            # GRRR
+            if [[ ! " ${resources[@]} " =~ " django-app-name " ]]; then
+               resource=django-app-image
+            fi
             
-            # grr if [[ " ${resources[@]} " =~ " $resource " ]]; then
+            if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
               image_id=$(docker images $image --format "{{.ID}}")
               charmcraft upload-resource $charm $resource --image=$image_id --verbosity=brief
-            # grr fi
+            fi
           done
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
