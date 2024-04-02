@@ -326,6 +326,10 @@ jobs:
           
           for image in "${images[@]}"; do
             resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
+            echo image: "$image"
+            echo resource: "$resource"
+            echo resources: "$resources[@]"
+            
             if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
               image_id=$(docker images $image --format "{{.ID}}")
