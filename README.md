@@ -27,7 +27,7 @@ The following workflows are available:
 |--------------------|----------|--------------------|-------------------|
 | charmcraft-channel       | string | latest/stable | Charmcraft channel to use for the integration test |
 | charmcraft-ref           | string | "" | Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version. |
-| charmcraft-repository    | string | "" | Pull and build charmcraft from source instead of using snapstore version. |
+| charmcraft-repository    | string | "" | Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored). |
 | channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
@@ -41,7 +41,7 @@ The following workflows are available:
 | microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
 | rockcraft-channel        | string | latest/stable | Rockcraft channel to use for the integration test |
 | rockcraft-ref            | string | "" | Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version. |
-| rockcraft-repository     | string | "" | Pull and build rockcraft from source instead of using snapstore version. |
+| rockcraft-repository     | string | "" | Pull and build rockcraft from source instead of using snapstore version (this means that the `rockcraft-channel` input will be ignored). |
 | self-hosted-runner| bool | false | Whether to use self-hosted runner for tests. |
 | self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |

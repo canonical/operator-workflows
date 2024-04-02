@@ -15,7 +15,7 @@ on:
         type: string
         default: ""
       charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version.
+        description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
         type: string
         default: ""
       channel:
@@ -68,7 +68,7 @@ on:
         type: string
         default: ""
       rockcraft-repository:
-        description: Pull and build rockcraft from source instead of using snapstore version.
+        description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
         type: string
         default: ""
       microk8s-addons:
