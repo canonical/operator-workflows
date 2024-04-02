@@ -196,16 +196,6 @@ jobs:
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
-      - uses: actions/checkout@v4.1.1
-      - if: inputs.charm-working-directory != ''
-        name: Change directory
-        run: |
-          set -x
-          TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
-          rm -rf .* * || :
-          cp -rp $TEMP_DIR/. .
-          rm -rf $TEMP_DIR
       - uses: actions/checkout@v4
         if: inputs.charmcraft-repository != ''
         with:
@@ -259,6 +249,18 @@ jobs:
         run: |
           sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
 
+      - uses: actions/checkout@v4.1.1
+      
+      - if: inputs.charm-working-directory != ''
+        name: Change directory
+        run: |
+          set -x
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+      
       - name: Get charm name
         id: get-charm-name
         run: |
