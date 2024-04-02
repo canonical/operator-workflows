@@ -6,12 +6,16 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      charmcraft-channel:
+        description: Charmcraft channel to use for the integration test
+        type: string
+        default: latest/stable
       charmcraft-ref:
         description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
         type: string
         default: ""
       charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version.
+        description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
         type: string
         default: ""
       channel:
@@ -58,12 +62,16 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      rockcraft-channel:
+        description: Rockcraft channel to use for the integration test
+        type: string
+        default: latest/stable
       rockcraft-ref:
         description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
         type: string
         default: ""
       rockcraft-repository:
-        description: Pull and build rockcraft from source instead of using snapstore version.
+        description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
         type: string
         default: ""
       microk8s-addons:
@@ -191,6 +199,7 @@ jobs:
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       trivy-image-config: ${{ inputs.trivy-image-config }}
       working-directory: ${{ inputs.working-directory }}
+      rockcraft-channel: ${{ inputs.rockcraft-channel }}
       rockcraft-repository: ${{ inputs.rockcraft-repository }}
       rockcraft-ref: ${{ inputs.rockcraft-ref }}
   all-images:
@@ -271,7 +280,7 @@ jobs:
       - name: Install charmcraft
         if: inputs.charmcraft-repository == ''
         run: |
-          sudo snap install charmcraft --classic --channel latest/stable
+          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
 
       - uses: actions/checkout@v4.1.1
 
