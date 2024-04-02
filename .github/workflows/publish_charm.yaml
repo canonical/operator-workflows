@@ -202,6 +202,7 @@ jobs:
         id: get-charm-name
         run: |
           set -x
+          pwd
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
@@ -214,22 +215,23 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download images artifact
-        if: ${{ github.event_name == 'push' }}
+        # if: ${{ github.event_name == 'push' }}
         run: |
           set -x
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download images artifact (for testing)
-        uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          name: ${{ env.CHARM_NAME }}-images
+      # - name: Download images artifact (for testing)
+      #   uses: actions/download-artifact@v4
+      #   if: ${{ github.event_name == 'pull_request' }}
+      #   with:
+      #     name: ${{ env.CHARM_NAME }}-images
       - name: Publish image
         env:
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           set -x
+          pwd
           charm=${{ env.CHARM_NAME }}
           declare -a resources
           declare -a images
