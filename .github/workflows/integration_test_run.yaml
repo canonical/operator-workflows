@@ -253,6 +253,7 @@ jobs:
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}
         run: |
+          set -x
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
