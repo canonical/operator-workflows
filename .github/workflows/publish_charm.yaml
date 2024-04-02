@@ -328,13 +328,13 @@ jobs:
             resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
             echo image: "$image"
             echo resource: "$resource"
-            echo resources: "$resources[@]"
+            echo resources: "${resources[@]}"
             
-            if [[ " ${resources[@]} " =~ " $resource " ]]; then
+            # grr if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
               image_id=$(docker images $image --format "{{.ID}}")
               charmcraft upload-resource $charm $resource --image=$image_id --verbosity=brief
-            fi
+            # grr fi
           done
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
