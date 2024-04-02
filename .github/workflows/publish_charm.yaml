@@ -178,6 +178,7 @@ jobs:
         run: |
           echo "RUN_ID=8524820040" >> $GITHUB_ENV
 
+  get-images:
     name: Get images
     runs-on: ubuntu-22.04
     outputs:
