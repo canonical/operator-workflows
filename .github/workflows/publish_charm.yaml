@@ -173,7 +173,7 @@ jobs:
       #   shell: bash  
       #   run: |
       #     echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
-      - name: Get current run id (hardcoded)
+      - name: Get current run id
         shell: bash
         run: |
           echo "RUN_ID=8524820040" >> $GITHUB_ENV
