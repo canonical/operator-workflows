@@ -256,11 +256,11 @@ jobs:
           set -x
           pwd
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          echo $CHARM_NAME
+          echo CHARM_NAME: $CHARM_NAME
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
           fi
-          echo $CHARM_NAME
+          echo CHARM_NAME: $CHARM_NAME
           echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
 
           args=""
