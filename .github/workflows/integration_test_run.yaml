@@ -21,6 +21,9 @@ on:
       charm-file:
         type: string
         description: Charm file
+      charm-working-directory:
+        type: string
+        description: The working directory for the charm
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -250,8 +253,13 @@ jobs:
           path: ${{ inputs.working-directory }}
           pattern: '*-charm'
           merge-multiple: true
-      - name: Integration tests variable setting
+
+      - name: Get charm dir
         working-directory: ${{ inputs.working-directory }}
+        run: echo "CHARM_DIR=$([ -d charm ] && realpath charm || realpath .)">> $GITHUB_ENV
+
+      - name: Integration tests variable setting
+        working-directory: ${{ env.CHARM_DIR }}
         run: |
           set -x
           pwd
