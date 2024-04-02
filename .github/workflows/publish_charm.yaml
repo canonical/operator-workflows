@@ -299,6 +299,7 @@ jobs:
           charmcraft expand-extensions
           
           pwd
+          echo "looking for oci images"
           charm=${{ env.CHARM_NAME }}
           declare -a resources
           declare -a images
@@ -308,7 +309,7 @@ jobs:
               resources+=("$resource")
             done
           else
-            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' charmcraft.yaml); do
+            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' <(charmcraft expand-extensions)); do
               resources+=("$resource")
             done
           fi
