@@ -104,7 +104,7 @@ jobs:
     steps:
       - name: Get workflow run id
         if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
-        shell: bash  
+        shell: bash
         run: |
           set -x
           # Get commit info
@@ -305,3 +305,5 @@ jobs:
           channel: ${{ inputs.channel }}
           tag-prefix: ${{ inputs.tag-prefix }}
           upload-image: false
+
+
