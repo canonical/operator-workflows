@@ -166,7 +166,7 @@ jobs:
       ${{
         inputs.runs-on == 'ubuntu-22.04' &&
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         inputs.runs-on
       }}
     if: ${{ !failure() }}
