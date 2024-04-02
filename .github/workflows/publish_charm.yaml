@@ -176,7 +176,8 @@ jobs:
       - name: Get current run id (hardcoded)
         shell: bash
         run: |
-          echo "RUN_ID=8524820040" >> $GITHUB_ENV  get-images:
+          echo "RUN_ID=8524820040" >> $GITHUB_ENV
+
     name: Get images
     runs-on: ubuntu-22.04
     outputs:
