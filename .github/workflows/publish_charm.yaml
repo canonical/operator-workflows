@@ -290,9 +290,12 @@ jobs:
       #     name: ${{ env.CHARM_NAME }}-images
       - name: Publish image
         env:
+          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           set -x
+          charmcraft expand-extensions
+          
           pwd
           charm=${{ env.CHARM_NAME }}
           declare -a resources
