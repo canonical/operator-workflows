@@ -22,14 +22,6 @@ on:
         required: false
         description: |
           Tag prefix, useful when bundling multiple charms in the same repo.
-      charmcraft-ref:
-        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
-        type: string
-        default: ""
-      charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
-        type: string
-        default: ""
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -110,70 +102,63 @@ jobs:
     outputs:
       run-id: ${{ env.RUN_ID }}
     steps:
-      # - name: Get workflow run id
-      #   if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' }}
-      #   shell: bash
-      #   run: |
-      #     set -x
-      #     # Get commit info
-      #     TREE_SHA=$(gh api \
-      #       -H "Accept: application/vnd.github+json" \
-      #       -H "X-GitHub-Api-Version: 2022-11-28" \
-      #       /repos/${{ github.repository }}/commits/${GITHUB_SHA} \
-      #       --jq '.commit.tree.sha')
-      #     # Get workflow run id from this specific tree id, paginate until found
-      #     TOTAL_COUNT=$(gh api \
-      #       --method GET \
-      #       -H "Accept: application/vnd.github+json" \
-      #       -H "X-GitHub-Api-Version: 2022-11-28" \
-      #       /repos/${{ github.repository }}/actions/runs \
-      #       -f status=completed \
-      #       -f event=pull_request | jq ".total_count")
-      #     PER_PAGE=100
-      #     MAX_PAGES=$(( (TOTAL_COUNT + 99) / $PER_PAGE ))
-      #     PAGE=1
-      #     while true; do
-      #        RESULT=$( gh api \
-      #         --method GET \
-      #         -H "Accept: application/vnd.github+json" \
-      #         -H "X-GitHub-Api-Version: 2022-11-28" \
-      #         /repos/${{ github.repository }}/actions/runs \
-      #         -f page=$PAGE \
-      #         -f per_page=$PER_PAGE \
-      #         -f status=completed \
-      #         -f event=pull_request \
-      #         --jq "[
-      #             .workflow_runs[]
-      #             | select(.path == \".github/workflows/integration_test.yaml\")
-      #             | select(.head_commit.tree_id == \"$TREE_SHA\")
-      #           ] | max_by(.updated_at) | .id"
-      #         )
-           
-      #         if [[ -n $RESULT ]]; then
-      #             RUN_ID=$RESULT
-      #             break
-      #         fi
-      #         if [[ "PAGE" -eq "$MAX_PAGES" ]]; then
-      #             echo "::error::No workflow run id found for specific tree id"
-      #             exit 1
-      #         fi
-      #         ((PAGE++))
-      #     done
-
-      #     echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-
-      # - name: Get current run id
-      #   if: ${{ github.event_name == 'pull_request' }}
-      #   shell: bash  
-      #   run: |
-      #     echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
-      - name: Get current run id
-        shell: bash
+      - name: Get workflow run id
+        if: ${{ github.event_name == 'push' }}
+        shell: bash  
         run: |
-          echo "RUN_ID=8524820040" >> $GITHUB_ENV
+          # Get commit info
+          TREE_SHA=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/commits/${GITHUB_SHA} \
+            --jq '.commit.tree.sha')
+          # Get workflow run id from this specific tree id, paginate until found
+          TOTAL_COUNT=$(gh api \
+            --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/${{ github.repository }}/actions/runs \
+            -f status=completed \
+            -f event=pull_request | jq ".total_count")
+          PER_PAGE=100
+          MAX_PAGES=$(( (TOTAL_COUNT + 99) / $PER_PAGE ))
+          PAGE=1
+          while true; do
+             RESULT=$( gh api \
+              --method GET \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              /repos/${{ github.repository }}/actions/runs \
+              -f page=$PAGE \
+              -f per_page=$PER_PAGE \
+              -f status=completed \
+              -f event=pull_request \
+              --jq "[
+                  .workflow_runs[]
+                  | select(.path == \".github/workflows/integration_test.yaml\")
+                  | select(.head_commit.tree_id == \"$TREE_SHA\")
+                ] | max_by(.updated_at) | .id" 
+              )
+           
+              if [[ -n $RESULT ]]; then
+                  RUN_ID=$RESULT
+                  break
+              fi
+              if [[ "PAGE" -eq "$MAX_PAGES" ]]; then
+                  echo "::error::No workflow run id found for specific tree id"
+                  exit 1
+              fi
+              ((PAGE++))
+          done
 
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+      - name: Get current run id
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash  
+        run: |
+          echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
   get-images:
     name: Get images
     runs-on: ubuntu-22.04
@@ -197,70 +182,18 @@ jobs:
     needs: [ get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
-      - uses: actions/checkout@v4
-        if: inputs.charmcraft-repository != ''
-        with:
-          repository: ${{ inputs.charmcraft-repository }}
-          ref: ${{ inputs.charmcraft-ref }}
-          path: ./charmcraft
-          fetch-depth: 0
-
-      - name: Get Charmcraft SHA
-        if: inputs.charmcraft-repository != ''
-        id: charmcraft-sha
-        working-directory: ./charmcraft
-        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Restore Charmcraft Cache
-        if: inputs.charmcraft-repository != ''
-        id: restore-charmcraft
-        uses: actions/cache/restore@v4
-        with:
-          path: ./charmcraft*.snap
-          key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
-
-      - name: Install Snapcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        run: sudo snap install snapcraft --classic
-
-      - name: Build Charmcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        working-directory: ./charmcraft
-        run: |
-          snapcraft --use-lxd
-          cp charmcraft*.snap ../
-
-      - name: Save Charmcraft Cache
-        uses: actions/cache/save@v4
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        with:
-          path: ./charmcraft*.snap
-          key: ${{ steps.restore-charmcraft.outputs.cache-primary-key }}
-
-      - name: Install charmcraft
-        if: inputs.charmcraft-repository != ''
-        run: sudo snap install --dangerous --classic charmcraft*.snap
-
-      - name: Clean up
-        if: inputs.charmcraft-repository != ''
-        run: rm -rf *
-
-      - name: Install charmcraft
-        if: inputs.charmcraft-repository == ''
-        run: |
-          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
-
       - uses: actions/checkout@v4.1.1
-      
       - if: inputs.charm-working-directory != ''
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
+          cp -rp ./${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      
+      - name: Install charmcraft
+        run: |
+          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
       - name: Get charm name
         id: get-charm-name
         run: |
@@ -276,17 +209,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download images artifact
-        # if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: |
-          set -x
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Download images artifact (for testing)
-      #   uses: actions/download-artifact@v4
-      #   if: ${{ github.event_name == 'pull_request' }}
-      #   with:
-      #     name: ${{ env.CHARM_NAME }}-images
+      - name: Download images artifact (for testing)
+        uses: actions/download-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ env.CHARM_NAME }}-images
       - name: Publish image
         env:
           CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
@@ -371,5 +303,3 @@ jobs:
           channel: ${{ inputs.channel }}
           tag-prefix: ${{ inputs.tag-prefix }}
           upload-image: false
-
-
