@@ -187,7 +187,6 @@ jobs:
       - name: Get images
         working-directory: ${{ inputs.working-directory }}
         run: |
-          set -x
           lines=$(find . -type f -name rockcraft.yaml | wc -l)
           if [ $lines -ne 0 ]; then
             IMAGES=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
@@ -353,17 +352,17 @@ jobs:
           fi
           echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
       - name: Download charm artifact
-        # if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' }}
         run: |
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Download charm artifact (for testing)
-      #   uses: actions/download-artifact@v4
-      #   if: ${{ github.event_name == 'pull_request' }}
-      #   with:
-      #     name: ${{ env.CHARM_NAME }}-charm
-      #     path: ${{ inputs.charm-working-directory }}
+      - name: Download charm artifact (for testing)
+        uses: actions/download-artifact@v4
+        if: ${{ github.event_name == 'pull_request' }}
+        with:
+          name: ${{ env.CHARM_NAME }}-charm
+          path: ${{ inputs.charm-working-directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
