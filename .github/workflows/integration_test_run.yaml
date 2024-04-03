@@ -254,12 +254,8 @@ jobs:
           pattern: '*-charm'
           merge-multiple: true
 
-      - name: Get charm dir
-        working-directory: ${{ inputs.working-directory }}
-        run: echo "CHARM_DIR=$([ -d charm ] && realpath charm || realpath .)">> $GITHUB_ENV
-
       - name: Integration tests variable setting
-        working-directory: ${{ env.CHARM_DIR }}
+        working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
         run: |
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then

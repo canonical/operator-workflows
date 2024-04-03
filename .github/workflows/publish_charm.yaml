@@ -315,15 +315,13 @@ jobs:
           done
           
           for image in "${images[@]}"; do
-            resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
-            echo image: "$image"
-            echo resource: "$resource"
-            echo resources: "${resources[@]}"
-
-            # GRRR
-            if [[ ! " ${resources[@]} " =~ " django-app-name " ]]; then
-               resource=django-app-image
+            resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)
+            # This is for paas-app-charmer for Django, as the main image name is named "django-app-image" and
+            # should match the main rockcraft.yaml.
+            if [[ ${resource_name} == ${CHARM_NAME} ]] && [[ " ${resources[@]} " =~ " django-app-image " ]]; then
+                resource_name=django-app
             fi
+            resource=${resource_name}-image
             
             if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
@@ -341,7 +339,6 @@ jobs:
       - if: inputs.charm-working-directory != './'
         name: Change directory
         run: |
-          set -x
           TEMP_DIR=$(mktemp -d)
           cp -rp ${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
@@ -350,7 +347,6 @@ jobs:
       - name: Get charm name
         id: get-charm-name
         run: |
-          set -x
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
@@ -359,7 +355,6 @@ jobs:
       - name: Download charm artifact
         # if: ${{ github.event_name == 'push' }}
         run: |
-          set -x
           gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
