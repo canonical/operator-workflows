@@ -211,14 +211,11 @@ jobs:
     steps:
       - name: Get rocks or fallback to Docker images
         run: |
-          set -x
-          pwd
           if [ ${{ needs.build-rocks.outputs.images != '[]' }} = true ]; then
             IMAGES='${{ needs.build-rocks.outputs.images }}'
           else
             IMAGES='${{ needs.build-images.outputs.images }}'
           fi
-          echo IMAGES: "IMAGES=$IMAGES"
           echo "IMAGES=$IMAGES" >> $GITHUB_ENV
   build-charm:
     name: Build and push charm
@@ -291,8 +288,6 @@ jobs:
       - name: Extract charm name
         working-directory: ${{ env.CHARM_DIR }}
         run: |
-          set -x
-          pwd
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
@@ -305,8 +300,6 @@ jobs:
         env:
           CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
         run: |
-          set -x
-          pwd
           charmcraft pack -v
           echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
 

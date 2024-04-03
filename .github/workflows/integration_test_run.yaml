@@ -261,14 +261,10 @@ jobs:
       - name: Integration tests variable setting
         working-directory: ${{ env.CHARM_DIR }}
         run: |
-          set -x
-          pwd
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          echo CHARM_NAME: $CHARM_NAME
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
           fi
-          echo CHARM_NAME: $CHARM_NAME
           echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
 
           args=""
@@ -359,7 +355,6 @@ jobs:
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
         working-directory: ${{ inputs.working-directory }}
         run: |
-          set -x
           echo "$(echo '${{ inputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
       - name: Upload image artifact
         if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
