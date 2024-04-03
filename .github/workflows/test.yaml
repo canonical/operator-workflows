@@ -38,7 +38,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -87,7 +87,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -156,7 +156,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -178,7 +178,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -202,7 +202,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -332,7 +332,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -358,7 +358,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     defaults:
@@ -382,7 +382,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     steps:
@@ -407,7 +407,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         'ubuntu-22.04'
       }}
     if: always() && !cancelled()

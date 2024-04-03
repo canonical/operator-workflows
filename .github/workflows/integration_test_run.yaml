@@ -169,7 +169,7 @@ jobs:
       ${{
         inputs.runs-on == 'ubuntu-22.04' &&
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
+        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
         inputs.runs-on
       }}
     if: ${{ !failure() }}
@@ -345,7 +345,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.11.0
+        uses: zaproxy/action-baseline@v0.12.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
