@@ -345,7 +345,7 @@ jobs:
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
-        uses: canonical/discourse-gatekeeper@main
+        uses: canonical/discourse-gatekeeper@stable
         with:
           discourse_host: discourse.charmhub.io
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
