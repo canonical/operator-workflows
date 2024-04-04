@@ -86,7 +86,7 @@ jobs:
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp $./{{inputs.charm-working-directory}}/. $TEMP_DIR
+          cp -rp $./${{inputs.charm-working-directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
