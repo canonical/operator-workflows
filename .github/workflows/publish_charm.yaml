@@ -35,7 +35,7 @@ jobs:
   vars:
     runs-on: ubuntu-22.04
     outputs:
-      charm_working_directory: ${{ env.charm_working_directory || env.working_directory }}
+      charm_working_directory: ${{ inputs.charm_working_directory || inputs.working_directory }}
     steps:
       - run: echo "Exposing env vars"
   branch-up-to-date-check-enabled:
