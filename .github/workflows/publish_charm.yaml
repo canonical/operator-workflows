@@ -57,7 +57,7 @@ jobs:
           fi
   draft-publish-docs:
     name: Draft publish docs
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [ branch-up-to-date-check-enabled, vars ]
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -79,12 +79,13 @@ jobs:
           charm_dir: ${{ needs.vars.outputs.charm_working_directory }}
   get-runner-image:
     name: Get runner image
+    needs: vars
     uses: ./.github/workflows/get_runner_image.yaml
     with:
       working-directory: ${{ needs.vars.outputs.charm_working_directory }}
   release-charm-libs:
     name: Release charm libs
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [ branch-up-to-date-check-enabled, vars ]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
@@ -185,7 +186,7 @@ jobs:
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [ get-images, get-run-id, get-runner-image]
+    needs: [ get-images, get-run-id, get-runner-image, vars ]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
@@ -266,7 +267,7 @@ jobs:
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-run-id, get-runner-image, publish-images]
+    needs: [get-run-id, get-runner-image, publish-images, vars]
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
