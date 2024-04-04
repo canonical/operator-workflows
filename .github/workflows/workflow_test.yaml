@@ -64,6 +64,7 @@ jobs:
     with:
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
+      charm-working-directory: tests/workflows/integration/test-upload-charm/
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
