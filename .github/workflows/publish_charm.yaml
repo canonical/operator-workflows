@@ -57,7 +57,7 @@ jobs:
           fi
   draft-publish-docs:
     name: Draft publish docs
-    needs: [ branch-up-to-date-check-enabled, vars ]
+    needs: [branch-up-to-date-check-enabled, vars]
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -85,7 +85,7 @@ jobs:
       working-directory: ${{ needs.vars.outputs.charm_working_directory }}
   release-charm-libs:
     name: Release charm libs
-    needs: [ branch-up-to-date-check-enabled, vars ]
+    needs: [branch-up-to-date-check-enabled, vars]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
@@ -104,7 +104,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   get-run-id:
     name: Get workflow run id
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [branch-up-to-date-check-enabled]
     runs-on: ubuntu-22.04
     outputs:
       run-id: ${{ env.RUN_ID }}
@@ -186,7 +186,7 @@ jobs:
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [ get-images, get-run-id, get-runner-image, vars ]
+    needs: [get-images, get-run-id, get-runner-image, vars]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
