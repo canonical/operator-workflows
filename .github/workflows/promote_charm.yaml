@@ -49,8 +49,6 @@ jobs:
   promote-charm:
     name: Promote charm
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    # JAVI TODO REMOVE THIS
-    if: false
     needs: [validate-channels, get-runner-image]
     steps:
       - uses: actions/checkout@v4.1.1
