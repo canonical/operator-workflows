@@ -32,6 +32,12 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
+  vars:
+    runs-on: ubuntu-22.04
+    outputs:
+      charm_working_directory: ${{ env.charm_working_directory || env.working_directory }}
+    steps:
+      - run: echo "Exposing env vars"
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
@@ -55,7 +61,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
+        working-directory: ${{ needs.vars.outputs.charm_working_directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
@@ -70,23 +76,23 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir:  ${{ inputs.charm-working-directory || inputs.working-directory }}
+          charm_dir: ${{ needs.vars.outputs.charm_working_directory }}
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
     with:
-      working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
+      working-directory: ${{ needs.vars.outputs.charm_working_directory }}
   release-charm-libs:
     name: Release charm libs
     needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.charm-working-directory != ''
+      - if: needs.vars.outputs.charm_working_directory != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{inputs.charm-working-directory}}/. $TEMP_DIR
+          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -183,11 +189,11 @@ jobs:
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.charm-working-directory != ''
+      - if: needs.vars.outputs.charm_working_directory != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{inputs.charm-working-directory}}/. $TEMP_DIR
+          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -264,11 +270,11 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.charm-working-directory != './'
+      - if: needs.vars.outputs.charm_working_directory != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{inputs.charm-working-directory}}/. $TEMP_DIR
+          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -291,7 +297,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.charm-working-directory }}
+          path: ${{ needs.vars.outputs.charm_working_directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub
