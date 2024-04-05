@@ -124,7 +124,7 @@ The following parameters are available for this workflow:
 | base-architecture | string | amd64 | Charm architecture |
 | destination-channel | string | "" | Destination channel |
 | doc-automation-disabled | boolean | true | Whether the documentation automation is disabled |
-| doc-working-directory | string | Null | The working directory for the docs |
+| charm-working-directory | string | Null | The working directory for the charm. docs directory, if existing, should be under this directory |
 | origin-channel | string | "" | Origin channel |
 | working-directory | string | "./" | The working directory for the job |
 
