@@ -14,6 +14,7 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| charm-working-directory | string | Null | The working directory for the charm. docs directory, if existing, should be under this directory |
 | working-directory | string | "./" | Directory where jobs should be executed |
 | self-hosted-runner | bool | true | Whether self-hosted-runner should be enabled |
 | self-hosted-runner-label| string | large | Label used to select the self-hosted runner if enabled |
@@ -109,6 +110,8 @@ The following parameters are available for this workflow:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | channel | string | latest/edge | Destination channel to push the charm to |
+| charm-working-directory | string | Null | The working directory for the charm. docs directory, if existing, should be under this directory |
+| charmcraft-channel       | string | latest/stable | Charmcraft channel to use for the integration test |
 | working-directory | string | "./" | Directory where jobs should be executed |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
