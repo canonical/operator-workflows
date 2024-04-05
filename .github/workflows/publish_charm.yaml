@@ -41,7 +41,7 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
-      - uses: octokit/request-action@v2.2.0
+      - uses: octokit/request-action@v2.3.0
         id: get-branch-protection
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
