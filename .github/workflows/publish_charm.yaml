@@ -54,10 +54,12 @@ jobs:
     name: Draft publish docs
     needs: [branch-up-to-date-check-enabled]
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ env.charm_working_directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
-        working-directory: ${{ env.charm_working_directory }}
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
       - name: Publish documentation
