@@ -12,7 +12,7 @@ on:
         default: 'amd64'
       charm-directory:
         type: string
-        description: The working directory for the charm
+        description: The directory for the charm under the working-directory
         default: "."
       destination-channel:
         type: string

@@ -12,7 +12,7 @@ on:
         description: 'Destination Channel'
       charm-directory:
         type: string
-        description: The working directory for the charm
+        description: The directory for the charm under the working-directory
         default: "."
       paas-app-charmer-oci-name:
         type: string
