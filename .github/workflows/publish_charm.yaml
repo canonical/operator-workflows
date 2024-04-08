@@ -13,6 +13,12 @@ on:
       charm-working-directory:
         type: string
         description: The working directory for the charm
+      paas-app-charmer-oci-name:
+        type: string
+        description: |
+          Name of the default resource oci image for the special case of paas-app-charmer.
+          If paas-app-charmer-oci-name variable is specified, it will replace the resource with the same
+          name as the charm for the value of paas-app-charmer-oci-name variable.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -250,13 +256,14 @@ jobs:
           done
           
           for image in "${images[@]}"; do
-            resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)
-            # This is for paas-app-charmer for Django, as the main image name is named "django-app-image" and
-            # should match the main rockcraft.yaml.
-            if [[ ${resource_name} == ${CHARM_NAME} ]] && [[ " ${resources[@]} " =~ " django-app-image " ]]; then
-                resource_name=django-app
+            if [[ "${{ paas-app-charmer-oci-name }}" != "" ]]; then
+                # This is for paas-app-charmer . The main image name (resource oci in charmcraft.yaml) is
+                # defined with the env variable paas-app-charmer-oci-name, and corresponds to the main
+                # image in rockcraft.yaml.
+                resource_name="{{ paas-app-charmer-oci-name }}"
+            else
+                resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
             fi
-            resource=${resource_name}-image
             
             if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
