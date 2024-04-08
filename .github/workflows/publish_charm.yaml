@@ -89,7 +89,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -190,7 +190,7 @@ jobs:
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -272,7 +272,7 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
