@@ -10,9 +10,10 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
-      charm-working-directory:
+      charm-directory:
         type: string
         description: The working directory for the charm
+        default: "."
       paas-app-charmer-oci-name:
         type: string
         description: |
@@ -38,12 +39,6 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
-  vars:
-    runs-on: ubuntu-22.04
-    outputs:
-      charm_working_directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
-    steps:
-      - run: echo "Exposing env vars"
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
@@ -67,7 +62,7 @@ jobs:
     runs-on: ubuntu-22.04
     defaults:
       run:
-        working-directory: ${{ needs.vars.outputs.charm_working_directory }}
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
@@ -82,24 +77,24 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir: ${{ needs.vars.outputs.charm_working_directory }}
+          charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   get-runner-image:
     name: Get runner image
     needs: vars
     uses: ./.github/workflows/get_runner_image.yaml
     with:
-      working-directory: ${{ needs.vars.outputs.charm_working_directory }}
+      working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
     needs: [branch-up-to-date-check-enabled, vars]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: needs.vars.outputs.charm_working_directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -196,11 +191,11 @@ jobs:
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: needs.vars.outputs.charm_working_directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -278,11 +273,11 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: needs.vars.outputs.charm_working_directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{needs.vars.outputs.charm_working_directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR

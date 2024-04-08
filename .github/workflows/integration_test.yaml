@@ -22,9 +22,10 @@ on:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
-      charm-working-directory:
+      charm-directory:
         type: string
         description: The working directory for the charm
+        default: "."
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -338,7 +339,7 @@ jobs:
       charm-file: ${{ needs.build-charm.outputs.charm-file }}
       charmcraft-ref: ${{ inputs.charmcraft-ref }}
       charmcraft-repository: ${{ inputs.charmcraft-repository }}
-      charm-working-directory: ${{ inputs.charm-working-directory }}
+      charm-directory: ${{ inputs.charm-directory }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.all-images.outputs.images }}
