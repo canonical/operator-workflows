@@ -256,11 +256,11 @@ jobs:
           done
           
           for image in "${images[@]}"; do
-            if [[ "${{ paas-app-charmer-oci-name }}" != "" ]]; then
+            if [[ "${{ inputs.paas-app-charmer-oci-name }}" != "" ]]; then
                 # This is for paas-app-charmer . The main image name (resource oci in charmcraft.yaml) is
                 # defined with the env variable paas-app-charmer-oci-name, and corresponds to the main
                 # image in rockcraft.yaml.
-                resource_name="{{ paas-app-charmer-oci-name }}"
+                resource_name="{{ inputs.paas-app-charmer-oci-name }}"
             else
                 resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
             fi
