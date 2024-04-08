@@ -6,9 +6,10 @@ name: Tests
 on:
   workflow_call:
     inputs:
-      charm-working-directory:
+      charm-directory:
         type: string
         description: The working directory for the docs
+        default: "."
       working-directory:
         type: string
         description: The working directory for jobs
@@ -337,7 +338,7 @@ jobs:
       }}
     defaults:
       run:
-        working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
@@ -352,7 +353,7 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir:  ${{ inputs.charm-working-directory || inputs.working-directory }}
+          charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   license-headers-check:
     name: Check license headers
     runs-on: >-

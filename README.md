@@ -14,7 +14,7 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
-| charm-working-directory | string | Null | The working directory for the charm. docs directory, if existing, should be under this directory |
+| charm-directory | string | Null | The working directory for the charm under working-directory. docs directory, if existing, should be under this directory |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | self-hosted-runner | bool | true | Whether self-hosted-runner should be enabled |
 | self-hosted-runner-label| string | large | Label used to select the self-hosted runner if enabled |
@@ -110,7 +110,7 @@ The following parameters are available for this workflow:
 | Name                      | Type   | Default       | Description                                                                                      |
 |---------------------------|--------|---------------|--------------------------------------------------------------------------------------------------|
 | channel                   | string | latest/edge   | Destination channel to push the charm to                                                         |
-| charm-working-directory   | string | Null          | The working directory for the charm. docs directory, if existing, should be under this directory |
+| charm-directory   | string | Null          | The working directory for the charm under working-directory. docs directory, if existing, should be under this directory |
 | charmcraft-channel        | string | latest/stable | Charmcraft channel to use for the integration test                                               |
 | paas-app-charmer-oci-name | string | Null          | Name of the resource oci image for paas-app-charmer generated apps                               |
 | working-directory         | string | "./"          | Directory where jobs should be executed                                                          |
@@ -126,7 +126,7 @@ The following parameters are available for this workflow:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | base-architecture | string | amd64 | Charm architecture |
-| charm-working-directory | string | Null | The working directory for the charm. docs directory, if existing, should be under this directory |
+| charm-directory | string | Null | The working directory the charm under working-directory. docs directory, if existing, should be under this directory |
 | destination-channel | string | "" | Destination channel |
 | doc-automation-disabled | boolean | true | Whether the documentation automation is disabled |
 | origin-channel | string | "" | Origin channel |

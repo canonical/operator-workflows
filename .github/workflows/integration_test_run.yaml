@@ -21,9 +21,10 @@ on:
       charm-file:
         type: string
         description: Charm file
-      charm-working-directory:
+      charm-directory:
         type: string
         description: The working directory for the charm
+        default: "."
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -255,7 +256,7 @@ jobs:
           merge-multiple: true
 
       - name: Integration tests variable setting
-        working-directory: ${{ inputs.charm-working-directory || inputs.working-directory }}
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
           if [ "$CHARM_NAME" == "UNKNOWN" ]; then
