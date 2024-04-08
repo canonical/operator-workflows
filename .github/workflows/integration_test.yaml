@@ -22,6 +22,10 @@ on:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
+      charm-directory:
+        type: string
+        description: The directory for the charm under the working-directory
+        default: "."
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -331,25 +335,26 @@ jobs:
     if: ${{ !failure() }}
     secrets: inherit
     with:
-      charmcraft-repository: ${{ inputs.charmcraft-repository }}
-      charmcraft-ref: ${{ inputs.charmcraft-ref }}
       channel: ${{ inputs.channel }}
       charm-file: ${{ needs.build-charm.outputs.charm-file }}
+      charmcraft-ref: ${{ inputs.charmcraft-ref }}
+      charmcraft-repository: ${{ inputs.charmcraft-repository }}
+      charm-directory: ${{ inputs.charm-directory }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       images: ${{ needs.all-images.outputs.images }}
       juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
+      microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
-      microk8s-addons: ${{ inputs.microk8s-addons }}
       registry: ghcr.io
       runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-      self-hosted-runner: ${{ inputs.self-hosted-runner }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
+      self-hosted-runner: ${{ inputs.self-hosted-runner }}
       series: ${{ inputs.series }}
       setup-devstack-swift: ${{ inputs.setup-devstack-swift }}
       test-timeout: ${{ inputs.test-timeout }}
@@ -360,15 +365,15 @@ jobs:
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       working-directory: ${{ inputs.working-directory }}
-      zap-auth-header: ${{ inputs.zap-auth-header }}
       zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
+      zap-auth-header: ${{ inputs.zap-auth-header }}
       zap-before-command: ${{ inputs.zap-before-command }}
       zap-cmd-options: ${{ inputs.zap-cmd-options }}
       zap-enabled: ${{ inputs.zap-enabled }}
-      zap-target: ${{ inputs.zap-target }}
+      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
       zap-target-port: ${{ inputs.zap-target-port }}
       zap-target-protocol: ${{ inputs.zap-target-protocol }}
-      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
+      zap-target: ${{ inputs.zap-target }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ubuntu-latest

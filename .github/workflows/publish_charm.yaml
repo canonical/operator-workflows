@@ -10,6 +10,16 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
+      charm-directory:
+        type: string
+        description: The directory for the charm under the working-directory
+        default: "."
+      paas-app-charmer-oci-name:
+        type: string
+        description: |
+          Name of the default resource oci image for the special case of paas-app-charmer.
+          If paas-app-charmer-oci-name variable is specified, it will replace the resource with the same
+          name as the charm for the value of paas-app-charmer-oci-name variable.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -19,6 +29,10 @@ on:
         required: false
         description: |
           Tag prefix, useful when bundling multiple charms in the same repo.
+      charmcraft-channel:
+        description: Charmcraft channel to use for the integration test
+        type: string
+        default: latest/stable
 
 env:
   REGISTRY: ghcr.io
@@ -44,8 +58,11 @@ jobs:
           fi
   draft-publish-docs:
     name: Draft publish docs
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [branch-up-to-date-check-enabled]
     runs-on: ubuntu-22.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
     steps:
       - uses: actions/checkout@v4.1.1
       - name: Search for docs folder
@@ -60,22 +77,23 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   get-runner-image:
     name: Get runner image
     uses: ./.github/workflows/get_runner_image.yaml
     with:
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [branch-up-to-date-check-enabled]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.working-directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -86,7 +104,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
   get-run-id:
     name: Get workflow run id
-    needs: [ branch-up-to-date-check-enabled ]
+    needs: [branch-up-to-date-check-enabled]
     runs-on: ubuntu-22.04
     outputs:
       run-id: ${{ env.RUN_ID }}
@@ -168,21 +186,21 @@ jobs:
   publish-images:
     name: Publish images to charmhub
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [ get-images, get-run-id, get-runner-image]
+    needs: [get-images, get-run-id, get-runner-image]
     if: ${{ needs.get-images.outputs.images != '[]' }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.working-directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
       - name: Install charmcraft
         run: |
-          sudo snap install charmcraft --classic
+          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
       - name: Get charm name
         id: get-charm-name
         run: |
@@ -210,6 +228,7 @@ jobs:
           name: ${{ env.CHARM_NAME }}-images
       - name: Publish image
         env:
+          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
           CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
         run: |
           charm=${{ env.CHARM_NAME }}
@@ -221,7 +240,7 @@ jobs:
               resources+=("$resource")
             done
           else
-            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' charmcraft.yaml); do
+            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' <(charmcraft expand-extensions)); do
               resources+=("$resource")
             done
           fi
@@ -231,7 +250,15 @@ jobs:
           done
           
           for image in "${images[@]}"; do
-            resource=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
+            if [[ "${{ inputs.paas-app-charmer-oci-name }}" != "" ]]; then
+                # This is for paas-app-charmer . The main image name (resource oci in charmcraft.yaml) is
+                # defined with the env variable paas-app-charmer-oci-name, and corresponds to the main
+                # image in rockcraft.yaml.
+                resource_name="{{ inputs.paas-app-charmer-oci-name }}"
+            else
+                resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
+            fi
+            
             if [[ " ${resources[@]} " =~ " $resource " ]]; then
               docker pull $image
               image_id=$(docker images $image --format "{{.ID}}")
@@ -245,11 +272,11 @@ jobs:
     if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.1
-      - if: inputs.working-directory != './'
+      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
         name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{inputs.working-directory}}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -272,7 +299,7 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         with:
           name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}
+          path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
       - name: Upload charm to charmhub

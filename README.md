@@ -14,10 +14,11 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
-| working-directory | string | "./" | Directory where jobs should be executed |
+| charm-directory | string | Null | The working directory for the charm under working-directory. docs directory, if existing, should be under this directory |
+| pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | self-hosted-runner | bool | true | Whether self-hosted-runner should be enabled |
 | self-hosted-runner-label| string | large | Label used to select the self-hosted runner if enabled |
-| pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
+| working-directory | string | "./" | Directory where jobs should be executed |
 
 * comment: Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
@@ -25,25 +26,25 @@ The following workflows are available:
 
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
+| channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | charmcraft-channel       | string | latest/stable | Charmcraft channel to use for the integration test |
 | charmcraft-ref           | string | "" | Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version. |
 | charmcraft-repository    | string | "" | Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored). |
-| channel | string | latest/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | extra-arguments | string | "" | Additional arguments to pass to the integration test execution |
 | extra-test-matrix | string | '{}' | Additional test matrices to run the integration test combinations |
 | image-build-args | string | "" | List of build args to pass to the build image job |
 | juju-channel | string | 2.9/stable | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
 | load-test-enabled | bool | false | Whether load testing is enabled. If enabled, k6 will expect a load_tests/load-test.js file with the tests to run. |
 | load-test-run-args | string | "" | Command line arguments for the load test execution. |
+| microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
 | modules | string | '[""]' | List of modules to run in parallel in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument |
 | pre-run-script | string | "" | Path to the bash script to be run before the integration tests |
 | provider | string | microk8s | Actions operator provider as defined [here](https://github.com/charmed-kubernetes/actions-operator#usage) |
-| microk8s-addons | string | "dns ingress rbac storage" | Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled. |
 | rockcraft-channel        | string | latest/stable | Rockcraft channel to use for the integration test |
 | rockcraft-ref            | string | "" | Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version. |
 | rockcraft-repository     | string | "" | Pull and build rockcraft from source instead of using snapstore version (this means that the `rockcraft-channel` input will be ignored). |
-| self-hosted-runner| bool | false | Whether to use self-hosted runner for tests. |
 | self-hosted-runner-label | string | large | Label to filter the self-hosted runner, if the self-hosted runners are used. |
+| self-hosted-runner| bool | false | Whether to use self-hosted runner for tests. |
 | series | string | '[""]' | List of series to run the tests in JSON format, i.e. '["jammy", "focal"]'. Each element will be passed to pytest through tox as --series argument |
 | setup-devstack-swift | bool | false | Use setup-devstack-swift action to prepare a swift server for testing. |
 | test-timeout | number | 360 | The timeout in minutes for the integration test |
@@ -60,10 +61,10 @@ The following workflows are available:
 | zap-before-command | string | "" | Command to run before ZAP testing |
 | zap-cmd-options | string | "-T 60" | Options to be used by ZAP. Default sets maximum scanning time to 60 minutes |
 | zap-enabled | boolean | false | Whether ZAP testing is enabled |
-| zap-target | string | "" | If this is not set, the unit IP address will be used as ZAP target |
-| zap-target-protocol | string | "http" | ZAP target protocol |
-| zap-target-port | string | 80 | ZAP target port |
 | zap-rules-file-name | string | "" | Rules file to ignore any alerts from the ZAP scan |
+| zap-target | string | "" | If this is not set, the unit IP address will be used as ZAP target |
+| zap-target-port | string | 80 | ZAP target port |
+| zap-target-protocol | string | "http" | ZAP target protocol |
 
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
@@ -106,10 +107,13 @@ This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token wit
 
 The following parameters are available for this workflow:
 
-| Name | Type | Default | Description |
-|--------------------|----------|--------------------|-------------------|
-| channel | string | latest/edge | Destination channel to push the charm to |
-| working-directory | string | "./" | Directory where jobs should be executed |
+| Name                      | Type   | Default       | Description                                                                                      |
+|---------------------------|--------|---------------|--------------------------------------------------------------------------------------------------|
+| channel                   | string | latest/edge   | Destination channel to push the charm to                                                         |
+| charm-directory   | string | Null          | The working directory for the charm under working-directory. docs directory, if existing, should be under this directory |
+| charmcraft-channel        | string | latest/stable | Charmcraft channel to use for the integration test                                               |
+| paas-app-charmer-oci-name | string | Null          | Name of the resource oci image for paas-app-charmer generated apps                               |
+| working-directory         | string | "./"          | Directory where jobs should be executed                                                          |
 
 The runner image will be set to the value of `bases[0].build-on[0]` in the `charmcraft.yaml` file, defaulting to ubuntu-22.04 if the file does not exist.
 
@@ -122,9 +126,9 @@ The following parameters are available for this workflow:
 | Name | Type | Default | Description |
 |--------------------|----------|--------------------|-------------------|
 | base-architecture | string | amd64 | Charm architecture |
+| charm-directory | string | Null | The working directory the charm under working-directory. docs directory, if existing, should be under this directory |
 | destination-channel | string | "" | Destination channel |
 | doc-automation-disabled | boolean | true | Whether the documentation automation is disabled |
-| doc-working-directory | string | Null | The working directory for the docs |
 | origin-channel | string | "" | Origin channel |
 | working-directory | string | "./" | The working directory for the job |
 
