@@ -45,7 +45,7 @@ jobs:
       - uses: octokit/request-action@v2.3.0
         id: get-branch-protection
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
         with:
           route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
           repo: ${{ github.event.repository.name }}
@@ -160,7 +160,7 @@ jobs:
 
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Get current run id
         if: ${{ github.event_name == 'pull_request' }}
         shell: bash  
