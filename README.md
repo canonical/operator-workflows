@@ -103,10 +103,7 @@ tmate can be run on failed tests either by setting the `tmate-debug` input to 't
 
 * publish_charm: Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).
 
-This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token with package-manage and package-view permissions for the charm and the destination channel. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth).
-The workflow needs to read the main branch protection settings, commits and workflow runs of the repo.
-If the built-in [GitHub token permissions](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#permissions-for-the-github_token) are too limited, a `REPO_ACCESS_TOKEN` secret containing a classic PAT with full repository permissions is required. See how to generate it [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
-
+This workflow requires a `CHARMHUB_TOKEN` secret containing a charmhub token with package-manage and package-view permissions for the charm and the destination channel. See how to generate it [here](https://juju.is/docs/sdk/remote-env-auth) and a `REPO_ACCESS_TOKEN` secret containg a classic PAT with full repository permissions. See how to generate it [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
 
 The following parameters are available for this workflow:
 
