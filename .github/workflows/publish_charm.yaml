@@ -249,7 +249,6 @@ jobs:
             images+=("$image")
           done
 
-          echo $resources $images
           for image in "${images[@]}"; do
             if [[ "${{ inputs.paas-app-charmer-oci-name }}" != "" ]]; then
                 # This is for paas-app-charmer . The main image name (resource oci in charmcraft.yaml) is
@@ -260,7 +259,7 @@ jobs:
                 resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
             fi
             
-            if [[ " ${resources[@]} " =~ " $resource " ]]; then
+            if [[ " ${resources[@]} " =~ " $resource_name " ]]; then
               docker pull $image
               image_id=$(docker images $image --format "{{.ID}}")
               charmcraft upload-resource $charm $resource_name --image=$image_id --verbosity=brief
