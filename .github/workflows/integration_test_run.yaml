@@ -254,7 +254,21 @@ jobs:
           path: ${{ inputs.working-directory }}
           pattern: '*-charm'
           merge-multiple: true
-
+      - name: Get fork cache path
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+            image_tar_name=$(echo $image | awk -F '/' '{print $(NF)}' | awk -F ":" '{print $1}')
+          done
+          echo "IMAGE_TAR=$image_tar_name" >> $GITHUB_ENV
+      - name: Restore rock from cache
+        id: cache-primes-restore
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.IMAGE_TAR }}.tar
+          key: ${{ github.run_id }}
+          fail-on-cache-miss: true
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
@@ -265,9 +279,21 @@ jobs:
           echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
 
           args=""
-          for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
-          done
+          if ${{ !github.event.pull_request.head.repo.fork }}; then
+            for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+              args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
+            done
+          else
+            sudo microk8s enable registry
+            sudo microk8s status --wait-ready
+            for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
+              image_tar_name=$(echo $image | awk -F '/' '{print $(NF)}' | awk -F ":" '{print $1}')
+              sudo docker load --input ${image_tar_name}.tar
+              sudo docker image tag ${image_tar_name}:test localhost:32000/${image_tar_name}:test
+              sudo docker push localhost:32000/${image_tar_name}:test
+              args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image localhost:32000/${image_tar_name}:test"
+            done
+          fi
           charm_artifacts=(`find . -maxdepth 1 -name "*.charm"`)
           if [ ! -e ${{ inputs.charm-file }} ]; then
             args="${args} --charm-file=${{ inputs.charm-file }}"

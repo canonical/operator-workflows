@@ -160,14 +160,39 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: rockcraft pack --verbosity trace
       - name: Upload rock to ghcr.io
-        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
+        if: ${{ !github.event.pull_request.head.repo.fork && (steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save') }}
         run: |
           skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker://$IMAGE_REF --dest-creds "${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}"
+      - name: Save rock as tar (fork)
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          image_name=$(yq .name "${{ matrix.path }}"/rockcraft.yaml)
+          skopeo --insecure-policy copy oci-archive:$(ls "${{ matrix.path }}"/*.rock) docker-daemon:${image_name}:test
+          docker save ${image_name}:test > ${image_name}.tar
+          echo "TAR_NAME=${IMAGE_NAME}.tar" >> $GITHUB_ENV
+      - name: Save rock tar to cache (fork)
+        if: ${{ github.event.pull_request.head.repo.fork }}
+        id: save-rock-tar-cache
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.TAR_NAME }}
+          key: ${{ github.run_id }}
       - name: Run Github Trivy Image Action
+        if: ${{ !github.event.pull_request.head.repo.fork && (steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save') }}
         uses: aquasecurity/trivy-action@0.19.0
-        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
         with:
           image-ref: ${{ env.IMAGE_REF }}
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Github Trivy Image Action (fork)
+        if: ${{ github.event.pull_request.head.repo.fork && (steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save') }}
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          input: ${{ env.TAR_NAME  }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
@@ -179,7 +204,11 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
           if [ -f ".trivyignore" ]
           then
-            output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            if [ ${{ !github.event.pull_request.head.repo.fork }} ]; then
+              output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            else
+              output=$(trivy image --input ${{ env.TAR_NAME  }} --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            fi
             line=0
             while read CVE;
             do
