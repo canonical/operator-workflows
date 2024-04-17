@@ -261,6 +261,7 @@ jobs:
         uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
           built-charm-path: ${{ env.CHARM_FILE }}
+          charmcraft-channel: ${{ inputs.charmcraft-channel }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}
