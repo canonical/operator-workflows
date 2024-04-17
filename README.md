@@ -111,7 +111,7 @@ The following parameters are available for this workflow:
 |---------------------------|--------|---------------|--------------------------------------------------------------------------------------------------|
 | channel                   | string | latest/edge   | Destination channel to push the charm to                                                         |
 | charm-directory   | string | Null          | The working directory for the charm under working-directory. docs directory, if existing, should be under this directory |
-| charmcraft-channel        | string | latest/stable | Charmcraft channel to use for the integration test                                               |
+| charmcraft-channel        | string | latest/stable | Charmcraft channel to use for publishing the charm and resources                                              |
 | paas-app-charmer-oci-name | string | Null          | Name of the resource oci image for paas-app-charmer generated apps                               |
 | working-directory         | string | "./"          | Directory where jobs should be executed                                                          |
 
