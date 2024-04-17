@@ -30,7 +30,7 @@ on:
         description: |
           Tag prefix, useful when bundling multiple charms in the same repo.
       charmcraft-channel:
-        description: Charmcraft channel to use for the integration test
+        description: Charmcraft channel to use for publishing the charm and resources
         type: string
         default: latest/stable
 
@@ -306,6 +306,7 @@ jobs:
         uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
           built-charm-path: ${{ env.CHARM_FILE }}
+          charmcraft-channel: ${{ inputs.charmcraft-channel }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           channel: ${{ inputs.channel }}
