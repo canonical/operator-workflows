@@ -179,12 +179,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.1
-      - uses: >-
-          ${{ 
-            github.event.repository.name == 'operator-workflows' && 
-            format('{0}/internal/plan@{1}', github.event.pull_request.head.repo.full_name, github.head_ref) || 
-            'canonical/operator-workflows/internal/plan@main' 
-          }}
+      - uses: canonical/operator-workflows/internal/plan@better-build
         with:
           working-directory: ${{ inputs.working-directory }}
 
