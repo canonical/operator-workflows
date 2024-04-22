@@ -2,7 +2,7 @@ name: Plan
 description: Workflow planning for operator-workflows
 author: is-devops-team@canonical.com
 inputs:
-  working_directory:
+  working-directory:
     description: Working directory for operator-workflows workflows.
     default: '.'
     required: true
