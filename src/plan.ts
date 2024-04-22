@@ -13,7 +13,7 @@ function normalizePath(p: string): string {
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replaceAll(/[\t\n:\/\\"<>|*?]/, '-')
+  return name.replaceAll(/[\t\n:\/\\"<>|*?]/g, '-')
 }
 
 function fromFork(): boolean {
