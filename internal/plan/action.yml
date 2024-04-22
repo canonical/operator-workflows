@@ -1,0 +1,14 @@
+name: Plan
+description: Workflow planning for operator-workflows
+author: is-devops-team@canonical.com
+inputs:
+  working_directory:
+    description: Working directory for operator-workflows workflows.
+    default: '.'
+    required: true
+outputs:
+  plan:
+    description: The generated plan for the entire workflow.
+runs:
+  using: node20
+  main: ../../dist/plan/index.js
