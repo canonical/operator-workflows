@@ -13,7 +13,7 @@ function normalizePath(p: string): string {
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replace(/\t\n[:\/\\"<>|*?]/, '-')
+  return name.replace(/[\t\n:\/\\"<>|*?]/, '-')
 }
 
 function fromFork(): boolean {
@@ -30,7 +30,10 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
     await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
   ).glob()
   return charmcraftFiles.map((charmcraftFile: string) => {
-    const file = path.relative(workingDir, charmcraftFile)
+    const file = path.join(
+      workingDir,
+      path.relative(workingDir, charmcraftFile)
+    )
     const charmcraft = yaml.load(
       fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
     )
@@ -54,7 +57,7 @@ async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
     await glob.create(path.join(workingDir, '**', 'rockcraft.yaml'))
   ).glob()
   return rockcraftFiles.map((rockcraftFile: string) => {
-    const file = path.relative(workingDir, rockcraftFile)
+    const file = path.join(workingDir, path.relative(workingDir, rockcraftFile))
     const rockcraft = yaml.load(
       fs.readFileSync(rockcraftFile, { encoding: 'utf-8' })
     )
@@ -78,7 +81,7 @@ async function planBuildDockerImage(workingDir: string): Promise<BuildPlan[]> {
     await glob.create(path.join(workingDir, '**', '*.Dockerfile'))
   ).glob()
   return dockerFiles.map((dockerFile: string) => {
-    const file = path.relative(workingDir, dockerFile)
+    const file = path.join(workingDir, path.relative(workingDir, dockerFile))
     const name = path.basename(file).replace(/.Dockerfile$/, '')
     return {
       type: 'docker-image',
