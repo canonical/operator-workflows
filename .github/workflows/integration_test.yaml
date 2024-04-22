@@ -169,10 +169,6 @@ env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
-concurrency:
-  group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}-${{ inputs.test-tox-env }}
-  cancel-in-progress: true
-
 jobs:
   plan:
     name: Plan
