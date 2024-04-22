@@ -31,7 +31,9 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
   ).glob()
   return charmcraftFiles.map((charmcraftFile: string) => {
     const file = path.relative(workingDir, charmcraftFile)
-    const charmcraft = yaml.load(fs.readFileSync(file, { encoding: 'utf-8' }))
+    const charmcraft = yaml.load(
+      fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
+    )
     // @ts-ignore
     const name = charmcraft['name']
     return {
@@ -53,7 +55,9 @@ async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
   ).glob()
   return rockcraftFiles.map((rockcraftFile: string) => {
     const file = path.relative(workingDir, rockcraftFile)
-    const rockcraft = yaml.load(fs.readFileSync(file, { encoding: 'utf-8' }))
+    const rockcraft = yaml.load(
+      fs.readFileSync(rockcraftFile, { encoding: 'utf-8' })
+    )
     // @ts-ignore
     const name = rockcraft['name']
     return {
