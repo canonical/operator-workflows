@@ -9,11 +9,11 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
 
 function normalizePath(p: string): string {
-  return path.normalize(p).replace(/\/$/, '')
+  return path.normalize(p).replace(/\/+$/, '')
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replace(/[\t\n:\/\\"<>|*?]/, '-')
+  return name.replaceAll(/[\t\n:\/\\"<>|*?]/, '-')
 }
 
 function fromFork(): boolean {
