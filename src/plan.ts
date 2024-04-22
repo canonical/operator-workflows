@@ -115,10 +115,11 @@ export async function run(): Promise<void> {
     core.info(`generate workflow plan: ${JSON.stringify(plan, null, 2)}`)
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
-    fs.writeFileSync(path.join(tmp, 'plan.json'), JSON.stringify(plan, null, 2))
+    const pathFile = path.join(tmp, 'plan.json')
+    fs.writeFileSync(pathFile, JSON.stringify(plan, null, 2))
     await artifact.uploadArtifact(
       sanitizeArtifactName(`${workingDir}__plan`),
-      ['plan.json'],
+      [pathFile],
       tmp
     )
   } catch (error) {
