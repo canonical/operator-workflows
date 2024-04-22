@@ -13,7 +13,7 @@ function normalizePath(p: string): string {
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replace(/[:\/\\"<>|*?]/, '-')
+  return name.replace(/\t\n[:\/\\"<>|*?]/, '-')
 }
 
 function fromFork(): boolean {
@@ -29,7 +29,8 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
   const charmcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
   ).glob()
-  return charmcraftFiles.map((file: string) => {
+  return charmcraftFiles.map((charmcraftFile: string) => {
+    const file = path.relative(workingDir, charmcraftFile)
     const charmcraft = yaml.load(fs.readFileSync(file, { encoding: 'utf-8' }))
     // @ts-ignore
     const name = charmcraft['name']
@@ -39,7 +40,9 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
       source_file: file,
       source_directory: path.dirname(file),
       output_type: 'file',
-      output: `${workingDir}__build__output__charm__${name}`
+      output: sanitizeArtifactName(
+        `${workingDir}__build__output__charm__${name}`
+      )
     }
   })
 }
@@ -48,7 +51,8 @@ async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
   const rockcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'rockcraft.yaml'))
   ).glob()
-  return rockcraftFiles.map((file: string) => {
+  return rockcraftFiles.map((rockcraftFile: string) => {
+    const file = path.relative(workingDir, rockcraftFile)
     const rockcraft = yaml.load(fs.readFileSync(file, { encoding: 'utf-8' }))
     // @ts-ignore
     const name = rockcraft['name']
@@ -58,7 +62,9 @@ async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
       source_file: file,
       source_directory: path.dirname(file),
       output_type: fromFork() ? 'file' : 'registry',
-      output: `${workingDir}__build__output__rock__${name}`
+      output: sanitizeArtifactName(
+        `${workingDir}__build__output__rock__${name}`
+      )
     }
   })
 }
@@ -67,7 +73,8 @@ async function planBuildDockerImage(workingDir: string): Promise<BuildPlan[]> {
   const dockerFiles = await (
     await glob.create(path.join(workingDir, '**', '*.Dockerfile'))
   ).glob()
-  return dockerFiles.map((file: string) => {
+  return dockerFiles.map((dockerFile: string) => {
+    const file = path.relative(workingDir, dockerFile)
     const name = path.basename(file).replace(/.Dockerfile$/, '')
     return {
       type: 'docker-image',
@@ -75,7 +82,9 @@ async function planBuildDockerImage(workingDir: string): Promise<BuildPlan[]> {
       source_file: file,
       source_directory: path.dirname(file),
       output_type: fromFork() ? 'file' : 'registry',
-      output: `${workingDir}__build__output__docker-image__${name}`
+      output: sanitizeArtifactName(
+        `${workingDir}__build__output__docker-image__${name}`
+      )
     }
   })
 }
@@ -100,7 +109,11 @@ export async function run(): Promise<void> {
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
     fs.writeFileSync(path.join(tmp, 'plan.json'), JSON.stringify(plan, null, 2))
-    await artifact.uploadArtifact(`${workingDir}__plan`, ['plan.json'], tmp)
+    await artifact.uploadArtifact(
+      sanitizeArtifactName(`${workingDir}__plan`),
+      ['plan.json'],
+      tmp
+    )
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
