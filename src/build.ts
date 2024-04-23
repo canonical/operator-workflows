@@ -284,26 +284,28 @@ async function buildRock({
     )
   } else {
     const tree = await gitTreeId(plan.source_directory)
-    const images = rocks.map(async f => {
-      const base = path
-        .basename(f)
-        .substring(plan.name.length)
-        .replace(/\.rock$/, '')
-      const image = `ghcr.io/${github.context.repo.owner}/${plan.name}:${tree}-${base}`
-      await exec.exec(
-        '/snap/rockcraft/current/bin/skopeo',
-        [
-          '--insecure-policy',
-          'copy',
-          `oci-archive:${path.basename(f)}`,
-          `docker://${image}`,
-          '--dest-creds',
-          `${user}:${token}`
-        ],
-        { cwd: plan.source_directory }
-      )
-      return image
-    })
+    const images = await Promise.all(
+      rocks.map(async f => {
+        const base = path
+          .basename(f)
+          .substring(plan.name.length)
+          .replace(/\.rock$/, '')
+        const image = `ghcr.io/${github.context.repo.owner}/${plan.name}:${tree}-${base}`
+        await exec.exec(
+          '/snap/rockcraft/current/bin/skopeo',
+          [
+            '--insecure-policy',
+            'copy',
+            `oci-archive:${path.basename(f)}`,
+            `docker://${image}`,
+            '--dest-creds',
+            `${user}:${token}`
+          ],
+          { cwd: plan.source_directory }
+        )
+        return image
+      })
+    )
     fs.writeFileSync(
       manifestFile,
       JSON.stringify(
