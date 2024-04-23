@@ -184,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build: ${{ needs.plan.outputs.plan.build }}
+        build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - run: echo ${{ matrix.build }}
 
