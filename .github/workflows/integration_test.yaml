@@ -178,6 +178,15 @@ jobs:
       - uses: canonical/operator-workflows/internal/plan@better-build
         with:
           working-directory: ${{ inputs.working-directory }}
+  build:
+    name: Build
+    needs: [ plan ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build: ${{ needs.plan.outputs.plan.build }}
+    steps:
+      - run: echo ${{ matrix.build }}
 
   get-runner-image:
     name: Get runner image
