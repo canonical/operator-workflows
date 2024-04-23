@@ -1,4 +1,4 @@
-name: Prepare Scan
+name: Plan Image Scan
 description: Preparing for Trivy image scanning.
 author: is-devops-team@canonical.com
 inputs:

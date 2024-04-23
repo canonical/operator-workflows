@@ -18,13 +18,6 @@ on:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
-      charm-file:
-        type: string
-        description: Charm file
-      charm-directory:
-        type: string
-        description: The directory for the charm under the working-directory
-        default: "."
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -34,10 +27,6 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
-      images:
-        description: Existing docker images
-        type: string
-        default: '[""]'
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -58,6 +47,9 @@ on:
         type: string
         description: Registry owner to push the built images
         default: ""
+      plan:
+        type: string
+        description: operator-workflow plan
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -247,13 +239,14 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
-      - name: Download charm artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
+
+      - run: sudo apt install skopeo -y
+
+      - name: Plan Integration
+        uses: canonical/operator-workflows/internal/plan-integration@better-build
+        id: plan-integration
         with:
-          path: ${{ inputs.working-directory }}
-          pattern: '*-charm'
-          merge-multiple: true
+          plan: ${{ inputs.plan }}
 
       - name: Integration tests variable setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
@@ -264,19 +257,7 @@ jobs:
           fi
           echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
 
-          args=""
-          for image in $(echo '${{ inputs.images }}' | jq -cr '.[]'); do
-            args="${args} --$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image ${image}"
-          done
-          charm_artifacts=(`find . -maxdepth 1 -name "*.charm"`)
-          if [ ! -e ${{ inputs.charm-file }} ]; then
-            args="${args} --charm-file=${{ inputs.charm-file }}"
-          elif [ ${#charm_artifacts[@]} -gt 0 ]; then
-            # iterate across any local *.charm files
-            for charm in "${charm_artifacts[@]}"; do
-              args="${args} --charm-file=${charm}"
-            done
-          fi
+          args="${{ steps.plan-integration.outputs.args }}"
           echo "ARGS=$args" >> $GITHUB_ENV
           series=""
           if [ ! -z ${{ matrix.series }} ]; then
