@@ -116,12 +116,14 @@ export async function run(): Promise<void> {
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
     const pathFile = path.join(tmp, 'plan.json')
-    fs.writeFileSync(pathFile, JSON.stringify(plan, null, 2))
+    const planJson = JSON.stringify(plan, null, 2)
+    fs.writeFileSync(pathFile, planJson)
     await artifact.uploadArtifact(
       sanitizeArtifactName(`${workingDir}__plan`),
       [pathFile],
       tmp
     )
+    core.setOutput('plan', planJson)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
