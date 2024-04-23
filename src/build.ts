@@ -134,7 +134,14 @@ async function buildDockerImage({
   const imageName = `${plan.name}:${tag}`
   await exec.exec(
     'docker',
-    ['build', '-t', imageName, '-f', plan.source_file, '.'],
+    [
+      'build',
+      '-t',
+      imageName,
+      '-f',
+      path.relative(plan.source_directory, plan.source_file),
+      '.'
+    ],
     { cwd: plan.source_directory }
   )
   const artifact = new DefaultArtifactClient()
