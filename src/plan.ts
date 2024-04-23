@@ -18,6 +18,7 @@ function sanitizeArtifactName(name: string): string {
 }
 
 function fromFork(): boolean {
+  return true
   const context = github.context
   if (context.payload.action !== 'pull_request') {
     return false
