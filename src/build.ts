@@ -2,8 +2,9 @@ import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as glob from '@actions/glob'
 import * as cache from '@actions/cache'
+import * as github from '@actions/github'
 
-import { BuildPlan, Plan } from './model'
+import { BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
@@ -109,7 +110,68 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   )
 }
 
-async function buildDockerImage(plan: BuildPlan): Promise<void> {}
+interface BuildDockerImageParams {
+  plan: BuildPlan
+  user: string
+  token: string
+}
+
+async function buildDockerImage({
+  plan,
+  user,
+  token
+}: BuildDockerImageParams): Promise<void> {
+  const gitPath =
+    path.resolve(plan.source_directory) == path.resolve(process.cwd())
+      ? ''
+      : plan.source_directory
+  const tag = (
+    await exec.getExecOutput('git', ['rev-parse', `HEAD:${gitPath}`])
+  ).stdout.trim()
+  if (!tag) {
+    throw new Error('failed to generate tag for docker image')
+  }
+  const imageName = `${plan.name}:${tag}`
+  await exec.exec(
+    'docker',
+    ['build', '-t', imageName, '-f', plan.source_file, '.'],
+    { cwd: plan.source_directory }
+  )
+  const artifact = new DefaultArtifactClient()
+  const manifest = path.join(plan.source_directory, 'manifest.json')
+  if (plan.output_type == 'file') {
+    const file = `${plan.name}-${tag}.tar`
+    fs.writeFileSync(
+      manifest,
+      JSON.stringify({ name: plan.name, files: [file] }, null, 2)
+    )
+    await exec.exec('docker', ['save', '-o', file, imageName])
+    await artifact.uploadArtifact(
+      plan.output,
+      [manifest, path.join(plan.source_directory, file)],
+      plan.source_directory
+    )
+  }
+  if (plan.output_type == 'registry') {
+    await exec.exec(
+      `docker`,
+      ['login', '-u', user, '--password-stdin', 'ghcr.io'],
+      { input: Buffer.from(`${token}\n`, 'utf-8') }
+    )
+    const registryImageName = `ghcr.io/${imageName}`
+    await exec.exec(`docker`, ['image', 'tag', imageName, registryImageName])
+    await exec.exec('docker', ['push', registryImageName])
+    fs.writeFileSync(
+      manifest,
+      JSON.stringify({ name: plan.name, images: [registryImageName] }, null, 2)
+    )
+    await artifact.uploadArtifact(
+      plan.output,
+      [manifest],
+      plan.source_directory
+    )
+  }
+}
 
 export async function run(): Promise<void> {
   try {
@@ -125,6 +187,14 @@ export async function run(): Promise<void> {
           charmcraftRef,
           charmcraftRepository
         })
+        break
+      case 'docker-image':
+        await buildDockerImage({
+          plan,
+          user: github.context.actor,
+          token: core.getInput('github-token')
+        })
+        break
     }
   } catch (error) {
     // Fail the workflow run if an error occurs

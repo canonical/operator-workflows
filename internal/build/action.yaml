@@ -14,6 +14,9 @@ inputs:
   charmcraft-repository:
     description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
     default: ""
+  github-token:
+    description: github token.
+    required: true
 runs:
   using: node20
   main: ../../dist/build/index.js
