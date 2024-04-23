@@ -26,11 +26,19 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+  integration-craft:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      charmcraft-repository: canonical/charmcraft
+      charmcraft-ref: main
+      rockcraft-repository: canonical/rockcraft
+      rockcraft-ref: main
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
-    needs:
-      - integration
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
@@ -40,8 +48,6 @@ jobs:
   integration-self-hosted:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
-    needs:
-      - integration-juju3
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
@@ -50,20 +56,16 @@ jobs:
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
-#    needs:
-#      - integration-self-hosted
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-  publish:
-    if: ${{ !github.event.pull_request.head.repo.fork }}
-    uses: ./.github/workflows/publish_charm.yaml
-    secrets: inherit
-    needs:
-      - integration-rock
-    with:
-      channel: latest/edge
-      working-directory: tests/workflows/integration/test-upload-charm/
+#  publish:
+#    if: ${{ !github.event.pull_request.head.repo.fork }}
+#    uses: ./.github/workflows/publish_charm.yaml
+#    secrets: inherit
+#    with:
+#      channel: latest/edge
+#      working-directory: tests/workflows/integration/test-upload-charm/
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()

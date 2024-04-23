@@ -23,7 +23,10 @@ export async function run(): Promise<void> {
       if (build.type === 'charm') {
         // @ts-ignore
         for (const file of manifest.files) {
-          fs.renameSync(path.join(tmp, file), file)
+          fs.renameSync(
+            path.join(tmp, file),
+            path.join(plan.working_directory, file)
+          )
           args.push(`--charm-file=./${file}`)
         }
       }
