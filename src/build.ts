@@ -152,7 +152,9 @@ async function buildDockerImage({
       manifest,
       JSON.stringify({ name: plan.name, files: [file] }, null, 2)
     )
-    await exec.exec('docker', ['save', '-o', file, imageName])
+    await exec.exec('docker', ['save', '-o', file, imageName], {
+      cwd: plan.source_directory
+    })
     await artifact.uploadArtifact(
       plan.output,
       [manifest, path.join(plan.source_directory, file)],
