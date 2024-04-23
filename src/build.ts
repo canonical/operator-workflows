@@ -327,7 +327,9 @@ async function buildRock({
 
 export async function run(): Promise<void> {
   try {
-    const plan: BuildPlan = JSON.parse(core.getInput('build-plan'))
+    const plan: BuildPlan = JSON.parse(
+      core.getMultilineInput('build-plan').join('\n')
+    )
     switch (plan.type) {
       case 'charm':
         await buildCharm({
