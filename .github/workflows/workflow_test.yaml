@@ -59,13 +59,13 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-#  publish:
-#    if: ${{ !github.event.pull_request.head.repo.fork }}
-#    uses: ./.github/workflows/publish_charm.yaml
-#    secrets: inherit
-#    with:
-#      channel: latest/edge
-#      working-directory: tests/workflows/integration/test-upload-charm/
+  publish:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    uses: ./.github/workflows/publish_charm.yaml
+    secrets: inherit
+    with:
+      channel: latest/edge
+      working-directory: tests/workflows/integration/test-upload-charm/
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
