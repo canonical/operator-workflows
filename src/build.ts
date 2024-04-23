@@ -11,13 +11,13 @@ import path from 'path'
 import os from 'os'
 
 async function installSnapcraft(): Promise<void> {
-  const versionCheck = await exec.exec('snapcraft', ['--version'], {
-    ignoreReturnCode: true
-  })
-  if (versionCheck === 0) {
+  const snapcraftInfo = (
+    await exec.getExecOutput('snap', ['info', 'snapcraft'])
+  ).stdout
+  if (snapcraftInfo.includes('installed')) {
     return
   }
-  await exec.exec('sudo', ['snap', 'install', 'snapcraft'])
+  await exec.exec('sudo', ['snap', 'install', 'snapcraft', '--classic'])
 }
 
 async function buildInstallCharmcraft(
