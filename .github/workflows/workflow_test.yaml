@@ -50,8 +50,8 @@ jobs:
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
-    needs:
-      - integration-self-hosted
+#    needs:
+#      - integration-self-hosted
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
