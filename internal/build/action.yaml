@@ -17,6 +17,15 @@ inputs:
   github-token:
     description: github token.
     required: true
+  rockcraft-channel:
+    description: Rockcraft channel to use for the integration test
+    default: latest/stable
+  rockcraft-ref:
+    description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
+    default: ""
+  rockcraft-repository:
+    description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
+    default: ""
 runs:
   using: node20
   main: ../../dist/build/index.js

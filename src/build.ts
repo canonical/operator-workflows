@@ -69,6 +69,17 @@ interface BuildCharmParams {
   charmcraftRef: string
 }
 
+async function gitTreeId(p: string): Promise<string> {
+  const gitPath = path.resolve(p) == path.resolve(process.cwd()) ? '' : p
+  const tree = (
+    await exec.getExecOutput('git', ['rev-parse', `HEAD:${gitPath}`])
+  ).stdout.trim()
+  if (!tree) {
+    throw new Error(`failed to get git tree id for path: ${p}`)
+  }
+  return tree
+}
+
 async function buildCharm(params: BuildCharmParams): Promise<void> {
   if (params.charmcraftChannel) {
     await exec.exec('sudo', [
@@ -121,16 +132,7 @@ async function buildDockerImage({
   user,
   token
 }: BuildDockerImageParams): Promise<void> {
-  const gitPath =
-    path.resolve(plan.source_directory) == path.resolve(process.cwd())
-      ? ''
-      : plan.source_directory
-  const tag = (
-    await exec.getExecOutput('git', ['rev-parse', `HEAD:${gitPath}`])
-  ).stdout.trim()
-  if (!tag) {
-    throw new Error('failed to generate tag for docker image')
-  }
+  const tag = await gitTreeId(plan.source_directory)
   const imageName = `${plan.name}:${tag}`
   await exec.exec(
     'docker',
@@ -182,19 +184,155 @@ async function buildDockerImage({
   }
 }
 
+async function buildInstallRockcraft(
+  repository: string,
+  ref: string
+): Promise<void> {
+  const workingDir = '/opt/operator-workflows/rockcraft'
+  await exec.exec('sudo', ['mkdir', workingDir, '-p'])
+  await exec.exec('sudo', ['chown', os.userInfo().username, workingDir])
+  await exec.exec('git', [
+    'clone',
+    `https://github.com/${repository}.git`,
+    '--branch',
+    ref,
+    workingDir
+  ])
+  const rockcraftSha = (
+    await exec.getExecOutput('git', ['rev-parse', 'HEAD'])
+  ).stdout.trim()
+  const cacheKey = `rockcraft-${rockcraftSha}`
+  const rockcraftGlob = path.join(workingDir, 'rockcraft*.snap')
+  const restored = await cache.restoreCache([rockcraftGlob], cacheKey)
+  if (!restored) {
+    await installSnapcraft()
+    await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
+      cwd: workingDir
+    })
+  }
+  const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
+  if (rockcraftSnaps.length == 0) {
+    throw new Error("can't find rockcraft snap")
+  }
+  await exec.exec('sudo', [
+    'snap',
+    'install',
+    rockcraftSnaps[0],
+    '--classic',
+    '--dangerous'
+  ])
+  if (!restored) {
+    await cache.saveCache([rockcraftGlob], cacheKey)
+  }
+}
+
+interface BuildRockParams {
+  plan: BuildPlan
+  rockcraftChannel: string
+  rockcraftRepository: string
+  rockcraftRef: string
+  user: string
+  token: string
+}
+
+async function buildRock({
+  plan,
+  rockcraftChannel,
+  rockcraftRepository,
+  rockcraftRef,
+  user,
+  token
+}: BuildRockParams): Promise<void> {
+  if (rockcraftChannel) {
+    await exec.exec('sudo', [
+      'snap',
+      'install',
+      'rockcraft',
+      '--channel',
+      rockcraftChannel,
+      '--classic'
+    ])
+  } else if (rockcraftRepository && rockcraftRef) {
+    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
+  } else {
+    await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
+  }
+  await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
+    cwd: plan.source_directory
+  })
+  const rocks = await (
+    await glob.create(path.join(plan.source_directory, '*.rock'))
+  ).glob()
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  const artifact = new DefaultArtifactClient()
+  if (plan.output_type === 'file') {
+    fs.writeFileSync(
+      manifestFile,
+      JSON.stringify(
+        {
+          name: plan.name,
+          files: [rocks.map(f => path.basename(f))]
+        },
+        null,
+        2
+      )
+    )
+    await artifact.uploadArtifact(
+      plan.output,
+      [...rocks, manifestFile],
+      plan.source_directory
+    )
+  } else {
+    const tree = await gitTreeId(plan.source_directory)
+    const images = rocks.map(async f => {
+      const base = path
+        .basename(f)
+        .substring(plan.name.length)
+        .replace(/\.rock$/, '')
+      const image = `ghcr.io/${github.context.repo.owner}/${plan.name}:${tree}-${base}`
+      await exec.exec(
+        '/snap/rockcraft/current/bin/skopeo',
+        [
+          '--insecure-policy',
+          'copy',
+          `oci-archive:${path.basename(f)}`,
+          `docker://${image}`,
+          '--dest-creds',
+          `${user}:${token}`
+        ],
+        { cwd: plan.source_directory }
+      )
+      return image
+    })
+    fs.writeFileSync(
+      manifestFile,
+      JSON.stringify(
+        {
+          name: plan.name,
+          images: images
+        },
+        null,
+        2
+      )
+    )
+    await artifact.uploadArtifact(
+      plan.output,
+      [manifestFile],
+      plan.source_directory
+    )
+  }
+}
+
 export async function run(): Promise<void> {
   try {
     const plan: BuildPlan = JSON.parse(core.getInput('plan'))
-    const charmcraftRepository = core.getInput('charmcraft-repository')
-    const charmcraftRef = core.getInput('charmcraft-ref')
-    const charmcraftChannel = core.getInput('charmcraft-channel')
     switch (plan.type) {
       case 'charm':
         await buildCharm({
           plan,
-          charmcraftChannel,
-          charmcraftRef,
-          charmcraftRepository
+          charmcraftChannel: core.getInput('charmcraft-channel'),
+          charmcraftRef: core.getInput('charmcraft-ref'),
+          charmcraftRepository: core.getInput('charmcraft-repository')
         })
         break
       case 'docker-image':
@@ -204,6 +342,15 @@ export async function run(): Promise<void> {
           token: core.getInput('github-token')
         })
         break
+      case 'rock':
+        await buildRock({
+          plan,
+          rockcraftChannel: core.getInput('rockcraft-channel'),
+          rockcraftRef: core.getInput('rockcraft-ref'),
+          rockcraftRepository: core.getInput('rockcraft-repository'),
+          user: github.context.actor,
+          token: core.getInput('github-token')
+        })
     }
   } catch (error) {
     // Fail the workflow run if an error occurs
