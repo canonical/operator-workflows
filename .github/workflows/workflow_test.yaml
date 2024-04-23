@@ -26,16 +26,6 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-  integration-craft:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      charmcraft-repository: canonical/charmcraft
-      charmcraft-ref: main
-      rockcraft-repository: canonical/rockcraft
-      rockcraft-ref: main
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -59,6 +49,16 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+  integration-craft:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      charmcraft-repository: canonical/charmcraft
+      charmcraft-ref: main
+      rockcraft-repository: canonical/rockcraft
+      rockcraft-ref: main
   publish:
     if: ${{ !github.event.pull_request.head.repo.fork }}
     uses: ./.github/workflows/publish_charm.yaml
