@@ -47,7 +47,7 @@ async function buildInstallCharmcraft(
   }
   const charmcraftSnaps = await (await glob.create(charmcraftGlob)).glob()
   if (charmcraftSnaps.length == 0) {
-    throw new Error("can't find charmcraft snap")
+    throw new Error('can\'t find charmcraft snap')
   }
   await exec.exec('sudo', [
     'snap',
@@ -86,8 +86,8 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
-  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'])
-  const charmFiles = await (await glob.create('*.charm')).glob()
+  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], { cwd: params.plan.source_directory })
+  const charmFiles = await (await glob.create(path.join(params.plan.source_directory, '*.charm'))).glob()
   const artifact = new DefaultArtifactClient()
   const manifestFile = path.join(params.plan.source_directory, 'manifest.json')
   fs.writeFileSync(
