@@ -35,16 +35,18 @@ async function buildInstallCharmcraft(
     workingDir
   ])
   const charmcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'])
+    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
   ).stdout.trim()
   const cacheKey = `charmcraft-${charmcraftSha}`
   const charmcraftGlob = path.join(workingDir, 'charmcraft*.snap')
   const restored = await cache.restoreCache([charmcraftGlob], cacheKey)
   if (!restored) {
     await installSnapcraft()
+    core.startGroup('snapcraft pack (charmcraft)')
     await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
       cwd: workingDir
     })
+    core.endGroup()
   }
   const charmcraftSnaps = await (await glob.create(charmcraftGlob)).glob()
   if (charmcraftSnaps.length == 0) {
@@ -98,9 +100,11 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
+  core.startGroup('charmcraft pack')
   await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory
   })
+  core.endGroup()
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
   ).glob()
@@ -199,16 +203,18 @@ async function buildInstallRockcraft(
     workingDir
   ])
   const rockcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'])
+    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
   ).stdout.trim()
   const cacheKey = `rockcraft-${rockcraftSha}`
   const rockcraftGlob = path.join(workingDir, 'rockcraft*.snap')
   const restored = await cache.restoreCache([rockcraftGlob], cacheKey)
   if (!restored) {
     await installSnapcraft()
+    core.startGroup('snapcraft pack (rockcraft)')
     await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
       cwd: workingDir
     })
+    core.endGroup()
   }
   const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
   if (rockcraftSnaps.length == 0) {
@@ -257,9 +263,11 @@ async function buildRock({
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
+  core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory
   })
+  core.endGroup()
   const rocks = await (
     await glob.create(path.join(plan.source_directory, '*.rock'))
   ).glob()
