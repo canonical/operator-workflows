@@ -81,7 +81,12 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftChannel) {
+  if (params.charmcraftRepository && params.charmcraftRef) {
+    await buildInstallCharmcraft(
+      params.charmcraftRepository,
+      params.charmcraftRef
+    )
+  } else if (params.charmcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -90,11 +95,6 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
       params.charmcraftChannel,
       '--classic'
     ])
-  } else if (params.charmcraftRepository && params.charmcraftRef) {
-    await buildInstallCharmcraft(
-      params.charmcraftRepository,
-      params.charmcraftRef
-    )
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
@@ -243,7 +243,9 @@ async function buildRock({
   user,
   token
 }: BuildRockParams): Promise<void> {
-  if (rockcraftChannel) {
+  if (rockcraftRepository && rockcraftRef) {
+    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
+  } else if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -252,8 +254,6 @@ async function buildRock({
       rockcraftChannel,
       '--classic'
     ])
-  } else if (rockcraftRepository && rockcraftRef) {
-    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
