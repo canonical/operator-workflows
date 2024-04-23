@@ -96,7 +96,11 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   const manifestFile = path.join(params.plan.source_directory, 'manifest.json')
   fs.writeFileSync(
     manifestFile,
-    JSON.stringify({ name: params.plan.name, files: charmFiles }, null, 2)
+    JSON.stringify(
+      { name: params.plan.name, files: charmFiles.map(f => path.basename(f)) },
+      null,
+      2
+    )
   )
   await artifact.uploadArtifact(
     params.plan.output,
@@ -104,6 +108,8 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     params.plan.source_directory
   )
 }
+
+async function buildDockerImage(plan: BuildPlan): Promise<void> {}
 
 export async function run(): Promise<void> {
   try {

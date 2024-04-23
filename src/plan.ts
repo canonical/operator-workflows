@@ -7,6 +7,7 @@ import * as github from '@actions/github'
 import { Plan, BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
+import { meta } from '@typescript-eslint/eslint-plugin'
 
 function normalizePath(p: string): string {
   return path.normalize(p).replace(/\/+$/, '')
@@ -36,9 +37,24 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
     )
     const charmcraft = yaml.load(
       fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
-    )
+    ) as object
     // @ts-ignore
-    const name = charmcraft['name']
+    let name: string
+    if ('name' in charmcraft) {
+      name = charmcraft['name'] as string
+    } else {
+      const metadataFile = path.join(
+        path.dirname(charmcraftFile),
+        'metadata.yaml'
+      )
+      const metadata = yaml.load(
+        fs.readFileSync(metadataFile, { encoding: 'utf-8' })
+      ) as object
+      if (!('name' in metadata)) {
+        throw new Error(`unknown charm name (${workingDir})`)
+      }
+      name = metadata['name'] as string
+    }
     return {
       type: 'charm',
       name,
