@@ -198,7 +198,7 @@ jobs:
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
           charmcraft-repository: ${{ inputs.charmcraft-repository }}
           charmcraft-ref: ${{ inputs.charmcraft-ref }}
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 #  get-runner-image:
 #    name: Get runner image
 #    uses: ./.github/workflows/get_runner_image.yaml
