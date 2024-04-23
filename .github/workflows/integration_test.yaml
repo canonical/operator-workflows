@@ -178,6 +178,12 @@ jobs:
       - uses: canonical/operator-workflows/internal/plan@better-build
         with:
           working-directory: ${{ inputs.working-directory }}
+  test:
+    name: Test
+    needs: [plan]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo ${{ needs.plan.outputs.plan }}
   build:
     name: Build
     needs: [ plan ]
