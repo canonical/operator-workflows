@@ -7,7 +7,6 @@ import * as github from '@actions/github'
 import { Plan, BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
-import { meta } from '@typescript-eslint/eslint-plugin'
 
 function normalizePath(p: string): string {
   return path.normalize(p).replace(/\/+$/, '')
@@ -127,7 +126,7 @@ async function planBuild(workingDir: string, id: string): Promise<BuildPlan[]> {
 
 export async function run(): Promise<void> {
   try {
-    const id = new Date().toISOString().replaceAll(':', '-')
+    const id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
     const workingDir: string = normalizePath(core.getInput('working-directory'))
     const buildPlans = await planBuild(workingDir, id)
     const plan: Plan = {

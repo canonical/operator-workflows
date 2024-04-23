@@ -182,7 +182,7 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
   build:
-    name: Build (${{ matrix.build.type }}, ${{ matrix.build.source_directory }})
+    name: Build ${{ matrix.build.type }} (${{ matrix.build.source_directory }})
     needs: [ plan ]
     runs-on: ubuntu-latest
     strategy:
@@ -194,7 +194,7 @@ jobs:
       - uses: canonical/operator-workflows/internal/build@better-build
         id: build
         with:
-          plan: ${{ toJSON(matrix.build) }}
+          build-plan: ${{ toJSON(matrix.build) }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
           charmcraft-ref: ${{ inputs.charmcraft-ref }}
           charmcraft-repository: ${{ inputs.charmcraft-repository }}
@@ -202,6 +202,67 @@ jobs:
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
           rockcraft-ref: ${{ inputs.rockcraft-ref }}
           rockcraft-repository: ${{ inputs.rockcraft-repository }}
+
+  plan-scan:
+    name: Prepare Image Scanning
+    runs-on: ubuntu-latest
+    needs: [ plan, build ]
+    outputs:
+      scans: ${{ steps.plan-scan.outputs.scans }}
+    steps:
+      - uses: canonical/operator-workflows/internal/plan-scan@better-build
+        id: plan-scan
+        with:
+          plan: ${{ needs.plan.outputs.plan }}
+
+  scan:
+    name: Scan Image (${{ matrix.scan.file }})
+    runs-on: ubuntu-latest
+    needs: [ plan-scan ]
+    strategy:
+      matrix:
+        scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
+    steps:
+      - uses: actions/download-artifact@v4
+        if: matrix.scan.artifact != ''
+        with:
+          name: ${{ matrix.scan.artifact }}
+      - if: matrix.scan.image != ''
+        run: |
+          docker image pull ${{ matrix.scan.image }}
+          docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
+      - name: Run Github Trivy Image Action
+        uses: aquasecurity/trivy-action@0.19.0
+        if: steps.rock-cache.outputs.cache-hit != 'true' || inputs.cache-action == 'save'
+        with:
+          input: ${{ matrix.scan.file }}
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4.1.3
+      - name: Check trivyignore
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
+          if [ -f ".trivyignore" ]
+          then
+            output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            line=0
+            while read CVE;
+            do
+              line=$(( line + 1 ))
+              if [[ "$output" != *"$CVE"* ]] && [[ ! "$CVE" =~ ^#.* ]]
+              then
+              echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
+              fi
+            done < .trivyignore
+          fi
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          ROCK_IMAGE: ${{ env.IMAGE_REF }}
 
 #  get-runner-image:
 #    name: Get runner image

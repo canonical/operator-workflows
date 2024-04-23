@@ -30,9 +30,10 @@
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
-    "package": "npm run package:plan && npm run package:build",
+    "package": "npm run package:plan && npm run package:build && npm run package:plan-scan",
     "package:build": "npx ncc build src/build.ts -o dist/build --source-map --license licenses.txt",
     "package:plan": "npx ncc build src/plan.ts -o dist/plan --source-map --license licenses.txt",
+    "package:plan-scan": "npx ncc build src/plan-scan.ts -o dist/plan-scan --source-map --license licenses.txt",
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
