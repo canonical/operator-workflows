@@ -167,7 +167,7 @@ async function buildDockerImage({
       ['login', '-u', user, '--password-stdin', 'ghcr.io'],
       { input: Buffer.from(`${token}\n`, 'utf-8') }
     )
-    const registryImageName = `ghcr.io/${imageName}`
+    const registryImageName = `ghcr.io/${github.context.repo.owner}/${imageName}`
     await exec.exec(`docker`, ['image', 'tag', imageName, registryImageName])
     await exec.exec('docker', ['push', registryImageName])
     fs.writeFileSync(
