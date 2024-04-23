@@ -50,7 +50,7 @@ jobs:
       rock-paths: ${{ steps.gen-rock-paths-and-images.outputs.rock-paths }}
       images: "${{ steps.gen-rock-paths-and-images.outputs.images }}"
     steps:
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4.1.3
       - name: Generate rock paths and images
         id: gen-rock-paths-and-images
         uses: actions/github-script@v7.0.1
@@ -138,7 +138,7 @@ jobs:
       - name: Cleanup Rockcraft
         if: inputs.rockcraft-repository != ''
         run: rm -rf rockcraft*
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4.1.3
         with:
           fetch-depth: 0
       - name: Extract rock information
