@@ -11,6 +11,7 @@ interface Scan {
 
 export async function run(): Promise<void> {
   try {
+    core.info(`input: ${core.getInput('plan')}`)
     const plan: Plan = JSON.parse(core.getInput('plan'))
     const artifact = new DefaultArtifactClient()
     let scans: Scan[] = []

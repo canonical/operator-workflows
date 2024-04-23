@@ -204,7 +204,7 @@ jobs:
           rockcraft-repository: ${{ inputs.rockcraft-repository }}
 
   plan-scan:
-    name: Prepare Image Scanning
+    name: Plan Image Scanning
     runs-on: ubuntu-latest
     needs: [ plan, build ]
     outputs:
