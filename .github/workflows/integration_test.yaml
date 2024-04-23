@@ -274,7 +274,6 @@ jobs:
       channel: ${{ inputs.channel }}
       charmcraft-ref: ${{ inputs.charmcraft-ref }}
       charmcraft-repository: ${{ inputs.charmcraft-repository }}
-      charm-directory: ${{ inputs.charm-directory }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
