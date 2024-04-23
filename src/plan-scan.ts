@@ -21,7 +21,9 @@ export async function run(): Promise<void> {
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
-      await artifact.getArtifact(build.output)
+      await artifact.downloadArtifact(
+        (await artifact.getArtifact(build.output)).artifact.id
+      )
       const manifest = JSON.parse(
         fs.readFileSync('manifest.json', { encoding: 'utf-8' })
       ) as object
