@@ -18,7 +18,6 @@ function sanitizeArtifactName(name: string): string {
 }
 
 function fromFork(): boolean {
-  return true
   const context = github.context
   if (context.payload.action !== 'pull_request') {
     return false
@@ -27,7 +26,10 @@ function fromFork(): boolean {
   return context.repo.owner !== context.payload.pull_request.head.repo.owner
 }
 
-async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
+async function planBuildCharm(
+  workingDir: string,
+  id: string
+): Promise<BuildPlan[]> {
   const charmcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
   ).glob()
@@ -62,14 +64,15 @@ async function planBuildCharm(workingDir: string): Promise<BuildPlan[]> {
       source_file: file,
       source_directory: path.dirname(file),
       output_type: 'file',
-      output: sanitizeArtifactName(
-        `${workingDir}__build__output__charm__${name}`
-      )
+      output: sanitizeArtifactName(`${id}__build__output__charm__${name}`)
     }
   })
 }
 
-async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
+async function planBuildRock(
+  workingDir: string,
+  id: string
+): Promise<BuildPlan[]> {
   const rockcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'rockcraft.yaml'))
   ).glob()
@@ -86,14 +89,15 @@ async function planBuildRock(workingDir: string): Promise<BuildPlan[]> {
       source_file: file,
       source_directory: path.dirname(file),
       output_type: fromFork() ? 'file' : 'registry',
-      output: sanitizeArtifactName(
-        `${workingDir}__build__output__rock__${name}`
-      )
+      output: sanitizeArtifactName(`${id}__build__output__rock__${name}`)
     }
   })
 }
 
-async function planBuildDockerImage(workingDir: string): Promise<BuildPlan[]> {
+async function planBuildDockerImage(
+  workingDir: string,
+  id: string
+): Promise<BuildPlan[]> {
   const dockerFiles = await (
     await glob.create(path.join(workingDir, '**', '*.Dockerfile'))
   ).glob()
@@ -107,24 +111,25 @@ async function planBuildDockerImage(workingDir: string): Promise<BuildPlan[]> {
       source_directory: path.dirname(file),
       output_type: fromFork() ? 'file' : 'registry',
       output: sanitizeArtifactName(
-        `${workingDir}__build__output__docker-image__${name}`
+        `${id}__build__output__docker-image__${name}`
       )
     }
   })
 }
 
-async function planBuild(workingDir: string): Promise<BuildPlan[]> {
+async function planBuild(workingDir: string, id: string): Promise<BuildPlan[]> {
   return [
-    ...(await planBuildCharm(workingDir)),
-    ...(await planBuildRock(workingDir)),
-    ...(await planBuildDockerImage(workingDir))
+    ...(await planBuildCharm(workingDir, id)),
+    ...(await planBuildRock(workingDir, id)),
+    ...(await planBuildDockerImage(workingDir, id))
   ]
 }
 
 export async function run(): Promise<void> {
   try {
+    const id = new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')
     const workingDir: string = normalizePath(core.getInput('working-directory'))
-    const buildPlans = await planBuild(workingDir)
+    const buildPlans = await planBuild(workingDir, id)
     const plan: Plan = {
       working_directory: workingDir,
       build: buildPlans
@@ -136,9 +141,10 @@ export async function run(): Promise<void> {
     const planJson = JSON.stringify(plan, null, 2)
     fs.writeFileSync(pathFile, planJson)
     await artifact.uploadArtifact(
-      sanitizeArtifactName(`${workingDir}__plan`),
+      sanitizeArtifactName(`${id}__plan`),
       [pathFile],
-      tmp
+      tmp,
+      {}
     )
     core.setOutput('plan', planJson)
   } catch (error) {
