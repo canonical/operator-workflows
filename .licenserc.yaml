@@ -25,4 +25,11 @@ header:
     - '**/icon.svg'
     - '**/LICENSE'
     - '**/trivy.yaml'
+    - '.eslintignore'
+    - '.gitattributes'
+    - '.node-version'
+    - '.prettierignore'
+    - 'dist/**'
+    - 'internal/**'
+    - 'src/**'
   comment: on-failure
