@@ -137,7 +137,7 @@ export async function run(): Promise<void> {
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
     const pathFile = path.join(tmp, 'plan.json')
-    const planJson = JSON.stringify(plan)
+    const planJson = JSON.stringify(plan, null, 2)
     fs.writeFileSync(pathFile, planJson)
     await artifact.uploadArtifact(
       sanitizeArtifactName(`${id}__plan`),
