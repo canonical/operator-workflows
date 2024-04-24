@@ -36,7 +36,6 @@
     "package:plan-scan": "npx ncc build src/plan-scan.ts -o dist/plan-scan --source-map --license licenses.txt",
     "package:plan-integration": "npx ncc build src/plan-integration.ts -o dist/plan-integration --source-map --license licenses.txt",
     "package:publish": "npx ncc build src/publish.ts -o dist/publish --source-map --license licenses.txt",
-
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
@@ -48,7 +47,6 @@
     "@actions/exec": "^1.1.1",
     "@actions/github": "^6.0.0",
     "@actions/glob": "^0.4.0",
-    "charmhub-upload-action": "github:canonical/charming-actions",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

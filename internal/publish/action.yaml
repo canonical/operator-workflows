@@ -2,9 +2,14 @@ name: Publish Charms
 description: Publish charms.
 author: is-devops-team@canonical.com
 inputs:
+  channel:
+    description: channel.
+    required: true
   github-token:
     description: github-token.
     required: true
+  tag-prefix:
+    description: tag-prefix
   workflow-file:
     description: workflow-file.
     default: 'integration_test.yaml'
