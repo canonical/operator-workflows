@@ -100,16 +100,16 @@ class Publish {
   }
 
   async getPlan(runId: number): Promise<Plan> {
-    const artifacts = (
-      await this.octokit.paginate(
-        this.octokit.rest.actions.listWorkflowRunArtifacts,
-        {
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          run_id: runId
-        }
-      )
-    ).artifacts
+    const artifactsResp = await this.octokit.paginate(
+      this.octokit.rest.actions.listWorkflowRunArtifacts,
+      {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        run_id: runId
+      }
+    )
+    console.log(artifactsResp)
+    const artifacts = artifactsResp.artifacts
       .filter(a => a.name.endsWith('__plan'))
       .sort()
     if (artifacts.length === 0) {
