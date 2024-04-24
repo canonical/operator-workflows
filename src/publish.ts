@@ -11,6 +11,7 @@ import os from 'os'
 
 class Publish {
   private token: string
+  private charmhubToken: string
   private octokit
   private workflowFile: string
   private artifact
@@ -20,6 +21,7 @@ class Publish {
 
   constructor() {
     this.token = core.getInput('github-token')
+    this.charmhubToken = core.getInput('charmhub-token')
     this.octokit = github.getOctokit(this.token)
     this.workflowFile = core.getInput('workflow-file')
     this.workingDir = core.getInput('working-directory')
@@ -98,13 +100,17 @@ class Publish {
             '{{.ID}}'
           ])
         ).stdout.trim()
-        await exec.exec('charmcraft', [
-          'upload-resource',
-          charmName,
-          resource,
-          `--image=${imageId}`,
-          '--verbosity=brief'
-        ])
+        await exec.exec(
+          'charmcraft',
+          [
+            'upload-resource',
+            charmName,
+            resource,
+            `--image=${imageId}`,
+            '--verbosity=brief'
+          ],
+          { env: { CHARMHUB_TOKEN: this.charmhubToken } }
+        )
       }
       core.setOutput('charms', charms.join(','))
     } catch (error) {

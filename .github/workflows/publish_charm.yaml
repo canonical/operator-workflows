@@ -110,6 +110,7 @@ jobs:
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
           workflow-run-id: ${{ github.repository == 'canonical/operator-workflows' && github.run_id || '' }}

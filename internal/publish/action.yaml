@@ -2,6 +2,9 @@ name: Publish Charms
 description: Publish charms.
 author: is-devops-team@canonical.com
 inputs:
+  charmhub-token:
+    description: charmhub-token.
+    required: true
   github-token:
     description: github-token.
     required: true
