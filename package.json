@@ -30,11 +30,13 @@
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
-    "package": "npm run package:plan && npm run package:build && npm run package:plan-scan && npm run package:plan-integration",
+    "package": "npm run package:plan && npm run package:build && npm run package:plan-scan && npm run package:plan-integration && npm run package:publish",
     "package:build": "npx ncc build src/build.ts -o dist/build --source-map --license licenses.txt",
     "package:plan": "npx ncc build src/plan.ts -o dist/plan --source-map --license licenses.txt",
     "package:plan-scan": "npx ncc build src/plan-scan.ts -o dist/plan-scan --source-map --license licenses.txt",
     "package:plan-integration": "npx ncc build src/plan-integration.ts -o dist/plan-integration --source-map --license licenses.txt",
+    "package:publish": "npx ncc build src/publish.ts -o dist/publish --source-map --license licenses.txt",
+
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
@@ -46,6 +48,7 @@
     "@actions/exec": "^1.1.1",
     "@actions/github": "^6.0.0",
     "@actions/glob": "^0.4.0",
+    "charmhub-upload-action": "github:canonical/charming-actions",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

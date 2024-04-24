@@ -78,11 +78,6 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-  get-runner-image:
-    name: Get runner image
-    uses: ./.github/workflows/get_runner_image.yaml
-    with:
-      working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
     needs: [branch-up-to-date-check-enabled]
@@ -102,213 +97,18 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-  get-run-id:
-    name: Get workflow run id
-    needs: [branch-up-to-date-check-enabled]
-    runs-on: ubuntu-22.04
-    outputs:
-      run-id: ${{ env.RUN_ID }}
-    steps:
-      - name: Get workflow run id
-        if: ${{ github.event_name == 'push' }}
-        shell: bash  
-        run: |
-          # Get commit info
-          TREE_SHA=$(gh api \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/commits/${GITHUB_SHA} \
-            --jq '.commit.tree.sha')
-          # Get workflow run id from this specific tree id, paginate until found
-          TOTAL_COUNT=$(gh api \
-            --method GET \
-            -H "Accept: application/vnd.github+json" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            /repos/${{ github.repository }}/actions/runs \
-            -f status=completed \
-            -f event=pull_request | jq ".total_count")
-          PER_PAGE=100
-          MAX_PAGES=$(( (TOTAL_COUNT + 99) / $PER_PAGE ))
-          PAGE=1
-          while true; do
-             RESULT=$( gh api \
-              --method GET \
-              -H "Accept: application/vnd.github+json" \
-              -H "X-GitHub-Api-Version: 2022-11-28" \
-              /repos/${{ github.repository }}/actions/runs \
-              -f page=$PAGE \
-              -f per_page=$PER_PAGE \
-              -f status=completed \
-              -f event=pull_request \
-              --jq "[
-                  .workflow_runs[]
-                  | select(.path == \".github/workflows/integration_test.yaml\")
-                  | select(.head_commit.tree_id == \"$TREE_SHA\")
-                ] | max_by(.updated_at) | .id" 
-              )
-           
-              if [[ -n $RESULT ]]; then
-                  RUN_ID=$RESULT
-                  break
-              fi
-              if [[ "PAGE" -eq "$MAX_PAGES" ]]; then
-                  echo "::error::No workflow run id found for specific tree id"
-                  exit 1
-              fi
-              ((PAGE++))
-          done
-
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-      - name: Get current run id
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash  
-        run: |
-          echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
-  get-images:
-    name: Get images
-    runs-on: ubuntu-22.04
-    outputs:
-      images: ${{ env.IMAGES }}
-    steps:
-      - uses: actions/checkout@v4.1.3
-      - name: Get images
-        working-directory: ${{ inputs.working-directory }}
-        run: |
-          lines=$(find . -type f -name rockcraft.yaml | wc -l)
-          if [ $lines -ne 0 ]; then
-            IMAGES=$(find . -type f -name rockcraft.yaml | xargs -l yq '.name' | jq -Rsc '. / "\n" - [""]')
-          else
-            IMAGES=$(ls *.Dockerfile 2> /dev/null | sed s/\.Dockerfile// |  jq -Rsc '. / "\n" - [""]')
-          fi
-          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
-  publish-images:
-    name: Publish images to charmhub
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-images, get-run-id, get-runner-image]
-    if: ${{ needs.get-images.outputs.images != '[]' }}
-    steps:
-      - uses: actions/checkout@v4.1.3
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
-        name: Change directory
-        run: |
-          TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
-          rm -rf .* * || :
-          cp -rp $TEMP_DIR/. .
-          rm -rf $TEMP_DIR
-      - name: Install charmcraft
-        run: |
-          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
-      - name: Get charm name
-        id: get-charm-name
-        run: |
-          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
-            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
-          fi
-          echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download images artifact
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download images artifact (for testing)
-        uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          name: ${{ env.CHARM_NAME }}-images
-      - name: Publish image
-        env:
-          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
-          CHARMCRAFT_AUTH:  ${{ secrets.CHARMHUB_TOKEN }}
-        run: |
-          charm=${{ env.CHARM_NAME }}
-          declare -a resources
-          declare -a images
-
-          if [ -f metadata.yaml ]; then
-            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' metadata.yaml); do
-              resources+=("$resource")
-            done
-          else
-            for resource in $(yq -er '.resources | with_entries(select(.value.type=="oci-image")) | keys | join(" ")' <(charmcraft expand-extensions)); do
-              resources+=("$resource")
-            done
-          fi
-
-          for image in $(cat ${{ env.CHARM_NAME }}-images); do
-            images+=("$image")
-          done
-
-          for image in "${images[@]}"; do
-            if [[ "${{ inputs.paas-app-charmer-oci-name }}" != "" ]]; then
-                # This is for paas-app-charmer . The main image name (resource oci in charmcraft.yaml) is
-                # defined with the env variable paas-app-charmer-oci-name, and corresponds to the main
-                # image in rockcraft.yaml.
-                resource_name="{{ inputs.paas-app-charmer-oci-name }}"
-            else
-                resource_name=$(echo $image | awk -F '/' '{print $NF}' | cut -d ':' -f 1)-image
-            fi
-            
-            if [[ " ${resources[@]} " =~ " $resource_name " ]]; then
-              docker pull $image
-              image_id=$(docker images $image --format "{{.ID}}")
-              charmcraft upload-resource $charm $resource_name --image=$image_id --verbosity=brief
-            fi
-          done
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [get-run-id, get-runner-image, publish-images]
-    if: ${{ !failure() }}
     steps:
       - uses: actions/checkout@v4.1.3
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
-        name: Change directory
-        run: |
-          TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
-          rm -rf .* * || :
-          cp -rp $TEMP_DIR/. .
-          rm -rf $TEMP_DIR
-      - name: Get charm name
-        id: get-charm-name
-        run: |
-          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
-            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
-          fi
-          echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
-      - name: Download charm artifact
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Download charm artifact (for testing)
-        uses: actions/download-artifact@v4
-        if: ${{ github.event_name == 'pull_request' }}
+      - run: |
+          sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
+          sudo apt-get update
+          sudo apt-get install skopeo -y
+      - uses: canonical/operator-workflows/internal/publish@better-build
         with:
-          name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-      - name: Get charm file
-        run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
-      - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.5.0-rc
-        with:
-          built-charm-path: ${{ env.CHARM_FILE }}
-          charmcraft-channel: ${{ inputs.charmcraft-channel }}
-          credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          channel: ${{ inputs.channel }}
-          tag-prefix: ${{ inputs.tag-prefix }}
-          upload-image: false
+          working-directory: ${{ inputs.working-directory }}
+          workflow-file: workflow_test.yaml
+          workflow-run-id: ${{ github.run_id }}
