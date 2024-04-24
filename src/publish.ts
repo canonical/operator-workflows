@@ -11,29 +11,21 @@ import os from 'os'
 
 class Publish {
   private token: string
-  private channel: string
   private octokit
   private workflowFile: string
   private artifact
   private workingDir: string
   private resourceMapping: { [key: string]: string }
   private workflowRunId: string
-  private charmcraft: Charmcraft
-  private tagger: Tagger
-  private readonly tagPrefix: string
 
   constructor() {
     this.token = core.getInput('github-token')
-    this.channel = core.getInput('channel')
     this.octokit = github.getOctokit(this.token)
     this.workflowFile = core.getInput('workflow-file')
     this.workingDir = core.getInput('working-directory')
     this.resourceMapping = JSON.parse(core.getInput('resource-mapping'))
     this.workflowRunId = core.getInput('workflow-run-id')
     this.artifact = new DefaultArtifactClient()
-    this.charmcraft = new Charmcraft()
-    this.tagger = new Tagger(this.token)
-    this.tagPrefix = core.getInput('tag-prefix')
   }
 
   async findWorkflowRunId(): Promise<number> {
@@ -98,31 +90,23 @@ class Publish {
       )
       for (const resource of images.keys()) {
         core.info(`upload resource ${resource}`)
-        await this.charmcraft.uploadResource(
-          <string>images.get(resource),
+        const imageId = (
+          await exec.getExecOutput('docker', [
+            'images',
+            images.get(resource) as string,
+            '--format',
+            '{{.ID}}'
+          ])
+        ).stdout.trim()
+        await exec.exec('charmcraft', [
+          'upload-resource',
           charmName,
-          resource
-        )
+          resource,
+          `--image=${imageId}`,
+          '--verbosity=brief'
+        ])
       }
-      core.info(`start uploading charms: ${charms}`)
-      const imageResults = await this.charmcraft.uploadResources({})
-      const fileResults = await this.charmcraft.fetchFileFlags({})
-      const staticResults = this.charmcraft.buildStaticFlags({})
-      const resourceInfo = [
-        imageResults.resourceInfo,
-        fileResults.resourceInfo,
-        staticResults.resourceInfo
-      ].join('\n')
-
-      const flags = [
-        ...imageResults.flags,
-        ...fileResults.flags,
-        ...staticResults.flags
-      ]
-
-      for (const charm of charms) {
-        core.info(`upload charm ${charm}`)
-      }
+      core.setOutput('charms', charms.join(','))
     } catch (error) {
       // Fail the workflow run if an error occurs
       if (error instanceof Error) {
