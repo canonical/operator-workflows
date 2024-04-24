@@ -88,7 +88,10 @@ class Publish {
       core.info(`start uploading charms: ${charms}`)
     } catch (error) {
       // Fail the workflow run if an error occurs
-      if (error instanceof Error) core.setFailed(error.message)
+      if (error instanceof Error) {
+        core.error(`${error.message}\n${error.stack}`)
+        core.setFailed(error.message)
+      }
     }
   }
 
