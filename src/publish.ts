@@ -171,7 +171,7 @@ class Publish {
       }
       const resourceName = this.resourceMapping.hasOwnProperty(build.name)
         ? this.resourceMapping[build.name]
-        : `${build}-image`
+        : `${build.name}-image`
       if (!resources.includes(resourceName)) {
         core.info(`skip uploading image: ${build.name}`)
         continue
