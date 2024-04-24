@@ -158,6 +158,7 @@ class Publish {
 
   async getImages(): Promise<Map<string, string>> {
     const resources = await this.getImageResources()
+    core.info(`required resources: ${resources}`)
     const upload: Map<string, string> = new Map()
     if (resources.length === 0) {
       return upload
