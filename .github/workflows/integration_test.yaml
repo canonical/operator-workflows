@@ -205,7 +205,7 @@ jobs:
       rockcraft-ref: ${{ inputs.rockcraft-ref }}
   all-images:
     name: Get rocks or Docker images
-    needs: [ build-images, build-rocks ]
+    needs: [build-images, build-rocks]
     runs-on: ubuntu-latest
     outputs:
       images: ${{ env.IMAGES }}
@@ -222,6 +222,9 @@ jobs:
     name: Build and push charm
     needs: get-runner-image
     runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.run_id }}
+      cancel-in-progress: true
     outputs:
       charm-file: ${{ env.CHARM_FILE }}
     steps:
@@ -331,7 +334,7 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ all-images, build-charm, get-runner-image ]
+    needs: [all-images, build-charm, get-runner-image]
     if: ${{ !failure() }}
     secrets: inherit
     with:
