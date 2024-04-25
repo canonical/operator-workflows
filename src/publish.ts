@@ -109,7 +109,7 @@ class Publish {
             `--image=${imageId}`,
             '--verbosity=brief'
           ],
-          { env: { CHARMHUB_TOKEN: this.charmhubToken } }
+          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
         )
       }
       core.setOutput('charms', charms.join(','))
