@@ -48,9 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         with:
           route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
-          repo: ${{ github.event.repository.name }}
-          owner: ${{ github.event.repository.owner.login }}
-          branch: main
       - run: |
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
             echo "::error::Strict checks are not enabled for this repository"
