@@ -123,6 +123,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
+          ls -lah
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
