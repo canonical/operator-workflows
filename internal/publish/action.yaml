@@ -20,6 +20,9 @@ inputs:
   workflow-run-id:
     description: workflow-run-id.
     default: ''
+  identifier:
+    description: identifier
+    default: ''
 outputs:
   charms:
     description: charms.

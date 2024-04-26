@@ -6,6 +6,9 @@ inputs:
     description: Working directory for operator-workflows workflows.
     default: '.'
     required: true
+  identifier:
+    description: identifier
+    default: ''
 outputs:
   plan:
     description: The generated plan for the entire workflow.

@@ -30,6 +30,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
+      identity: test-upload
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       juju-channel: 3.1/stable
@@ -64,6 +65,7 @@ jobs:
     secrets: inherit
     needs: [integration, integration-juju3, integration-rock, integration-craft]
     with:
+      identity: test-upload
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
 #  check:

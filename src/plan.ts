@@ -126,7 +126,11 @@ async function planBuild(workingDir: string, id: string): Promise<BuildPlan[]> {
 
 export async function run(): Promise<void> {
   try {
-    const id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
+    let id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
+    const identifier = core.getInput('identifier')
+    if (identifier) {
+      id = `-${identifier}`
+    }
     const workingDir: string = normalizePath(core.getInput('working-directory'))
     const buildPlans = await planBuild(workingDir, id)
     const plan: Plan = {

@@ -18,6 +18,7 @@ class Publish {
   private workingDir: string
   private resourceMapping: { [key: string]: string }
   private workflowRunId: string
+  private identifier: string
 
   constructor() {
     this.token = core.getInput('github-token')
@@ -27,6 +28,7 @@ class Publish {
     this.workingDir = core.getInput('working-directory')
     this.resourceMapping = JSON.parse(core.getInput('resource-mapping'))
     this.workflowRunId = core.getInput('workflow-run-id')
+    this.identifier = core.getInput('identifier')
     this.artifact = new DefaultArtifactClient()
   }
 
@@ -137,7 +139,7 @@ class Publish {
         }
       )
     )
-      .filter(a => a.name.endsWith('__plan'))
+      .filter(a => a.name.endsWith(`${this.identifier}__plan`))
       .sort()
     if (artifacts.length === 0) {
       throw new Error(`can't find plan artifact for workflow run ${runId}`)
