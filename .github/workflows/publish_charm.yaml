@@ -112,7 +112,8 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
           workflow-run-id: ${{ github.repository == 'canonical/operator-workflows' && github.run_id || '' }}
-      - uses: canonical/operator-workflows/internal/publish@better-build
+      - name: Upload charm to charmhub
+        uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
           built-charm-path: ${{ steps.publish.outputs.charms }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}

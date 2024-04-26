@@ -182,7 +182,7 @@ jobs:
         with:
           working-directory: ${{ inputs.working-directory }}
   build:
-    name: Build ${{ matrix.build.type }} (${{ matrix.build.source_directory }})
+    name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
     runs-on: ubuntu-latest
     strategy:

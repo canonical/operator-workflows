@@ -14,9 +14,6 @@ inputs:
   working-directory:
     description: working-directory.
     default: '.'
-  resource-mapping:
-    description: resource-mapping.
-    default: '{}'
   workflow-run-id:
     description: workflow-run-id.
     default: ''
