@@ -26,6 +26,8 @@ inputs:
 outputs:
   charms:
     description: charms.
+  charm-directory:
+    description: charm-directory.
 runs:
   using: node20
   main: ../../dist/publish/index.js

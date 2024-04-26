@@ -87,7 +87,11 @@ class Publish {
       const images = await this.getImages()
       core.endGroup()
       core.startGroup('retrieve charm info')
-      const [charmName, charms] = await this.getCharms()
+      const {
+        name: charmName,
+        dir: charmDir,
+        files: charms
+      } = await this.getCharms()
       core.endGroup()
       core.info(
         `start uploading image resources: ${JSON.stringify(Object.fromEntries([...images]))}`
@@ -115,6 +119,7 @@ class Publish {
         )
       }
       core.setOutput('charms', charms.join(','))
+      core.setOutput('charm-directory', charmDir)
     } catch (error) {
       // Fail the workflow run if an error occurs
       if (error instanceof Error) {
@@ -262,7 +267,7 @@ class Publish {
     return upload
   }
 
-  async getCharms(): Promise<[string, string[]]> {
+  async getCharms(): Promise<{ name: string; dir: string; files: string[] }> {
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
     const charms = plan.build.filter(b => b.type === 'charm')
@@ -298,10 +303,11 @@ class Publish {
     const manifest = JSON.parse(
       fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
     )
-    return [
-      manifest.name as string,
-      (manifest.files as string[]).map(f => path.join(tmp, f))
-    ]
+    return {
+      name: manifest.name as string,
+      dir: charm.source_directory,
+      files: (manifest.files as string[]).map(f => path.join(tmp, f))
+    }
   }
 }
 

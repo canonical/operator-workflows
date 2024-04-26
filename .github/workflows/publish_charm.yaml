@@ -116,6 +116,13 @@ jobs:
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
           workflow-run-id: ${{ github.repository == 'canonical/operator-workflows' && github.run_id || '' }}
+      - name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ${{ steps.publish.outputs.charm-directory }} $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.5.0-rc
         with:
