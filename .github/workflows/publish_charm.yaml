@@ -102,8 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.1.3
-      - run: |
-          sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
+      - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
       - uses: canonical/operator-workflows/internal/publish@better-build
         id: publish
         with:
