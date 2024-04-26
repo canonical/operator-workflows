@@ -6,8 +6,8 @@ inputs:
     description: Working directory for operator-workflows workflows.
     default: '.'
     required: true
-  identifier:
-    description: identifier
+  identity:
+    description: identity
     default: ''
 outputs:
   plan:
