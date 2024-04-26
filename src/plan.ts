@@ -129,7 +129,7 @@ export async function run(): Promise<void> {
     let id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
     const identifier = core.getInput('identifier')
     if (identifier) {
-      id = `-${identifier}`
+      id = `${id}-${identifier}`
     }
     const workingDir: string = normalizePath(core.getInput('working-directory'))
     const buildPlans = await planBuild(workingDir, id)
