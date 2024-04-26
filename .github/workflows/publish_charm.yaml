@@ -14,6 +14,10 @@ on:
         type: string
         description: The directory for the charm under the working-directory
         default: "."
+      identity:
+        type: string
+        description: identity
+        default: ""
       paas-app-charmer-oci-name:
         type: string
         description: |
