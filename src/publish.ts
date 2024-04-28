@@ -251,10 +251,13 @@ class Publish {
         }
         const file = files[0]
         const image = `${build.name}:${file}`
+        const archiveType = file.endsWith('.rock')
+          ? 'oci-archive'
+          : 'docker-archive'
         await exec.exec('skopeo', [
           'copy',
           '--insecure-policy',
-          `oci-archive:${path.join(tmp, file)}`,
+          `${archiveType}:${path.join(tmp, file)}`,
           `docker-daemon:${image}`
         ])
         upload.set(resourceName, image)
