@@ -63,7 +63,7 @@ jobs:
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
-    needs: [integration, integration-juju3, integration-rock, integration-craft]
+    needs: [ integration-juju3 ]
     with:
       identity: test-upload
       channel: latest/edge
