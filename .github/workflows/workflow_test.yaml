@@ -36,6 +36,19 @@ jobs:
       juju-channel: 3.1/stable
       provider: lxd
       test-tox-env: "integration-juju3.1"
+  integration-artifact:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      identifier: test-upload-artifact
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      juju-channel: 3.1/stable
+      provider: lxd
+      test-tox-env: "integration-juju3.1"
+      upload-image: artifact
+      microk8s-addons: "dns ingress rbac storage registry"
+
 #  integration-self-hosted:
 #    uses: ./.github/workflows/integration_test.yaml
 #    secrets: inherit
@@ -49,6 +62,13 @@ jobs:
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+  integration-rock-artifact:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      upload-image: artifact
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
   integration-craft:
     uses: ./.github/workflows/integration_test.yaml
@@ -68,6 +88,15 @@ jobs:
       identifier: test-upload
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
+  publish-artifact:
+    uses: ./.github/workflows/publish_charm.yaml
+    secrets: inherit
+    needs: [ publish, integration-artifact ]
+    with:
+      identifier: test-upload-artifact
+      channel: latest/edge
+      working-directory: tests/workflows/integration/test-upload-charm/
+
 #  check:
 #    runs-on: ubuntu-latest
 #    if: always() && !cancelled()

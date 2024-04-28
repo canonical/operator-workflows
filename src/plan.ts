@@ -18,7 +18,6 @@ function sanitizeArtifactName(name: string): string {
 
 function fromFork(): boolean {
   const context = github.context
-  return true
   if (context.payload.action !== 'pull_request') {
     return false
   }
@@ -71,7 +70,8 @@ async function planBuildCharm(
 
 async function planBuildRock(
   workingDir: string,
-  id: string
+  id: string,
+  outputType: 'file' | 'registry'
 ): Promise<BuildPlan[]> {
   const rockcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'rockcraft.yaml'))
@@ -88,7 +88,7 @@ async function planBuildRock(
       name,
       source_file: file,
       source_directory: path.dirname(file),
-      output_type: fromFork() ? 'file' : 'registry',
+      output_type: outputType,
       output: sanitizeArtifactName(`${id}__build__output__rock__${name}`)
     }
   })
@@ -96,7 +96,8 @@ async function planBuildRock(
 
 async function planBuildDockerImage(
   workingDir: string,
-  id: string
+  id: string,
+  outputType: 'file' | 'registry'
 ): Promise<BuildPlan[]> {
   const dockerFiles = await (
     await glob.create(path.join(workingDir, '**', '*.Dockerfile'))
@@ -109,7 +110,7 @@ async function planBuildDockerImage(
       name,
       source_file: file,
       source_directory: path.dirname(file),
-      output_type: fromFork() ? 'file' : 'registry',
+      output_type: outputType,
       output: sanitizeArtifactName(
         `${id}__build__output__docker-image__${name}`
       )
@@ -117,11 +118,15 @@ async function planBuildDockerImage(
   })
 }
 
-async function planBuild(workingDir: string, id: string): Promise<BuildPlan[]> {
+async function planBuild(
+  workingDir: string,
+  id: string,
+  imageOutputType: 'file' | 'registry'
+): Promise<BuildPlan[]> {
   return [
     ...(await planBuildCharm(workingDir, id)),
-    ...(await planBuildRock(workingDir, id)),
-    ...(await planBuildDockerImage(workingDir, id))
+    ...(await planBuildRock(workingDir, id, imageOutputType)),
+    ...(await planBuildDockerImage(workingDir, id, imageOutputType))
   ]
 }
 
@@ -133,7 +138,23 @@ export async function run(): Promise<void> {
       id = `${id}-${identity}`
     }
     const workingDir: string = normalizePath(core.getInput('working-directory'))
-    const buildPlans = await planBuild(workingDir, id)
+    let imageOutputType: 'file' | 'registry'
+    const uploadImage = core.getInput('upload-image')
+    switch (uploadImage) {
+      case '':
+        imageOutputType = fromFork() ? 'file' : 'registry'
+        break
+      case 'artifact':
+        imageOutputType = 'file'
+        break
+      case 'registry':
+        imageOutputType = 'registry'
+        break
+      default:
+        core.setFailed(`unknown upload-image input: ${uploadImage}`)
+        return
+    }
+    const buildPlans = await planBuild(workingDir, id, imageOutputType)
     const plan: Plan = {
       working_directory: workingDir,
       build: buildPlans

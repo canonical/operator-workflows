@@ -9,6 +9,9 @@ inputs:
   identifier:
     description: identifier
     default: ''
+  upload-image:
+    description: upload-image
+    default: ''
 outputs:
   plan:
     description: The generated plan for the entire workflow.

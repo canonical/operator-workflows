@@ -129,6 +129,9 @@ on:
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      upload-image:
+        type: string
+        default: ""
       working-directory:
         type: string
         description: The working directory for jobs
@@ -185,7 +188,9 @@ jobs:
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
+          upload-image: ${{ inputs.upload-image }}
           working-directory: ${{ inputs.working-directory }}
+
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
