@@ -232,6 +232,10 @@ jobs:
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
+      - if: endsWith( matrix.scan.file, '.rock')
+        run: |
+          skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
+          mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
       - if: matrix.scan.image != ''
         run: |
           docker image pull ${{ matrix.scan.image }}
