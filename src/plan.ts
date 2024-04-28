@@ -133,7 +133,7 @@ async function planBuild(
 export async function run(): Promise<void> {
   try {
     let id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
-    const identity = core.getInput('identity')
+    const identity = core.getInput('identifier')
     if (identity) {
       id = `${id}-${identity}`
     }
