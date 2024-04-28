@@ -279,7 +279,7 @@ async function buildRock({
       JSON.stringify(
         {
           name: plan.name,
-          files: [rocks.map(f => path.basename(f))]
+          files: rocks.map(f => path.basename(f))
         },
         null,
         2
