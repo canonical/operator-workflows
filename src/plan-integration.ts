@@ -36,11 +36,14 @@ export async function run(): Promise<void> {
         if ('files' in manifest) {
           for (const file of manifest.files as string[]) {
             const image = `localhost:32000/${name}:${file.replace(`${name}_`, '')}`
+            const archiveType = file.endsWith('.rock')
+              ? 'oci-archive'
+              : 'docker-archive'
             await exec.exec('skopeo', [
               'copy',
               '--insecure-policy',
               '--dest-tls-verify=false',
-              `oci-archive:${path.join(tmp, file)}`,
+              `${archiveType}:${path.join(tmp, file)}`,
               `docker://${image}`
             ])
             args.push(`--${name}-image=${image}`)

@@ -69,6 +69,7 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       upload-image: artifact
+      microk8s-addons: "dns ingress rbac storage registry"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
   integration-craft:
     uses: ./.github/workflows/integration_test.yaml
