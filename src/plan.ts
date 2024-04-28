@@ -134,8 +134,12 @@ export async function run(): Promise<void> {
   try {
     let id = `${new Date().toISOString().replaceAll(':', '-').replace(/\..+/, '')}-${crypto.randomUUID().split('-')[3]}`
     const identity = core.getInput('identifier')
+    if (identity.includes('__')) {
+      core.setFailed('identifier can not contain "__"')
+      return
+    }
     if (identity) {
-      id = `${id}-${identity}`
+      id = `${id}__${identity}`
     }
     const workingDir: string = normalizePath(core.getInput('working-directory'))
     let imageOutputType: 'file' | 'registry'

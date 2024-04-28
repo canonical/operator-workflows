@@ -144,7 +144,11 @@ class Publish {
         }
       )
     )
-      .filter(a => a.name.endsWith(`${this.identifier}__plan`))
+      .filter(a =>
+        a.name.endsWith(
+          `${this.identifier ? '__' : ''}${this.identifier}__plan`
+        )
+      )
       .sort()
     if (artifacts.length === 0) {
       throw new Error(`can't find plan artifact for workflow run ${runId}`)
