@@ -14,9 +14,9 @@ on:
         type: string
         description: The directory for the charm under the working-directory
         default: "."
-      identity:
+      identifier:
         type: string
-        description: identity
+        description: identifier
         default: ""
       paas-app-charmer-oci-name:
         type: string
@@ -112,7 +112,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
-          identity: ${{ inputs.identity }}
+          identifier: ${{ inputs.identifier }}
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
           workflow-run-id: ${{ github.repository == 'canonical/operator-workflows' && github.run_id || '' }}

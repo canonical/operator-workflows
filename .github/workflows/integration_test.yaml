@@ -44,8 +44,8 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
-      identity:
-        description: identity
+      identifier:
+        description: identifier
         type: string
         default: ''
       load-test-enabled:
@@ -184,7 +184,7 @@ jobs:
       - uses: canonical/operator-workflows/internal/plan@better-build
         id: plan
         with:
-          identity: ${{ inputs.identity }}
+          identifier: ${{ inputs.identifier }}
           working-directory: ${{ inputs.working-directory }}
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
