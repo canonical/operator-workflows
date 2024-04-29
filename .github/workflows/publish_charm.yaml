@@ -10,10 +10,6 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
-      charm-directory:
-        type: string
-        description: The directory for the charm under the working-directory
-        default: "."
       identifier:
         type: string
         description: identifier
@@ -49,9 +45,10 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
+    needs: [publish-charm]
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
     steps:
       - uses: actions/checkout@v4.1.4
       - name: Search for docs folder
@@ -66,17 +63,16 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+          charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.4
-      - if: ${{ inputs.working-directory }}/${{ inputs.charm-directory }} != './/.'
-        name: Change directory
+      - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{ inputs.working-directory }}/${{ inputs.charm-directory }}/. $TEMP_DIR
+          cp -rp ${{ needs.publish-charm.outputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -88,6 +84,8 @@ jobs:
   publish-charm:
     name: Publish charm to ${{ inputs.channel }}
     runs-on: ubuntu-latest
+    outputs:
+      charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
       - uses: actions/checkout@v4.1.3
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
