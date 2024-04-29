@@ -13,7 +13,8 @@ on:
       identifier:
         type: string
         description: identifier
-        default: ""
+        default: >-
+          The matching integration test workflow job identifier, see identifier in the integration test workflow input.
       paas-app-charmer-oci-name:
         type: string
         description: |
@@ -34,7 +35,10 @@ on:
         type: string
         default: latest/stable
       workflow-run-id:
-        description: workflow-run-id
+        description: >-
+          Use the newly built charms and images in this workflow run as the new version to upload. 
+          If these are not provided, the system will default to using charms and rocks from the most 
+          recent successful integration test that matches the git tree ID.
         type: string
         default: ""
 env:

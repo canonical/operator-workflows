@@ -47,7 +47,9 @@ on:
       identifier:
         description: identifier
         type: string
-        default: ''
+        default: >-
+          Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
+          running within the same workflow. It is recommended to set this identifier to the job name.
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -131,6 +133,12 @@ on:
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
       upload-image:
         type: string
+        description: >-
+          Can be either 'artifact' or 'registry', which determines the method by which images used 
+          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
+          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
+          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
+          originating from forked repositories, and 'registry' for all other cases.
         default: ""
       working-directory:
         type: string
@@ -167,10 +175,6 @@ on:
       zap-rules-file-name:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
-    outputs:
-      images:
-        description: Pushed images
-        value: ${{ jobs.all-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
