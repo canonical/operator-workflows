@@ -98,23 +98,32 @@ jobs:
       identifier: test-upload-artifact
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
-
-#  check:
-#    runs-on: ubuntu-latest
-#    if: always() && !cancelled()
-#    timeout-minutes: 5
-#    needs:
-#      - simple
-#      - simple-self-hosted
-#      - integration
-#      - integration-juju3
-#      - integration-rock
-#      - publish
-#    steps:
-#      - run: |
-#          [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
-#          [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
-#          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
-#          [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
-#          [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
-#          [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
+  check:
+    runs-on: ubuntu-latest
+    if: always() && !cancelled()
+    timeout-minutes: 5
+    needs:
+      - simple
+      - simple-self-hosted
+      - integration
+      - integration-juju3
+      - integration-artifact
+      - integration-self-hosted
+      - integration-rock
+      - integration-rock-artifact
+      - integration-craft
+      - publish
+      - publish-artifact
+    steps:
+      - run: |
+          [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
+          [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
+          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
+          [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
+          [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock failed && false)
+          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-rock failed && false)
+          [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
+          [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
