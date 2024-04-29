@@ -280,7 +280,7 @@ jobs:
         run: |
           sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
 
-      - uses: actions/checkout@v4.1.1
+      - uses: actions/checkout@v4.1.4
 
       - name: Get charm dir
         working-directory: ${{ inputs.working-directory }}
