@@ -37,7 +37,10 @@ on:
         description: Charmcraft channel to use for publishing the charm and resources
         type: string
         default: latest/stable
-
+      workflow-run-id:
+        description: workflow-run-id
+        type: string
+        default: ""
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
@@ -96,7 +99,7 @@ jobs:
           identifier: ${{ inputs.identifier }}
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
-          workflow-run-id: ${{ github.repository == 'canonical/operator-workflows' && github.run_id || '' }}
+          workflow-run-id: ${{ inputs.workflow-run-id }}
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)

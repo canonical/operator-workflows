@@ -90,6 +90,7 @@ jobs:
       identifier: test-upload
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
+      workflow-run-id: ${{ github.run_id }}
   publish-artifact:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -98,6 +99,7 @@ jobs:
       identifier: test-upload-artifact
       channel: latest/edge
       working-directory: tests/workflows/integration/test-upload-charm/
+      workflow-run-id: ${{ github.run_id }}
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
