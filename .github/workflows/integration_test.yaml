@@ -45,11 +45,11 @@ on:
         type: string
         default: 2.9/stable
       identifier:
-        description: identifier
         type: string
-        default: >-
+        description: >-
           Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
           running within the same workflow. It is recommended to set this identifier to the job name.
+        default: ""
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
