@@ -12,9 +12,9 @@ on:
         description: 'Destination Channel'
       identifier:
         type: string
-        description: identifier
-        default: >-
+        description: >-
           The matching integration test workflow job identifier, see identifier in the integration test workflow input.
+        default: ""
       paas-app-charmer-oci-name:
         type: string
         description: |
