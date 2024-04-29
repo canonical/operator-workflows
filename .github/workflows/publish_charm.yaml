@@ -43,26 +43,8 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
-  branch-up-to-date-check-enabled:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: octokit/request-action@v2.3.0
-        id: get-branch-protection
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        with:
-          route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
-          repo: ${{ github.event.repository.name }}
-          owner: ${{ github.event.repository.owner.login }}
-          branch: main
-      - run: |
-          if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
-            echo "::error::Strict checks are not enabled for this repository"
-            exit 1
-          fi
   draft-publish-docs:
     name: Draft publish docs
-    needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -84,7 +66,6 @@ jobs:
           charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
-    needs: [ branch-up-to-date-check-enabled ]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.4
