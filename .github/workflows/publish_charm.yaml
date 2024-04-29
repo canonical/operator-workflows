@@ -71,12 +71,13 @@ jobs:
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-22.04
+    needs: [ publish-charm ]
     steps:
       - uses: actions/checkout@v4.1.4
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{ needs.publish-charm.outputs.charm-directory }}/. $TEMP_DIR
+          cp -rp ./${{ needs.publish-charm.outputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
@@ -105,7 +106,7 @@ jobs:
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ${{ steps.publish.outputs.charm-directory }}/. $TEMP_DIR
+          cp -rp ./${{ steps.publish.outputs.charm-directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
