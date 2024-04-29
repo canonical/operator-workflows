@@ -3,7 +3,7 @@ description: Artifact building for operator-workflows
 author: is-devops-team@canonical.com
 inputs:
   build-plan:
-    description: Working directory for operator-workflows workflows.
+    description: Build plan.
     required: true
   charmcraft-channel:
     description: Charmcraft channel to use for the integration test
