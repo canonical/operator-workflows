@@ -77,7 +77,8 @@ class Publish {
       }
     }
     throw new Error(
-      `failed to find integration workflow run with tree id (${tree})`
+      `Failed to find integration test workflow run on tree id (${tree}).` +
+        "Consider enabling the 'Require branches to be up to date before merging' setting to ensure that the integration tests are executed on the merged commit"
     )
   }
 
