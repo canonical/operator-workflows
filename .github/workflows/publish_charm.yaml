@@ -42,6 +42,11 @@ jobs:
   branch-up-to-date-check-enabled:
     runs-on: ubuntu-22.04
     steps:
+      - env:
+          BRANCH: ${{ github.base_ref || github.ref }}
+        run: |
+          BRANCH=${BRANCH#refs/heads/}  # strip off refs/heads/ if it exists
+          echo "BRANCH=${BRANCH}" >> "$GITHUB_OUTPUT"
       - uses: octokit/request-action@v2.3.0
         id: get-branch-protection
         env:
@@ -50,10 +55,10 @@ jobs:
           route: GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks
           repo: ${{ github.event.repository.name }}
           owner: ${{ github.event.repository.owner.login }}
-          branch: main
+          branch: ${{ env.BRANCH }} 
       - run: |
           if [ ${{ fromJson(steps.get-branch-protection.outputs.data).strict }} != "true" ]; then
-            echo "::error::Strict checks are not enabled for this repository"
+            echo "::error::Strict checks are not enabled for this repository's branch"
             exit 1
           fi
   draft-publish-docs:
