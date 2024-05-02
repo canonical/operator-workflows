@@ -10,6 +10,20 @@ on:
         required: true
         type: string
         description: 'Destination Channel'
+      artifact-format:
+        type: string
+        default: ""
+        description: |
+          Charm and Image gh artifacts are generally stored with the following names
+            * ${CHARM_NAME}-charm
+            * ${CHARM_NAME}-images
+
+          If publishing for multiple architectures, it may be necessary for the same
+          action run to publish multiple artifacts with different names for the same
+          charm.  (eg: different charm files, different oci-images)
+
+          Set this to ${CHARM_NAME}-arm64 to change the prefix to those artifacts
+          Unset, and it will default to the current behavior
       charm-directory:
         type: string
         description: The directory for the charm under the working-directory
@@ -209,6 +223,12 @@ jobs:
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
           fi
           echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
+          if [ "${{ inputs.artifact-format }}" == "" ]; then
+            echo "CHARM_IMAGES=${CHARM_NAME}-images" >> $GITHUB_ENV
+          else
+            echo "Adjusting artifact format"
+            echo "CHARM_IMAGES=${{ inputs.artifact-format }}-images" | tee -a $GITHUB_ENV
+          fi
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -218,14 +238,14 @@ jobs:
       - name: Download images artifact
         if: ${{ github.event_name == 'push' }}
         run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-images
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_IMAGES }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download images artifact (for testing)
         uses: actions/download-artifact@v4
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          name: ${{ env.CHARM_NAME }}-images
+          name: ${{ env.CHARM_IMAGES }}
       - name: Publish image
         env:
           CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
@@ -245,7 +265,7 @@ jobs:
             done
           fi
 
-          for image in $(cat ${{ env.CHARM_NAME }}-images); do
+          for image in $(cat ${{ env.CHARM_IMAGES }}); do
             images+=("$image")
           done
 
@@ -288,17 +308,23 @@ jobs:
             CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
           fi
           echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
+          if [ "${{ inputs.artifact-format }}" == "" ]; then
+            echo "CHARM_ARTIFACT=${CHARM_NAME}-charm" >> $GITHUB_ENV
+          else
+            echo "Adjusting artifact format"
+            echo "CHARM_ARTIFACT=${{ inputs.artifact-format }}-charm" | tee -a $GITHUB_ENV
+          fi
       - name: Download charm artifact
         if: ${{ github.event_name == 'push' }}
         run: |
-          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_NAME }}-charm
+          gh run download ${{ needs.get-run-id.outputs.run-id }} -R ${{ github.repository }} -n ${{ env.CHARM_ARTIFACT }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Download charm artifact (for testing)
         uses: actions/download-artifact@v4
         if: ${{ github.event_name == 'pull_request' }}
         with:
-          name: ${{ env.CHARM_NAME }}-charm
+          name: ${{ env.CHARM_ARTIFACT }}
           path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
       - name: Get charm file
         run: echo "CHARM_FILE=$(ls ${{ env.CHARM_NAME }}_*.charm)" >> $GITHUB_OUTPUT
