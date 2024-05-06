@@ -247,10 +247,19 @@ class Publish {
     return upload
   }
 
+  normalizePath(p: string): string {
+    return path.normalize(p).replace(/\/+$/, '')
+  }
+
   async getCharms(): Promise<{ name: string; dir: string; files: string[] }> {
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
-    const charms = plan.build.filter(b => b.type === 'charm')
+    const charms = plan.build.filter(
+      b =>
+        b.type === 'charm' &&
+        this.normalizePath(b.source_directory) ===
+          this.normalizePath(this.workingDir)
+    )
     if (charms.length === 0) {
       throw new Error('no charm to upload')
     }
