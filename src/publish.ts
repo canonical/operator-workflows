@@ -113,7 +113,15 @@ class Publish {
           `${this.identifier ? '__' : ''}${this.identifier}__plan`
         )
       )
-      .sort()
+      .sort((a, b) => {
+        if (a.name < b.name) {
+          return -1
+        }
+        if (a.name > b.name) {
+          return 1
+        }
+        return 0
+      })
     if (artifacts.length === 0) {
       throw new Error(`can't find plan artifact for workflow run ${runId}`)
     }
