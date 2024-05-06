@@ -13,7 +13,7 @@ This workflow executes the default tox targets defined in the `tox.ini` file and
 Posts the content of the artifact specified as a comment in a PR. It needs to be triggered from a PR triggered workflow.
 
 ### Integration Test Workflow (`canonical/operator-workflows/.github/workflows/integration_test.yaml@main`)
-Builds the existing Dockerfiles, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. See [the workflow file](.github/workflows/integration_test.yaml) for workflow inputs.
+Builds the existing docker or rock images, if any, and executes the `integration` test target defined in the `tox.ini` file. The tox environment used can be changed with the `test-tox-env` input. See [the workflow file](.github/workflows/integration_test.yaml) for workflow inputs.
 
 More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 

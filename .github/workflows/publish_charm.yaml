@@ -15,6 +15,13 @@ on:
         description: >-
           The matching integration test workflow job identifier, see identifier in the integration test workflow input.
         default: ""
+      resource-mapping:
+        type: string
+        description: >-
+          Associate rock image names with corresponding resource names specified in the charm metadata. 
+          If not defined, the suffix '-image' to the rock image name will be append. 
+          For instance, a rock image named 'my-rock' will be uploaded as the charm OCI resource named 'my-rock-image'.
+        default: "{}"
       paas-app-charmer-oci-name:
         type: string
         description: |
@@ -60,6 +67,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
           identifier: ${{ inputs.identifier }}
+          resource-mapping: ${{ inputs.resource-mapping }}
           working-directory: ${{ inputs.working-directory }}
           workflow-file: workflow_test.yaml
           workflow-run-id: ${{ inputs.workflow-run-id }}

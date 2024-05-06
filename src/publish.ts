@@ -32,6 +32,10 @@ class Publish {
     this.artifact = new DefaultArtifactClient()
   }
 
+  mkdtemp(): string {
+    return fs.mkdtempSync(path.join(os.tmpdir(), 'artifact-'))
+  }
+
   async findWorkflowRunId(): Promise<number> {
     if (this.workflowRunId !== '') {
       return parseInt(this.workflowRunId)
@@ -80,58 +84,6 @@ class Publish {
       `Failed to find integration test workflow run on tree id (${tree}).` +
         "Consider enabling the 'Require branches to be up to date before merging' setting to ensure that the integration tests are executed on the merged commit"
     )
-  }
-
-  async run() {
-    try {
-      core.startGroup('retrieve image info')
-      const images = await this.getImages()
-      core.endGroup()
-      core.startGroup('retrieve charm info')
-      const {
-        name: charmName,
-        dir: charmDir,
-        files: charms
-      } = await this.getCharms()
-      core.endGroup()
-      core.info(
-        `start uploading image resources: ${JSON.stringify(Object.fromEntries([...images]))}`
-      )
-      for (const resource of images.keys()) {
-        core.info(`upload resource ${resource}`)
-        const imageId = (
-          await exec.getExecOutput('docker', [
-            'images',
-            images.get(resource) as string,
-            '--format',
-            '{{.ID}}'
-          ])
-        ).stdout.trim()
-        await exec.exec(
-          'charmcraft',
-          [
-            'upload-resource',
-            charmName,
-            resource,
-            `--image=${imageId}`,
-            '--verbosity=brief'
-          ],
-          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
-        )
-      }
-      core.setOutput('charms', charms.join(','))
-      core.setOutput('charm-directory', charmDir)
-    } catch (error) {
-      // Fail the workflow run if an error occurs
-      if (error instanceof Error) {
-        core.error(`${error.message}\n${error.stack}`)
-        core.setFailed(error.message)
-      }
-    }
-  }
-
-  mkdtemp(): string {
-    return fs.mkdtempSync(path.join(os.tmpdir(), 'artifact-'))
   }
 
   async getPlan(runId: number): Promise<Plan> {
@@ -315,6 +267,54 @@ class Publish {
       name: manifest.name as string,
       dir: charm.source_directory,
       files: (manifest.files as string[]).map(f => path.join(tmp, f))
+    }
+  }
+
+  async run() {
+    try {
+      core.startGroup('retrieve image info')
+      const images = await this.getImages()
+      core.endGroup()
+      core.startGroup('retrieve charm info')
+      const {
+        name: charmName,
+        dir: charmDir,
+        files: charms
+      } = await this.getCharms()
+      core.endGroup()
+      core.info(
+        `start uploading image resources: ${JSON.stringify(Object.fromEntries([...images]))}`
+      )
+      for (const resource of images.keys()) {
+        core.info(`upload resource ${resource}`)
+        const imageId = (
+          await exec.getExecOutput('docker', [
+            'images',
+            images.get(resource) as string,
+            '--format',
+            '{{.ID}}'
+          ])
+        ).stdout.trim()
+        await exec.exec(
+          'charmcraft',
+          [
+            'upload-resource',
+            charmName,
+            resource,
+            `--image=${imageId}`,
+            '--verbosity=brief'
+          ],
+          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
+        )
+      }
+      core.setOutput('charms', charms.join(','))
+      core.setOutput('charm-directory', charmDir)
+    } catch (error) {
+      // Fail the workflow run if an error occurs
+      if (error instanceof Error) {
+        core.error(`${error.message}\n${error.stack}`)
+        core.setFailed(error.message)
+      }
     }
   }
 }

@@ -163,7 +163,7 @@ export async function run(): Promise<void> {
       working_directory: workingDir,
       build: buildPlans
     }
-    core.info(`generate workflow plan: ${JSON.stringify(plan, null, 2)}`)
+    core.info(`generated workflow plan: ${JSON.stringify(plan, null, 2)}`)
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
     const pathFile = path.join(tmp, 'plan.json')

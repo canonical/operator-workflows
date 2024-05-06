@@ -102,7 +102,8 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   }
   core.startGroup('charmcraft pack')
   await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
-    cwd: params.plan.source_directory
+    cwd: params.plan.source_directory,
+    env: { CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const charmFiles = await (
@@ -265,7 +266,8 @@ async function buildRock({
   }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
-    cwd: plan.source_directory
+    cwd: plan.source_directory,
+    env: { ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const rocks = await (
