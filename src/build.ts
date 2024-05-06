@@ -53,7 +53,7 @@ async function buildInstallCharmcraft(
   }
   const charmcraftSnaps = await (await glob.create(charmcraftGlob)).glob()
   if (charmcraftSnaps.length == 0) {
-    throw new Error('can\'t find charmcraft snap')
+    throw new Error("can't find charmcraft snap")
   }
   await exec.exec('sudo', [
     'snap',
@@ -138,10 +138,10 @@ interface BuildDockerImageParams {
 }
 
 async function buildDockerImage({
-                                  plan,
-                                  user,
-                                  token
-                                }: BuildDockerImageParams): Promise<void> {
+  plan,
+  user,
+  token
+}: BuildDockerImageParams): Promise<void> {
   const tag = await gitTreeId(plan.source_directory)
   const imageName = `${plan.name}:${tag}`
   await exec.exec(
@@ -224,7 +224,7 @@ async function buildInstallRockcraft(
   }
   const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
   if (rockcraftSnaps.length == 0) {
-    throw new Error('can\'t find rockcraft snap')
+    throw new Error("can't find rockcraft snap")
   }
   await exec.exec('sudo', [
     'snap',
@@ -248,13 +248,13 @@ interface BuildRockParams {
 }
 
 async function buildRock({
-                           plan,
-                           rockcraftChannel,
-                           rockcraftRepository,
-                           rockcraftRef,
-                           user,
-                           token
-                         }: BuildRockParams): Promise<void> {
+  plan,
+  rockcraftChannel,
+  rockcraftRepository,
+  rockcraftRef,
+  user,
+  token
+}: BuildRockParams): Promise<void> {
   if (rockcraftRepository && rockcraftRef) {
     await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
   } else if (rockcraftChannel) {
