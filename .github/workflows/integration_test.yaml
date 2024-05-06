@@ -249,6 +249,7 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
+      - uses: actions/checkout@v4.1.4
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.19.0
         with:
@@ -259,7 +260,6 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/checkout@v4.1.4
       - name: Check trivyignore
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
