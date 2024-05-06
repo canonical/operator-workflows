@@ -97,6 +97,7 @@ class Publish {
   }
 
   async getPlan(runId: number): Promise<Plan> {
+    core.info(`search plan artifact from workflow run: ${runId}`)
     const artifacts = (
       await this.octokit.paginate(
         this.octokit.rest.actions.listWorkflowRunArtifacts,
@@ -118,7 +119,15 @@ class Publish {
     }
     const artifact = artifacts[artifacts.length - 1]
     const tmp = this.mkdtemp()
-    await this.artifact.downloadArtifact(artifact.id, { path: tmp })
+    await this.artifact.downloadArtifact(artifact.id, {
+      path: tmp,
+      findBy: {
+        token: this.token,
+        repositoryOwner: github.context.repo.owner,
+        repositoryName: github.context.repo.repo,
+        workflowRunId: runId
+      }
+    })
     return JSON.parse(
       fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
     ) as Plan
