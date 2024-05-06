@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd.
+// See LICENSE file for licensing details.
+
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import * as yaml from 'js-yaml'

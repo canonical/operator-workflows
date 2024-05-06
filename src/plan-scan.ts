@@ -1,3 +1,6 @@
+// Copyright 2024 Canonical Ltd.
+// See LICENSE file for licensing details.
+
 import * as core from '@actions/core'
 import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'

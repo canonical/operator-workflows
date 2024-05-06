@@ -31,5 +31,4 @@ header:
     - '.prettierignore'
     - 'dist/**'
     - 'internal/**'
-    - 'src/**'
   comment: on-failure
