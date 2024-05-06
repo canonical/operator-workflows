@@ -51,6 +51,8 @@ class Publish {
       commit_sha: github.context.sha
     })
     const tree = commit.data.tree.sha
+    core.info(`current git tree id: ${tree}`)
+    core.info(`lookup integration test workflow: ${this.workflowFile}`)
     const workflowResp = await this.octokit.rest.actions.getWorkflow({
       owner,
       repo,
@@ -61,6 +63,7 @@ class Publish {
         `failed to find integration workflow (${this.workflowFile}): status ${workflowResp.status}`
       )
     }
+    core.info(`integration test workflow id: ${workflowResp.data.id}`)
     const runIter = this.octokit.paginate.iterator(
       this.octokit.rest.actions.listWorkflowRuns,
       {
