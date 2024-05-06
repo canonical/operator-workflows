@@ -44,6 +44,12 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
+      identifier:
+        type: string
+        description: >-
+          Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
+          running within the same workflow. It is recommended to set this identifier to the job name.
+        default: ""
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -125,6 +131,15 @@ on:
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      upload-image:
+        type: string
+        description: >-
+          Can be either 'artifact' or 'registry', which determines the method by which images used 
+          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
+          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
+          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
+          originating from forked repositories, and 'registry' for all other cases.
+        default: ""
       working-directory:
         type: string
         description: The working directory for jobs
@@ -160,199 +175,134 @@ on:
       zap-rules-file-name:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
-    outputs:
-      images:
-        description: Pushed images
-        value: ${{ jobs.all-images.outputs.images }}
 
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
 
-concurrency:
-  group: operator-workflows-${{ github.workflow }}-integration-tests-${{ github.ref }}-${{ inputs.test-tox-env }}
-  cancel-in-progress: true
-
 jobs:
-  get-runner-image:
-    name: Get runner image
-    uses: ./.github/workflows/get_runner_image.yaml
-    with:
-      working-directory: ${{ inputs.working-directory }}
-  build-images:
-    name: Build image
-    uses: ./.github/workflows/build_images.yaml
-    needs: get-runner-image
-    with:
-      owner: ${{ github.repository_owner }}
-      registry: ghcr.io
-      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-      trivy-image-config: ${{ inputs.trivy-image-config }}
-      working-directory: ${{ inputs.working-directory }}
-      build-args: ${{ inputs.image-build-args }}
-  build-rocks:
-    name: Build rock
-    uses: ./.github/workflows/build_rocks.yaml
-    needs: get-runner-image
-    with:
-      owner: ${{ github.repository_owner }}
-      registry: ghcr.io
-      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-      trivy-image-config: ${{ inputs.trivy-image-config }}
-      working-directory: ${{ inputs.working-directory }}
-      rockcraft-channel: ${{ inputs.rockcraft-channel }}
-      rockcraft-repository: ${{ inputs.rockcraft-repository }}
-      rockcraft-ref: ${{ inputs.rockcraft-ref }}
-  all-images:
-    name: Get rocks or Docker images
-    needs: [ build-images, build-rocks ]
+  plan:
+    name: Plan
     runs-on: ubuntu-latest
     outputs:
-      images: ${{ env.IMAGES }}
+      plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - name: Get rocks or fallback to Docker images
-        run: |
-          if [ ${{ needs.build-rocks.outputs.images != '[]' }} = true ]; then
-            IMAGES='${{ needs.build-rocks.outputs.images }}'
-          else
-            IMAGES='${{ needs.build-images.outputs.images }}'
-          fi
-          echo "IMAGES=$IMAGES" >> $GITHUB_ENV
-  build-charm:
-    name: Build and push charm
-    needs: get-runner-image
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    outputs:
-      charm-file: ${{ env.CHARM_FILE }}
+      - uses: actions/checkout@v4.1.1
+      - uses: canonical/operator-workflows/internal/plan@better-build
+        id: plan
+        with:
+          identifier: ${{ inputs.identifier }}
+          upload-image: ${{ inputs.upload-image }}
+          working-directory: ${{ inputs.working-directory }}
+
+  build:
+    name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
+    needs: [ plan ]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - uses: canonical/setup-lxd@v0.1.1
-
       - uses: actions/checkout@v4
-        if: inputs.charmcraft-repository != ''
+      - uses: canonical/operator-workflows/internal/build@better-build
+        id: build
         with:
-          repository: ${{ inputs.charmcraft-repository }}
-          ref: ${{ inputs.charmcraft-ref }}
-          path: ./charmcraft
-          fetch-depth: 0
+          build-plan: ${{ toJSON(matrix.build) }}
+          charmcraft-channel: ${{ inputs.charmcraft-channel }}
+          charmcraft-ref: ${{ inputs.charmcraft-ref }}
+          charmcraft-repository: ${{ inputs.charmcraft-repository }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          rockcraft-channel: ${{ inputs.rockcraft-channel }}
+          rockcraft-ref: ${{ inputs.rockcraft-ref }}
+          rockcraft-repository: ${{ inputs.rockcraft-repository }}
 
-      - name: Get Charmcraft SHA
-        if: inputs.charmcraft-repository != ''
-        id: charmcraft-sha
-        working-directory: ./charmcraft
-        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-
-      - name: Restore Charmcraft Cache
-        if: inputs.charmcraft-repository != ''
-        id: restore-charmcraft
-        uses: actions/cache/restore@v4
+  plan-scan:
+    name: Plan Image Scanning
+    runs-on: ubuntu-latest
+    needs: [ plan, build ]
+    outputs:
+      scans: ${{ steps.plan-scan.outputs.scans }}
+    steps:
+      - uses: canonical/operator-workflows/internal/plan-scan@better-build
+        id: plan-scan
         with:
-          path: ./charmcraft*.snap
-          key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
+          plan: ${{ needs.plan.outputs.plan }}
 
-      - name: Install Snapcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        run: sudo snap install snapcraft --classic
-
-      - name: Build Charmcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        working-directory: ./charmcraft
-        run: |
-          snapcraft --use-lxd
-          cp charmcraft*.snap ../
-
-      - name: Save Charmcraft Cache
-        uses: actions/cache/save@v4
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
+  scan:
+    name: Scan Image (${{ matrix.scan.file }})
+    runs-on: ubuntu-latest
+    needs: [ plan-scan ]
+    strategy:
+      matrix:
+        scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
+    steps:
+      - uses: actions/download-artifact@v4.1.7
+        if: matrix.scan.artifact != ''
         with:
-          path: ./charmcraft*.snap
-          key: ${{ steps.restore-charmcraft.outputs.cache-primary-key }}
-
-      - name: Install charmcraft
-        if: inputs.charmcraft-repository != ''
-        run: sudo snap install --dangerous --classic charmcraft*.snap
-
-      - name: Clean up
-        if: inputs.charmcraft-repository != ''
-        run: rm -rf *
-
-      - name: Install charmcraft
-        if: inputs.charmcraft-repository == ''
+          name: ${{ matrix.scan.artifact }}
+      - if: endsWith( matrix.scan.file, '.rock')
         run: |
-          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
-
-      - uses: actions/checkout@v4.1.4
-
-      - name: Get charm dir
-        working-directory: ${{ inputs.working-directory }}
-        run: echo "CHARM_DIR=$([ -d charm ] && realpath charm || realpath .)">> $GITHUB_ENV
-
-      - name: Extract charm name
-        working-directory: ${{ env.CHARM_DIR }}
+          skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
+          mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
+      - if: matrix.scan.image != ''
         run: |
-          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
-            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
-          fi
-          echo "CHARM_NAME=$CHARM_NAME">> $GITHUB_ENV
-
-      - name: Pack charm
-        if: ${{ env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ env.CHARM_DIR }}
+          docker image pull ${{ matrix.scan.image }}
+          docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
+      - name: Run Github Trivy Image Action
+        uses: aquasecurity/trivy-action@0.19.0
+        with:
+          input: ${{ matrix.scan.file }}
+          trivy-config: ${{ inputs.trivy-image-config }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
         env:
-          CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4.1.3
+      - name: Check trivyignore
         run: |
-          charmcraft pack -v
-          echo "CHARM_FILE=$(ls $CHARM_NAME_*.charm || echo UNKNOWN)" >> $GITHUB_ENV
-
-      - name: Upload charm artifact
-        if: ${{ !contains(fromJson('["", "UNKNOWN"]'), env.CHARM_FILE) && !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.CHARM_NAME }}-charm
-          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_FILE }}
-          if-no-files-found: error
-          overwrite: true
-
-      - name: Save image names for charm OCI resources
-        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        working-directory: ${{ env.CHARM_DIR }}
-        run: |
-          echo "$(echo '${{ needs.all-images.outputs.images }}' | jq -cr '.[]')" > ${{ env.CHARM_NAME }}-images
-
-      - name: Upload image artifact
-        if: ${{ always() && env.CHARM_NAME != 'UNKNOWN' && !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.CHARM_NAME }}-images
-          path: ${{ env.CHARM_DIR }}/${{ env.CHARM_NAME }}-images
-          if-no-files-found: error
-          overwrite: true
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
+          if [ -f ".trivyignore" ]
+          then
+            output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            line=0
+            while read CVE;
+            do
+              line=$(( line + 1 ))
+              if [[ "$output" != *"$CVE"* ]] && [[ ! "$CVE" =~ ^#.* ]]
+              then
+              echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
+              fi
+            done < .trivyignore
+          fi
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          ROCK_IMAGE: ${{ env.IMAGE_REF }}
 
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ all-images, build-charm, get-runner-image ]
+    needs: [ plan, build ]
     if: ${{ !failure() }}
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
-      charm-file: ${{ needs.build-charm.outputs.charm-file }}
       charmcraft-ref: ${{ inputs.charmcraft-ref }}
       charmcraft-repository: ${{ inputs.charmcraft-repository }}
-      charm-directory: ${{ inputs.charm-directory }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
-      images: ${{ needs.all-images.outputs.images }}
       juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
+      plan: ${{ needs.plan.outputs.plan }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
       registry: ghcr.io
-      runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
       self-hosted-runner: ${{ inputs.self-hosted-runner }}
       series: ${{ inputs.series }}

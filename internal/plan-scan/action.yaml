@@ -1,0 +1,13 @@
+name: Plan Image Scan
+description: Preparing for Trivy image scanning.
+author: is-devops-team@canonical.com
+inputs:
+  plan:
+    description: operator-workflows plan.
+    required: true
+outputs:
+  scans:
+    description: required scans.
+runs:
+  using: node20
+  main: ../../dist/plan-scan/index.js
