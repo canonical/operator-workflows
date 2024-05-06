@@ -27,7 +27,11 @@ class Publish {
     this.token = core.getInput('github-token')
     this.charmhubToken = core.getInput('charmhub-token')
     this.octokit = github.getOctokit(this.token)
-    this.workflowFile = core.getInput('workflow-file')
+    if (github.context.repo.repo === 'operator-workflows') {
+      this.workflowFile = core.getInput('workflow-file')
+    } else {
+      this.workflowFile = 'integration_test.yaml'
+    }
     this.workingDir = core.getInput('working-directory')
     this.resourceMapping = JSON.parse(core.getInput('resource-mapping'))
     this.workflowRunId = core.getInput('workflow-run-id')
