@@ -150,8 +150,9 @@ class Publish {
       ).stdout
     ) as Metadata
     if (
-      metadata.resources === undefined ||
-      Object.keys(metadata.resources).length === 0
+      (metadata.resources === undefined ||
+        Object.keys(metadata.resources).length === 0) &&
+      fs.existsSync(path.join(this.workingDir, 'metadata.yaml'))
     ) {
       metadata = yaml.load(
         fs.readFileSync(path.join(this.workingDir, 'metadata.yaml'), {
