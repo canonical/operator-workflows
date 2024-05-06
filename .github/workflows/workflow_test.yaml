@@ -89,6 +89,7 @@ jobs:
     with:
       identifier: test-upload
       channel: latest/edge
+      integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
   publish-artifact:
@@ -98,6 +99,7 @@ jobs:
     with:
       identifier: test-upload-artifact
       channel: latest/edge
+      integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
   check:
