@@ -22,12 +22,6 @@ on:
           If not defined, the suffix '-image' to the rock image name will be append. 
           For instance, a rock image named 'my-rock' will be uploaded as the charm OCI resource named 'my-rock-image'.
         default: "{}"
-      paas-app-charmer-oci-name:
-        type: string
-        description: |
-          Name of the default resource oci image for the special case of paas-app-charmer.
-          If paas-app-charmer-oci-name variable is specified, it will replace the resource with the same
-          name as the charm for the value of paas-app-charmer-oci-name variable.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -41,6 +35,10 @@ on:
         description: Charmcraft channel to use for publishing the charm and resources
         type: string
         default: latest/stable
+      integration-test-workflow-file:
+        description: The filename of the integration test workflow file.
+        type: string
+        default: "integration_test.yaml"
       workflow-run-id:
         description: >-
           Use the newly built charms and images in this workflow run as the new version to upload. 
@@ -69,7 +67,7 @@ jobs:
           identifier: ${{ inputs.identifier }}
           resource-mapping: ${{ inputs.resource-mapping }}
           working-directory: ${{ inputs.working-directory }}
-          workflow-file: workflow_test.yaml
+          workflow-file: ${{ inputs.integration-test-workflow-file }}
           workflow-run-id: ${{ inputs.workflow-run-id }}
       - name: Change directory
         run: |
