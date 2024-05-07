@@ -233,6 +233,7 @@ jobs:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ubuntu-latest
     needs: [ plan-scan ]
+    if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
