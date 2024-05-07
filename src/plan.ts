@@ -32,9 +32,13 @@ async function planBuildCharm(
   workingDir: string,
   id: string
 ): Promise<BuildPlan[]> {
-  const charmcraftFiles = await (
+  const allCharmcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
   ).glob()
+  const charmcraftFiles = allCharmcraftFiles.filter(
+    file =>
+      !path.normalize(path.relative(workingDir, file)).startsWith('tests/')
+  )
   return charmcraftFiles.map((charmcraftFile: string) => {
     const file = path.join(
       workingDir,
