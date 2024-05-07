@@ -118,8 +118,6 @@ class Publish {
         }
         return 0
       })
-    if (artifacts.length === 0) {
-    }
     for (const artifact of artifacts) {
       const tmp = this.mkdtemp()
       await this.artifact.downloadArtifact(artifact.id, {
@@ -136,6 +134,8 @@ class Publish {
       ) as Plan
       if (
         plan.working_directory === '.' ||
+        this.normalizePath(this.workingDir) ===
+          this.normalizePath(plan.working_directory) ||
         this.normalizePath(this.workingDir).startsWith(
           this.normalizePath(plan.working_directory) + '/'
         )
