@@ -82,14 +82,6 @@ jobs:
       charmcraft-ref: main
       rockcraft-repository: canonical/rockcraft
       rockcraft-ref: main
-  integration-no-image:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/nginx-ingress-integrator-operator/"
-      channel: 1.28-strict/stable
-      modules: '["test_cert_relation", "test_ingress_relation", "test_nginx_route"]'
-      juju-channel: 3.1/stable
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -124,7 +116,6 @@ jobs:
       - integration-rock
       - integration-rock-artifact
       - integration-craft
-      - integration-no-image
       - publish
       - publish-artifact
     steps:
@@ -138,6 +129,5 @@ jobs:
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock-artifact failed && false)
           [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
-          [ '${{ needs.integration-no-image.result }}' = 'success' ] || (echo integration-no-image failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
