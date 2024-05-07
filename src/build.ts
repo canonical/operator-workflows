@@ -104,12 +104,15 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
   core.startGroup('charmcraft pack')
-  // await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
-  //   cwd: params.plan.source_directory,
-  //   env: { CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
-  // })
-  await exec.exec('python3', ['-m', 'pip', 'install', 'tox'])
-  await exec.exec('tox', ['-e', 'pack', '--', '-v'])
+  try {
+    await exec.exec('python3', ['-m', 'pip', 'install', 'tox'])
+    await exec.exec('tox', ['-e', 'pack', '--', '-v'])
+  } catch (error) {
+    await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
+      cwd: params.plan.source_directory,
+      env: { CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    })
+  }
   core.endGroup()
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
