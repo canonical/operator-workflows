@@ -272,11 +272,15 @@ class Publish {
   async getCharms(): Promise<{ name: string; dir: string; files: string[] }> {
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
+    // FIXME: a workaround for paas app charms
+    let charmDir = this.workingDir
+    if (fs.existsSync(path.join(charmDir, 'charm', 'charmcraft.yaml'))) {
+      charmDir = path.join(charmDir, 'charm')
+    }
     const charms = plan.build.filter(
       b =>
         b.type === 'charm' &&
-        this.normalizePath(b.source_directory) ===
-          this.normalizePath(this.workingDir)
+        this.normalizePath(b.source_directory) === this.normalizePath(charmDir)
     )
     if (charms.length === 0) {
       throw new Error('no charm to upload')
