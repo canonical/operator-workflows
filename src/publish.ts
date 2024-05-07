@@ -155,20 +155,25 @@ class Publish {
       }
     }
 
+    let cwd = this.workingDir
+    // FIXME: search current working directory and the ./charm directory for charm directory
+    if (!fs.existsSync(path.join(this.workingDir, 'charmcraft.yaml'))) {
+      cwd = path.join(this.workingDir, 'charm')
+    }
     let metadata = yaml.load(
       (
         await exec.getExecOutput('charmcraft', ['expand-extensions'], {
-          cwd: this.workingDir
+          cwd
         })
       ).stdout
     ) as Metadata
     if (
       (metadata.resources === undefined ||
         Object.keys(metadata.resources).length === 0) &&
-      fs.existsSync(path.join(this.workingDir, 'metadata.yaml'))
+      fs.existsSync(path.join(cwd, 'metadata.yaml'))
     ) {
       metadata = yaml.load(
-        fs.readFileSync(path.join(this.workingDir, 'metadata.yaml'), {
+        fs.readFileSync(path.join(cwd, 'metadata.yaml'), {
           encoding: 'utf-8'
         })
       ) as Metadata
