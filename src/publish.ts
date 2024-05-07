@@ -111,30 +111,39 @@ class Publish {
       )
       .sort((a, b) => {
         if (a.name < b.name) {
-          return -1
+          return 1
         }
         if (a.name > b.name) {
-          return 1
+          return -1
         }
         return 0
       })
     if (artifacts.length === 0) {
-      throw new Error(`can't find plan artifact for workflow run ${runId}`)
     }
-    const artifact = artifacts[artifacts.length - 1]
-    const tmp = this.mkdtemp()
-    await this.artifact.downloadArtifact(artifact.id, {
-      path: tmp,
-      findBy: {
-        token: this.token,
-        repositoryOwner: github.context.repo.owner,
-        repositoryName: github.context.repo.repo,
-        workflowRunId: runId
+    for (const artifact of artifacts) {
+      const tmp = this.mkdtemp()
+      await this.artifact.downloadArtifact(artifact.id, {
+        path: tmp,
+        findBy: {
+          token: this.token,
+          repositoryOwner: github.context.repo.owner,
+          repositoryName: github.context.repo.repo,
+          workflowRunId: runId
+        }
+      })
+      const plan = JSON.parse(
+        fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
+      ) as Plan
+      if (
+        plan.working_directory === '.' ||
+        this.normalizePath(this.workingDir).startsWith(
+          this.normalizePath(plan.working_directory) + '/'
+        )
+      ) {
+        return plan
       }
-    })
-    return JSON.parse(
-      fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
-    ) as Plan
+    }
+    throw new Error(`can't find plan artifact for workflow run ${runId}`)
   }
 
   async getImageResources(): Promise<string[]> {
