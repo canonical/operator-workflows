@@ -1,0 +1,8 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+get-certificate:
+  description: Returns the TLS Certificate. Intended for testing and debugging purposes.
+  params:
+    hostname:
+      type: string
+      description: Hostname to extract certs from.

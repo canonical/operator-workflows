@@ -1,0 +1,13 @@
+name: Integration tests
+
+on:
+  pull_request:
+
+jobs:
+  integration-tests:
+    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
+    secrets: inherit
+    with:
+      channel: 1.28-strict/stable
+      modules: '["test_cert_relation", "test_ingress_relation", "test_nginx_route"]'
+      juju-channel: 3.1/stable

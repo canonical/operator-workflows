@@ -1,0 +1,14 @@
+# Copyright 2022 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: tls-certificates-provider
+description: tls-certificates-provider.
+summary: tls-certificates-provider.
+
+provides:
+  certificates:
+    interface: tls-certificates
+
+peers:
+  replicas:
+    interface: tls-certificates-replica

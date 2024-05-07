@@ -1,0 +1,8 @@
+*~
+*swp
+*.charm
+.tox
+.coverage
+__pycache__
+venv
+.vscode

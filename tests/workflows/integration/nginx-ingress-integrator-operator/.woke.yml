@@ -1,0 +1,9 @@
+rules:
+  # Ignore "whitelist" - upstream uses this terminology and it would be
+  # confusing to change in this charm while upstream continues to use it.
+  # Specifically the following annotations:
+  #   - nginx.ingress.kubernetes.io/limit-whitelist
+  #   - nginx.ingress.kubernetes.io/whitelist-source-range
+  # See https://github.com/kubernetes/ingress-nginx/issues/7916 for upstream
+  # issue about this.
+  - name: whitelist

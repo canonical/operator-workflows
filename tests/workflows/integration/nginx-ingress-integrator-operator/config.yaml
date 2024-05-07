@@ -1,0 +1,129 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+options:
+  additional-hostnames:
+    default: ""
+    description: >
+      Comma-separated list of additional hostnames for this ingress to listen on.
+    type: string
+  backend-protocol:
+    default: ""
+    description: >
+      Indicates how NGINX should communicate with the backend service. Valid
+      Values: HTTP, HTTPS, GRPC, GRPCS, AJP and FCGI.
+    type: string
+  enable-access-log:
+    description: >-
+      Setting this to false disables access log for the ingress using nginx.ingress.kubernetes.io/enable-access-log.
+      If this setting is not set anywhere (config or relation), it defaults to true.
+    type: boolean
+  ingress-class:
+    default: ""
+    description: |
+      The ingress class to target for this ingress resource.
+
+      If your cluster has multiple ingress controllers, this allows
+      you to select the correct one, by setting the ingressClassName
+      field on the ingress resource created by the charm.
+
+      This value isn't available to be set via the relation as it's a
+      property of the cluster's configuration.
+
+      If this value is empty, the charm will use whichever ingress class has the
+      "ingressclass.kubernetes.io/is-default-class" annotation set to "true".
+
+      If multiple ingress classes are so configured, no selection will be made.
+
+      For more details, see:
+
+       * https://kubernetes.github.io/ingress-nginx/user-guide/multiple-ingress/
+
+       * https://kubernetes.io/docs/concepts/services-networking/ingress/#default-ingress-class
+    type: string
+  limit-rps:
+    default: 0
+    description: |
+      Number of requests accepted from a given IP each second. The burst limit
+      is set to this limit multiplied by 5. When clients exceed this limit a
+      503 error will be returned.
+      Setting this to 0 disables rate-limiting.
+    type: int
+  limit-whitelist:
+    default: ""
+    description: |
+      If rate-limiting is set, client IP source ranges to be excluded. The value
+      is a comma-separated list of CIDRs.
+    type: string
+  max-body-size:
+    default: 20
+    description: Max allowed body-size (for file uploads) in megabytes, set to 0 to disable limits.
+    type: int
+  owasp-modsecurity-crs:
+    default: false
+    description: |
+      Enable OWASP ModSecurity Core Rule Set (CRS). A set of generic attack detection rules for use
+      with ModSecurity or compatible web application firewalls. The CRS aims to protect web
+      applications from a wide range of attacks, including the OWASP Top Ten, with a minimum of
+      false alerts. See https://github.com/coreruleset/coreruleset for more details.
+    type: boolean
+  owasp-modsecurity-custom-rules:
+    default: ""
+    description: |
+      New line ('\n') separated list of custom rules to be added to modsecurity-snippet annotation.
+      Example: "SecAction id:900130,phase:1,nolog,pass,t:none,setvar:tx.crs_exclusions_wordpress=1\n".
+    type: string
+  path-routes:
+    default: ""
+    description: |
+      Comma separated list of the routes under the hostname that you wish to map to the relation.
+      Example: "/admin,/portal" will map example.test/admin and example.test/portal only.
+    type: string
+  proxy-read-timeout:
+    default: 60
+    description: Defines a timeout in seconds for reading a response from the proxied server.
+    type: int
+  retry-errors:
+    default: ""
+    description: |
+      Specifies in which cases a request should be retried against the next server.
+      Comma-separated list, e.g. "error,timeout,http_502,http_503,http_504".
+      See http://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_next_upstream
+      for more details. Unrecognised values will be ignored. The nginx default
+      will be used if this config option is set to an empty value.
+    type: string
+  rewrite-enabled:
+    default: false
+    description: Whether requests should be written to the `rewrite-target`
+    type: boolean
+  rewrite-target:
+    default: ""
+    description: The path to rewrite requests to. If not set, rewrite-target will be "/".
+    type: string
+  service-hostname:
+    default: ""
+    description: The hostname of the service to create an ingress for.
+    type: string
+  service-name:
+    default: ""
+    description: The name of the service to create an ingress for.
+    type: string
+  service-namespace:
+    default: ""
+    description: The namespace of the service to create an ingress for. Will default to the namespace this charm is deployed into.
+    type: string
+  service-port:
+    default: 0
+    description: The port of the service to create an ingress for.
+    type: int
+  session-cookie-max-age:
+    default: 0
+    description: The max age to configure a session cookie for. Leaving unset or setting to 0 will disable session cookies and cookie-based affinity.
+    type: int
+  tls-secret-name:
+    default: ""
+    description: The name of the Kubernetes secret used to get the TLS certificate used for HTTPS. This settings overrides any tls-certificate relation defined. If left empty and no tls-certificates relation is defined, HTTPS will be disabled.
+    type: string
+  whitelist-source-range:
+    default: ""
+    description: Allowed client IP source ranges. The value is a comma separated list of CIDRs.
+    type: string
