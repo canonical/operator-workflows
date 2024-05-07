@@ -31,4 +31,5 @@ header:
     - '.prettierignore'
     - 'dist/**'
     - 'internal/**'
+    - 'tests/workflows/integration/**'
   comment: on-failure
