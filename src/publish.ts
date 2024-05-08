@@ -194,6 +194,7 @@ class Publish {
     }
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
+    let dockerLogin = false
     for (const build of plan.build) {
       if (build.type === 'charm') {
         continue
@@ -227,6 +228,20 @@ class Publish {
         fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
       )
       if (build.output_type === 'registry') {
+        if (!dockerLogin) {
+          await exec.exec(
+            `docker`,
+            [
+              'login',
+              '-u',
+              github.context.actor,
+              '--password-stdin',
+              'ghcr.io'
+            ],
+            { input: Buffer.from(`${this.token}\n`, 'utf-8') }
+          )
+          dockerLogin = true
+        }
         const images = manifest.images as string[]
         if (images.length !== 1) {
           throw new Error(
