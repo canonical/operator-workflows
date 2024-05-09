@@ -6,6 +6,10 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      builder-runner-label:
+        description: Label for building the charm
+        type: string
+        default: ubuntu-latest
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -183,7 +187,7 @@ env:
 jobs:
   plan:
     name: Plan
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
@@ -198,7 +202,7 @@ jobs:
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
@@ -219,7 +223,7 @@ jobs:
 
   plan-scan:
     name: Plan Image Scanning
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs: [ plan, build ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
@@ -231,7 +235,7 @@ jobs:
 
   scan:
     name: Scan Image (${{ matrix.scan.file }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs: [ plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
@@ -332,7 +336,7 @@ jobs:
       zap-target: ${{ inputs.zap-target }}
   required_status_checks:
     name: Required Integration Test Status Checks
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
     if: always() && !cancelled()
