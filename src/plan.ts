@@ -24,9 +24,10 @@ function fromFork(): boolean {
   if (context.eventName !== 'pull_request') {
     return false
   }
-  core.info(JSON.stringify(context.payload))
-  // @ts-ignore
-  return context.repo.owner !== context.payload.pull_request.head.repo.owner
+  return (
+    // @ts-ignore
+    context.repo.owner !== context.payload.pull_request.head.repo.owner.login
+  )
 }
 
 async function planBuildCharm(
