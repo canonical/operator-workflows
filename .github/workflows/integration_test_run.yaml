@@ -60,7 +60,7 @@ on:
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
-        default: "dns ingress rbac registry storage"
+        default: "dns ingress rbac storage"
       registry:
         type: string
         description: Registry to push the built images
@@ -171,7 +171,19 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
-          microk8s-addons: ${{ inputs.microk8s-addons }}
+          microk8s-addons: >-
+            ${{
+              ( 
+                github.event.pull_request.head.repo.full_name == github.repository || 
+                !contains('registry', inputs.microk8s-addons)
+              ) &&
+              (
+                inputs.microk8s-addons == '' && 
+                'registry' || 
+                format('registry {0}', inputs.microk8s-addons)
+              ) ||
+              inputs.microk8s-addons
+            }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
       - uses: actions/checkout@v4
