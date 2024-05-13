@@ -174,8 +174,8 @@ jobs:
           microk8s-addons: >-
             ${{
               ( 
-                github.event.pull_request.head.repo.full_name == github.repository && 
-                !contains(inputs.microk8s-addons, 'registry')
+                github.event.pull_request.head.repo.full_name != github.repository && 
+                >!contains(inputs.microk8s-addons, 'registry')
               ) &&
               (
                 inputs.microk8s-addons == '' && 
