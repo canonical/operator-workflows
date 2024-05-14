@@ -171,7 +171,19 @@ jobs:
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
-          microk8s-addons: ${{ inputs.microk8s-addons }}
+          microk8s-addons: >-
+            ${{
+              ( 
+                github.event.pull_request.head.repo.full_name != github.repository && 
+                !contains(inputs.microk8s-addons, 'registry')
+              ) &&
+              (
+                inputs.microk8s-addons == '' && 
+                'registry' || 
+                format('registry {0}', inputs.microk8s-addons)
+              ) ||
+              inputs.microk8s-addons
+            }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
       - uses: actions/checkout@v4
