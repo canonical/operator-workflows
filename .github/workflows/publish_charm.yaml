@@ -52,13 +52,13 @@ env:
 
 jobs:
   select-channel:
-  runs-on: ubuntu-latest
-  outputs:
-    destination-channel: ${{ steps.select-channel.outputs.name }}
-  steps:
-    - name: Select charmhub channel
-      uses: canonical/charming-actions/channel@2.5.0-rc
-      id: select-channel
+    runs-on: ubuntu-latest
+    outputs:
+      destination-channel: ${{ steps.select-channel.outputs.name }}
+    steps:
+      - name: Select charmhub channel
+        uses: canonical/charming-actions/channel@2.5.0-rc
+        id: select-channel
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
