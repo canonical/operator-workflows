@@ -7,8 +7,8 @@ on:
   workflow_call:
     inputs:
       channel:
-        required: true
         type: string
+        required: false
         description: 'Destination Channel'
       identifier:
         type: string
@@ -51,9 +51,18 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
-  publish-charm:
-    name: Publish charm to ${{ inputs.channel }}
+  select-channel:
     runs-on: ubuntu-latest
+    outputs:
+      destination-channel: ${{ steps.select-channel.outputs.name }}
+    steps:
+      - name: Select charmhub channel
+        uses: canonical/charming-actions/channel@2.5.0-rc
+        id: select-channel
+  publish-charm:
+    name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
+    runs-on: ubuntu-latest
+    needs: [select-channel]
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
@@ -84,7 +93,7 @@ jobs:
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          channel: ${{ inputs.channel }}
+          channel: ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
           tag-prefix: ${{ inputs.tag-prefix }}
           upload-image: false
   draft-publish-docs:
