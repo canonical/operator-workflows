@@ -299,7 +299,7 @@ jobs:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [ build ]
-    if: needs.build.outcome == 'success' || needs.build.outcome == 'skipped'
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
