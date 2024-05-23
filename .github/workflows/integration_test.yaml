@@ -6,6 +6,10 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      builder-runner-label:
+        description: Label for building the charm
+        type: string
+        default: ubuntu-latest
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -89,6 +93,10 @@ on:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
         default: false
+      self-hosted-runner-arch:
+        type: string
+        description: Architecture to use on self-hosted runners to run the jobs.
+        default: "x64"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -183,11 +191,11 @@ env:
 jobs:
   plan:
     name: Plan
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - uses: canonical/operator-workflows/internal/plan@better-build
         id: plan
         with:
@@ -198,7 +206,7 @@ jobs:
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
@@ -219,7 +227,7 @@ jobs:
 
   plan-scan:
     name: Plan Image Scanning
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs: [ plan, build ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
@@ -231,14 +239,14 @@ jobs:
 
   scan:
     name: Scan Image (${{ matrix.scan.file }})
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs: [ plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - uses: actions/download-artifact@v4.1.7
         if: matrix.scan.artifact != ''
         with:
@@ -257,7 +265,7 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.20.0
+        uses: aquasecurity/trivy-action@0.21.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
@@ -309,6 +317,7 @@ jobs:
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
       registry: ghcr.io
+      self-hosted-runner-arch: ${{ inputs.self-hosted-runner-arch }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
       self-hosted-runner: ${{ inputs.self-hosted-runner }}
       series: ${{ inputs.series }}
@@ -332,7 +341,7 @@ jobs:
       zap-target: ${{ inputs.zap-target }}
   required_status_checks:
     name: Required Integration Test Status Checks
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
     if: always() && !cancelled()
