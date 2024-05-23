@@ -290,8 +290,8 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ plan, build ]
-    if: ${{ !failure() }}
+    needs: [ build ]
+    if: needs.build.outcome == 'success' || needs.build.outcome == 'skipped'
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
