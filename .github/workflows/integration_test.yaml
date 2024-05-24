@@ -295,19 +295,11 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ env.IMAGE_REF }}
 
-  test:
-    needs: [ plan, build ]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ needs.build.result }}
-      - run: echo ${{ needs.plan.result }}
-
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [ plan, build ]
-    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || needs.build.result == 'skipped' || needs.build.result == 'cancelled')
+    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
