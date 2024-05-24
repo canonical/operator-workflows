@@ -170,7 +170,6 @@ jobs:
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
         )) || inputs.runs-on
       }}
-    if: ${{ !failure() }}
     steps:
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
