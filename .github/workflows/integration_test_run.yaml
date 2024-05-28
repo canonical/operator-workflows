@@ -176,7 +176,7 @@ jobs:
       }}
     steps:
       - name: Setup Canonical k8s
-        if: inputs.provider == 'k8s' && inputs.use-canonical-k8s == 'true'
+        if: ${{ inputs.use-canonical-k8s }}
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=1.30-classic/beta --classic
