@@ -181,7 +181,8 @@ jobs:
         run: |
           sudo snap install k8s --channel=1.30-classic/beta --classic
           sudo k8s bootstrap
-          sudo k8s config >> ~/.kube/config
+          mkdir -p ~/.kube
+          sudo k8s config > ~/.kube/config
           cat ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
       - name: Setup operator environment
