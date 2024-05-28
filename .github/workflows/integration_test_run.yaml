@@ -179,6 +179,11 @@ jobs:
         if: ${{ inputs.use-canonical-k8s }} == true
         run: |
           echo "Hello"
+          juju clouds
+          juju update-public-clouds
+          sudo k8s config >> ~/.kube/config
+          echo " ---------------- "
+          juju clouds
       - name: Setup Canonical k8s
         if: ${{ inputs.use-canonical-k8s }} == true
         id: canonical-k8s
