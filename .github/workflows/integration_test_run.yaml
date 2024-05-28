@@ -175,21 +175,14 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
-      - name: Echo inputs
-        if: ${{ inputs.use-canonical-k8s }} == true
-        run: |
-          echo "Hello"
-          juju clouds
-          juju update-public-clouds
-          sudo k8s config >> ~/.kube/config
-          echo " ---------------- "
-          juju clouds
       - name: Setup Canonical k8s
         if: ${{ inputs.use-canonical-k8s }} == true
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=1.30-classic/beta --classic
           sudo k8s bootstrap
+          sudo k8s config >> ~/.kube/config
+          cat ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
