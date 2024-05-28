@@ -180,7 +180,7 @@ jobs:
         run: |
           echo "Hello"
       - name: Setup Canonical k8s
-        if: ${{ inputs.use-canonical-k8s }}
+        if: ${{ inputs.use-canonical-k8s }} == true
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=1.30-classic/beta --classic
