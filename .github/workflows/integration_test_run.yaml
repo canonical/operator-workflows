@@ -175,6 +175,10 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: Echo inputs
+        if: ${{ inputs.use-canonical-k8s }} == true
+        run: |
+          echo "Hello"
       - name: Setup Canonical k8s
         if: ${{ inputs.use-canonical-k8s }}
         id: canonical-k8s
