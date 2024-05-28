@@ -116,6 +116,10 @@ on:
         type: string
         description: Target directory to do the Trivy testing
         default: "."
+      use-canonical-k8s:
+        type: boolean
+        description: (Experimental) Whether to use canonical k8s instead of microk8s
+        default: false
       working-directory:
         type: string
         description: The working directory for jobs
@@ -171,10 +175,18 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: Setup Canonical k8s
+        if: inputs.provider == 'k8s' && inputs.use-canonical-k8s == 'true'
+        id: canonical-k8s
+        run: |
+          sudo snap install k8s --channel=1.30-classic/beta --classic
+          sudo k8s bootstrap
+          echo "kubeconfig=$(sudo k8s config | base64)" >> $GITHUB_OUTPUT
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
+          credentials-yaml: ${{ steps.canonical-k8s.outputs.kubeconfig }}
           microk8s-addons: >-
             ${{
               ( 
