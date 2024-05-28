@@ -185,7 +185,7 @@ jobs:
         run: |
           sudo snap install k8s --channel=1.30-classic/beta --classic
           sudo k8s bootstrap
-          echo "kubeconfig=$(sudo k8s config | base64)" >> $GITHUB_OUTPUT
+          echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
