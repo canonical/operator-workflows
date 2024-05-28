@@ -71,7 +71,7 @@ class Publish {
         repo,
         workflow_id: workflowResp.data.id,
         status: 'success',
-        created: `>${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
+        created: `>${new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
       }
     )
     for await (const resp of runIter) {
