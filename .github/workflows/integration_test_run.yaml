@@ -302,7 +302,7 @@ jobs:
           echo "MODULE=$module" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
-        if: ${{ inputs.provider == 'microk8s' }}
+        if: ${{ inputs.provider == 'microk8s' }} || ${ inputs.provider == 'k8s' }
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Run lxd integration tests
@@ -360,3 +360,7 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+      - name: Cleanup canonical k8s
+        if: ${{ inputs.use-canonical-k8s }} == true
+        run: |
+          sudo snap remove k8s --purge
