@@ -360,7 +360,3 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
-      - name: Cleanup canonical k8s
-        if: always() && ${{ inputs.use-canonical-k8s }} == true
-        run: |
-          sudo snap remove k8s --purge
