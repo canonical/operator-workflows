@@ -361,6 +361,6 @@ jobs:
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
       - name: Cleanup canonical k8s
-        if: ${{ inputs.use-canonical-k8s }} == true
+        if: always() && ${{ inputs.use-canonical-k8s }} == true
         run: |
           sudo snap remove k8s --purge
