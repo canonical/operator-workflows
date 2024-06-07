@@ -33,7 +33,7 @@ jobs:
       - name: Create pull request
         uses: canonical/create-pull-request@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
           commit-message: "chore: update charm libraries"
           branch-name: "chore/auto-libs"
           title: Update charm libraries
