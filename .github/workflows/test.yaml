@@ -43,7 +43,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
         )) || 'ubuntu-22.04'
       }}
