@@ -183,14 +183,15 @@ jobs:
           sudo k8s bootstrap
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
-          cat ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
           
           IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
           INGRESS_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,2}' OFS='.')"
           INGRESS_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           INGRESS_RANGE="${INGRESS_FIRST_ADDR}-${INGRESS_LAST_ADDR}"
+          echo $INGRESS_RANGE
           sudo k8s set load-balancer.cidrs=$INGRESS_RANGE
+          sudo k8s get load-balancer.cidrs
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
