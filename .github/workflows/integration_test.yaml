@@ -196,7 +196,7 @@ jobs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
       - uses: actions/checkout@v4.1.7
-      - uses: canonical/operator-workflows/internal/plan@better-build
+      - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
