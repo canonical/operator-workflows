@@ -213,7 +213,7 @@ jobs:
     steps:
       - uses: canonical/setup-lxd@v0.1.1
       - uses: actions/checkout@v4
-      - uses: canonical/operator-workflows/internal/build@better-build
+      - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -232,7 +232,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@better-build
+      - uses: canonical/operator-workflows/internal/plan-scan@main
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
