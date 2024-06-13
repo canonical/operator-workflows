@@ -68,7 +68,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.6
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
-      - uses: canonical/operator-workflows/internal/publish@better-build
+      - uses: canonical/operator-workflows/internal/publish@main
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
