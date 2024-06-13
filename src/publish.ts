@@ -71,7 +71,7 @@ class Publish {
         repo,
         workflow_id: workflowResp.data.id,
         status: 'success',
-        created: `>${new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
+        created: `>${new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
       }
     )
     for await (const resp of runIter) {
@@ -93,6 +93,7 @@ class Publish {
   }
 
   async getPlan(runId: number): Promise<Plan> {
+    core.info(`search plan artifact from workflow run: ${runId}`)
     const artifacts = (
       await this.octokit.paginate(
         this.octokit.rest.actions.listWorkflowRunArtifacts,
@@ -108,16 +109,41 @@ class Publish {
           `${this.identifier ? '__' : ''}${this.identifier}__plan`
         )
       )
-      .sort()
-    if (artifacts.length === 0) {
-      throw new Error(`can't find plan artifact for workflow run ${runId}`)
+      .sort((a, b) => {
+        if (a.name < b.name) {
+          return 1
+        }
+        if (a.name > b.name) {
+          return -1
+        }
+        return 0
+      })
+    for (const artifact of artifacts) {
+      const tmp = this.mkdtemp()
+      await this.artifact.downloadArtifact(artifact.id, {
+        path: tmp,
+        findBy: {
+          token: this.token,
+          repositoryOwner: github.context.repo.owner,
+          repositoryName: github.context.repo.repo,
+          workflowRunId: runId
+        }
+      })
+      const plan = JSON.parse(
+        fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
+      ) as Plan
+      if (
+        plan.working_directory === '.' ||
+        this.normalizePath(this.workingDir) ===
+          this.normalizePath(plan.working_directory) ||
+        this.normalizePath(this.workingDir).startsWith(
+          this.normalizePath(plan.working_directory) + '/'
+        )
+      ) {
+        return plan
+      }
     }
-    const artifact = artifacts[artifacts.length - 1]
-    const tmp = this.mkdtemp()
-    await this.artifact.downloadArtifact(artifact.id, { path: tmp })
-    return JSON.parse(
-      fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
-    ) as Plan
+    throw new Error(`can't find plan artifact for workflow run ${runId}`)
   }
 
   async getImageResources(): Promise<string[]> {
@@ -129,19 +155,25 @@ class Publish {
       }
     }
 
+    let cwd = this.workingDir
+    // FIXME: search current working directory and the ./charm directory for charm directory
+    if (!fs.existsSync(path.join(this.workingDir, 'charmcraft.yaml'))) {
+      cwd = path.join(this.workingDir, 'charm')
+    }
     let metadata = yaml.load(
       (
         await exec.getExecOutput('charmcraft', ['expand-extensions'], {
-          cwd: this.workingDir
+          cwd
         })
       ).stdout
     ) as Metadata
     if (
-      metadata.resources === undefined ||
-      Object.keys(metadata.resources).length === 0
+      (metadata.resources === undefined ||
+        Object.keys(metadata.resources).length === 0) &&
+      fs.existsSync(path.join(cwd, 'metadata.yaml'))
     ) {
       metadata = yaml.load(
-        fs.readFileSync(path.join(this.workingDir, 'metadata.yaml'), {
+        fs.readFileSync(path.join(cwd, 'metadata.yaml'), {
           encoding: 'utf-8'
         })
       ) as Metadata
@@ -162,6 +194,7 @@ class Publish {
     }
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
+    let dockerLogin = false
     for (const build of plan.build) {
       if (build.type === 'charm') {
         continue
@@ -195,6 +228,20 @@ class Publish {
         fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
       )
       if (build.output_type === 'registry') {
+        if (!dockerLogin) {
+          await exec.exec(
+            `docker`,
+            [
+              'login',
+              '-u',
+              github.context.actor,
+              '--password-stdin',
+              'ghcr.io'
+            ],
+            { input: Buffer.from(`${this.token}\n`, 'utf-8') }
+          )
+          dockerLogin = true
+        }
         const images = manifest.images as string[]
         if (images.length !== 1) {
           throw new Error(
@@ -233,10 +280,23 @@ class Publish {
     return upload
   }
 
+  normalizePath(p: string): string {
+    return path.normalize(p).replace(/\/+$/, '')
+  }
+
   async getCharms(): Promise<{ name: string; dir: string; files: string[] }> {
     const runId = await this.findWorkflowRunId()
     const plan = await this.getPlan(runId)
-    const charms = plan.build.filter(b => b.type === 'charm')
+    // FIXME: a workaround for paas app charms
+    let charmDir = this.workingDir
+    if (fs.existsSync(path.join(charmDir, 'charm', 'charmcraft.yaml'))) {
+      charmDir = path.join(charmDir, 'charm')
+    }
+    const charms = plan.build.filter(
+      b =>
+        b.type === 'charm' &&
+        this.normalizePath(b.source_directory) === this.normalizePath(charmDir)
+    )
     if (charms.length === 0) {
       throw new Error('no charm to upload')
     }
