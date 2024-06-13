@@ -30,7 +30,7 @@ jobs:
       channel: ${{ env.BUILD_ON_CHANNEL }}
       runs-on: ${{ env.BUILD_ON }}
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - name: Get build-on value
         working-directory: ${{ inputs.working-directory }}
         run: |

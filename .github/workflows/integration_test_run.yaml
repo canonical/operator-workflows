@@ -230,7 +230,7 @@ jobs:
       - name: Clean up
         if: inputs.charmcraft-repository != ''
         run: rm -rf *
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Setup Devstack Swift
