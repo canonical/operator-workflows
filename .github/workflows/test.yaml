@@ -21,6 +21,10 @@ on:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
         default: true
+      self-hosted-runner-arch:
+        type: string
+        description: Architecture to use on self-hosted runners to run the jobs.
+        default: "x64"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -39,19 +43,20 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
         with:
           repository: canonical/Inclusive-naming
           path: ${{ inputs.working-directory }}
       - run: mv * /tmp
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
@@ -88,14 +93,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -157,14 +163,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -179,14 +186,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -203,14 +211,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
@@ -333,14 +342,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -359,14 +369,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -383,11 +394,12 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     steps:
-      - uses: actions/checkout@v4.1.4
+      - uses: actions/checkout@v4.1.6
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork }}
         uses: canonical/charming-actions/check-libraries@2.5.0-rc
@@ -408,8 +420,9 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''x64'', ''jammy'', ''{0}'']',  inputs.self-hosted-runner-label)) ||
-        'ubuntu-22.04'
+        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        )) || 'ubuntu-22.04'
       }}
     if: always() && !cancelled()
     timeout-minutes: 5

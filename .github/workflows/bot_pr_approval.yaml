@@ -9,7 +9,7 @@ on:
 jobs:
   approve_pr:
     name: Approve bot PR
-    runs-on: [self-hosted, x64, jammy, edge]
+    runs-on: ubuntu-latest
     steps:
       - name: Show actor
         run: |
@@ -17,7 +17,7 @@ jobs:
       - name: Approve bot PR
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: contains(fromJSON('["renovate[bot]", "github-actions[bot]"]'), github.actor)
+        if: contains(fromJSON('["renovate[bot]", "github-actions[bot]"]', "is-devops-bot"), github.actor)
         uses: actions/github-script@v7
         with:
           script: |

@@ -89,6 +89,7 @@ jobs:
     with:
       identifier: test-upload
       channel: latest/edge
+      integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
   publish-artifact:
@@ -98,6 +99,7 @@ jobs:
     with:
       identifier: test-upload-artifact
       channel: latest/edge
+      integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
   check:
@@ -122,10 +124,10 @@ jobs:
           [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
-          [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration failed && false)
-          [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration failed && false)
+          [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration-artifact failed && false)
+          [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
-          [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock failed && false)
-          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-rock failed && false)
+          [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock-artifact failed && false)
+          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
