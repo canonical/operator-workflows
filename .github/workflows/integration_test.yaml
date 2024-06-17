@@ -195,8 +195,8 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - uses: actions/checkout@v4.1.6
-      - uses: canonical/operator-workflows/internal/plan@better-build
+      - uses: actions/checkout@v4.1.7
+      - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -213,7 +213,7 @@ jobs:
     steps:
       - uses: canonical/setup-lxd@v0.1.1
       - uses: actions/checkout@v4
-      - uses: canonical/operator-workflows/internal/build@better-build
+      - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -232,7 +232,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@better-build
+      - uses: canonical/operator-workflows/internal/plan-scan@main
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
@@ -246,7 +246,7 @@ jobs:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - uses: actions/download-artifact@v4.1.7
         if: matrix.scan.artifact != ''
         with:

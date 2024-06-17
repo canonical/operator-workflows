@@ -66,9 +66,9 @@ jobs:
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
-      - uses: canonical/operator-workflows/internal/publish@better-build
+      - uses: canonical/operator-workflows/internal/publish@main
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -104,7 +104,7 @@ jobs:
       run:
         working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -123,7 +123,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ publish-charm ]
     steps:
-      - uses: actions/checkout@v4.1.6
+      - uses: actions/checkout@v4.1.7
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)

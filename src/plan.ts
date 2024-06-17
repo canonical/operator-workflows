@@ -21,20 +21,26 @@ function sanitizeArtifactName(name: string): string {
 
 function fromFork(): boolean {
   const context = github.context
-  if (context.payload.action !== 'pull_request') {
+  if (context.eventName !== 'pull_request') {
     return false
   }
-  // @ts-ignore
-  return context.repo.owner !== context.payload.pull_request.head.repo.owner
+  return (
+    // @ts-ignore
+    context.repo.owner !== context.payload.pull_request.head.repo.owner.login
+  )
 }
 
 async function planBuildCharm(
   workingDir: string,
   id: string
 ): Promise<BuildPlan[]> {
-  const charmcraftFiles = await (
+  const allCharmcraftFiles = await (
     await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
   ).glob()
+  const charmcraftFiles = allCharmcraftFiles.filter(
+    file =>
+      !path.normalize(path.relative(workingDir, file)).startsWith('tests/')
+  )
   return charmcraftFiles.map((charmcraftFile: string) => {
     const file = path.join(
       workingDir,
