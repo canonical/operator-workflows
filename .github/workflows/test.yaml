@@ -29,7 +29,7 @@ on:
         type: string
         description: Label for selecting the self-hosted runners.
         default: "large"
-      self-hosted-runner-series:
+      self-hosted-runner-image:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
         default: "jammy"
