@@ -68,6 +68,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4.1.7
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
+        # required to use skopeo embedded within rockcraft - otherwise a docker error
+        # "io: read/write on closed pipe" will happen
+      - run: sudo snap snap install rockcraft --classic
       - uses: canonical/operator-workflows/internal/publish@main
         id: publish
         with:
