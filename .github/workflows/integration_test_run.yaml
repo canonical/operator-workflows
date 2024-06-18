@@ -186,7 +186,7 @@ jobs:
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
           
           IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
-          INGRESS_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,2}' OFS='.')"
+          INGRESS_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
           INGRESS_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           INGRESS_RANGE="${INGRESS_FIRST_ADDR}-${INGRESS_LAST_ADDR}"
           sudo k8s set load-balancer.cidrs=$INGRESS_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
