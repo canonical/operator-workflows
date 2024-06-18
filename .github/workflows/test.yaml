@@ -31,7 +31,7 @@ on:
         default: "large"
       self-hosted-runner-series:
         type: string
-        description: Flavor of the requested runner. Supports only 'jammy' or 'noble'.
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
         default: "jammy"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
