@@ -189,9 +189,7 @@ jobs:
           INGRESS_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,2}' OFS='.')"
           INGRESS_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           INGRESS_RANGE="${INGRESS_FIRST_ADDR}-${INGRESS_LAST_ADDR}"
-          echo $INGRESS_RANGE
-          sudo k8s set load-balancer.cidrs=$INGRESS_RANGE
-          sudo k8s get load-balancer.cidrs
+          sudo k8s set load-balancer.cidrs=$INGRESS_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
