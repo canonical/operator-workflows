@@ -151,6 +151,7 @@ class Publish {
       resources?: {
         [name: string]: {
           type: string
+          'upstream-source'?: string
         }
       }
     }
@@ -182,7 +183,9 @@ class Publish {
     if (resources === undefined) {
       return []
     }
-    return Object.keys(resources).filter(k => resources[k].type === 'oci-image')
+    return Object.keys(resources).filter(
+      k => resources[k].type === 'oci-image' && !resources[k]['upstream-source']
+    )
   }
 
   async getImages(): Promise<Map<string, string>> {
