@@ -10,6 +10,10 @@ on:
         type: string
         description: The working directory for the docs
         default: "."
+      charmcraft-channel:
+        description: Charmcraft channel to use
+        type: string
+        default: latest/stable
       working-directory:
         type: string
         description: The working directory for jobs
@@ -410,6 +414,7 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          charmcraft-channel: ${{ inputs.charmcraft-channel }}
   required_status_checks:
     name: Required Test Status Checks
     needs:
