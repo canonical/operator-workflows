@@ -312,12 +312,14 @@ jobs:
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && !inputs.self-hosted-runner }}
         uses: mxschmitt/action-tmate@v3
         timeout-minutes: ${{ inputs.tmate-timeout }}
-      - name: Dump logs
-        uses: canonical/charm-logdump-action@main
-        if: failure()
-        with:
-          app: ${{ env.CHARM_NAME }}
-          model: testing
+      # Temporarily disable until https://github.com/canonical/charm-logdump-action/pull/9
+      # is resolved
+      # - name: Dump logs
+      #   uses: canonical/charm-logdump-action@main
+      #   if: failure()
+      #   with:
+      #     app: ${{ env.CHARM_NAME }}
+      #     model: testing
       - name: Install k6s
         if: ${{ inputs.load-test-enabled }}
         run: sudo snap install k6
