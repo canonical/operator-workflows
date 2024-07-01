@@ -304,7 +304,7 @@ jobs:
         uses: mxschmitt/action-tmate@v3
         timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Dump logs
-        uses: Thanhphan1147/charm-logdump-action@e173d0829dbf33b1d8823b97a159d840fb308e82 # temporary fix until https://github.com/canonical/charm-logdump-action/pull/9 is merged 
+        uses: Thanhphan1147/charm-logdump-action@52c733cadd44a176bee78a30571c8344de65be83 # temporary fix until https://github.com/canonical/charm-logdump-action/pull/9 is merged 
         if: failure()
         with:
           app: ${{ env.CHARM_NAME }}
