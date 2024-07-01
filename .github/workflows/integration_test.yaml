@@ -148,6 +148,10 @@ on:
           If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
           originating from forked repositories, and 'registry' for all other cases.
         default: ""
+      use-canonical-k8s:
+        type: boolean
+        description: (Experimental) Whether to use canonical k8s instead of microk8s
+        default: false
       working-directory:
         type: string
         description: The working directory for jobs
@@ -316,6 +320,7 @@ jobs:
       plan: ${{ needs.plan.outputs.plan }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
+      use-canonical-k8s: ${{ inputs.use-canonical-k8s }}
       registry: ghcr.io
       self-hosted-runner-arch: ${{ inputs.self-hosted-runner-arch }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
