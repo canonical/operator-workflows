@@ -30,11 +30,9 @@ jobs:
             })).data.filter(pr => pr.head.sha == context.payload.workflow_run.head_sha)[0];
             const issue_number = pull.number;
 
-            const createComment = async (body) => {
-                await github.rest.issues.createComment({
-                    owner: owner,
-                    repo: repo,
-                    issue_number: issue_number,
-                    body,
-                });
-            }
+            await github.rest.issues.createComment({
+                owner: owner,
+                repo: repo,
+                issue_number: issue_number,
+                body,
+            });
