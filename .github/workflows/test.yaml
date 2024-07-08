@@ -33,6 +33,10 @@ on:
         type: string
         description: Label for selecting the self-hosted runners.
         default: "large"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "jammy"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -47,8 +51,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -97,8 +101,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -167,8 +171,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -190,8 +194,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -206,7 +210,11 @@ jobs:
         if: steps.metadata-yaml.outputs.exists == 'true'
         id: run-lint
         run: |
-          python3 -m pip install check-jsonschema
+          options=""
+          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
+            options+=" --break-system-packages"
+          fi
+          python3 -m pip install check-jsonschema $options
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
@@ -215,8 +223,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -228,7 +236,12 @@ jobs:
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
       - name: Install tox
-        run: python3 -m pip install tox
+        run: |
+          options=""
+          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
+            options+=" --break-system-packages"
+          fi
+          python3 -m pip install tox $options
       - name: Run tests
         id: run-tests
         run: |
@@ -346,8 +359,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -373,8 +386,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     defaults:
@@ -398,15 +411,15 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     steps:
       - uses: actions/checkout@v4.1.7
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: canonical/charming-actions/check-libraries@2.5.0-rc
+        uses: canonical/charming-actions/check-libraries@2.6.1
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -425,8 +438,8 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
     if: always() && !cancelled()

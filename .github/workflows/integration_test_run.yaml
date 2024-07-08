@@ -275,6 +275,15 @@ jobs:
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+        # pre-run-script can be used to bootstrap private-endpoints.
+        # map the secrets related to private-endpoints as environment variables.
+        env:
+          JUJU_CONTROLLER: ${{ secrets.JUJU_CONTROLLER }}
+          JUJU_MODEL: ${{ secrets.JUJU_MODEL }}
+          PRODSTACK: ${{ secrets.PRODSTACK }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
+          VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
       - run: sudo apt install skopeo -y
 
