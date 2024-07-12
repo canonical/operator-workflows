@@ -57,7 +57,7 @@ jobs:
       destination-channel: ${{ steps.select-channel.outputs.name }}
     steps:
       - name: Select charmhub channel
-        uses: canonical/charming-actions/channel@2.6.1
+        uses: canonical/charming-actions/channel@2.6.2
         id: select-channel
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
@@ -90,7 +90,7 @@ jobs:
           rm -rf $TEMP_DIR
           ls -lah
       - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.6.1
+        uses: canonical/charming-actions/upload-charm@2.6.2
         with:
           built-charm-path: ${{ steps.publish.outputs.charms }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
@@ -134,7 +134,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.6.1
+      - uses: canonical/charming-actions/release-libraries@2.6.2
         name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
