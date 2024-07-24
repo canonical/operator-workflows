@@ -7,11 +7,9 @@ on:
   workflow_call:
     inputs:
       base-architecture:
-        type: choice
+        type: string
         description: Charm base architecture
-        options:
-          - amd64
-          - arm64
+        default: 'amd64'
       base-channel:
         type: string
         description: Charm base channel
@@ -80,7 +78,10 @@ jobs:
                   for run_on in $run_ons; do
                       channel=$(echo $run_on | yq -r '.channel')
                       name=$(echo $run_on | yq -r '.name')
-                      for arch in $(echo $run_on | yq -r '.architectures[]'); do
+                      # Default to amd64 if no architectures provided
+                      architectures=$(echo $run_on | yq -r '.architectures[]')
+                      architectures=${architectures:="amd64"}
+                      for arch in $architectures; do
                           if [[ "$arch" == "$target_base_arch" ]] && \
                               [[ "$channel" == "$target_base_channel" ]] && \
                               [[ "$name" == "$target_base_name" ]]; then
@@ -94,7 +95,11 @@ jobs:
               for build_on in $build_ons; do
                   channel=$(echo $build_on | yq -r '.channel')
                   name=$(echo $build_on | yq -r '.name')
-                  for arch in $(echo $build_on | yq -r '.architectures[]'); do
+                  # Default to amd64 if no architectures provided
+                  architectures=$(echo $run_on | yq -r '.architectures[]')
+                  architectures=${architectures:="amd64"}
+                  for arch in $architectures; do
+                      echo $arch
                       if [[ "$arch" == "$target_base_arch" ]] && \
                       [[ "$channel" == "$target_base_channel" ]] && \
                       [[ "$name" == "$target_base_name" ]]; then
