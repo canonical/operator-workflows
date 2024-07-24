@@ -7,9 +7,19 @@ on:
   workflow_call:
     inputs:
       base-architecture:
+        type: choice
+        description: Charm base architecture
+        options:
+          - amd64
+          - arm64
+      base-channel:
         type: string
-        description: 'Charmcraft Base Architecture'
-        default: 'amd64'
+        description: Charm base channel
+        default: "22.04"
+      base-name:
+        type: string
+        description: Charm base name
+        default: ubuntu
       charm-directory:
         type: string
         description: The directory for the charm under the working-directory
@@ -30,12 +40,8 @@ on:
         default: "./"
 
 jobs:
-  get-runner-image:
-    name: Get runner image
-    uses: ./.github/workflows/get_runner_image.yaml
   validate-channels:
     name: Validate channels
-    needs: get-runner-image
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4.1.7
@@ -47,10 +53,63 @@ jobs:
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
           fi
+  validate-inputs:
+    name: Validate inputs
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - run: |
+          set -e
+
+          CHARMCRAFT_YAML_PATH=${{ inputs.working-directory }}/${{ inputs.charm-directory }}/charmcraft.yaml
+          if [ ! -f $CHARMCRAFT_YAML_PATH ]; then
+              echo "charmcraft.yaml not found in $CHARMCRAFT_YAML_PATH"
+              exit 1
+          fi
+
+          # Validate input charm base configurations exists in charmcraft.yaml
+          target_base_arch=${{ inputs.base-architecture }}
+          target_base_channel=${{ inputs.base-channel }}
+          target_base_name=${{ inputs.base-name }}
+
+          readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
+          for base in "${bases[@]}"; do
+              # Check optional run-on first, since build-on is used as default otherwise.
+              if [[ $(echo $base | yq 'has("run-on")') == "true" ]]; then
+                  readarray run_ons < <(echo $base | yq --output-format json --indent=0 '.run-on[]')
+                  for run_on in $run_ons; do
+                      channel=$(echo $run_on | yq -r '.channel')
+                      name=$(echo $run_on | yq -r '.name')
+                      for arch in $(echo $run_on | yq -r '.architectures[]'); do
+                          if [[ "$arch" == "$target_base_arch" ]] && \
+                              [[ "$channel" == "$target_base_channel" ]] && \
+                              [[ "$name" == "$target_base_name" ]]; then
+                              exit 0
+                          fi
+                      done
+                  done
+              fi
+
+              readarray build_ons < <(echo $base | yq --output-format json --indent=0 '.build-on[]')
+              for build_on in $build_ons; do
+                  channel=$(echo $build_on | yq -r '.channel')
+                  name=$(echo $build_on | yq -r '.name')
+                  for arch in $(echo $build_on | yq -r '.architectures[]'); do
+                      if [[ "$arch" == "$target_base_arch" ]] && \
+                      [[ "$channel" == "$target_base_channel" ]] && \
+                      [[ "$name" == "$target_base_name" ]]; then
+                          exit 0
+                      fi
+                  done
+              done
+          done
+
+          echo "No matching base found: $target_base_arch $target_base_channel $target_base_name"
+          exit 1
   promote-charm:
     name: Promote charm
-    runs-on: ${{ needs.get-runner-image.outputs.runs-on }}
-    needs: [validate-channels, get-runner-image]
+    runs-on: ubuntu-latest
+    needs: [validate-channels, validate-inputs]
     steps:
       - uses: actions/checkout@v4.1.7
       - name: Release charm to channel
@@ -61,8 +120,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ inputs.origin-channel }}
           destination-channel: ${{ inputs.destination-channel }}
-          base-name: ${{ needs.get-runner-image.outputs.name }}
-          base-channel: ${{ needs.get-runner-image.outputs.channel }}
+          base-name: ${{ inputs.base-name }}
+          base-channel: ${{ inputs.base-channel }}
           base-architecture: ${{ inputs.base-architecture }}
   draft-publish-docs:
     name: Draft publish docs
