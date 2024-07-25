@@ -216,7 +216,6 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
-    needs: get-runner-image
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
