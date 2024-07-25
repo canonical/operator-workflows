@@ -8,15 +8,15 @@ on:
     inputs:
       base-architecture:
         type: string
-        description: Charm base architecture
+        description: Charm base architecture to promote (e.g. amd64)
         default: ""
       base-channel:
         type: string
-        description: Charm base channel
+        description: Charm base channel to promote (e.g. 22.04)
         default: ""
       base-name:
         type: string
-        description: Charm base name
+        description: Charm base name to promote (e.g. ubuntu)
         default: ""
       charm-directory:
         type: string
@@ -76,6 +76,10 @@ jobs:
   validate-inputs:
     name: Validate inputs
     runs-on: ubuntu-22.04
+    outputs:
+      arch: ${{ env.BUILD_ON_ARCH }}
+      channel: ${{ env.BUILD_ON_CHANNEL }}
+      name: ${{ env.BUILD_ON_NAME }}
     needs: [ get-runner-image ]
     steps:
       - uses: actions/checkout@v4.1.7
@@ -88,21 +92,25 @@ jobs:
               exit 1
           fi
 
-          # Validate input charm base configurations exists in charmcraft.yaml
           target_base_arch=${{ inputs.base-architecture }}
           target_base_channel=${{ inputs.base-channel }}
           target_base_name=${{ inputs.base-name }}
 
-          if [ -n "$target_base_arch"]; then
+          if [[ -n "$target_base_arch" ]]; then
             target_base_arch=amd64
           fi
-          if [ -n "$target_base_channel"]; then
+
+          # if input not configured, use first result found from charmcraft.yaml
+          if [[ -n "$target_base_channel" ]] && [[ -n "$target_base_name" ]]; then
             target_base_channel=${{ needs.get-runner-image.outputs.BUILD_ON_CHANNEL }}
-          fi
-          if [ -n "$target_base_name"]; then
             target_base_name=${{ needs.get-runner-image.outputs.BUILD_ON_NAME }}
+            echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
+            echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
+            echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
+            exit 0
           fi
 
+          # if input is configured, validate
           readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
           for base in "${bases[@]}"; do
               # Check optional run-on first, since build-on is used as default otherwise.
@@ -118,12 +126,16 @@ jobs:
                           if [[ "$arch" == "$target_base_arch" ]] && \
                               [[ "$channel" == "$target_base_channel" ]] && \
                               [[ "$name" == "$target_base_name" ]]; then
+                              echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
+                              echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
+                              echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
                               exit 0
                           fi
                       done
                   done
               fi
 
+              # Check build-on values.
               readarray build_ons < <(echo $base | yq --output-format json --indent=0 '.build-on[]')
               for build_on in $build_ons; do
                   channel=$(echo $build_on | yq -r '.channel')
@@ -136,6 +148,9 @@ jobs:
                       if [[ "$arch" == "$target_base_arch" ]] && \
                       [[ "$channel" == "$target_base_channel" ]] && \
                       [[ "$name" == "$target_base_name" ]]; then
+                          echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
+                          echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
+                          echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
                           exit 0
                       fi
                   done
@@ -158,9 +173,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           origin-channel: ${{ inputs.origin-channel }}
           destination-channel: ${{ inputs.destination-channel }}
-          base-name: ${{ inputs.base-name }}
-          base-channel: ${{ inputs.base-channel }}
-          base-architecture: ${{ inputs.base-architecture }}
+          base-name: ${{ needs.validate-inputs.outputs.name }}
+          base-channel: ${{ needs.validate-inputs.channel }}
+          base-architecture: ${{ needs.validate-inputs.outputs.arch }}
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-22.04
