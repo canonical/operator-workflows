@@ -9,15 +9,15 @@ on:
       base-architecture:
         type: string
         description: Charm base architecture
-        default: 'amd64'
+        default: ""
       base-channel:
         type: string
         description: Charm base channel
-        default: "22.04"
+        default: ""
       base-name:
         type: string
         description: Charm base name
-        default: ubuntu
+        default: ""
       charm-directory:
         type: string
         description: The directory for the charm under the working-directory
@@ -38,6 +38,28 @@ on:
         default: "./"
 
 jobs:
+  get-runner-image:
+    name: Get runner image
+    runs-on: ubuntu-22.04
+    outputs:
+      name: ${{ env.BUILD_ON_NAME }}
+      channel: ${{ env.BUILD_ON_CHANNEL }}
+      runs-on: ${{ env.BUILD_ON }}
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - name: Get build-on value
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        run: |
+          name="ubuntu"
+          channel="22.04"
+          if [ -f charmcraft.yaml ]; then
+            name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
+            channel=$(yq '.bases.[0].build-on.[0].channel // '22.04'' charmcraft.yaml)
+          fi
+          image="$name-$channel"
+          echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
+          echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
+          echo "BUILD_ON=$image" >> $GITHUB_ENV
   validate-channels:
     name: Validate channels
     runs-on: ubuntu-22.04
@@ -54,6 +76,7 @@ jobs:
   validate-inputs:
     name: Validate inputs
     runs-on: ubuntu-22.04
+    needs: [ get-runner-image ]
     steps:
       - uses: actions/checkout@v4.1.7
       - run: |
@@ -69,6 +92,16 @@ jobs:
           target_base_arch=${{ inputs.base-architecture }}
           target_base_channel=${{ inputs.base-channel }}
           target_base_name=${{ inputs.base-name }}
+
+          if [ -n "$target_base_arch"]; then
+            target_base_arch=amd64
+          fi
+          if [ -n "$target_base_channel"]; then
+            target_base_channel=${{ needs.get-runner-image.outputs.BUILD_ON_CHANNEL }}
+          fi
+          if [ -n "$target_base_name"]; then
+            target_base_name=${{ needs.get-runner-image.outputs.BUILD_ON_NAME }}
+          fi
 
           readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
           for base in "${bases[@]}"; do
