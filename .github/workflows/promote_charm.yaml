@@ -105,8 +105,8 @@ jobs:
             target_base_channel=${{ needs.get-runner-image.outputs.channel }}
             target_base_name=${{ needs.get-runner-image.outputs.name }}
             echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
-            echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
-            echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
+            echo "BUILD_ON_CHANNEL=$target_base_channel" >> $GITHUB_ENV
+            echo "BUILD_ON_NAME=$target_base_name" >> $GITHUB_ENV
             exit 0
           fi
 
