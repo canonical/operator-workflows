@@ -93,9 +93,6 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
-  get-runner-image:
-    name: Get runner image
-    uses: ./.github/workflows/get_runner_image.yaml
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
@@ -219,7 +216,6 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
-    needs: get-runner-image
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
