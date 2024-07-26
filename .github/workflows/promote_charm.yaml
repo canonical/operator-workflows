@@ -168,7 +168,7 @@ jobs:
       - name: Promote charm check
         run: |
           echo ${{ needs.validate-inputs.outputs.name }}
-          echo ${{ needs.validate-inputs.channel }}
+          echo ${{ needs.validate-inputs.outputs.channel }}
           echo ${{ needs.validate-inputs.outputs.arch }}
   # promote-charm:
   #   name: Promote charm
@@ -185,7 +185,7 @@ jobs:
   #         origin-channel: ${{ inputs.origin-channel }}
   #         destination-channel: ${{ inputs.destination-channel }}
   #         base-name: ${{ needs.validate-inputs.outputs.name }}
-  #         base-channel: ${{ needs.validate-inputs.channel }}
+  #         base-channel: ${{ needs.validate-inputs.outputs.channel }}
   #         base-architecture: ${{ needs.validate-inputs.outputs.arch }}
   # draft-publish-docs:
   #   name: Draft publish docs
