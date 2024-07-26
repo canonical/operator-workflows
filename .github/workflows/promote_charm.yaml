@@ -96,12 +96,12 @@ jobs:
           target_base_channel=${{ inputs.base-channel }}
           target_base_name=${{ inputs.base-name }}
 
-          if [[ -n "$target_base_arch" ]]; then
+          if [[ -z "$target_base_arch" ]]; then
             target_base_arch=amd64
           fi
 
           # if input not configured, use first result found from charmcraft.yaml
-          if [[ -n "$target_base_channel" ]] && [[ -n "$target_base_name" ]]; then
+          if [[ -z "$target_base_channel" ]] && [[ -z "$target_base_name" ]]; then
             target_base_channel=${{ needs.get-runner-image.outputs.channel }}
             target_base_name=${{ needs.get-runner-image.outputs.name }}
             echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
