@@ -102,8 +102,8 @@ jobs:
 
           # if input not configured, use first result found from charmcraft.yaml
           if [[ -n "$target_base_channel" ]] && [[ -n "$target_base_name" ]]; then
-            target_base_channel=${{ needs.get-runner-image.outputs.BUILD_ON_CHANNEL }}
-            target_base_name=${{ needs.get-runner-image.outputs.BUILD_ON_NAME }}
+            target_base_channel=${{ needs.get-runner-image.outputs.channel }}
+            target_base_name=${{ needs.get-runner-image.outputs.name }}
             echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
             echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
             echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
