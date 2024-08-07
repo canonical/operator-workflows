@@ -164,7 +164,11 @@ class Publish {
     let metadata = yaml.load(
       (
         await exec.getExecOutput('charmcraft', ['expand-extensions'], {
-          cwd
+          cwd,
+          env: {
+            CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true',
+            ...process.env
+          }
         })
       ).stdout
     ) as Metadata
