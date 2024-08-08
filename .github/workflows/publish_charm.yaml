@@ -49,6 +49,8 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
+  ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
 
 jobs:
   select-channel:
