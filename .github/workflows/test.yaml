@@ -93,6 +93,29 @@ jobs:
           filter-mode: nofilter
           workdir: ${{ inputs.working-directory }}
           woke-version: latest
+  vale:
+    name: Style checker
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
+        )) || 'ubuntu-22.04'
+      }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - name: Checkout repo to runner
+        uses: actions/checkout@v3
+      - name: Install styles
+        uses: canonical/praecepta@main
+      - name: Run Vale tests
+        uses: errata-ai/vale-action@reviewdog
+        with:
+          files: ./docs
+          fail_on_error: false
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
