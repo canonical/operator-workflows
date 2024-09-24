@@ -112,7 +112,7 @@ jobs:
       - name: Install styles
         uses: canonical/praecepta@main
       - run: |
-          apt-get update -y && apt-get install -y tree
+          sudo apt-get update -y && sudo apt-get install -y tree
       - name: Run Vale tests
         uses: errata-ai/vale-action@reviewdog
         with:
