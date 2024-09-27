@@ -40,7 +40,7 @@ on:
 jobs:
   get-runner-image:
     name: Get runner image
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       name: ${{ env.BUILD_ON_NAME }}
       channel: ${{ env.BUILD_ON_CHANNEL }}
@@ -62,7 +62,7 @@ jobs:
           echo "BUILD_ON=$image" >> $GITHUB_ENV
   validate-channels:
     name: Validate channels
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4.2.0
       - run: |
@@ -75,7 +75,7 @@ jobs:
           fi
   validate-inputs:
     name: Validate inputs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     outputs:
       arch: ${{ env.BUILD_ON_ARCH }}
       channel: ${{ env.BUILD_ON_CHANNEL }}
@@ -178,7 +178,7 @@ jobs:
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
@@ -200,7 +200,7 @@ jobs:
   publish-docs:
     if: ${{ github.event.inputs.destination-channel }} == 'latest/stable'
     name: Publish docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}

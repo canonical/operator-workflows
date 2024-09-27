@@ -103,7 +103,7 @@ jobs:
           upload-image: false
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [publish-charm]
     defaults:
       run:
@@ -125,7 +125,7 @@ jobs:
           charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [ publish-charm ]
     steps:
       - uses: actions/checkout@v4.2.0
