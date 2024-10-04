@@ -26,6 +26,7 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      trivy-severity-config: "CRITICAL,HIGH"
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
