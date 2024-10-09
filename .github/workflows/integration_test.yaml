@@ -85,6 +85,10 @@ on:
         description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
         type: string
         default: ""
+      rockcraft-enable-security-nesting:
+        description: Set security.nesting=true on the rockcraft lxc project.
+        type: boolean
+        default: false
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -228,6 +232,7 @@ jobs:
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
           rockcraft-ref: ${{ inputs.rockcraft-ref }}
           rockcraft-repository: ${{ inputs.rockcraft-repository }}
+          rockcraft-enable-security-nesting: ${{ inputs.rockcraft-enable-security-nesting }}
 
   plan-scan:
     name: Plan Image Scanning

@@ -243,6 +243,7 @@ interface BuildRockParams {
   rockcraftRef: string
   user: string
   token: string
+  enableSecurityNesting: boolean
 }
 
 async function buildRock({
@@ -251,7 +252,8 @@ async function buildRock({
   rockcraftRepository,
   rockcraftRef,
   user,
-  token
+  token,
+  enableSecurityNesting
 }: BuildRockParams): Promise<void> {
   if (rockcraftRepository && rockcraftRef) {
     await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
@@ -266,6 +268,9 @@ async function buildRock({
     ])
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
+  }
+  if (enableSecurityNesting) {
+    await exec.exec('sudo', ['lxc', '--project=rockcraft', 'profile', 'set', 'default', 'security.nesting', 'true'])
   }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
@@ -364,7 +369,8 @@ export async function run(): Promise<void> {
           rockcraftRef: core.getInput('rockcraft-ref'),
           rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
-          token: core.getInput('github-token')
+          token: core.getInput('github-token'),
+          enableSecurityNesting: core.getInput('rockcraft-enable-security-nesting')
         })
     }
   } catch (error) {
