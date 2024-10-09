@@ -270,8 +270,7 @@ async function buildRock({
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
   // if (enableSecurityNesting) {
-  await exec.exec('sudo', [
-    'lxc',
+  await exec.exec('lxc', [
     '--project=rockcraft',
     'profile',
     'set',
