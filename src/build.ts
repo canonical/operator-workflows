@@ -270,7 +270,15 @@ async function buildRock({
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
   if (enableSecurityNesting) {
-    await exec.exec('sudo', ['lxc', '--project=rockcraft', 'profile', 'set', 'default', 'security.nesting', 'true'])
+    await exec.exec('sudo', [
+      'lxc',
+      '--project=rockcraft',
+      'profile',
+      'set',
+      'default',
+      'security.nesting',
+      'true'
+    ])
   }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
@@ -370,7 +378,8 @@ export async function run(): Promise<void> {
           rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token'),
-          enableSecurityNesting: core.getInput('rockcraft-enable-security-nesting')
+          enableSecurityNesting:
+            core.getInput('rockcraft-enable-security-nesting') === 'true'
         })
     }
   } catch (error) {

@@ -27,7 +27,8 @@ inputs:
     description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
     default: ""
   rockcraft-enable-security-nesting:
-    description: Set security.nesting=true on the rockcraft lxc project.
+    description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
+    default: ""
 runs:
   using: node20
   main: ../../dist/build/index.js

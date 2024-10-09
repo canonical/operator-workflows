@@ -86,7 +86,7 @@ on:
         type: string
         default: ""
       rockcraft-enable-security-nesting:
-        description: Set security.nesting=true on the rockcraft lxc project.
+        description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
         type: boolean
         default: false
       microk8s-addons:
