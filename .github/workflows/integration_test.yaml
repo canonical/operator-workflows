@@ -220,6 +220,9 @@ jobs:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - uses: canonical/setup-lxd@v0.1.1
+      - name: set security nesting
+        run: |
+          lxc profile set default security.nesting true
       - uses: actions/checkout@v4
       - uses: canonical/operator-workflows/internal/build@main
         id: build
