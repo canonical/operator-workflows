@@ -269,17 +269,17 @@ async function buildRock({
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
-  if (enableSecurityNesting) {
-    await exec.exec('sudo', [
-      'lxc',
-      '--project=rockcraft',
-      'profile',
-      'set',
-      'default',
-      'security.nesting',
-      'true'
-    ])
-  }
+  // if (enableSecurityNesting) {
+  await exec.exec('sudo', [
+    'lxc',
+    '--project=rockcraft',
+    'profile',
+    'set',
+    'default',
+    'security.nesting',
+    'true'
+  ])
+  // }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
