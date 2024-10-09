@@ -269,6 +269,7 @@ async function buildRock({
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
+  core.startGroup('rockcraft pack')
   // if (enableSecurityNesting) {
   await exec.exec('lxc', [
     '--project=rockcraft',
@@ -279,7 +280,6 @@ async function buildRock({
     'true'
   ])
   // }
-  core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
     env: { ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
