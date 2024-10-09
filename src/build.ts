@@ -378,8 +378,9 @@ export async function run(): Promise<void> {
           rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token'),
-          enableSecurityNesting:
-            core.getInput('rockcraft-enable-security-nesting') === 'true'
+          enableSecurityNesting: core.getBooleanInput(
+            'rockcraft-enable-security-nesting'
+          )
         })
     }
   } catch (error) {
