@@ -85,6 +85,10 @@ on:
         description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
         type: string
         default: ""
+      rockcraft-enable-security-nesting:
+        description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
+        type: boolean
+        default: false
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -216,6 +220,10 @@ jobs:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - uses: canonical/setup-lxd@v0.1.1
+      - name: Set LXC security nesting
+        if: ${{ inputs.rockcraft-enable-security-nesting }}
+        run: |
+          lxc profile set default security.nesting true
       - uses: actions/checkout@v4
       - uses: canonical/operator-workflows/internal/build@main
         id: build
