@@ -230,7 +230,7 @@ jobs:
       - name: Clean up
         if: inputs.charmcraft-repository != ''
         run: rm -rf *
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Setup Devstack Swift
@@ -326,7 +326,7 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.25.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
@@ -344,7 +344,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@v0.13.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
