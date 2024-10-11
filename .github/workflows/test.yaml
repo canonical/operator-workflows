@@ -116,7 +116,7 @@ jobs:
       - name: Run Vale tests
         uses: errata-ai/vale-action@reviewdog
         with:
-          files: ./docs
+          files: ${{ inputs.charm-directory }}/docs
           fail_on_error: false
   shellcheck-lint:
     name: Shell scripts lint
