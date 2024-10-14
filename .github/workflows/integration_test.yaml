@@ -85,6 +85,10 @@ on:
         description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
         type: string
         default: ""
+      rockcraft-enable-security-nesting:
+        description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
+        type: boolean
+        default: false
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -139,6 +143,10 @@ on:
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
+      trivy-severity-config:
+        type: string
+        description: Trivy severity configuration for image testing
+        default: "CRITICAL,HIGH"
       upload-image:
         type: string
         description: >-
@@ -195,7 +203,7 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - uses: actions/checkout@v4.2.0
+      - uses: actions/checkout@v4.2.1
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -212,6 +220,10 @@ jobs:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - uses: canonical/setup-lxd@v0.1.1
+      - name: Set LXC security nesting
+        if: ${{ inputs.rockcraft-enable-security-nesting }}
+        run: |
+          lxc profile set default security.nesting true
       - uses: actions/checkout@v4
       - uses: canonical/operator-workflows/internal/build@main
         id: build
@@ -246,7 +258,7 @@ jobs:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.2.0
+      - uses: actions/checkout@v4.2.1
       - uses: actions/download-artifact@v4.1.8
         if: matrix.scan.artifact != ''
         with:
@@ -265,12 +277,12 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.25.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
-          severity: 'CRITICAL,HIGH'
+          severity: ${{ inputs.trivy-severity-config }}
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
@@ -279,7 +291,7 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
           if [ -f ".trivyignore" ]
           then
-            output=$(trivy image $ROCK_IMAGE --severity HIGH,CRITICAL -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            output=$(trivy image $ROCK_IMAGE --severity ${{ inputs.trivy-severity-config }} -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
             line=0
             while read CVE;
             do
