@@ -5,5 +5,3 @@ CVE-2022-31043
 CVE-2022-31090
 CVE-2022-31091
 CVE-2022-24775
-# Pebble CVE, false positive: https://github.com/canonical/pebble/issues/498#issuecomment-2339325722
-CVE-2024-34156
