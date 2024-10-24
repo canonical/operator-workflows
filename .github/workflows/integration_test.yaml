@@ -259,6 +259,14 @@ jobs:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
       - uses: actions/checkout@v4.2.2
+      - name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ./${{ inputs.working-directory }}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+          ls -lah
       - uses: actions/download-artifact@v4.1.8
         if: matrix.scan.artifact != ''
         with:
@@ -277,7 +285,7 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
