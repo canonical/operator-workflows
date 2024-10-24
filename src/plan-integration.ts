@@ -23,17 +23,21 @@ export async function run(): Promise<void> {
       const manifest = JSON.parse(
         fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
       ) as object
-      if (build.type === 'charm') {
+      if (build.type === 'charm' || build.type === 'file') {
         // @ts-ignore
-        for (const file of manifest.files) {
+        for (const file of manifest.files as string[]) {
           fs.renameSync(
             path.join(tmp, file),
             path.join(plan.working_directory, file)
           )
-          args.push(`--charm-file=./${file}`)
+          const file_path = path.resolve(plan.working_directory, file)
+          // @ts-ignore
+          const name = manifest.name as string
+          let argName: string =
+            build.type === 'charm' ? 'charm-file' : `${name}-resource`
+          args.push(`--${argName}=${file_path}`)
         }
-      }
-      if (build.type === 'rock' || build.type == 'docker-image') {
+      } else if (build.type === 'rock' || build.type == 'docker-image') {
         // @ts-ignore
         const name = manifest.name as string
         if ('files' in manifest) {

@@ -143,7 +143,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -268,7 +268,7 @@ jobs:
       - run: sudo apt install skopeo -y
 
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@main
+        uses: ./internal/plan-integration
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}

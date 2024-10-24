@@ -178,7 +178,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -199,7 +199,7 @@ jobs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: canonical/operator-workflows/internal/plan@main
+      - uses: ./internal/plan
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -220,7 +220,7 @@ jobs:
         run: |
           lxc profile set default security.nesting true
       - uses: actions/checkout@v4
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: ./internal/build
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -239,7 +239,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: ./internal/plan-scan
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}

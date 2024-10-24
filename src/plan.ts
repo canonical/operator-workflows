@@ -7,7 +7,7 @@ import * as path from 'path'
 import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 import * as github from '@actions/github'
-import { Plan, BuildPlan } from './model'
+import { Plan, BuildPlan, CharmResource } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
 
@@ -127,6 +127,75 @@ async function planBuildDockerImage(
   })
 }
 
+async function planBuildFileResource(
+  workingDir: string,
+  id: string
+): Promise<BuildPlan[]> {
+  const allCharmcraftFiles = await (
+    await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))
+  ).glob()
+  const charmcraftFiles = allCharmcraftFiles.filter(
+    file =>
+      !path.normalize(path.relative(workingDir, file)).startsWith('tests/')
+  )
+  return charmcraftFiles.flatMap((charmcraftFile: string) => {
+    const file = path.join(
+      workingDir,
+      path.relative(workingDir, charmcraftFile)
+    )
+    const charmcraft = yaml.load(
+      fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
+    ) as object
+    const metadataFile = path.join(
+      path.dirname(charmcraftFile),
+      'metadata.yaml'
+    )
+    const metadataExists = fs.existsSync(metadataFile)
+    const metadata = metadataExists
+      ? (yaml.load(
+          fs.readFileSync(metadataFile, { encoding: 'utf-8' })
+        ) as object)
+      : {}
+
+    let charmName: string = ''
+    if ('name' in charmcraft) {
+      charmName = charmcraft['name'] as string
+    } else if ('name' in metadata) {
+      charmName = metadata.name as string
+    } else {
+      throw new Error(`unknown charm name (${workingDir})`)
+    }
+
+    let resources: Map<string, CharmResource> = new Map()
+    if ('resources' in charmcraft) {
+      resources = charmcraft['resources'] as Map<string, CharmResource>
+    }
+    if ('resources' in metadata) {
+      resources = metadata['resources'] as Map<string, CharmResource>
+    }
+
+    return Object.entries(resources).reduce(
+      (acc, [resourceName, resource]: [string, CharmResource]) => {
+        if (resource.type === 'file' && resource.filename) {
+          let parent = path.dirname(file)
+          acc.push({
+            type: 'file',
+            name: resourceName,
+            source_file: resource.filename,
+            source_directory: parent,
+            output_type: 'file',
+            output: sanitizeArtifactName(
+              `${id}__build__output__file__${charmName}__${resourceName}`
+            )
+          })
+        }
+        return acc
+      },
+      [] as BuildPlan[]
+    )
+  })
+}
+
 async function planBuild(
   workingDir: string,
   id: string,
@@ -135,7 +204,8 @@ async function planBuild(
   return [
     ...(await planBuildCharm(workingDir, id)),
     ...(await planBuildRock(workingDir, id, imageOutputType)),
-    ...(await planBuildDockerImage(workingDir, id, imageOutputType))
+    ...(await planBuildDockerImage(workingDir, id, imageOutputType)),
+    ...(await planBuildFileResource(workingDir, id))
   ]
 }
 
@@ -172,7 +242,7 @@ export async function run(): Promise<void> {
       working_directory: workingDir,
       build: buildPlans
     }
-    core.info(`generated workflow plan: ${JSON.stringify(plan, null, 2)}`)
+    core.info(`Generated workflow plan: ${JSON.stringify(plan, null, 2)}`)
     const artifact = new DefaultArtifactClient()
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-'))
     const pathFile = path.join(tmp, 'plan.json')
