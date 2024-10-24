@@ -203,7 +203,7 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -258,7 +258,7 @@ jobs:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
