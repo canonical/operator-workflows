@@ -68,7 +68,7 @@ jobs:
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
@@ -109,7 +109,7 @@ jobs:
       run:
         working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-24.04
     needs: [ publish-charm ]
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
