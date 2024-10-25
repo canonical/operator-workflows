@@ -49,6 +49,8 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
+  CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
+  ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
 
 jobs:
   select-channel:
@@ -57,7 +59,7 @@ jobs:
       destination-channel: ${{ steps.select-channel.outputs.name }}
     steps:
       - name: Select charmhub channel
-        uses: canonical/charming-actions/channel@2.6.1
+        uses: canonical/charming-actions/channel@2.6.3
         id: select-channel
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
@@ -66,7 +68,7 @@ jobs:
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
@@ -90,7 +92,7 @@ jobs:
           rm -rf $TEMP_DIR
           ls -lah
       - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.6.1
+        uses: canonical/charming-actions/upload-charm@2.6.3
         with:
           built-charm-path: ${{ steps.publish.outputs.charms }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
@@ -101,13 +103,13 @@ jobs:
           upload-image: false
   draft-publish-docs:
     name: Draft publish docs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [publish-charm]
     defaults:
       run:
         working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -123,10 +125,10 @@ jobs:
           charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
   release-charm-libs:
     name: Release charm libs
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: [ publish-charm ]
     steps:
-      - uses: actions/checkout@v4.1.7
+      - uses: actions/checkout@v4.2.2
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -134,7 +136,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.6.1
+      - uses: canonical/charming-actions/release-libraries@2.6.3
         name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
