@@ -29,7 +29,7 @@ When running the integration tests, the following posargs will be automatically 
 
 * --charm-file [charm_file_name]: The name of the charm artifact generated prior to the integration tests run, this argument can be supplied multiple times for charm with multiple bases.
 * --{image-name}-image: The name of the image artifact built prior to the integration tests run, this argument may be supplied multiple times or not at all depending on the plan
-* --{resource-name}-file-resource: The name of the charm file resources built prior to the integration tests run, this argument may be supplied multiple times or not at all depending on the plan
+* --{resource-name}-resource: The name of the charm file resources built prior to the integration tests run, this argument may be supplied multiple times or not at all depending on the plan
 * --series [series]: As defined in the `series` configuration described option above
 * -k [module]: As defined in the `modules` configuration option described above
 * --keep-models
