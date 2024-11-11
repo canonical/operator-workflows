@@ -39,11 +39,6 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
-      image-build-args:
-        description: |
-          List of build args to pass to the build image job
-        type: string
-        default: ""
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
