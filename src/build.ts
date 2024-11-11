@@ -137,7 +137,7 @@ interface BuildDockerImageParams {
 
 async function buildFileResource(plan: BuildPlan): Promise<void> {
   core.startGroup(`Build resource {plan.name}`)
-  await exec.exec('./build-resource.sh', [plan.name, plan.source_file], {
+  await exec.exec(`./build-${plan.name}.sh`, [plan.source_file], {
     cwd: plan.source_directory
   })
   core.endGroup()

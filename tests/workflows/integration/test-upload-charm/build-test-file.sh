@@ -3,11 +3,10 @@
 set -eu
 
 function build_resource() {
-    local RESOURCE=$1
-    local RESOURCE_OUTPUT=$2
+    local RESOURCE_OUTPUT=$1
 
     case $RESOURCE in
-        test-file)
+        test-file.txt)
             touch "$RESOURCE_OUTPUT"
             ;;
         *)
@@ -17,4 +16,4 @@ function build_resource() {
     esac
 }
 
-build_resource "$1" "$2"
+build_resource "$1"
