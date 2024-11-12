@@ -214,7 +214,7 @@ jobs:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
-      - uses: canonical/setup-lxd@v0.1.1
+      - uses: canonical/setup-lxd@v0.1.2
       - name: Set LXC security nesting
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
