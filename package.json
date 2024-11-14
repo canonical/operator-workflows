@@ -42,7 +42,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/artifact": "2.1.11",
-    "@actions/cache": "3.2.4",
+    "@actions/cache": "3.3.0",
     "@actions/core": "1.11.1",
     "@actions/exec": "1.1.1",
     "@actions/github": "6.0.0",
@@ -57,7 +57,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vercel/ncc": "^0.38.1",
-    "eslint": "^8.57.0",
+    "eslint": "^9.0.0",
     "eslint-plugin-github": "^5.0.1",
     "eslint-plugin-jest": "^28.6.0",
     "eslint-plugin-jsonc": "^2.16.0",

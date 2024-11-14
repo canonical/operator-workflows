@@ -230,7 +230,7 @@ jobs:
       - name: Clean up
         if: inputs.charmcraft-repository != ''
         run: rm -rf *
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Setup Devstack Swift
@@ -326,7 +326,7 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
