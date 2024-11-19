@@ -11,6 +11,7 @@ export interface BuildPlan {
   name: string
   source_file: string
   source_directory: string
+  build_target: string | undefined
   output_type: 'file' | 'registry'
   output: string
 }

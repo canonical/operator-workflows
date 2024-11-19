@@ -71,6 +71,7 @@ async function planBuildCharm(
       name,
       source_file: file,
       source_directory: path.dirname(file),
+      build_target: undefined,
       output_type: 'file',
       output: sanitizeArtifactName(`${id}__build__output__charm__${name}`)
     }
@@ -97,6 +98,7 @@ async function planBuildRock(
       name,
       source_file: file,
       source_directory: path.dirname(file),
+      build_target: undefined,
       output_type: outputType,
       output: sanitizeArtifactName(`${id}__build__output__rock__${name}`)
     }
@@ -119,6 +121,7 @@ async function planBuildDockerImage(
       name,
       source_file: file,
       source_directory: path.dirname(file),
+      build_target: undefined,
       output_type: outputType,
       output: sanitizeArtifactName(
         `${id}__build__output__docker-image__${name}`
@@ -181,7 +184,8 @@ async function planBuildFileResource(
           acc.push({
             type: 'file',
             name: resourceName,
-            source_file: resource.filename,
+            source_file: `build-${resourceName}.sh`,
+            build_target: resource.filename,
             source_directory: parent,
             output_type: 'file',
             output: sanitizeArtifactName(

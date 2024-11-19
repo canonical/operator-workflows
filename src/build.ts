@@ -137,12 +137,15 @@ interface BuildDockerImageParams {
 
 async function buildFileResource(plan: BuildPlan): Promise<void> {
   core.startGroup(`Build resource {plan.name}`)
-  await exec.exec(`./build-${plan.name}.sh`, [plan.source_file], {
+  if (!plan.build_target) {
+    throw new Error('build_target is required for file resources')
+  }
+  await exec.exec(`./${plan.source_file}`, [plan.build_target], {
     cwd: plan.source_directory
   })
   core.endGroup()
   const resourceFiles = await (
-    await glob.create(path.join(plan.source_directory, plan.source_file))
+    await glob.create(path.join(plan.source_directory, plan.build_target))
   ).glob()
   const artifact = new DefaultArtifactClient()
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
