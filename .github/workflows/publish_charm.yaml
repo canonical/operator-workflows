@@ -73,7 +73,7 @@ jobs:
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
       - run: sudo snap install rockcraft --classic
-      - uses: ./internal/publish
+      - uses: canonical/operator-workflows/internal/publish@main
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
