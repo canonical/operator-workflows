@@ -136,7 +136,7 @@ interface BuildDockerImageParams {
 }
 
 async function buildFileResource(plan: BuildPlan): Promise<void> {
-  core.startGroup(`Build resource {plan.name}`)
+  core.startGroup(`Build resource ${plan.name}`)
   if (!plan.build_target) {
     throw new Error('build_target is required for file resources')
   }
