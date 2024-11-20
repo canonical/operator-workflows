@@ -30,12 +30,11 @@ export async function run(): Promise<void> {
             path.join(tmp, file),
             path.join(plan.working_directory, file)
           )
-          const file_path = path.resolve(plan.working_directory, file)
           // @ts-ignore
           const name = manifest.name as string
           let argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
-          args.push(`--${argName}=${file_path}`)
+          args.push(`--${argName}=${file}`)
         }
       } else if (build.type === 'rock' || build.type == 'docker-image') {
         // @ts-ignore
