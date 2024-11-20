@@ -146,11 +146,12 @@ class Publish {
     throw new Error(`can't find plan artifact for workflow run ${runId}`)
   }
 
-  async getImageResources(): Promise<string[]> {
+  async getCharmResources(): Promise<[string[], string[]]> {
     interface Metadata {
       resources?: {
         [name: string]: {
           type: string
+          filename?: string
           'upstream-source'?: string
         }
       }
@@ -185,15 +186,69 @@ class Publish {
     }
     const resources = metadata.resources
     if (resources === undefined) {
-      return []
+      return [[], []]
     }
-    return Object.keys(resources).filter(
+    let images = Object.keys(resources).filter(
       k => resources[k].type === 'oci-image' && !resources[k]['upstream-source']
     )
+    let files = Object.keys(resources).filter(k => resources[k].type === 'file')
+    return [images, files]
+  }
+
+  async getFiles(): Promise<Map<string, string>> {
+    const [, resources] = await this.getCharmResources()
+    core.info(`required resources: ${resources}`)
+    const upload: Map<string, string> = new Map()
+    if (resources.length === 0) {
+      return upload
+    }
+    const runId = await this.findWorkflowRunId()
+    const plan = await this.getPlan(runId)
+    for (const build of plan.build) {
+      if (build.type === 'file') {
+        const resourceName = this.resourceMapping[build.name]
+        if (!resources.includes(resourceName)) {
+          core.info(`skip uploading file: ${build.name}`)
+          continue
+        }
+        const tmp = this.mkdtemp()
+        const artifact = await this.artifact.getArtifact(build.output, {
+          findBy: {
+            token: this.token,
+            repositoryOwner: github.context.repo.owner,
+            repositoryName: github.context.repo.repo,
+            workflowRunId: runId
+          }
+        })
+        await this.artifact.downloadArtifact(artifact.artifact.id, {
+          path: tmp,
+          findBy: {
+            token: this.token,
+            repositoryOwner: github.context.repo.owner,
+            repositoryName: github.context.repo.repo,
+            workflowRunId: runId
+          }
+        })
+        const manifest = JSON.parse(
+          fs.readFileSync(path.join(tmp, 'manifest.json'), {
+            encoding: 'utf-8'
+          })
+        )
+        const files = manifest.files as string[]
+        if (files.length !== 1) {
+          throw new Error(
+            `file resource ${build.name} contain multiple candidates: ${files}`
+          )
+        }
+        const file = files[0]
+        upload.set(resourceName, file)
+      }
+    }
+    return upload
   }
 
   async getImages(): Promise<Map<string, string>> {
-    const resources = await this.getImageResources()
+    const [resources] = await this.getCharmResources()
     core.info(`required resources: ${resources}`)
     const upload: Map<string, string> = new Map()
     if (resources.length === 0) {
@@ -203,7 +258,7 @@ class Publish {
     const plan = await this.getPlan(runId)
     let dockerLogin = false
     for (const build of plan.build) {
-      if (build.type === 'charm') {
+      if (build.type === 'charm' || build.type === 'file') {
         continue
       }
       const resourceName = this.resourceMapping.hasOwnProperty(build.name)
@@ -346,7 +401,8 @@ class Publish {
   async run() {
     try {
       core.startGroup('retrieve image info')
-      const images = await this.getImages()
+      const imageResources = await this.getImages()
+      const fileResources = await this.getFiles()
       core.endGroup()
       core.startGroup('retrieve charm info')
       const {
@@ -355,15 +411,36 @@ class Publish {
         files: charms
       } = await this.getCharms()
       core.endGroup()
-      core.info(
-        `start uploading image resources: ${JSON.stringify(Object.fromEntries([...images]))}`
-      )
-      for (const resource of images.keys()) {
+      if (fileResources.size !== 0) {
+        core.info(
+          `start uploading file resources: ${JSON.stringify(Object.fromEntries([...fileResources]))}`
+        )
+      }
+      for (const [resource, filePath] of fileResources) {
+        core.info(`upload resource ${resource}`)
+        await exec.exec(
+          'charmcraft',
+          [
+            'upload-resource',
+            charmName,
+            resource,
+            `--filepath=${filePath}`,
+            '--verbosity=brief'
+          ],
+          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
+        )
+      }
+      if (imageResources.size !== 0) {
+        core.info(
+          `start uploading image resources: ${JSON.stringify(Object.fromEntries([...imageResources]))}`
+        )
+      }
+      for (const [resource, image] of imageResources) {
         core.info(`upload resource ${resource}`)
         const imageId = (
           await exec.getExecOutput('docker', [
             'images',
-            images.get(resource) as string,
+            image,
             '--format',
             '{{.ID}}'
           ])
