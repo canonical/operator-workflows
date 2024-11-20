@@ -34,7 +34,7 @@ export async function run(): Promise<void> {
           const name = manifest.name as string
           let argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
-          args.push(`--${argName}=${file}`)
+          args.push(`--${argName}=./${file}`)
         }
       } else if (build.type === 'rock' || build.type == 'docker-image') {
         // @ts-ignore
