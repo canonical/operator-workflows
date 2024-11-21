@@ -178,7 +178,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
