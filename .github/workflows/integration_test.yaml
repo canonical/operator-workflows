@@ -287,8 +287,6 @@ jobs:
           exit-code: '1'
           severity: ${{ inputs.trivy-severity-config }}
         env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           TRIVY_SKIP_DB_UPDATE: true
       - name: Check trivyignore
         run: |
