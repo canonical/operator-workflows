@@ -300,6 +300,7 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_SKIP_DB_UPDATE: false
       ## Trivy-db uses `0600` permissions.
       ## But `action/cache` use `runner` user by default
       ## So we need to change the permissions before caching the database.

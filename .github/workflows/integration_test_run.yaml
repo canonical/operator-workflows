@@ -329,6 +329,7 @@ jobs:
         id: date
         run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
       - name: Restore trivy cache
+        if: ${{ inputs.trivy-fs-enabled }}
         uses: actions/cache@v4.1.2
         with:
           path: cache/db
@@ -342,10 +343,13 @@ jobs:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
+        env:
+          TRIVY_SKIP_DB_UPDATE: false
       ## Trivy-db uses `0600` permissions.
       ## But `action/cache` use `runner` user by default
       ## So we need to change the permissions before caching the database.
       - name: change permissions for trivy.db
+        if: ${{ inputs.trivy-fs-enabled }}
         run: sudo chmod 0644 ./cache/db/trivy.db
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
