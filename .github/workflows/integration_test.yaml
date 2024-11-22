@@ -289,7 +289,7 @@ jobs:
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          TRIVY_SKIP_DB_UPDATE: false
+          TRIVY_SKIP_DB_UPDATE: true
       - name: Check trivyignore
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
