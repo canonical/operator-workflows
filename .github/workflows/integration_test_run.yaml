@@ -205,7 +205,7 @@ jobs:
       - name: Restore Charmcraft Cache
         if: inputs.charmcraft-repository != ''
         id: restore-charmcraft
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v4.1.2
         with:
           path: ./charmcraft*.snap
           key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
@@ -219,7 +219,7 @@ jobs:
           snapcraft --use-lxd
           cp charmcraft*.snap ../
       - name: Save Charmcraft Cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v4.1.2
         if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
         with:
           path: ./charmcraft*.snap
@@ -324,6 +324,17 @@ jobs:
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
+       ## To avoid the trivy-db becoming outdated, we save the cache for one day
+      - name: Get data
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
+      - name: Restore trivy cache
+        uses: actions/cache@v4.1.2
+        with:
+          path: cache/db
+          key: trivy-cache-${{ steps.date.outputs.date }}
+          restore-keys:
+            trivy-cache-
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
         uses: aquasecurity/trivy-action@0.28.0
@@ -331,6 +342,11 @@ jobs:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
+      ## Trivy-db uses `0600` permissions.
+      ## But `action/cache` use `runner` user by default
+      ## So we need to change the permissions before caching the database.
+      - name: change permissions for trivy.db
+        run: sudo chmod 0644 ./cache/db/trivy.db
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
