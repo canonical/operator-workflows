@@ -61,6 +61,7 @@ jobs:
       - name: Select charmhub channel
         uses: canonical/charming-actions/channel@2.6.3
         id: select-channel
+        continue-on-error: true
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
