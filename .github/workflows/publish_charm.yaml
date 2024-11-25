@@ -46,6 +46,13 @@ on:
           recent successful integration test that matches the git tree ID.
         type: string
         default: ""
+      select-channel-continue-on-error:
+        description: >-
+          Skip the select-channel step if the channel cannot be selected using the action logic.
+          This is useful when the charm has a fallback logic to select the channel.
+        type: boolean
+        required: false
+        default: false
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
@@ -61,6 +68,7 @@ jobs:
       - name: Select charmhub channel
         uses: canonical/charming-actions/channel@2.6.3
         id: select-channel
+        continue-on-error: ${{ inputs.select-channel-continue-on-error }}
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
