@@ -294,16 +294,20 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
+      - name: Install Allure Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install allure-pytest>=2.8.18
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}  --alluredir=allure-results
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}  --alluredir=allure-results
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
         uses: canonical/action-tmate@main
@@ -354,3 +358,23 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+      - name: Get Allure history
+        uses: actions/checkout@v3
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+      - name: Allure Report action from marketplace
+        uses: simple-elf/allure-report-action@v1.7
+        if: always()
+        with:
+          allure_results: allure-results
+          allure_history: allure-history
+      - name: Deploy report to Github Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v2
+        env:
+          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: allure-history
