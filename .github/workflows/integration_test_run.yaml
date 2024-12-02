@@ -152,6 +152,9 @@ on:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
 
+permissions:
+  contents: write 
+
 jobs:
   integration-test:
     name: Integration tests
@@ -294,20 +297,24 @@ jobs:
             module="-k ${{ matrix.modules }}"
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
-      - name: Install Allure Dependencies
+      - name: (beta) Get Allure option
+        id: allure-option
+        shell: python
         run: |
-          python -m pip install --upgrade pip
-          pip install allure-pytest>=2.8.18
+          import os
+          output = "option=--alluredir=allure-results"
+          with open(os.environ["GITHUB_OUTPUT"], "a") as file:
+              file.write(output)
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}  --alluredir=allure-results
+          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} ${{ steps.allure-option.outputs.option }}
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}  --alluredir=allure-results
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} ${{ steps.allure-option.outputs.option }}
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
         uses: canonical/action-tmate@main
