@@ -427,7 +427,7 @@ class Publish {
             `--filepath=${filePath}`,
             '--verbosity=brief'
           ],
-          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
+          { env: { ...process.env, CHARMCRAFT_AUTH: this.charmhubToken } }
         )
       }
       if (imageResources.size !== 0) {
@@ -454,7 +454,7 @@ class Publish {
             `--image=${imageId}`,
             '--verbosity=brief'
           ],
-          { env: { CHARMCRAFT_AUTH: this.charmhubToken } }
+          { env: { ...process.env, CHARMCRAFT_AUTH: this.charmhubToken } }
         )
       }
       core.setOutput('charms', charms.join(','))
