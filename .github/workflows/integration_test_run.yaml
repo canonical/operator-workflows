@@ -302,7 +302,7 @@ jobs:
         shell: python
         run: |
           import os
-          output = "option=--alluredir=${{ inputs.working-directory }}allure-results"
+          output = "option=--alluredir=allure-results"
           with open(os.environ["GITHUB_OUTPUT"], "a") as file:
               file.write(output)
       - name: Run k8s integration tests
