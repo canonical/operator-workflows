@@ -328,7 +328,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.modules }}
-          path: ${{ inputs.working-directory }}allure-results/
+          path: allure-results/
           if-no-files-found: error
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
