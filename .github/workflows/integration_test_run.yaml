@@ -315,8 +315,14 @@ jobs:
         if: ${{ inputs.provider == 'lxd' }}
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ steps.allure-option.outputs.option }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+      - name: Check Allure directory
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          ls -la
+          ls -la allure-results/
       - name: Upload Allure results
         timeout-minutes: 3
+        if: always() && !cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.modules }}
