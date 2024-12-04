@@ -324,12 +324,11 @@ jobs:
           ls -la allure-results/
       - name: Upload Allure results
         timeout-minutes: 3
-        working-directory: ${{ inputs.working-directory }}
         if: always() && !cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ matrix.modules }}
-          path: allure-results/
+          path: ${{ inputs.working-directory }}/allure-results/
           if-no-files-found: error
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
