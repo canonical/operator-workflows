@@ -110,7 +110,7 @@ jobs:
       - name: Checkout repo to runner
         uses: actions/checkout@v4.2.2
       - run: |
-          sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems
+          sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
         uses: canonical/praecepta@main
       - name: Run Vale tests
