@@ -13,7 +13,6 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
-      calling-job-name: simple
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -21,7 +20,6 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
-      calling-job-name: simple-self-hosted
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
