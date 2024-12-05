@@ -171,6 +171,10 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: List snap changes
+        run: sudo snap changes
+      - name: List snap changes lxd
+        run: sudo snap changes lxd
       - name: Disable snap autorefresh
         run: sudo snap refresh --hold=2h
       - name: Setup operator environment
