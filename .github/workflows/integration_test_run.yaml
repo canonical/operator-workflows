@@ -6,6 +6,10 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
+      calling-job-name:
+        description: Name of the job that is calling this reusable workflow
+        type: string
+        required: true
       charmcraft-ref:
         description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
         type: string
@@ -328,7 +332,7 @@ jobs:
         if: always() && !cancelled()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ matrix.modules }}
+          name: allure-results-${{ inputs.calling-job-name }}-${{ matrix.modules }}
           path: ${{ inputs.working-directory }}allure-results/
           if-no-files-found: error
       - name: Tmate debugging session (self-hosted)

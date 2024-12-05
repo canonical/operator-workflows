@@ -13,6 +13,7 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
+      calling-job-name: simple
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -20,6 +21,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+      calling-job-name: simple-self-hosted
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -27,6 +29,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       trivy-severity-config: "CRITICAL,HIGH"
+      calling-job-name: integration
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -38,6 +41,7 @@ jobs:
       channel: 1.30-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
+      calling-job-name: integration-juju3
   integration-artifact:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -51,6 +55,7 @@ jobs:
       test-tox-env: "integration-juju3.1"
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
+      calling-job-name: integration-artifact
   integration-self-hosted:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -59,12 +64,14 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+      calling-job-name: integration-self-hosted
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      calling-job-name: integration-rock
   integration-rock-artifact:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -73,6 +80,7 @@ jobs:
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      calling-job-name: integration-rock-artifact
   integration-craft:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -83,6 +91,7 @@ jobs:
       charmcraft-ref: main
       rockcraft-repository: canonical/rockcraft
       rockcraft-ref: main
+      calling-job-name: integration-craft
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -93,6 +102,7 @@ jobs:
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
+      calling-job-name: publish
   publish-artifact:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -103,6 +113,7 @@ jobs:
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
+      calling-job-name: publish-artifact
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
@@ -132,3 +143,18 @@ jobs:
           [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
+  allure-report:
+    if: always() && !cancelled()
+    needs:
+      - simple
+      - simple-self-hosted
+      - integration
+      - integration-juju3
+      - integration-artifact
+      - integration-self-hosted
+      - integration-rock
+      - integration-rock-artifact
+      - integration-craft
+      - publish
+      - publish-artifact
+    uses: ./.github/workflows/allure_report.yaml
