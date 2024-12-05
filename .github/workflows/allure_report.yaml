@@ -1,10 +1,13 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
 name: Allure Report Generation
 
 on: [workflow_call]
 
 jobs:
   allure-report:
-    name: (beta) Publish Allure report
+    name: Publish Allure report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     if: always() && !cancelled()
@@ -20,12 +23,12 @@ jobs:
           sudo apt-get install ./allure_*.deb -y
       # For first run, manually create branch with no history
       # (e.g.
-      # git checkout --orphan gh-pages-beta
+      # git checkout --orphan gh-pages
       # git rm -rf .
       # touch .nojekyll
       # git add .nojekyll
       # git commit -m "Initial commit"
-      # git push origin gh-pages-beta
+      # git push origin gh-pages
       # )
       - name: Checkout GitHub pages branch
         uses: actions/checkout@v4

@@ -291,50 +291,38 @@ jobs:
 
           args="${{ steps.plan-integration.outputs.args }}"
           echo "ARGS=$args" >> $GITHUB_ENV
+
+          allure_artifact_suffix=$(uuidgen)
           series=""
           if [ ! -z ${{ matrix.series }} ]; then
             series="--series ${{ matrix.series }}"
+            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.series }}
           fi
           echo "SERIES=$series" >> $GITHUB_ENV
           module=""
           if [ ! -z ${{ matrix.modules }} ]; then
             module="-k ${{ matrix.modules }}"
+            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.modules }}
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
-      - name: (beta) Get Allure option
-        id: allure-option
-        shell: python
-        run: |
-          import os
-          output = "option=--alluredir=allure-results"
-          with open(os.environ["GITHUB_OUTPUT"], "a") as file:
-              file.write(output)
+          echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          pwd
-          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ steps.allure-option.outputs.option }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          pwd
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ steps.allure-option.outputs.option }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
-      - name: Check Allure directory
-        working-directory: ${{ inputs.working-directory }}
-        run: |
-          pwd
-          ls -la
-          ls -la allure-results/
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Upload Allure results
         timeout-minutes: 3
         if: always() && !cancelled()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ inputs.calling-job-name }}-${{ matrix.modules }}
+          name: allure-results-${{ env.ALLURE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/
-          if-no-files-found: error
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
         uses: canonical/action-tmate@main
