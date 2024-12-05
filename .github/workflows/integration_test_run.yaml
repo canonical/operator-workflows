@@ -171,6 +171,8 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: Disable snap autorefresh
+        run: sudo snap refresh --hold=2h
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
