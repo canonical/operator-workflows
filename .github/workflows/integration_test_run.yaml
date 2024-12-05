@@ -177,6 +177,8 @@ jobs:
         run: sudo snap changes lxd
       - name: Disable snap autorefresh
         run: sudo snap refresh --hold=2h
+      - name: Wait for last autorefresh
+        run: sudo snap watch --last=auto-refresh?
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
