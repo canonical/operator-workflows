@@ -320,7 +320,7 @@ jobs:
     if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
     secrets: inherit
     with:
-      calling-job-name: ${{ inputs.calling-job-name}}
+      calling-job-name: ${{ inputs.calling-job-name }}
       channel: ${{ inputs.channel }}
       charmcraft-ref: ${{ inputs.charmcraft-ref }}
       charmcraft-repository: ${{ inputs.charmcraft-repository }}
