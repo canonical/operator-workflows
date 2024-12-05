@@ -100,7 +100,6 @@ jobs:
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
-      calling-job-name: publish
   publish-artifact:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -111,7 +110,6 @@ jobs:
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
-      calling-job-name: publish-artifact
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
@@ -144,8 +142,6 @@ jobs:
   allure-report:
     if: always() && !cancelled()
     needs:
-      - simple
-      - simple-self-hosted
       - integration
       - integration-juju3
       - integration-artifact
@@ -153,6 +149,4 @@ jobs:
       - integration-rock
       - integration-rock-artifact
       - integration-craft
-      - publish
-      - publish-artifact
     uses: ./.github/workflows/allure_report.yaml
