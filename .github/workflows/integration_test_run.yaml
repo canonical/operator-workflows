@@ -6,10 +6,6 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
-      calling-job-name:
-        description: Name of the job that is calling this reusable workflow
-        type: string
-        required: true
       charmcraft-ref:
         description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
         type: string
@@ -156,9 +152,6 @@ on:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
 
-permissions:
-  contents: write 
-
 jobs:
   integration-test:
     name: Integration tests
@@ -178,6 +171,55 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: Plan Integration
+        uses: canonical/operator-workflows/internal/plan-integration@main
+        id: plan-integration
+        with:
+          plan: ${{ inputs.plan }}
+      - name: Integration tests variable setting
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        run: |
+          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
+          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
+            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
+          fi
+          echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
+
+          args="${{ steps.plan-integration.outputs.args }}"
+          echo "ARGS=$args" >> $GITHUB_ENV
+
+          allure_artifact_suffix=$(uuidgen)
+          series=""
+          if [ ! -z ${{ matrix.series }} ]; then
+            series="--series ${{ matrix.series }}"
+            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.series }}
+          fi
+          echo "SERIES=$series" >> $GITHUB_ENV
+          module=""
+          if [ ! -z ${{ matrix.modules }} ]; then
+            module="-k ${{ matrix.modules }}"
+            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.modules }}
+          fi
+          echo "MODULE=$module" >> $GITHUB_ENV
+          echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
+      - name: Install pytest plugin for Allure
+        run: pip install git+https://github.com/canonical/operator-workflows@ISD-2620-allure#subdirectory=python/pytest_plugins/allure_pytest_collection_report
+      - name: Collect tests for Allure (k8s)
+        working-directory: ${{ inputs.working-directory }}
+        if: ${{ inputs.provider == 'microk8s' }}
+        run: |
+          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+      - name: Collect tests for Allure (lxd)
+        working-directory: ${{ inputs.working-directory }}
+        if: ${{ inputs.provider == 'lxd' }}
+        run: |
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+      - name: Upload Default Allure results
+        timeout-minutes: 3
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-default-results-${{ env.ALLURE_ARTIFACT_SUFFIX }}
+          path: allure-default/
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
@@ -274,38 +316,6 @@ jobs:
 
       - run: sudo apt install skopeo -y
 
-      - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@main
-        id: plan-integration
-        with:
-          plan: ${{ inputs.plan }}
-
-      - name: Integration tests variable setting
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-        run: |
-          CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
-          if [ "$CHARM_NAME" == "UNKNOWN" ]; then
-            CHARM_NAME="$([ -f charmcraft.yaml ] && yq '.name' charmcraft.yaml || echo UNKNOWN)"
-          fi
-          echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
-
-          args="${{ steps.plan-integration.outputs.args }}"
-          echo "ARGS=$args" >> $GITHUB_ENV
-
-          allure_artifact_suffix=$(uuidgen)
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.series }}
-          fi
-          echo "SERIES=$series" >> $GITHUB_ENV
-          module=""
-          if [ ! -z ${{ matrix.modules }} ]; then
-            module="-k ${{ matrix.modules }}"
-            allure_artifact_suffix=$(allure_artifact_suffix)-${{ matrix.modules }}
-          fi
-          echo "MODULE=$module" >> $GITHUB_ENV
-          echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}

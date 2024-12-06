@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "allure_pytest_collection_report"
+# Version unused; repository has its own versioning system. (See .github/workflows/__release.yaml)
+version = "0.1.0"
+description = ""
+authors = ["Carl Csaposs <carl.csaposs@canonical.com>"]
+readme = "README.md"
+classifiers = [
+    "Framework :: Pytest",
+]
+
+[tool.poetry.plugins."pytest11"]
+allure_collection_report = "allure_pytest_collection_report._plugin"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pytest = "*"
+allure-pytest = ">=2.13.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

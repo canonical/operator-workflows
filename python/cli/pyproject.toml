@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "workflows-cli"
+# Version unused; repository has its own versioning system. (See .github/workflows/__release.yaml)
+version = "0.1.0"
+description = ""
+license = "Apache-2.0"
+authors = ["Carl Csaposs <carl.csaposs@canonical.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+allure-add-default-for-missing-results = "workflows_cli.allure_add_default_for_missing_results:main"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyyaml = "^6.0.1"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

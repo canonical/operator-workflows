@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
     if: always() && !cancelled()
     steps:
-      - name: Download Allure from allure-framwork
+      - name: Download Allure
         # Following instructions from https://allurereport.org/docs/gettingstarted-installation/#install-via-the-system-package-manager-for-linux
         run: gh release download --repo allure-framework/allure2 --pattern 'allure_*.deb'
         env:
@@ -35,12 +35,25 @@ jobs:
         with:
           ref: gh-pages
           path: repo/
-      - name: Download first test results
+      - name: Download default test results
+        uses: actions/download-artifact@v4
+        with:
+          path: allure-collection-default-results/
+          pattern: allure-default-results*
+          merge-multiple: true
+      - name: Download actual test results
         uses: actions/download-artifact@v4
         with:
           path: allure-results/
           pattern: allure-results*
           merge-multiple: true
+      - name: Install CLI
+        run: pipx install git+https://github.com/canonical/operator-workflows@ISD-2620-allure#subdirectory=python/cli
+      - name: Combine Allure default results & actual results
+        # For every test: if actual result available, use that. Otherwise, use default result
+        # So that, if actual result not available, Allure report will show "unknown"/"failed" test result
+        # instead of omitting the test
+        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-default-results-dir=allure-collection-default-results
       - name: Load test report history
         run: |
           if [[ -d repo/_latest/history/ ]]

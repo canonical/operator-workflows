@@ -1,0 +1,1 @@
+The `allure-pytest` plugin marks all the test statuses as unknown during collection time.
