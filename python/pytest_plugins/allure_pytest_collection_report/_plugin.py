@@ -1,3 +1,5 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
 # Upstream feature request to replace this plugin:
 # https://github.com/allure-framework/allure-python/issues/821
 

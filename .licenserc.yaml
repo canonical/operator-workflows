@@ -32,4 +32,5 @@ header:
     - 'dist/**'
     - 'internal/**'
     - 'tests/workflows/integration/**'
+    - 'python/**/**/pyproject.toml'
   comment: on-failure
