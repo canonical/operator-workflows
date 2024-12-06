@@ -172,7 +172,6 @@ jobs:
       }}
     steps:
       - name: Integration tests variable setting
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
           allure_artifact_suffix=$(uuidgen)
           series=""
