@@ -190,6 +190,9 @@ jobs:
           echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
       - name: Install pytest plugin for Allure
         run: pip install git+https://github.com/canonical/operator-workflows@ISD-2620-allure#subdirectory=python/pytest_plugins/allure_pytest_collection_report
+      - name: Install tox
+        run: |
+          pip install tox 
       - name: Collect tests for Allure
         working-directory: ${{ inputs.working-directory }}
         run: |
