@@ -171,6 +171,7 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - uses: actions/checkout@v4.2.2
       - name: Integration tests variable setting
         run: |
           allure_artifact_suffix=$(uuidgen)
