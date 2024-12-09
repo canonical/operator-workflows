@@ -200,7 +200,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-default-results-${{ env.ALLURE_ARTIFACT_SUFFIX }}
-          path: allure-default/
+          path: ${{ inputs.working-directory }}allure-default/
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
