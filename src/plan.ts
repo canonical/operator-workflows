@@ -181,6 +181,9 @@ async function planBuildFileResource(
       (acc, [resourceName, resource]: [string, CharmResource]) => {
         if (resource.type === 'file' && resource.filename) {
           let parent = path.dirname(file)
+          if (resource.description?.trim().startsWith('(local)')) {
+            return acc
+          }
           acc.push({
             type: 'file',
             name: resourceName,
