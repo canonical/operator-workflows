@@ -1,6 +1,5 @@
 [tool.poetry]
 name = "allure_pytest_collection_report"
-# Version unused; repository has its own versioning system. (See .github/workflows/__release.yaml)
 version = "0.1.0"
 description = ""
 authors = ["Carl Csaposs <carl.csaposs@canonical.com>"]

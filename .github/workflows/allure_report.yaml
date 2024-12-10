@@ -39,7 +39,7 @@ jobs:
           pattern: allure-results*
           merge-multiple: true
       - name: Install CLI
-        run: pipx install git+https://github.com/canonical/operator-workflows@${{ github.ref_name }}#subdirectory=python/cli
+        run: pipx install git+https://github.com/canonical/operator-workflows@ISD-2620-allure#subdirectory=python/cli
       - name: Combine Allure default results & actual results
         # For every test: if actual result available, use that. Otherwise, use default result
         # So that, if actual result not available, Allure report will show "unknown"/"failed" test result

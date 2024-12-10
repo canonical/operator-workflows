@@ -1,6 +1,5 @@
 [tool.poetry]
 name = "allure_add_default_for_missing_results"
-# Version unused; repository has its own versioning system. (See .github/workflows/__release.yaml)
 version = "0.1.0"
 description = ""
 license = "Apache-2.0"
