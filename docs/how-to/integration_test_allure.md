@@ -39,7 +39,7 @@ Here's an [example for the above](https://github.com/canonical/github-runner-ope
 **NOTE:** For this, you would require admin access to the repository.
 
 - Go to the repository's **Settings > Branches** and next to Branch protection rules, select **Add rule**
-- Enter the branch name **gh-pages** and select **Allow force pushes** and click **Save changes**
+- Enter the branch name **gh-pages** and click **Save changes** (Ensure that "require signed commits" is unchecked)
 
 ## 4. Github pages branch
 

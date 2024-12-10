@@ -21,16 +21,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
-      - name: Checkout GitHub pages branch
+      - name: Checkout GitHub pages branch 
         uses: actions/checkout@v4
         with:
           ref: gh-pages
-          path: repo/
-      - name: Download default test results
+          path: repo/ 
+        # The `gh-pages` branch is used to host the Allure report site.
+        # With every workflow run, the workflow creates a new folder with the run_number and stores the test results there
+      - name: Download fallback test results
         uses: actions/download-artifact@v4
         with:
-          path: allure-collection-default-results/
-          pattern: allure-default-results*
+          path: allure-collection-fallback-results/
+          pattern: allure-fallback-results*
           merge-multiple: true
       - name: Download actual test results
         uses: actions/download-artifact@v4
@@ -40,11 +42,11 @@ jobs:
           merge-multiple: true
       - name: Install CLI
         run: pipx install git+https://github.com/canonical/data-platform-workflows@v24.0.0#subdirectory=python/cli
-      - name: Combine Allure default results & actual results
-        # For every test: if actual result available, use that. Otherwise, use default result
+      - name: Combine Allure fallback results & actual results
+        # For every test: if actual result available, use that. Otherwise, use fallback result
         # So that, if actual result not available, Allure report will show "unknown"/"failed" test result
         # instead of omitting the test
-        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-default-results-dir=allure-collection-default-results
+        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-fallback-results-dir=allure-collection-fallback-results
       - name: Load test report history
         run: |
           if [[ -d repo/_latest/history/ ]]
@@ -82,7 +84,6 @@ jobs:
               file.write(DATA)
       - name: Update GitHub pages branch
         working-directory: repo/
-        # TODO future improvement: commit message
         run: |
           mkdir '${{ github.run_number }}'
           rm -f _latest
@@ -90,7 +91,8 @@ jobs:
           cp -r ../allure-report/. _latest/
           git add .
           git config user.name "GitHub Actions"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # user.email obtained from https://github.com/actions/checkout/issues/13#issuecomment-724415212
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com" 
           git commit -m "Allure report ${{ github.run_number }}"
           # Uses token set in checkout step
           git push origin gh-pages
