@@ -13,7 +13,7 @@ jobs:
     if: always() && !cancelled()
     steps:
       - name: Download Allure
-        # Following instructions from https://allurereport.org/docs/gettingstarted-installation/#install-via-the-system-package-manager-for-linux
+        # Following instructions from  https://allurereport.org/docs/install-for-linux/#install-from-a-deb-package
         run: gh release download --repo allure-framework/allure2 --pattern 'allure_*.deb'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -21,15 +21,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
-      # For first run, manually create branch with no history
-      # (e.g.
-      # git checkout --orphan gh-pages
-      # git rm -rf .
-      # touch .nojekyll
-      # git add .nojekyll
-      # git commit -m "Initial commit"
-      # git push origin gh-pages
-      # )
       - name: Checkout GitHub pages branch
         uses: actions/checkout@v4
         with:
@@ -48,7 +39,7 @@ jobs:
           pattern: allure-results*
           merge-multiple: true
       - name: Install CLI
-        run: pipx install git+https://github.com/canonical/operator-workflows@ISD-2620-allure#subdirectory=python/cli
+        run: pipx install git+https://github.com/canonical/operator-workflows@${{ github.ref_name }}#subdirectory=python/cli
       - name: Combine Allure default results & actual results
         # For every test: if actual result available, use that. Otherwise, use default result
         # So that, if actual result not available, Allure report will show "unknown"/"failed" test result
