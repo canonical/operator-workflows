@@ -190,7 +190,7 @@ jobs:
           echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
       - name: Install tox
         run: |
-          pipx install tox 
+          pip install tox 
       - name: Collect tests for Allure
         working-directory: ${{ inputs.working-directory }}
         run: |
