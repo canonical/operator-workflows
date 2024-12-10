@@ -103,6 +103,14 @@ jobs:
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
+  allure-report:
+    if: always() && !cancelled()
+    needs:
+      - integration
+      - integration-juju3
+      - integration-artifact
+      - integration-self-hosted
+    uses: ./.github/workflows/allure_report.yaml
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
@@ -119,6 +127,7 @@ jobs:
       - integration-craft
       - publish
       - publish-artifact
+      - allure-report
     steps:
       - run: |
           [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
@@ -132,14 +141,5 @@ jobs:
           [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
-  allure-report:
-    if: always() && !cancelled()
-    needs:
-      - integration
-      - integration-juju3
-      - integration-artifact
-      - integration-self-hosted
-      - integration-rock
-      - integration-rock-artifact
-      - integration-craft
-    uses: ./.github/workflows/allure_report.yaml
+          [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
+
