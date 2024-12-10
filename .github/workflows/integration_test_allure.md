@@ -59,5 +59,6 @@ Here's an [example for the above](https://github.com/canonical/github-runner-ope
 
  - Enable gh pages publishing at ** Settings > Pages ** and set branch name as `gh-pages`:
 
+<img width="816" alt="image" src="https://github.com/user-attachments/assets/346c04fc-0daa-40bc-92b5-93b0ea639f94">
 
- Example: 
+ [Example PR for steps 1 & 2](https://github.com/canonical/github-runner-operator/pull/412/files#)
