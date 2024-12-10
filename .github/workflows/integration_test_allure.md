@@ -12,16 +12,10 @@ Please add the following into the `requirements.txt` that is called by the integ
 allure-pytest>=2.8.18
 ```
 
-Create a seperate file `test-requirements.txt` in the same location and add the following -
+Add the following line under the dependencies (`deps`) in the integration section inside `tox.ini` -
 
 ```
-git+https://github.com/canonical/operator-workflows@main#subdirectory=python/pytest_plugins/allure_pytest_collection_report
-```
-
-Add the following line under the dependencies `deps` for the integration test inside `tox.ini` -
-
-```
--r{toxinidir}/test-requirements.txt
+git+https://github.com/canonical/operator-workflows@main\#subdirectory=python/pytest_plugins/allure_pytest_collection_report
 ```
 
 ## 2. Calling the allure-workflow
@@ -35,6 +29,8 @@ Add the following lines at the end of the workflow that runs the integrations te
       - [list of jobs with tests you would like to visualize]
     uses: canonical/operator-workflows/.github/workflows/allure_report.yaml@main
 ```
+
+Here's an [example for the above](https://github.com/canonical/github-runner-operator/pull/412).
 
 **NOTE:** If the workflow is being called inside a matrix with the same test modules run with different parameters, the allure report will only display the results of the last combination.
 
@@ -62,8 +58,6 @@ Add the following lines at the end of the workflow that runs the integrations te
  ```
 
  - Enable gh pages publishing at ** Settings > Pages ** and set branch name as `gh-pages`:
-
- ![alt text](image.png)
 
 
  Example: 
