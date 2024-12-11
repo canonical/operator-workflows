@@ -46,7 +46,7 @@ jobs:
         # For every test: if actual result available, use that. Otherwise, use fallback result
         # So that, if actual result not available, Allure report will show "unknown"/"failed" test result
         # instead of omitting the test
-        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-fallback-results-dir=allure-collection-fallback-results
+        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-default-results-dir=allure-collection-fallback-results
       - name: Load test report history
         run: |
           if [[ -d repo/_latest/history/ ]]
