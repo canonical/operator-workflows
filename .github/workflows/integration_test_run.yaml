@@ -221,12 +221,12 @@ jobs:
             && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
             || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
       - name: Collect tests for Allure
-        if: ${{ env.ENABLE_ALLURE == "true" }}
+        if: env.ENABLE_ALLURE == "true"
         working-directory: ${{ inputs.working-directory }}
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Upload Default Allure results
-        if: ${{ env.ENABLE_ALLURE == "true" }}
+        if: env.ENABLE_ALLURE == "true"
         timeout-minutes: 3
         uses: actions/upload-artifact@v4
         with:
