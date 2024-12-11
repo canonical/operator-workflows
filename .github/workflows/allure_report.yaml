@@ -58,6 +58,7 @@ jobs:
         shell: python
         run: |
           # Reverse engineered from https://github.com/simple-elf/allure-report-action/blob/eca283b643d577c69b8e4f048dd6cd8eb8457cfd/entrypoint.sh
+          # Not using the original action due to security concerns over using 3rd party github actions and the risk of running arbitrary code
           import json
 
           DATA = {

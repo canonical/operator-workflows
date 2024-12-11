@@ -190,12 +190,43 @@ jobs:
           echo "ALLURE_ARTIFACT_SUFFIX=$allure_artifact_suffix" >> $GITHUB_ENV
       - name: Install tox
         run: |
-          pip install tox 
+          if which tox &> /dev/null; then
+            echo "tox is already installed."
+            tox --version
+          fi
+
+          pip_path=$(which pip 2>/dev/null)
+          SYSTEM_PIP_PATH="/usr/bin/pip"
+          if [ -n "$pip_path" ] && [ "$pip_path" != "$SYSTEM_PIP_PATH" ]; then
+              echo "Pip is available and not system-managed. Installing tox"
+              pip install tox
+          fi
+
+          if which pipx &> /dev/null; then
+              echo "Pipx is available. Installing tox"
+              pipx install tox
+          fi
+
+          echo "Neither pip nor pipx are available. Installing pipx via apt..."
+          sudo apt-get update -yqq
+          sudo apt-get install -yqq pipx
+          pipx ensurepath
+          sudo pipx ensurepath
+
+          echo "Installing tox with pipx..."
+          pipx install tox
+      - name: Check Allure
+        run: |
+          tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1 | grep -q allure \
+            && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
+            || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
       - name: Collect tests for Allure
+        if: ${{ env.ENABLE_ALLURE == true }}
         working-directory: ${{ inputs.working-directory }}
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Upload Default Allure results
+        if: ${{ env.ENABLE_ALLURE == true }}
         timeout-minutes: 3
         uses: actions/upload-artifact@v4
         with:
