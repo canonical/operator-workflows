@@ -24,7 +24,7 @@ To call the reusable workflow [allure_report.yaml](https://github.com/canonical/
   allure-report:
     if: always() && !cancelled()
     needs:
-      - [list of jobs that calls integration_test workflow whose tests you would like to visualize]
+      - [list of jobs that call integration_test workflow whose tests you would like to visualize]
     uses: canonical/operator-workflows/.github/workflows/allure_report.yaml@main
 ```
 
@@ -35,6 +35,8 @@ For an example of this implementation, see [the GitHub runner repository](https:
 ## Changing branch permissions
 
 **NOTE:** For this step, you need admin access to the repository.
+
+If your repository is configured to have signed commits for all branches by default, you need to create a seperate protection rule for the `gh-pages` branch with the signed commits disabled.
 
 - Go to the repository's **Settings > Branches** and next to Branch protection rules, select **Add rule**
 - Enter the branch name **gh-pages** and click **Save changes** (Ensure that "require signed commits" is unchecked)
