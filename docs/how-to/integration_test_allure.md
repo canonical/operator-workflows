@@ -18,19 +18,19 @@ git+https://github.com/canonical/operator-workflows@main\#subdirectory=python/py
 
 ## Calling the allure-workflow
 
-Add the following lines at the end of the workflow that runs the integrations tests by calling the reuable workflow [integration-test.yaml](https://github.com/canonical/operator-workflows/blob/main/.github/workflows/integration_test.yaml):
+To call the reusable workflow [allure_report.yaml](https://github.com/canonical/operator-workflows/blob/main/.github/workflows/allure_report.yaml), add the following lines at the end of the workflow that runs the integrations tests:
 
 ```
   allure-report:
     if: always() && !cancelled()
     needs:
-      - [list of jobs with tests you would like to visualize]
+      - [list of jobs that calls integration_test workflow whose tests you would like to visualize]
     uses: canonical/operator-workflows/.github/workflows/allure_report.yaml@main
 ```
 
 For an example of this implementation, see [the GitHub runner repository](https://github.com/canonical/github-runner-operator/pull/412).
 
-**NOTE:** If the workflow is being called inside a matrix with the same test modules run with different parameters, the allure report will only display the results of the last combination.
+**NOTE:** If the workflow is being called inside a matrix with the same test modules run with different parameters, the Allure Report will only display the results of the last combination.
 
 ## Changing branch permissions
 
