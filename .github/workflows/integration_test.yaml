@@ -39,11 +39,6 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
-      image-build-args:
-        description: |
-          List of build args to pass to the build image job
-        type: string
-        default: ""
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -183,7 +178,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -203,7 +198,7 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -219,7 +214,7 @@ jobs:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
-      - uses: canonical/setup-lxd@v0.1.1
+      - uses: canonical/setup-lxd@v0.1.2
       - name: Set LXC security nesting
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
@@ -258,7 +253,15 @@ jobs:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
+      - name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ./${{ inputs.working-directory }}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+          ls -lah
       - uses: actions/download-artifact@v4.1.8
         if: matrix.scan.artifact != ''
         with:
@@ -277,15 +280,14 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: '1'
           severity: ${{ inputs.trivy-severity-config }}
         env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0

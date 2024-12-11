@@ -143,7 +143,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -230,7 +230,7 @@ jobs:
       - name: Clean up
         if: inputs.charmcraft-repository != ''
         run: rm -rf *
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v4.2.2
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Setup Devstack Swift
@@ -338,11 +338,13 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
@@ -356,7 +358,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.13.0
+        uses: zaproxy/action-baseline@v0.14.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}

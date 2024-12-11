@@ -106,7 +106,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   core.startGroup('charmcraft pack')
   await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
-    env: { CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const charmFiles = await (
@@ -133,6 +133,35 @@ interface BuildDockerImageParams {
   plan: BuildPlan
   user: string
   token: string
+}
+
+async function buildFileResource(plan: BuildPlan): Promise<void> {
+  core.startGroup(`Build resource ${plan.name}`)
+  if (!plan.build_target) {
+    throw new Error('build_target is required for file resources')
+  }
+  await exec.exec(`./${plan.source_file}`, [plan.build_target], {
+    cwd: plan.source_directory
+  })
+  core.endGroup()
+  const resourceFiles = await (
+    await glob.create(path.join(plan.source_directory, plan.build_target))
+  ).glob()
+  const artifact = new DefaultArtifactClient()
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  fs.writeFileSync(
+    manifestFile,
+    JSON.stringify(
+      { name: plan.name, files: resourceFiles.map(f => path.basename(f)) },
+      null,
+      2
+    )
+  )
+  await artifact.uploadArtifact(
+    plan.output,
+    [...resourceFiles, manifestFile],
+    plan.source_directory
+  )
 }
 
 async function buildDockerImage({
@@ -270,7 +299,7 @@ async function buildRock({
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
-    env: { ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const rocks = await (
@@ -366,6 +395,10 @@ export async function run(): Promise<void> {
           user: github.context.actor,
           token: core.getInput('github-token')
         })
+        break
+      case 'file':
+        await buildFileResource(plan)
+        break
     }
   } catch (error) {
     // Fail the workflow run if an error occurs
