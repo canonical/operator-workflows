@@ -216,7 +216,9 @@ jobs:
           echo "Installing tox with pipx..."
           pipx install tox
       - name: Check Allure
+        working-directory: ${{ inputs.working-directory }}
         run: |
+          tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1
           tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1 | grep -q allure \
             && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
             || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
