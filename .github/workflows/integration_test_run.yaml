@@ -365,7 +365,7 @@ jobs:
           fi
       - name: Upload Allure results
         timeout-minutes: 3
-        if: always() && !cancelled()
+        if: env.ENABLE_ALLURE == 'true' && always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ env.ALLURE_ARTIFACT_SUFFIX }}
