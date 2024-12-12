@@ -20,3 +20,7 @@ resources:
   test-image:
     type: oci-image
     description: Test image
+  test-file:
+    type: file
+    description: Test file
+    filename: test-file.txt
