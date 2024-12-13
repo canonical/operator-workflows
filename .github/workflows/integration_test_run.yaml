@@ -228,7 +228,7 @@ jobs:
         run: |
           tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
       - name: Upload Default Allure results
-        if: env.ENABLE_ALLURE == 'true'
+        if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
         uses: actions/upload-artifact@v4
         with:
@@ -365,7 +365,7 @@ jobs:
           fi
       - name: Upload Allure results
         timeout-minutes: 3
-        if: env.ENABLE_ALLURE == 'true' && always()
+        if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ env.ALLURE_ARTIFACT_SUFFIX }}

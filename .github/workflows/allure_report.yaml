@@ -10,7 +10,7 @@ jobs:
     name: Publish Allure report
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    if: always() && !cancelled()
+    if: always() && !cancelled() && github.run_attempt == '1'
     steps:
       - name: Download Allure
         # Following instructions from  https://allurereport.org/docs/install-for-linux/#install-from-a-deb-package
