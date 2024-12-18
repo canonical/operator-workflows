@@ -349,12 +349,12 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'microk8s' }}
         run: |
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
             tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
           else
