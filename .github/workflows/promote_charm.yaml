@@ -32,6 +32,11 @@ on:
       origin-channel:
         type: string
         description: 'Origin Channel'
+      tag-prefix:
+        type: string
+        required: false
+        description: |
+          Tag prefix, useful when promoting multiple charms from the same repo.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -176,6 +181,7 @@ jobs:
           base-name: ${{ needs.validate-inputs.outputs.name }}
           base-channel: ${{ needs.validate-inputs.outputs.channel }}
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
+          tag-prefix: ${{ inputs.tag-prefix }}
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
