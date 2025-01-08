@@ -1,6 +1,6 @@
 # How to set up Allure Reports for integration tests
 
-This how-to guide describes how to integrate [Allure Reports](https://allurereport.org/) into your code repository's [integration_test_run.yaml](https://github.com/canonical/operator-workflows?tab=readme-ov-file#integration-test-workflow-canonicaloperator-workflowsgithubworkflowsintegration_testyamlmain).
+This how-to guide describes how to integrate [Allure Reports](https://allurereport.org/) into your code repository's [integration_test.yaml](https://github.com/canonical/operator-workflows?tab=readme-ov-file#integration-test-workflow-canonicaloperator-workflowsgithubworkflowsintegration_testyamlmain).
 
 ## Adding allure-pytest and pytest collection plugin
 
@@ -13,7 +13,7 @@ allure-pytest>=2.8.18
 Add the following line under the dependencies (`deps`) in the integration section inside `tox.ini`:
 
 ```
-git+https://github.com/canonical/operator-workflows@main\#subdirectory=python/pytest_plugins/allure_pytest_collection_report
+git+https://github.com/canonical/data-platform-workflows@v24.0.0\#subdirectory=python/pytest_plugins/allure_pytest_collection_report
 ```
 
 ## Calling the allure-workflow
