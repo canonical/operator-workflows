@@ -175,6 +175,7 @@ jobs:
         run: sudo snap refresh --hold=2h
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
+        timeout-minutes: 10
       - uses: actions/checkout@v4.2.2
       - name: Integration tests variable setting
         run: |
