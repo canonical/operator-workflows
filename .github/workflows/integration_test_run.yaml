@@ -171,6 +171,10 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
+      - name: Disable snap autorefresh
+        run: sudo snap refresh --hold=2h
+      - name: Wait for last autorefresh
+        run: sudo snap watch --last=auto-refresh?
       - uses: actions/checkout@v4.2.2
       - name: Integration tests variable setting
         run: |
