@@ -52,7 +52,7 @@ on:
         default: false
 
 concurrency:
-  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
+  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
 
 jobs:
