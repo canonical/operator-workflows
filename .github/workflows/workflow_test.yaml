@@ -13,6 +13,13 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
+  simple-uv:
+    uses: ./.github/workflows/test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      self-hosted-runner: false
+      with-uv: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
