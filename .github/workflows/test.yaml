@@ -18,6 +18,11 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       shellcheck-working-directory:
         type: string
         description: The working directory for the shellcheck-lint job
@@ -40,9 +45,14 @@ on:
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
+      with-uv:
+        description: Whether to run the unit tests with tox-uv
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
-  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
+  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
 
 jobs:
@@ -251,18 +261,46 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    env:
+      python-version: >-
+        ${{
+          inputs.python-version ||
+          inputs.self-hosted-runner &&
+          (
+            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
+            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
+            inputs.self-hosted-runner-image == 'focal' && '3.8'
+          ) ||
+          '3.10'
+        }}
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+
+      # Test with tox and regular python
+      - name: Setup Python
+        if: ${{ ! inputs.with-uv }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.python-version }}
+
       - name: Install tox
-        run: |
-          options=""
-          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
-            options+=" --break-system-packages"
-          fi
-          python3 -m pip install tox $options
+        if: ${{ ! inputs.with-uv }}
+        run: pip install tox
+          
+      # Test with tox-uv and python setup by UV
+      - name: Setup Astral UV
+        if: ${{ inputs.with-uv }}
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: ${{ env.python-version }}
+
+      - name: Install tox with UV
+        if: ${{ inputs.with-uv }}
+        run: uv tool install tox --with tox-uv
+
       - name: Run tests
         id: run-tests
         run: |
