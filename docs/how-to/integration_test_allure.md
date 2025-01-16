@@ -4,15 +4,10 @@ This how-to guide describes how to integrate [Allure Reports](https://allurerepo
 
 ## Adding allure-pytest and pytest collection plugin
 
-Include the following snippet in the `requirements.txt` that is called by the integration test:
+Add the following lines under the dependencies (`deps`) in the integration section inside `tox.ini`:
 
 ```
 allure-pytest>=2.8.18
-```
-
-Add the following line under the dependencies (`deps`) in the integration section inside `tox.ini`:
-
-```
 git+https://github.com/canonical/data-platform-workflows@v24.0.0\#subdirectory=python/pytest_plugins/allure_pytest_collection_report
 ```
 
