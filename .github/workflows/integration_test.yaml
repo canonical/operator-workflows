@@ -90,7 +90,7 @@ on:
         default: "dns ingress rbac storage"
       runs-on:
         type: string
-        description: Image runner for building the images
+        description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
         default: ubuntu-22.04
       self-hosted-runner:
         type: boolean
