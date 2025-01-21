@@ -67,7 +67,7 @@ on:
         default: ""
       runs-on:
         type: string
-        description: Image runner for building the images
+        description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
         default: ubuntu-22.04
       self-hosted-runner:
         type: boolean
@@ -77,6 +77,10 @@ on:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
         default: "x64"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "jammy"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -164,10 +168,9 @@ jobs:
       fail-fast: false
     runs-on: >-
       ${{
-        inputs.runs-on == 'ubuntu-22.04' &&
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || inputs.runs-on
       }}
     steps:

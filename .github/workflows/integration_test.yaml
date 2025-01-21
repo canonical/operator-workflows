@@ -88,6 +88,9 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      runs-on:
+        type: string
+        description: Image of the GitHub hosted runner to run the test job. This cannot be combined with self-hosted-runner=true.
       self-hosted-runner:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
@@ -96,6 +99,10 @@ on:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
         default: "x64"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "jammy"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -198,6 +205,13 @@ jobs:
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
     steps:
+      - name: Validate input
+        run: |
+          # exit if runs-on and self-hosted-runner is both set
+            if [ -n "${{ inputs.runs-on }}" ] && [ "${{ inputs.self-hosted-runner }}" = "true" ]; then
+                echo "::error Both runs-on and self-hosted-runner cannot be set at the same time."
+                exit 1
+            fi
       - uses: actions/checkout@v4.2.2
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
@@ -331,7 +345,9 @@ jobs:
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
       registry: ghcr.io
+      runs-on: ${{ inputs.runs-on || 'ubuntu-22.04' }}
       self-hosted-runner-arch: ${{ inputs.self-hosted-runner-arch }}
+      self-hosted-runner-image: ${{ inputs.self-hosted-runner-image }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
       self-hosted-runner: ${{ inputs.self-hosted-runner }}
       series: ${{ inputs.series }}
