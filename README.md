@@ -28,7 +28,7 @@ The following secrets are available for this workflow:
 Furthermore, in order to export sensitive data as environment variables into the integration test run,
 a mapping of variables to secrets can be defined by setting the [GitHub Action Variable](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables)
 `INTEGRATION_TEST_SECRET_ENV_NAME` with the name of the environment variable you want to export and `INTEGRATION_TEST_SECRET_ENV_VALUE` with the value you want the environment variable to have.
- There are six slots available, in addition to the one mentioned above, you can use
+ There are six slots available. In addition to the one mentioned above, you can use
 `INTEGRATION_TEST_SECRET_ENV_NAME_{1,...5}` and `INTEGRATION_TEST_SECRET_ENV_VALUE_{1,...5}`.
 
 When running the integration tests, the following posargs will be automatically passed to the `integration` target:
