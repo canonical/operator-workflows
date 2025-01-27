@@ -335,12 +335,12 @@ jobs:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-          JUJU_CONTROLLER_ALT: ${{ secrets.JUJU_CONTROLLER }}
-          JUJU_MODEL_ALT: ${{ secrets.JUJU_MODEL }}
-          PRODSTACK_ALT: ${{ secrets.PRODSTACK }}
-          VAULT_ADDR_ALT: ${{ secrets.VAULT_ADDR }}
-          VAULT_APPROLE_ROLE_ID_ALT: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
-          VAULT_APPROLE_SECRET_ID_ALT: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+          JUJU_CONTROLLER_ALT: ${{ secrets.JUJU_CONTROLLER_ALT }}
+          JUJU_MODEL_ALT: ${{ secrets.JUJU_MODEL_ALT }}
+          PRODSTACK_ALT: ${{ secrets.PRODSTACK_ALT }}
+          VAULT_ADDR_ALT: ${{ secrets.VAULT_ADDR_ALT }}
+          VAULT_APPROLE_ROLE_ID_ALT: ${{ secrets.VAULT_APPROLE_ROLE_ID_ALT }}
+          VAULT_APPROLE_SECRET_ID_ALT: ${{ secrets.VAULT_APPROLE_SECRET_ID_ALT }}
       - run: sudo apt install skopeo -y
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
