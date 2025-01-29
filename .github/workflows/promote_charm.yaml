@@ -171,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Release charm to channel
-        uses: canonical/charming-actions/release-charm@2.6.3
+        uses: canonical/charming-actions/release-charm@2.7.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
