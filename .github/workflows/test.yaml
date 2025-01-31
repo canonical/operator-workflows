@@ -8,7 +8,7 @@ on:
     inputs:
       charm-directory:
         type: string
-        description: The working directory for the docs
+        description: The working directory for the charm
         default: "."
       charmcraft-channel:
         description: Charmcraft channel to use
@@ -51,9 +51,14 @@ on:
         required: false
         default: false
 
+        
 concurrency:
   group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
+
+env:
+  CONCURRENCY_GROUP: operator-workflows-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
+  REPORT_NAME: "report"
 
 jobs:
   inclusive-naming-check:
@@ -406,13 +411,16 @@ jobs:
             );
             let json = JSON.stringify(reports);
             fs.writeFileSync('report.json', json);
+      - name: Name test Report
+        if: always() && github.event_name == 'pull_request' && !cancelled()
+        run: |
+          echo "REPORT_NAME=report-${CONCURRENCY_GROUP//\//_}" >> $GITHUB_ENV
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
-          name: report
+          name: ${{ env.REPORT_NAME }}
           path: report.json
-          overwrite: true
   draft-publish-docs:
     name: Draft publish docs
     runs-on: >-
@@ -485,6 +493,7 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
   required_status_checks:
     name: Required Test Status Checks
