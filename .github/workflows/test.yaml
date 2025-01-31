@@ -8,7 +8,7 @@ on:
     inputs:
       charm-directory:
         type: string
-        description: The working directory for the docs
+        description: The working directory for the charm
         default: "."
       charmcraft-channel:
         description: Charmcraft channel to use
@@ -485,6 +485,7 @@ jobs:
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
   required_status_checks:
     name: Required Test Status Checks
