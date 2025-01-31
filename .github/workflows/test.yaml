@@ -51,9 +51,13 @@ on:
         required: false
         default: false
 
+        
 concurrency:
   group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
+
+env:
+  CONCURRENCY_GROUP: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
 
 jobs:
   inclusive-naming-check:
@@ -410,9 +414,8 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
-          name: report
+          name: report-${{ env.CONCURRENCY_GROUP}}
           path: report.json
-          overwrite: true
   draft-publish-docs:
     name: Draft publish docs
     runs-on: >-
