@@ -10,15 +10,31 @@ jobs:
   simple:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: 
+        - '3.8'
+        - '3.10'
+        - '3.12'
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
+      python-version: ${{ matrix.python-version }}
   simple-uv:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: 
+        - '3.8'
+        - '3.10'
+        - '3.12'
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
+      python-version: ${{ matrix.python-version }}
       with-uv: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
