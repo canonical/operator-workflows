@@ -7,7 +7,7 @@ on:
   workflow_call:
 
 env:
-  ARTIFACT_NAME: report
+  ARTIFACT_NAME: "report-"
 
 jobs:
   comment-on-pr:
@@ -30,7 +30,7 @@ jobs:
                 run_id: run_id,
             });
             const matchArtifact = artifacts.data.artifacts.filter(artifact =>
-              artifact.name == '${{ env.ARTIFACT_NAME }}'
+              artifact.name.startsWith('${{ env.ARTIFACT_NAME }}')
             )[0];
             const download = await github.rest.actions.downloadArtifact({
                 owner: owner,
