@@ -5,6 +5,9 @@ name: Comment on the pull request
 
 on:
   workflow_call:
+  workflow_run:
+    workflows: ["Workflow test"]
+    types: [completed]
 
 env:
   ARTIFACT_NAME: "report"
