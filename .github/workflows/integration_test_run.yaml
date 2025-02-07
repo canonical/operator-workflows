@@ -408,7 +408,7 @@ jobs:
         if: failure()
         run: |
           juju models
-          for model in $(juju models --format json | jq -r '.models[].name');
+          for model in $(juju models --format json | jq -r '.models[].name')
           do
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
