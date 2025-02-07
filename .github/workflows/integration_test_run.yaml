@@ -410,8 +410,8 @@ jobs:
           juju models
           for model in $(juju models --format json | jq -r '.models[].name');
           do
-            echo DEBUG-LOG IN MODEL: $model;
-            juju debug-log --replay --no-tail -m $model;
+            echo ==== debug-log in model: $model
+            juju debug-log --replay --no-tail -m $model
       - name: Install k6s
         if: ${{ inputs.load-test-enabled }}
         run: sudo snap install k6
