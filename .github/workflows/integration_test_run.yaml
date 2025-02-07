@@ -412,6 +412,7 @@ jobs:
           do
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
+          done
       - name: Install k6s
         if: ${{ inputs.load-test-enabled }}
         run: sudo snap install k6
