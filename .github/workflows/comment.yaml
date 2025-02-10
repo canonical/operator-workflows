@@ -6,7 +6,7 @@ name: Comment on the pull request
 on:
   workflow_call:
   workflow_run:
-    workflows: ["Workflow test"]
+    workflows: ["Workflow Unit tests"]
     types: [completed]
 
 env:
