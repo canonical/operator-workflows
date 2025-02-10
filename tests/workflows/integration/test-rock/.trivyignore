@@ -1,2 +1,4 @@
 # Pebble CVE, false positive: https://github.com/canonical/pebble/issues/498#issuecomment-2339325722
 CVE-2024-34156
+# Can be removed after https://github.com/canonical/pebble/pull/540 is released
+CVE-2024-45338

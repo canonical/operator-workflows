@@ -21,6 +21,8 @@ header:
     - '**/.gitignore'
     - '**/.licenserc.yaml'
     - '**/.trivyignore'
+    - '**/.woke.yaml'
+    - '**/.woke.yml'
     - '**/CODEOWNERS'
     - '**/icon.svg'
     - '**/LICENSE'

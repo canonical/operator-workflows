@@ -25,9 +25,17 @@ The following secrets are available for this workflow:
 |--------------------|-------------------|
 | INTEGRATION_TEST_ARGS | Additional arguments to pass to the integration test execution that contain secrets |
 
+Furthermore, in order to export sensitive data as environment variables into the integration test run,
+a mapping of variables to secrets can be defined by setting the [GitHub Action Variable](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables)
+`INTEGRATION_TEST_SECRET_ENV_NAME` with the name of the environment variable you want to export and `INTEGRATION_TEST_SECRET_ENV_VALUE` with the value you want the environment variable to have.
+ There are six slots available. In addition to the one mentioned above, you can use
+`INTEGRATION_TEST_SECRET_ENV_NAME_{1,...5}` and `INTEGRATION_TEST_SECRET_ENV_VALUE_{1,...5}`.
+
 When running the integration tests, the following posargs will be automatically passed to the `integration` target:
 
 * --charm-file [charm_file_name]: The name of the charm artifact generated prior to the integration tests run, this argument can be supplied multiple times for charm with multiple bases.
+* --{image-name}-image: The name of the image artifact built prior to the integration tests run, this argument may be supplied multiple times or not at all depending on the plan
+* --{resource-name}-resource: The name of the charm file resources built prior to the integration tests run, this argument may be supplied multiple times or not at all depending on the plan
 * --series [series]: As defined in the `series` configuration described option above
 * -k [module]: As defined in the `modules` configuration option described above
 * --keep-models

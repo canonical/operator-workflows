@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: Promote charm
@@ -32,6 +32,11 @@ on:
       origin-channel:
         type: string
         description: 'Origin Channel'
+      tag-prefix:
+        type: string
+        required: false
+        description: |
+          Tag prefix, useful when promoting multiple charms from the same repo.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -166,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Release charm to channel
-        uses: canonical/charming-actions/release-charm@2.6.3
+        uses: canonical/charming-actions/release-charm@2.7.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
@@ -176,6 +181,7 @@ jobs:
           base-name: ${{ needs.validate-inputs.outputs.name }}
           base-channel: ${{ needs.validate-inputs.outputs.channel }}
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
+          tag-prefix: ${{ inputs.tag-prefix }}
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
