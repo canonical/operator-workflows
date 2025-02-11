@@ -6,7 +6,7 @@ name: Comment on the pull request
 on:
   workflow_call:
   workflow_run:
-    workflows: ["Workflow test"]
+    workflows: ["Workflow Unit tests"]
     types: [completed]
 
 env:
@@ -35,19 +35,22 @@ jobs:
                 repo: repo,
                 run_id: run_id,
             });
-            const zips = artifacts.data.artifacts.filter(artifact =>
+            const report_artifacts = artifacts.data.artifacts.filter(artifact =>
               artifact.name.startsWith('${{ env.ARTIFACT_NAME }}-')
-            ).forEach(artifact => {
-              const download = await github.rest.actions.downloadArtifact({
-                  owner: owner,
-                  repo: repo,
-                  artifact_id: artifact.id,
-                  archive_format: 'zip',
-              });
-              const zipPath = '${artifact}.zip';
-              fs.writeFileSync(zipPath, Buffer.from(download.data));
-              return zipPath;
-            });
+            )
+            const zips = await Promise.all(
+              report_artifacts.map(async artifact => {
+                const download = await github.rest.actions.downloadArtifact({
+                    owner: owner,
+                    repo: repo,
+                    artifact_id: artifact.id,
+                    archive_format: 'zip',
+                });
+                const zipPath = `${artifact}.zip`;
+                fs.writeFileSync(zipPath, Buffer.from(download.data));
+                return zipPath;
+              })
+            );
             return JSON.stringify(zips);
   comment-on-prs:
     name: Comment on PRs
