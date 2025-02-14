@@ -183,6 +183,7 @@ jobs:
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
+          sudo rm -rf /run/containerd
           sudo k8s bootstrap
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
