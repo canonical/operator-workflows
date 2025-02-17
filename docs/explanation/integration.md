@@ -2,23 +2,23 @@
 
 The integration test is composed of the follwing steps.
 
-1. [Plan](#1-plan)
-2. [Build](#2-build)
-3. [Test run](#3-test-run)
+1. [Plan the workflow](#plan-the-workflow)
+2. [Build the artifacts](#build-the-artifacts)
+3. [Run the integration test](#run-the-integration-test)
 
 This documentation goes over each steps, covering the internal details of how
 they work.
 
-## 1. Plan
+## Plan the workflow
 
 The [plan workflow](../../internal/plan/action.yml) refers to the 
 [plan action](../../src/plan.ts). It is used to plan the build for the following
 resources if detected:
 
-* charm
-* rock
-* docker
-* charm resources
+* Charm
+* Rock
+* Docker
+* Charm Resources
 
 The resources are shared between workflows using the local filesystem or the
 GitHub container registry, depending on the user specified `upload-image` input.
@@ -64,7 +64,7 @@ The plan resource output will be named the following:
 
 `<generated-id>__build__output__<charm-name>__<resource-name>`
 
-## 2. Build
+## Build the artifacts
 
 ### Charm
 
@@ -80,27 +80,27 @@ The rocks detected from the [plan step](#1-plan) is built using the
 `rockcraft pack` command. The workflow automatically changes the working
 directory to where the `rockcraft.yaml` file resides.
 The built rock output are selected using the `*.rock` glob syntax. The output
-artifact is then uploaded to the GitHub or uploaded to the docker repository.
+artifact is then uploaded to the GitHub or uploaded to the Docker repository.
 
 ### Docker
 
 The Dockerfiles detected from the [plan step](#1-plan) is built using the
 `docker build` command. The workflow automatically changes the working
 directory to where the `*.Dockerfile` file resides.
-The built docker images are either:
+The built Docker images are either:
 
 1. Saved as a tarball and uploaded to GitHub
 2. Pushed to the Docker registry
 
 ### Charm Resources
 
-The charm resources detected from the [plan step](#1-plan) is built by executing
+The Charm Resources detected from the [plan step](#1-plan) is built by executing
 the `<build-<resourceName>.sh>` script. The workflow automatically changes the
 working directory to where the `<build-<resourceName>.sh>` file resides.
 
 The output charm resource will be uploaded to GitHub.
 
-## 3. Test run
+## Run the integration test
 
 The artifacts built from the [build step](#2-build) are automatically unpacked
 and used in the `tox` integration test.
@@ -113,7 +113,7 @@ Tox argument: `--charm-file=./<charm-build-output-file>.charm`
 
 ### Rock
 
-The rocks are pushed to the local microk8s image registry (localhost:32000)
+The rocks are pushed to the local MicroK8s image registry (localhost:32000)
 using `skopeo copy --insecure-policy --dest-tls-verify=false ...` command.
 
 Tox argument: `--<rock-name>-image=<local-registry-image-name>`
@@ -128,7 +128,7 @@ Tox argument: `--<image-name>-image=<image-resource-uri>`
 
 ### Charm Resources
 
-The charm resources are unpacked and is referred to via their respective file
+The Charm Resources are unpacked and is referred to via their respective file
 paths.
 
 Tox argument: `--<resource-name>-resource=./<path-to-resource>`
