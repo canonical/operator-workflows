@@ -32,8 +32,8 @@ jobs:
                 repo: context.payload.workflow_run.repository.name,
                 run_id: ${{ github.event.workflow_run.id }},
             });
-            const zips = artifacts.data.artifacts.filter(artifact =>
-              artifact.name.startsWith('${{ env.ARTIFACT_NAME }}-')
+            const zips = artifacts.data.artifacts.flatMap(artifact =>
+              artifact.name.startsWith('${{ env.ARTIFACT_NAME }}-')? [artifact.name] : []
             );
             return JSON.stringify(zips);
   comment-on-prs:
