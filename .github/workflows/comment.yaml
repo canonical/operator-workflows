@@ -13,55 +13,33 @@ env:
   ARTIFACT_NAME: "report"
 
 jobs:
-  filter-artifacts:
-    name: Filter Artifacts
-    runs-on: ubuntu-24.04
-    if: github.event.workflow_run.event == 'pull_request'
-    outputs:
-      artifacts: ${{ fromJson(steps.filter-artifacts.outputs.result) }}
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - id:   filter-artifacts
-        name: Filter test report artifacts
-        uses: actions/github-script@v7.0.1
-        with:
-          script: |
-            const fs = require('fs');
-            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
-                owner: context.payload.workflow_run.repository.owner.login,
-                repo: context.payload.workflow_run.repository.name,
-                run_id: ${{ github.event.workflow_run.id }},
-            });
-            const zips = artifacts.data.artifacts.flatMap(artifact =>
-              artifact.name.startsWith('${{ env.ARTIFACT_NAME }}-')? [artifact.name] : []
-            );
-            return JSON.stringify(zips);
   comment-on-prs:
     name: Comment on PRs
     runs-on: ubuntu-24.04
-    needs: filter-artifacts
-    if: github.event.workflow_run.event == 'pull_request' && needs.filter-artifacts.outputs.artifacts != '[]'
-    strategy:
-      matrix:
-        artifact: ${{fromJson(needs.filter-artifacts.outputs.artifacts)}}
+    if: github.event.workflow_run.event == 'pull_request'
     steps:
-      - name: Download artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4.1.8
         with:
-          repository: ${{ github.event.workflow_run.repository.name }}
+          repository: ${{ github.event.workflow_run.repository.full_name }}
           run-id: ${{ github.event.workflow_run.id }}
-          name: ${{ matrix.artifact }}
+          pattern: "${{ env.ARTIFACT_NAME }}-*"
       - name: Comment on PR
         uses: actions/github-script@v7.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const comments = JSON.parse(fs.readFileSync('${{ env.ARTIFACT_NAME }}.json'));
+            const artifact = '${{ env.ARTIFACT_NAME }}';
             const owner = context.payload.workflow_run.repository.owner.login;
             const repo = context.payload.workflow_run.repository.name;
             const sha = context.payload.workflow_run.head_sha
             const header = `## Test results for commit ${sha}\n\n`;
+            const comments = fs.readdirSync('.')
+                .filter(d => fs.statSync(d).isDirectory() && d.startsWith(`${artifact}-`))
+                .map(dir => `${dir}/${artifact}.json`)
+                .filter(fs.existsSync)
+                .flatMap(filePath => JSON.parse(fs.readFileSync(filePath, 'utf8')));
 
             const pull = (await github.rest.pulls.list({
                 owner: owner,
