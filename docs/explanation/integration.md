@@ -1,6 +1,6 @@
 # Integration test workflow
 
-The integration test is composed of the follwing steps.
+The integration test is composed of the following steps.
 
 1. [Plan the workflow](#plan-the-workflow)
 2. [Build the artifacts](#build-the-artifacts)
@@ -12,7 +12,7 @@ how they work.
 ## Plan the workflow
 
 The [plan workflow](../../internal/plan/action.yml) refers to the 
-[plan action](../../src/plan.ts). The plan generates the plan for the entire
+[action](../../src/plan.ts). The plan generates the plan for the entire
 integration workflow, including the building of the following
 resources if detected:
 
@@ -113,8 +113,8 @@ Tox argument: `--<rock-name>-image=<local-registry-image-name>`
 ### Docker
 
 The Docker images are referred to from the image registry that is output from
-the build step. It usually uses the GitHub Container Registry (ghcr), unless
-specified otherwise in the workflow.
+the build step. The integration test workflow usually uses the GitHub Container
+Registry (ghcr), unless specified otherwise in the workflow.
 
 Tox argument: `--<image-name>-image=<image-resource-uri>`
 
