@@ -9,6 +9,10 @@ on:
     workflows: ["Workflow Unit tests"]
     types: [completed]
 
+permissions:
+  # Needed to add and delete comments on a PRs
+  pull-requests: write
+
 env:
   ARTIFACT_NAME: "report"
 
@@ -17,37 +21,41 @@ jobs:
     name: Setup environment
     runs-on: ubuntu-24.04
     outputs:
+      IS_PR: ${{ steps.call.outputs.IS_PR || steps.run.outputs.IS_PR }}
       ORG: ${{ steps.call.outputs.ORG || steps.run.outputs.ORG }}
       REPO: ${{ steps.call.outputs.REPO || steps.run.outputs.REPO }}
       RUN_ID: ${{ steps.call.outputs.RUN_ID || steps.run.outputs.RUN_ID }}
       REPO_FULL_NAME: ${{ steps.call.outputs.REPO_FULL_NAME || steps.run.outputs.REPO_FULL_NAME }}
       SHA: ${{ steps.call.outputs.SHA || steps.run.outputs.SHA }}
     steps:
-    - name: Workflow call setup
+    - name: Workflow call setup from a Pull Request
       id: call
-      if: github.event_name == 'workflow_call'
+      if: github.event_name == 'pull_request'
       run: |
-        echo "RUN_ID=${{ github.event.workflow_call.run_id }}" >> $GITHUB_OUTPUT
-        echo "ORG=${{ github.event.workflow_call.organization.login }}" >> $GITHUB_OUTPUT
-        echo "REPO=${{ github.event.workflow_call.repository.name }}" >> $GITHUB_OUTPUT
-        echo "REPO_FULL_NAME=${{ github.event.workflow_call.repository.full_name }}" >> $GITHUB_OUTPUT
-        echo "SHA=${{ github.event.workflow_call.head_sha }}" >> $GITHUB_OUTPUT
+        echo "Setting up from a workflow call"
+        echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
+        REPO_FULL_NAME="${{ github.repository }}"
+        parts=(${REPO_FULL_NAME//\// })
+        echo "ORG=${parts[0]}" >> $GITHUB_OUTPUT
+        echo "REPO=${parts[1]}" >> $GITHUB_OUTPUT
+        echo "SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
+        echo "IS_PR=${{ github.event_name == 'pull_request' }}" >> $GITHUB_OUTPUT
     - name: Workflow run setup
       id: run
       if: github.event_name == 'workflow_run'
       run: |
         echo "RUN_ID=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
-        echo "ORG=${{ github.event.workflow_call.organization.login }}" >> $GITHUB_OUTPUT
-        echo "REPO=${{ github.event.workflow_call.repository.name }}" >> $GITHUB_OUTPUT
+        echo "ORG=${{ github.event.workflow_run.organization.login }}" >> $GITHUB_OUTPUT
+        echo "REPO=${{ github.event.workflow_run.repository.name }}" >> $GITHUB_OUTPUT
         echo "REPO_FULL_NAME=${{ github.event.workflow_run.repository.full_name }}" >> $GITHUB_OUTPUT
         echo "SHA=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
-
+        echo "IS_PR=${{ github.event.workflow_run.event == 'pull_request' }}" >> $GITHUB_OUTPUT
 
   comment-on-prs:
     name: Comment on PRs
     runs-on: ubuntu-24.04
     needs: setup-env
-    if: github.event.workflow_run.event == 'pull_request'
+    if: ${{ needs.setup-env.outputs.IS_PR }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4.1.8
@@ -83,7 +91,7 @@ jobs:
                     owner: owner,
                     repo: repo,
                     issue_number: issue_number,
-                    header + body,
+                    body: (header + body),
                 });
             }
 
