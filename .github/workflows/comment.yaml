@@ -45,7 +45,7 @@ jobs:
       if: github.event_name == 'workflow_run'
       run: |
         echo "RUN_ID=${{ github.event.workflow_run.id }}" >> $GITHUB_OUTPUT
-        echo "ORG=${{ github.event.workflow_run.organization.login }}" >> $GITHUB_OUTPUT
+        echo "ORG=${{ github.event.workflow_run.repository.owner.login }}" >> $GITHUB_OUTPUT
         echo "REPO=${{ github.event.workflow_run.repository.name }}" >> $GITHUB_OUTPUT
         echo "REPO_FULL_NAME=${{ github.event.workflow_run.repository.full_name }}" >> $GITHUB_OUTPUT
         echo "SHA=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
