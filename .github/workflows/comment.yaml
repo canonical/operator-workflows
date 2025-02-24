@@ -38,6 +38,7 @@ jobs:
         parts=(${REPO_FULL_NAME//\// })
         echo "ORG=${parts[0]}" >> $GITHUB_OUTPUT
         echo "REPO=${parts[1]}" >> $GITHUB_OUTPUT
+        echo "REPO_FULL_NAME=${REPO_FULL_NAME}" >> $GITHUB_OUTPUT
         echo "SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_OUTPUT
         echo "IS_PR=${{ github.event_name == 'pull_request' }}" >> $GITHUB_OUTPUT
     - name: Workflow run setup
