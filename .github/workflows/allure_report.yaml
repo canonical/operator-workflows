@@ -29,13 +29,13 @@ jobs:
         # The `gh-pages` branch is used to host the Allure report site.
         # With every workflow run, the workflow creates a new folder with the run_number and stores the test results there
       - name: Download fallback test results
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4.1.9
         with:
           path: allure-collection-fallback-results/
           pattern: allure-fallback-results*
           merge-multiple: true
       - name: Download actual test results
-        uses: actions/download-artifact@v4.1.8
+        uses: actions/download-artifact@v4.1.9
         with:
           path: allure-results/
           pattern: allure-results*
