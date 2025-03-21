@@ -11,3 +11,4 @@ Each revision is versioned by the date of the revision.
 ### Added
 
 - Changelog added for tracking changes.
+- Added unique artifact name for zap-scan artifacts
