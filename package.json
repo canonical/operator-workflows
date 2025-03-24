@@ -41,8 +41,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@actions/artifact": "2.2.1",
-    "@actions/cache": "4.0.0",
+    "@actions/artifact": "2.3.1",
+    "@actions/cache": "4.0.3",
     "@actions/core": "1.11.1",
     "@actions/exec": "1.1.1",
     "@actions/github": "6.0.0",
@@ -50,7 +50,7 @@
     "js-yaml": "4.1.0"
   },
   "devDependencies": {
-    "@github/local-action": "^2.2.0",
+    "@github/local-action": "^3.0.0",
     "@jest/globals": "^29.7.0",
     "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
