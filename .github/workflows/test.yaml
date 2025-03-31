@@ -79,11 +79,13 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-          ls -lah
       - uses: actions/checkout@v4.2.2
         with:
           repository: canonical/Inclusive-naming
-          path: /tmp
+          path: tmp-inclusive-naming
+      - run: |
+          mv tmp-inclusive-naming/config.yml /tmp/config.yml
+          rm -rf tmp-inclusive-naming
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
