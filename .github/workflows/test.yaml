@@ -70,9 +70,6 @@ jobs:
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Change directory
