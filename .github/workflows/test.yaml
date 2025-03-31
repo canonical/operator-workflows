@@ -101,10 +101,9 @@ jobs:
         uses: canonical/inclusive-naming@main
         with:
           fail-on-error: "true"
-          workdir: ${{ inputs.working-directory }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: ". -c /tmp/config.yml"
+          woke-args: "${{ inputs.working-directory }} -c /tmp/config.yml"
           filter-mode: nofilter
           woke-version: latest
   vale:
