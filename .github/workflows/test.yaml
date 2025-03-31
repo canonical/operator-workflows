@@ -84,10 +84,10 @@ jobs:
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
-          if [ -f ./${{ inputs.working-directory }}/.woke.yaml ]; then
-            woke_file="./${{ inputs.working-directory }}/.woke.yaml"
-          elif [ -f ./${{ inputs.working-directory }}/.woke.yml ]; then
-            woke_file="./${{ inputs.working-directory }}/.woke.yml"
+          if [ -f .woke.yaml ]; then
+            woke_file=".woke.yaml"
+          elif [ -f .woke.yml ]; then
+            woke_file=".woke.yml"
           fi
           if [ ! -z "$woke_file" ]; then
             yq eval-all '
