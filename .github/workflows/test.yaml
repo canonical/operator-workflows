@@ -72,29 +72,22 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v4.2.2
-      - name: Change directory
-        run: |
-          TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{ inputs.working-directory }}/. $TEMP_DIR
-          rm -rf .* * || :
-          cp -rp $TEMP_DIR/. .
-          rm -rf $TEMP_DIR
-      - uses: actions/checkout@v4.2.2
         with:
           repository: canonical/Inclusive-naming
           path: tmp-inclusive-naming
       - run: |
           mv tmp-inclusive-naming/config.yml /tmp/config.yml
           rm -rf tmp-inclusive-naming
+      - uses: actions/checkout@v4.2.2
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
           # .name in .rules for the ones in .woke.yaml
           woke_file=""
-          if [ -f .woke.yaml ]; then
-            woke_file=".woke.yaml"
-          elif [ -f .woke.yml ]; then
-            woke_file=".woke.yml"
+          if [ -f ./${{ inputs.working-directory }}/.woke.yaml ]; then
+            woke_file="./${{ inputs.working-directory }}/.woke.yaml"
+          elif [ -f ./${{ inputs.working-directory }}/.woke.yml ]; then
+            woke_file="./${{ inputs.working-directory }}/.woke.yml"
           fi
           if [ ! -z "$woke_file" ]; then
             yq eval-all '
@@ -108,6 +101,7 @@ jobs:
         uses: canonical/inclusive-naming@main
         with:
           fail-on-error: "true"
+          workdir: ${{ inputs.working-directory }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           woke-args: ". -c /tmp/config.yml"
