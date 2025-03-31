@@ -75,11 +75,18 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.2.2
+      - name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ./${{ inputs.working-directory }}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+          ls -lah
+      - uses: actions/checkout@v4.2.2
         with:
           repository: canonical/Inclusive-naming
-          path: ${{ inputs.working-directory }}
-      - run: mv * /tmp
-      - uses: actions/checkout@v4.2.2
+          path: /tmp
       - name: Merge configuration files
         run: |
           # Combine all entries and replace matching elements by
@@ -106,7 +113,6 @@ jobs:
           reporter: github-pr-review
           woke-args: ". -c /tmp/config.yml"
           filter-mode: nofilter
-          workdir: ${{ inputs.working-directory }}
           woke-version: latest
   vale:
     name: Style checker
