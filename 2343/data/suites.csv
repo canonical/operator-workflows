@@ -1,0 +1,5 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Build the charm-under-test and deploy it together with related charms.
+
+    Assert on the unit status before any relations/configurations take place.
+    ","26048","test_build_and_deploy","tests.integration","Fri Apr 04 20:41:49 UTC 2025","passed","Fri Apr 04 20:42:15 UTC 2025","","test_charm","",""
