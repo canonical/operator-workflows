@@ -6,6 +6,10 @@ name: Tests
 on:
   workflow_call:
     inputs:
+      base-branch:
+        type: string
+        description: The base/default branch for the charm
+        default: "main"
       charm-directory:
         type: string
         description: The working directory for the charm
@@ -451,7 +455,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-          base_branch: ${{ inputs.base_branch || 'main' }}
+          base_branch: ${{ inputs.base-branch }}
   license-headers-check:
     name: Check license headers
     runs-on: >-

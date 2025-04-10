@@ -10,6 +10,10 @@ on:
         type: string
         description: Charm base architecture to promote (e.g. amd64)
         default: ""
+      base-branch:
+        type: string
+        description: The base/default branch for the charm
+        default: "main"
       base-channel:
         type: string
         description: Charm base channel to promote (e.g. 22.04)
@@ -206,7 +210,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir:  ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-          base_branch: ${{ inputs.base_branch || 'main' }}
+          base_branch: ${{ inputs.base-branch }}
   publish-docs:
     if: ${{ github.event.inputs.destination-channel }} == 'latest/stable'
     name: Publish docs

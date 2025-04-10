@@ -6,6 +6,10 @@ name: Publish charm
 on:
   workflow_call:
     inputs:
+      base-branch:
+        type: string
+        description: The base/default branch for the charm
+        default: "main"
       channel:
         type: string
         required: false
@@ -127,7 +131,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
-          base_branch: ${{ inputs.base_branch || 'main' }}
+          base_branch: ${{ inputs.base-branch }}
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-24.04
