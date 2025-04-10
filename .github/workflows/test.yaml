@@ -131,7 +131,7 @@ jobs:
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
-        uses: canonical/praecepta@main
+        uses: canonical/praecepta@1.0
       - name: Run Vale tests
         uses: errata-ai/vale-action@reviewdog
         with:

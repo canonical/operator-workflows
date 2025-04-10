@@ -276,7 +276,7 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
-      - uses: actions/download-artifact@v4.1.8
+      - uses: actions/download-artifact@v4.2.1
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
@@ -284,7 +284,7 @@ jobs:
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v3.3.0
+      - uses: docker/login-action@v3.4.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -294,7 +294,7 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@0.30.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
