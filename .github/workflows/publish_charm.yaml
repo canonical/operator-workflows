@@ -127,6 +127,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
+          base_branch: ${{ inputs.base_branch || 'main' }}
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-24.04
