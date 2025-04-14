@@ -178,22 +178,6 @@ jobs:
         )) || inputs.runs-on
       }}
     steps:
-      - name: Setup Canonical k8s
-        if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
-        id: canonical-k8s
-        run: |
-          sudo snap install k8s --channel=${{ inputs.channel }} --classic
-          sudo rm -rf /run/containerd
-          sudo k8s bootstrap --timeout=5m
-          mkdir -p ~/.kube
-          sudo k8s config > ~/.kube/config
-          echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
-          
-          IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
-          LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
-          LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
-          LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
-          sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
       - name: Disable snap autorefresh
         run: sudo snap refresh --hold=2h
       - name: Wait for last autorefresh
@@ -262,6 +246,21 @@ jobs:
         with:
           name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-default/
+      - name: Setup Canonical k8s
+        if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
+        id: canonical-k8s
+        run: |
+          sudo snap install k8s --channel=${{ inputs.channel }} --classic
+          sudo k8s bootstrap --timeout=5m
+          mkdir -p ~/.kube
+          sudo k8s config > ~/.kube/config
+          echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
+          
+          IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
+          LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
+          LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
+          LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
+          sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
