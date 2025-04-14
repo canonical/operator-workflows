@@ -251,7 +251,11 @@ jobs:
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
-          sudo k8s bootstrap --timeout=5m
+          
+          cat << EOF | sudo k8s bootstrap --timeout=5m --file -
+          containerd-base-dir: /opt/containerd
+          EOF
+          
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
