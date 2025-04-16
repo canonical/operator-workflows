@@ -256,8 +256,7 @@ jobs:
           containerd-base-dir: /opt/containerd
           EOF
           
-          sudo k8s enable load-balancer
-          sudo k8s enable local-storage
+          sudo k8s enable network dns load-balancer local-storage
           
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
