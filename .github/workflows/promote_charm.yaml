@@ -115,9 +115,12 @@ jobs:
             exit 0
           fi
 
-          # if input is configured, validate
-          readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
-          for base in "${bases[@]}"; do
+          # if input is configured
+          if yq e '.bases' $CHARMCRAFT_YAML_PATH > /dev/null 2>&1; then
+            echo "Using legacy 'bases' section"
+            readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
+
+            for base in "${bases[@]}"; do
               # Check optional run-on first, since build-on is used as default otherwise.
               if [[ $(echo $base | yq 'has("run-on")') == "true" ]]; then
                   readarray run_ons < <(echo $base | yq --output-format json --indent=0 '.run-on[]')
@@ -146,7 +149,7 @@ jobs:
                   channel=$(echo $build_on | yq -r '.channel')
                   name=$(echo $build_on | yq -r '.name')
                   # Default to amd64 if no architectures provided
-                  architectures=$(echo $run_on | yq -r '.architectures[]')
+                  architectures=$(echo $build_on | yq -r '.architectures[]')
                   architectures=${architectures:="amd64"}
                   for arch in $architectures; do
                       echo $arch
@@ -160,8 +163,26 @@ jobs:
                       fi
                   done
               done
-          done
+            done
+          else
+            echo "Using 'base' and 'platforms' syntax"
+            target_base_name=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f1)
+            target_base_channel=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f2)
+            # Default to amd64 if not specified under 'platforms'
+            if yq e '.platforms' $CHARMCRAFT_YAML_PATH > /dev/null 2>&1; then
+                target_base_archs=$(yq -r '.platforms | keys[]' $CHARMCRAFT_YAML_PATH)
+            else
+                target_base_archs="amd64"
+            fi
 
+            for arch in $target_base_archs; do
+                echo "BUILD_ON_ARCH=$arch" >> $GITHUB_ENV
+                echo "BUILD_ON_CHANNEL=$target_base_channel" >> $GITHUB_ENV
+                echo "BUILD_ON_NAME=$target_base_name" >> $GITHUB_ENV
+            done
+            exit 0
+          fi
+    
           echo "No matching base found: $target_base_arch $target_base_channel $target_base_name"
           exit 1
   promote-charm:
