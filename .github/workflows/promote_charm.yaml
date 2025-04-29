@@ -117,7 +117,6 @@ jobs:
 
           # if input is configured
           if yq e 'has("bases")' "$CHARMCRAFT_YAML_PATH" | grep -q true; then
-            echo "Using legacy 'bases' section"
             readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
 
             for base in "${bases[@]}"; do
@@ -165,7 +164,6 @@ jobs:
               done
             done
           else
-            echo "Using 'base' and 'platforms' syntax"
             target_base_name=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f1)
             target_base_channel=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f2)
             # Default to amd64 if not specified under 'platforms'
