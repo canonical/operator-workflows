@@ -116,7 +116,7 @@ jobs:
           fi
 
           # if input is configured
-          if yq e '.bases' $CHARMCRAFT_YAML_PATH > /dev/null 2>&1; then
+          if yq e 'has("bases") and (.bases | length > 0)' $CHARMCRAFT_YAML_PATH > /dev/null 2>&1; then
             echo "Using legacy 'bases' section"
             readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
 
