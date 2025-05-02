@@ -168,7 +168,7 @@ jobs:
           destination-channel: ${{ inputs.destination-channel }}
           base-name: ${{ needs.get-charm-base.outputs.name }}
           base-channel: ${{ needs.get-charm-base.outputs.channel }}
-          base-architecture: ${{ needs.get-charm-base.outputs.arch }}
+          base-architecture: ${{ needs.get-charm-base.outputs.architecture }}
           tag-prefix: ${{ inputs.tag-prefix }}
   publish-docs:
     name: Publish docs
