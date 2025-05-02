@@ -10,8 +10,7 @@ Each revision is versioned by the date of the revision.
 
 ### Modified
 
-- Modified `promote_charm` workflow to check if `charmcraft.yaml` uses legacy `bases` or 
-  `base/build-base`.
+- Update `promote_charm` workflow logic to use `charmcraft status` to obtain base information instead of `charmcraft.yaml`.
 
 ## 2025-03-21
 
