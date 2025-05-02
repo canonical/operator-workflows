@@ -43,28 +43,6 @@ on:
         default: "./"
 
 jobs:
-  get-runner-image:
-    name: Get runner image
-    runs-on: ubuntu-24.04
-    outputs:
-      name: ${{ env.BUILD_ON_NAME }}
-      channel: ${{ env.BUILD_ON_CHANNEL }}
-      runs-on: ${{ env.BUILD_ON }}
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - name: Get build-on value
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-        run: |
-          name="ubuntu"
-          channel="22.04"
-          if [ -f charmcraft.yaml ]; then
-            name=$(yq '.bases.[0].build-on.[0].name // "ubuntu"' charmcraft.yaml)
-            channel=$(yq '.bases.[0].build-on.[0].channel // '22.04'' charmcraft.yaml)
-          fi
-          image="$name-$channel"
-          echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
-          echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
-          echo "BUILD_ON=$image" >> $GITHUB_ENV
   validate-channels:
     name: Validate channels
     runs-on: ubuntu-24.04
@@ -78,6 +56,47 @@ jobs:
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
           fi
+  get-charm-base:
+    name: Get charm base
+    runs-on: ubuntu-24.04
+    outputs:
+      name: ${{ env.BASE_NAME }}
+      channel: ${{ env.BASE_CHANNEL }}
+      architecture: ${{ env.BASE_ARCHITECTURE }}
+      charm-name: ${{ env.CHARM_NAME }}
+    steps:
+      - uses: actions/checkout@v4.2.2
+      - name: Get charm name
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        run:
+          set -e
+          if [[ ! -f "charmcraft.yaml" ]]; then
+            echo "Error: charmcraft.yaml not found in the current directory."
+            exit 1
+          fi
+
+          CHARM_NAME=$(yq e '.name' charmcraft.yaml)
+          if [[ -z "$CHARM_NAME" || "$CHARM_NAME" == "null" ]]; then
+            echo "Error: Could not extract charm name from charmcraft.yaml."
+            exit 1
+          fi
+          echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v4.2.2
+      - name: Get charm base
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        run: |
+          status_json=$(charmcraft status "$CHARM_NAME" --format json)
+
+          first_mapping=$(echo "$status_json" | jq -r '.[0].mappings[0].base')
+
+          BASE_NAME=$(echo "$first_mapping" | jq -r '.name')
+          BASE_CHANNEL=$(echo "$first_mapping" | jq -r '.channel')
+          BASE_ARCHITECTURE=$(echo "$first_mapping" | jq -r '.architecture')
+
+          echo "BASE_NAME=$BASE_NAME" >> $GITHUB_ENV
+          echo "BASE_CHANNEL=$BASE_CHANNEL" >> $GITHUB_ENV
+          echo "BASE_ARCHITECTURE=$BASE_ARCHITECTURE" >> $GITHUB_ENV
   validate-inputs:
     name: Validate inputs
     runs-on: ubuntu-24.04
@@ -85,108 +104,56 @@ jobs:
       arch: ${{ env.BUILD_ON_ARCH }}
       channel: ${{ env.BUILD_ON_CHANNEL }}
       name: ${{ env.BUILD_ON_NAME }}
-    needs: [ get-runner-image ]
+    needs: [get-charm-base, validate-channels]
     steps:
       - uses: actions/checkout@v4.2.2
       - run: |
           set -e
 
-          CHARMCRAFT_YAML_PATH=${{ inputs.working-directory }}/${{ inputs.charm-directory }}/charmcraft.yaml
-          if [ ! -f $CHARMCRAFT_YAML_PATH ]; then
-              echo "charmcraft.yaml not found in $CHARMCRAFT_YAML_PATH"
-              exit 1
-          fi
-
           target_base_arch=${{ inputs.base-architecture }}
           target_base_channel=${{ inputs.base-channel }}
           target_base_name=${{ inputs.base-name }}
 
-          if [[ -z "$target_base_arch" ]]; then
-            target_base_arch=amd64
-          fi
+          CHARM_NAME=${{ needs.get-charm-base.outputs.charm-name }}
 
-          # if input not configured, use first result found from charmcraft.yaml
-          if [[ -z "$target_base_channel" ]] && [[ -z "$target_base_name" ]]; then
-            target_base_channel=${{ needs.get-runner-image.outputs.channel }}
-            target_base_name=${{ needs.get-runner-image.outputs.name }}
+          # if no input is configured, use the charm base from the previous job
+          if [[ -z "$target_base_channel" ]] && [[ -z "$target_base_name" ]] && [[ -z "$target_base_arch" ]]; then
+            target_base_name=${{ needs.get-charm-base.outputs.name }}
+            target_base_channel=${{ needs.get-charm-base.outputs.channel }}
+            target_base_arch=${{ needs.get-charm-base.outputs.architecture }}
             echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
             echo "BUILD_ON_CHANNEL=$target_base_channel" >> $GITHUB_ENV
             echo "BUILD_ON_NAME=$target_base_name" >> $GITHUB_ENV
             exit 0
           fi
 
-          # if input is configured
-          if yq e 'has("bases")' "$CHARMCRAFT_YAML_PATH" | grep -q true; then
-            readarray bases < <(yq --output-format json --indent=0 '.bases[]' $CHARMCRAFT_YAML_PATH)
+          # if input is configured, check if it is present in the charm status
+          status_json=$(charmcraft status "$CHARM_NAME" --format json)
+          track=$(echo "${{ inputs.origin-channel }}" | cut -d '/' -f1)
+          
+          mappings=$(echo "$status_json" | jq -c --arg track "$track" '.[] | select(.track == $track) | .mappings[]')
+          while IFS= read -r mapping; do
+            base=$(echo "$mapping" | jq -r '.base')
+            name=$(echo "$base" | jq -r '.name')
+            channel=$(echo "$base" | jq -r '.channel')
+            arch=$(echo "$base" | jq -r '.architecture')
 
-            for base in "${bases[@]}"; do
-              # Check optional run-on first, since build-on is used as default otherwise.
-              if [[ $(echo $base | yq 'has("run-on")') == "true" ]]; then
-                  readarray run_ons < <(echo $base | yq --output-format json --indent=0 '.run-on[]')
-                  for run_on in $run_ons; do
-                      channel=$(echo $run_on | yq -r '.channel')
-                      name=$(echo $run_on | yq -r '.name')
-                      # Default to amd64 if no architectures provided
-                      architectures=$(echo $run_on | yq -r '.architectures[]')
-                      architectures=${architectures:="amd64"}
-                      for arch in $architectures; do
-                          if [[ "$arch" == "$target_base_arch" ]] && \
-                              [[ "$channel" == "$target_base_channel" ]] && \
-                              [[ "$name" == "$target_base_name" ]]; then
-                              echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
-                              echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
-                              echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
-                              exit 0
-                          fi
-                      done
-                  done
-              fi
-
-              # Check build-on values.
-              readarray build_ons < <(echo $base | yq --output-format json --indent=0 '.build-on[]')
-              for build_on in $build_ons; do
-                  channel=$(echo $build_on | yq -r '.channel')
-                  name=$(echo $build_on | yq -r '.name')
-                  # Default to amd64 if no architectures provided
-                  architectures=$(echo $build_on | yq -r '.architectures[]')
-                  architectures=${architectures:="amd64"}
-                  for arch in $architectures; do
-                      echo $arch
-                      if [[ "$arch" == "$target_base_arch" ]] && \
-                      [[ "$channel" == "$target_base_channel" ]] && \
-                      [[ "$name" == "$target_base_name" ]]; then
-                          echo "BUILD_ON_ARCH=$target_base_arch" >> $GITHUB_ENV
-                          echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
-                          echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
-                          exit 0
-                      fi
-                  done
-              done
-            done
-          else
-            target_base_name=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f1)
-            target_base_channel=$(yq -r '.build-base // .base' $CHARMCRAFT_YAML_PATH | cut -d'@' -f2)
-            # Default to amd64 if not specified under 'platforms'
-            if yq e '.platforms' $CHARMCRAFT_YAML_PATH > /dev/null 2>&1; then
-                target_base_archs=$(yq -r '.platforms | keys[]' $CHARMCRAFT_YAML_PATH)
-            else
-                target_base_archs="amd64"
+            if [[ "$name" == "$target_base_name" && "$channel" == "$target_base_channel" && "$arch" == "$target_base_arch" ]]; then
+              echo "Matched base: $name $channel $arch"
+              echo "BUILD_ON_NAME=$name" >> $GITHUB_ENV
+              echo "BUILD_ON_CHANNEL=$channel" >> $GITHUB_ENV
+              echo "BUILD_ON_ARCH=$arch" >> $GITHUB_ENV
+              exit 0
+              break
             fi
+          done <<< "$mappings"
 
-            for arch in $target_base_archs; do
-                echo "BUILD_ON_ARCH=$arch" >> $GITHUB_ENV
-                echo "BUILD_ON_CHANNEL=$target_base_channel" >> $GITHUB_ENV
-                echo "BUILD_ON_NAME=$target_base_name" >> $GITHUB_ENV
-            done
-            exit 0
-          fi
-    
-          echo "No matching base found: $target_base_arch $target_base_channel $target_base_name"
+          echo "::error::No matching base found in charm status for: $target_base_name $target_base_channel $target_base_arch"
           exit 1
   promote-charm:
     name: Promote charm
     runs-on: ubuntu-latest
-    needs: [validate-channels, validate-inputs]
+    needs: [validate-inputs]
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Release charm to channel
@@ -201,30 +168,6 @@ jobs:
           base-channel: ${{ needs.validate-inputs.outputs.channel }}
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
           tag-prefix: ${{ inputs.tag-prefix }}
-  draft-publish-docs:
-    name: Draft publish docs
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-    steps:
-      - uses: actions/checkout@v4.2.2
-      - name: Search for docs folder
-        id: docs-exist
-        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
-      - name: Publish documentation
-        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && env.discourse_api_username != '' && env.discourse_api_key != '' }}
-        uses: canonical/discourse-gatekeeper@stable
-        env: 
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
-        with:
-          discourse_host: discourse.charmhub.io
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
-          dry_run: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir:  ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   publish-docs:
     name: Publish docs
     runs-on: ubuntu-24.04
