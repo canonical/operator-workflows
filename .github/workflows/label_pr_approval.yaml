@@ -1,0 +1,53 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Provide approval for bot PRs
+
+on:
+  workflow_call:
+    inputs:
+      labels:
+        description: List of labels in JSON format, i.e. '["trivial", "documentation"]', to indicate that a PR should be approved. When a pull request contains at least one of those labels, the PR will be approved.
+        type: string
+        default: '["trivial"]'
+
+jobs:
+  approve_pr:
+    name: Approve PR for matching label
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Approve PR for matching label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.payload.repository.full_name.split('/')[0];
+            const repo = context.payload.repository.full_name.split('/')[1];
+            const labels = JSON.parse('${{ inputs.labels }}');
+  
+            const pull = (await github.rest.pulls.get({
+              owner: owner,
+              repo: repo,
+              pull_number: context.payload.number,
+            })).data;
+
+            let found = false;
+            for (const prLabel of pull.labels) {
+              if (labels.includes(prLabel.name)) {
+                console.log("Found a matching label '" + prLabel.name + "', will approve PR");
+                await github.rest.pulls.createReview({
+                    owner: owner,
+                    repo: repo,
+                    pull_number: pull.number,
+                    event: 'APPROVE'
+                });
+                found = true;
+                break;
+              } 
+            }
+
+            if (!found) {
+              console.log("No matching label found, will not approve PR");
+            }
