@@ -15,7 +15,7 @@ jobs:
   approve_pr:
     name: Approve PR for matching label
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.repo.full_name == github.event.pull_request.head.repo.full_name
     steps:
       - name: Approve PR for matching label
         env:
@@ -36,7 +36,7 @@ jobs:
             let found = false;
             for (const prLabel of pull.labels) {
               if (labels.includes(prLabel.name)) {
-                console.log("Found a matching label '" + prLabel.name + "', will approve PR");
+                console.log(`Found a matching label '${prLabel.name}', will approve PR`);
                 await github.rest.pulls.createReview({
                     owner: owner,
                     repo: repo,
