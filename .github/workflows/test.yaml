@@ -296,7 +296,7 @@ jobs:
       # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.python-version }}
 

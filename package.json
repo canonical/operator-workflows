@@ -41,11 +41,11 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@actions/artifact": "2.3.1",
+    "@actions/artifact": "2.3.2",
     "@actions/cache": "4.0.3",
     "@actions/core": "1.11.1",
     "@actions/exec": "1.1.1",
-    "@actions/github": "6.0.0",
+    "@actions/github": "6.0.1",
     "@actions/glob": "0.5.0",
     "js-yaml": "4.1.0"
   },
