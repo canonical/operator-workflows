@@ -70,15 +70,14 @@ jobs:
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || 'ubuntu-22.04'
       }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.2.2
         with:
           repository: canonical/Inclusive-naming
-          path: ${{ inputs.working-directory }}
-      - run: mv * /tmp
+          path: tmp-inclusive-naming
+      - run: |
+          mv tmp-inclusive-naming/config.yml /tmp/config.yml
+          rm -rf tmp-inclusive-naming
       - uses: actions/checkout@v4.2.2
       - name: Merge configuration files
         run: |
@@ -104,9 +103,8 @@ jobs:
           fail-on-error: "true"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          woke-args: ". -c /tmp/config.yml"
+          woke-args: "${{ inputs.working-directory }} -c /tmp/config.yml"
           filter-mode: nofilter
-          workdir: ${{ inputs.working-directory }}
           woke-version: latest
   vale:
     name: Style checker
@@ -298,7 +296,7 @@ jobs:
       # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.python-version }}
 
