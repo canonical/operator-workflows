@@ -138,3 +138,6 @@ jobs:
       juju-channel: 3.5/stable
       channel: edge
       charmcraft-channel: latest/edge
+      # We need large runners to be able to deploy canonical k8s
+      self-hosted-runner: true
+      self-hosted-runner-label: "large"
