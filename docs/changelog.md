@@ -12,3 +12,9 @@ Each revision is versioned by the date of the revision.
 
 - Changelog added for tracking changes.
 - Added unique artifact name for zap-scan artifacts
+
+# 2025-05-15
+
+### Added
+
+- Added support for canonical-k8s via the `use-canonical-k8s: true` and `provider: k8s` parameter
