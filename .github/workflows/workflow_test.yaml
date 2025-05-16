@@ -140,4 +140,4 @@ jobs:
       charmcraft-channel: latest/edge
       # We need large runners to be able to deploy canonical k8s
       self-hosted-runner: true
-      self-hosted-runner-label: "large"
+      self-hosted-runner-label: self-hosted-linux-amd64-noble-large
