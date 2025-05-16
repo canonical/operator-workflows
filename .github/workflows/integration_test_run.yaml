@@ -256,7 +256,7 @@ jobs:
           containerd-base-dir: /opt/containerd
           EOF
 
-          sudo k8s status --wait-ready
+          sudo k8s status --wait-ready --timeout 5m
           sudo k8s enable network dns load-balancer local-storage gateway
           
           mkdir -p ~/.kube
