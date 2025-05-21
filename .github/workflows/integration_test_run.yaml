@@ -252,12 +252,12 @@ jobs:
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
           
-          cat << EOF | sudo k8s bootstrap --timeout=5m --file -
+          cat << EOF | sudo k8s bootstrap --timeout=10m --file -
           containerd-base-dir: /opt/containerd
           EOF
 
           sudo k8s enable network dns load-balancer local-storage gateway
-          sudo k8s status --wait-ready --timeout 10m
+          sudo k8s status --wait-ready --timeout 5m
           
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
