@@ -125,4 +125,20 @@ jobs:
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
-
+  integration-canonical-k8s:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      provider: k8s
+      extra-arguments: |
+        --kube-config=~/.kube/config
+      use-canonical-k8s: true
+      juju-channel: 3.5/stable
+      channel: edge
+      charmcraft-channel: latest/edge
+      # We need large runners to be able to deploy canonical k8s
+      self-hosted-runner: true
+      self-hosted-runner-image: noble
+      self-hosted-runner-label: large
