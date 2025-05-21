@@ -74,6 +74,7 @@ jobs:
           set -e
           origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
           destination_track=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 1)
+          destination_risk=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 2)
           if [ $origin_track != $destination_track ]; then
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
@@ -165,6 +166,7 @@ jobs:
           echo "No matching base found: $target_base_arch $target_base_channel $target_base_name"
           exit 1
   promote-charm:
+    if: endsWith(inputs.destination-channel, '/stable')
     name: Promote charm
     runs-on: ubuntu-latest
     needs: [validate-channels, validate-inputs]

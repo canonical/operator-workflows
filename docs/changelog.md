@@ -10,9 +10,9 @@ Each revision is versioned by the date of the revision.
 
 ## Removed
 
-- Cleaned up promote charm to remove outdated code.
+- Ejected draft publish docs step from from promote charm workflow.
 
-## 2025-05-21
+## Changed
 
 - Allow the "Draft Publish Docs" job to fail, but still consider the "Tests" workflow successful.
 
