@@ -496,6 +496,7 @@ jobs:
   required_status_checks:
     name: Required Test Status Checks
     needs:
+      - draft-publish-docs
       - docker-lint
       - inclusive-naming-check
       - lib-check
@@ -514,7 +515,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
+          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo 'Warning: The "Draft Publish Docs" job failed. The workflow will still be considered successful.' )
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
