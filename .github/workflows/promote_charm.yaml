@@ -184,7 +184,7 @@ jobs:
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
           tag-prefix: ${{ inputs.tag-prefix }}
   publish-docs:
-    if: endsWith(inputs.destination-channel, '/stable')
+    if: endsWith(github.event.inputs.destination-channel, '/stable')
     name: Publish docs
     runs-on: ubuntu-24.04
     defaults:
