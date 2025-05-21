@@ -74,7 +74,6 @@ jobs:
           set -e
           origin_track=$(echo ${{ inputs.origin-channel }} | cut -d "/" -f 1)
           destination_track=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 1)
-          destination_risk=$(echo ${{ inputs.destination-channel }} | cut -d "/" -f 2)
           if [ $origin_track != $destination_track ]; then
             echo "::error::Destination track $destination_track does not match origin track $origin_track"
             exit 1
