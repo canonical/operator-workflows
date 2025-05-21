@@ -8,6 +8,12 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-05-21
 
+## Removed
+
+- Cleaned up promote charm to remove outdated code.
+
+## 2025-05-21
+
 - Allow the "Draft Publish Docs" job to fail, but still consider the "Tests" workflow successful.
 
 ## 2025-03-21
