@@ -496,7 +496,6 @@ jobs:
   required_status_checks:
     name: Required Test Status Checks
     needs:
-      - draft-publish-docs
       - docker-lint
       - inclusive-naming-check
       - lib-check
