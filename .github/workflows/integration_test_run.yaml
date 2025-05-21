@@ -256,16 +256,11 @@ jobs:
           containerd-base-dir: /opt/containerd
           EOF
 
-          echo "Enabling network"
-          sudo k8s enable network
-          sudo k8s status --wait-ready --timeout 10m
-
-          echo "Enabling dns load-balancer local-storage gateway"
-          sudo k8s enable dns load-balancer local-storage gateway
+          # Note: the previous --file arguments override the default bootstrap options
+          #       resulting in the following not being enabled by default
+          sudo k8s enable network dns load-balancer local-storage gateway
           sudo k8s status --wait-ready --timeout 5m
 
-          echo "Cluster ready"
-          
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
