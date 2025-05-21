@@ -166,7 +166,6 @@ jobs:
           echo "No matching base found: $target_base_arch $target_base_channel $target_base_name"
           exit 1
   promote-charm:
-    if: endsWith(inputs.destination-channel, '/stable')
     name: Promote charm
     runs-on: ubuntu-latest
     needs: [validate-channels, validate-inputs]
@@ -185,6 +184,7 @@ jobs:
           base-architecture: ${{ needs.validate-inputs.outputs.arch }}
           tag-prefix: ${{ inputs.tag-prefix }}
   publish-docs:
+    if: endsWith(inputs.destination-channel, '/stable')
     name: Publish docs
     runs-on: ubuntu-24.04
     defaults:
