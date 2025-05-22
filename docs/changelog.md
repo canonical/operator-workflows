@@ -6,11 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2025-04-29
+## 2025-05-22
 
-### Modified
+### Fixed
 
-- Update `promote_charm` workflow logic to use `charmcraft status` to obtain base information instead of `charmcraft.yaml`.
+- Fix the step "Run k8s integration test" in the integration test workflow to not always run.
 
 ## 2025-05-21
 
@@ -21,6 +21,13 @@ Each revision is versioned by the date of the revision.
 ## Changed
 
 - Allow the "Draft Publish Docs" job to fail, but still consider the "Tests" workflow successful.
+
+## 2025-04-29
+
+### Modified
+
+- Update `promote_charm` workflow logic to use `charmcraft status` to obtain base information instead of `charmcraft.yaml`.
+
 
 ## 2025-03-21
 
