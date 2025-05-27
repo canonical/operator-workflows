@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-05-27
+
+### Fixed
+
+- Update `promote_charm` workflow to obtain charm name from `charmcraft expand-extensions` instead 
+  of `charmcraft.yaml`.
+
 ## 2025-05-22
 
 ### Fixed
@@ -14,11 +21,11 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-05-21
 
-## Removed
+### Removed
 
 - Ejected draft publish docs step from from promote charm workflow.
 
-## Changed
+### Changed
 
 - Allow the "Draft Publish Docs" job to fail, but still consider the "Tests" workflow successful.
 
