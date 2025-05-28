@@ -7,8 +7,7 @@ inputs:
     required: true
   charmcraftcache:
     description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
-    type: boolean
-    default: false
+    default: "false"
   charmcraft-channel:
     description: Charmcraft channel to use for the integration test
     default: latest/stable
