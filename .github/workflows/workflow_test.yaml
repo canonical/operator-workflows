@@ -142,3 +142,11 @@ jobs:
       self-hosted-runner: true
       self-hosted-runner-image: noble
       self-hosted-runner-label: large
+  integration-charmcraftcache:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      charmcraftcache: true
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      trivy-severity-config: "CRITICAL,HIGH"
