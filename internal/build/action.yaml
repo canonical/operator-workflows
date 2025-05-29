@@ -5,6 +5,9 @@ inputs:
   build-plan:
     description: Build plan.
     required: true
+  charmcraftcache:
+    description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
+    default: "false"
   charmcraft-channel:
     description: Charmcraft channel to use for the integration test
     default: latest/stable

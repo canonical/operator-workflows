@@ -10,6 +10,10 @@ on:
         description: Label for building the charm
         type: string
         default: ubuntu-latest
+      charmcraftcache:
+        description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
+        type: boolean
+        default: false
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -237,11 +241,16 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
+      - name: Install charmcraftcache
+        if: ${{ inputs.charmcraftcache }}
+        run: |
+          pipx install charmcraftcache
       - uses: actions/checkout@v4
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
+          charmcraftcache: ${{ inputs.charmcraftcache }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
           charmcraft-ref: ${{ inputs.charmcraft-ref }}
           charmcraft-repository: ${{ inputs.charmcraft-repository }}
