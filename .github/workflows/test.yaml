@@ -508,6 +508,7 @@ jobs:
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
+      - vale
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
