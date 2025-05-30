@@ -45,8 +45,8 @@ on:
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
-      vale-style-checker:
-        description: Whether to make the vale style check mandatory
+      vale-style-check:
+        description: Whether to make it required for the vale style check to be successful.
         type: boolean
         default: false
       with-uv:
@@ -134,7 +134,7 @@ jobs:
         uses: errata-ai/vale-action@reviewdog
         with:
           files: ${{ inputs.charm-directory }}/docs
-          fail_on_error: ${{ inputs.vale-style-checker }}
+          fail_on_error: ${{ inputs.vale-style-check }}
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-

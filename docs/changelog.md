@@ -10,7 +10,7 @@ Each revision is versioned by the date of the revision.
 
 ### Added
 
-- Add support to make the vale style check mandatory via the `vale-style-checker` input to the `test` workflow.
+- Add support to make the vale style check mandatory via the `vale-style-check` input to the `test` workflow.
 
 ## 2025-05-27
 
