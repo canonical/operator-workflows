@@ -45,6 +45,10 @@ on:
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
+      vale-style-check-mandatory:
+        description: Whether to make the vale style check mandatory
+        type: boolean
+        default: false
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -130,7 +134,7 @@ jobs:
         uses: errata-ai/vale-action@reviewdog
         with:
           files: ${{ inputs.charm-directory }}/docs
-          fail_on_error: false
+          fail_on_error: ${{ inputs.vale-style-check-mandatory }}
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
@@ -523,3 +527,4 @@ jobs:
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
+          [ '${{ needs.vale.result }}' = 'success' ] || (echo "vale style check failed" && false)
