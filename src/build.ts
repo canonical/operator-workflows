@@ -107,7 +107,9 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
     ? 'ccc'
     : 'charmcraft'
-  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
+  const charmcraftArgs =
+    charmcraftBin === 'ccc' ? ['pack'] : ['pack', '--verbosity', 'trace']
+  await exec.exec(charmcraftBin, charmcraftArgs, {
     cwd: params.plan.source_directory,
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
