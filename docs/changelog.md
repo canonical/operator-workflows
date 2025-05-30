@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+### 2025-05-30
+
+### Added
+
+- Add support to make the vale style check mandatory via the `vale-style-checker` input to the `test` workflow.
+
 ## 2025-05-27
 
 ### Fixed
