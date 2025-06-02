@@ -1,0 +1,30 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:795 Connecting to existing model github-pr-9939f-microk8s:testing on unspecified cloud
+[33mWARNING [0m juju.client.connection:connection.py:876 unknown facade AgentLifeFlag
+[33mWARNING [0m juju.client.connection:connection.py:900 unexpected facade AgentLifeFlag found, unable to decipher version to use
+[32mINFO    [0m juju.model:model.py:2584 Waiting for model:
+  test (missing)
+[32mINFO    [0m juju.model:model.py:1960 Deploying local:jammy/test-upload-0
+[32mINFO    [0m juju.model:model.py:2584 Waiting for model:
+  test/0 [idle] active:
+[32mINFO    [0m pytest_operator.plugin:plugin.py:937 Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-9939f-microk8s  microk8s/localhost  2.9.51   unsupported  05:10:14Z
+
+App   Version  Status  Scale  Charm        Channel  Rev  Address         Exposed  Message
+test           active      1  test-upload             0  10.152.183.161  no       
+
+Unit     Workload  Agent  Address    Ports  Message
+test/0*  active    idle   10.1.53.9         
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:943 Juju error logs:
+
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:18 ERROR juju.worker.dependency "caas-broker-tracker" manifold worker returned unexpected error: watcher has been stopped (stopped)
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:18 ERROR juju.worker.dependency "upgrader" manifold worker returned unexpected error: watcher has been stopped (stopped)
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:18 ERROR juju.worker.dependency "log-sender" manifold worker returned unexpected error: sending log message: websocket: close 1006 (abnormal closure): unexpected EOF: use of closed network connection
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:18 ERROR juju.worker.dependency "logging-config-updater" manifold worker returned unexpected error: watcher has been stopped (stopped)
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:18 ERROR juju.worker.dependency "api-caller" manifold worker returned unexpected error: api connection broken unexpectedly
+model-67a21cd1-4c68-4d96-896b-bd1c321b94cd: 05:09:21 ERROR juju.worker.dependency "api-caller" manifold worker returned unexpected error: [67a21c] "model-67a21cd1-4c68-4d96-896b-bd1c321b94cd" cannot open api: unable to connect to API: dial tcp 10.152.183.188:17070: connect: connection refused
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:1025 Forgetting model main...
