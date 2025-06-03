@@ -185,21 +185,32 @@ jobs:
         timeout-minutes: 10
       - uses: actions/checkout@v4.2.2
       - name: Integration tests variable setting
+        shell: python
         run: |
-          unique_artifact_suffix=$(uuidgen)
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-            unique_artifact_suffix="$unique_artifact_suffix"-${{ matrix.series }}
-          fi
-          echo "SERIES=$series" >> $GITHUB_ENV
-          module=""
-          if [ ! -z ${{ matrix.modules }} ]; then
-            module="-k ${{ matrix.modules }}"
-            unique_artifact_suffix="$unique_artifact_suffix"-${{ matrix.modules }}
-          fi
-          echo "MODULE=$module" >> $GITHUB_ENV
-          echo "UNIQUE_ARTIFACT_SUFFIX=$unique_artifact_suffix" >> $GITHUB_ENV
+          import os
+          import re
+          import uuid
+          
+          def safe(s):
+              return re.sub('[^0-9a-zA-Z-_]+', '-', s)
+          
+          GITHUB_ENV_FILE = open(os.environ["GITHUB_ENV"], "a")
+          
+          series = """${{ matrix.series }}"""
+          module = """${{ matrix.modules }}"""
+          unique_artifact_suffix = str(uuid.uuid4())
+          if series:
+              unique_artifact_suffix += "-{safe(series)}"
+              series = "--series {matrix.series}"
+          if module:
+              unique_artifact_suffix += "-{safe(module)}"
+              module = "-k '{module}'"
+          
+          GITHUB_ENV_FILE.write(f"SERIES={series}\n")
+          GITHUB_ENV_FILE.write(f"MODULE={module}\n")
+          GITHUB_ENV_FILE.write(f"UNIQUE_ARTIFACT_SUFFIX={unique_artifact_suffix}\n")
+          
+          GITHUB_ENV_FILE.close()
       - name: Install tox
         run: |
           if which tox &> /dev/null; then
