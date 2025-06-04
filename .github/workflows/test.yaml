@@ -453,6 +453,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+          base_branch: ${{ github.event.repository.default_branch }}
   license-headers-check:
     name: Check license headers
     runs-on: >-
