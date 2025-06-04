@@ -197,6 +197,7 @@ jobs:
           dry_run: ${{ inputs.doc-automation-disabled }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir:  ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+          base_branch: ${{ github.event.repository.default_branch }}
       - name: Show index page
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && env.discourse_api_username != '' && env.discourse_api_key != '' }}
         run: echo '${{ steps.publishDocumentation.outputs.index_url }}'
