@@ -57,6 +57,11 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
