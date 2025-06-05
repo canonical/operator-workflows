@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-### 2025-05-30
+## 2025-06-05
+
+### Added
+
+- Added support for installing `tox` with `uv` in the integration tests workflows.
+
+## 2025-05-30
 
 ### Added
 

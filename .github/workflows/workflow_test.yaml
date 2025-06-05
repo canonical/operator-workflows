@@ -46,6 +46,14 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+  integration-with-uv:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      self-hosted-runner: false
+      with-uv: true
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
