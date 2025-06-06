@@ -54,6 +54,7 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: false
       with-uv: true
+      python-version: "3.12"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
