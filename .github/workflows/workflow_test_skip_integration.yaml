@@ -1,0 +1,27 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Workflow Integration tests
+
+on:
+  pull_request:
+
+jobs:
+  publish-artifact:
+    uses: ./.github/workflows/publish_charm.yaml
+    secrets: inherit
+    with:
+      identifier: test-upload-artifact
+      channel: latest/edge
+      integration-test-workflow-file: workflow_test.yaml
+      working-directory: tests/workflows/integration/test-upload-charm/
+      workflow-run-id: -1
+  check:
+    runs-on: ubuntu-latest
+    if: always() && !cancelled()
+    timeout-minutes: 5
+    needs:
+      - publish-artifact
+    steps:
+      - run: |
+          [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
