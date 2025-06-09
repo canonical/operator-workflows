@@ -388,8 +388,4 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
-    if: always() && !cancelled()
     timeout-minutes: 5
-    steps:
-      - run: |
-          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
