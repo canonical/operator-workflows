@@ -106,6 +106,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
+    needs: [publish-charm]
     defaults:
       run:
         working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
