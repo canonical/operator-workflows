@@ -204,26 +204,30 @@ jobs:
           import os
           import re
           import uuid
-          
+
           def safe(s):
               return re.sub('[^0-9a-zA-Z-_]+', '-', s)
-          
+
           GITHUB_ENV_FILE = open(os.environ["GITHUB_ENV"], "a")
-          
-          series = """${{ matrix.series }}"""
-          module = """${{ matrix.modules }}"""
+
           unique_artifact_suffix = str(uuid.uuid4())
-          if series:
-              unique_artifact_suffix += "-{safe(series)}"
-              series = "--series {matrix.series}"
-          if module:
-              unique_artifact_suffix += "-{safe(module)}"
-              module = "-k '{module}'"
-          
+
+          series = ""
+          series_input = """${{ matrix.series }}"""
+          if series_input:
+              unique_artifact_suffix += f"-{safe(series_input)}"
+              series = f"--series {series_input}"
+
+          module = ""
+          module_input = """${{ matrix.modules }}"""
+          if module_input:
+              unique_artifact_suffix += f"-{safe(module_input)}"
+              module = f"-k '{module_input}'"
+
           GITHUB_ENV_FILE.write(f"SERIES={series}\n")
           GITHUB_ENV_FILE.write(f"MODULE={module}\n")
           GITHUB_ENV_FILE.write(f"UNIQUE_ARTIFACT_SUFFIX={unique_artifact_suffix}\n")
-          
+
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
