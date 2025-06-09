@@ -62,10 +62,21 @@ jobs:
         uses: canonical/charming-actions/channel@2.7.0
         id: select-channel
         continue-on-error: true
+  get-plan:
+    name: Get plan
+    runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.get-plan.outputs.plan }}
+      run-id: ${{ steps.get-plan.outputs.runId }}
+    steps:
+      - name: Get plan
+        uses: canonical/operator-workflows/internal/get-plan@main
+        id: get-plan
+
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
-    needs: [select-channel]
+    needs: [get-plan, select-channel]
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
@@ -80,7 +91,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
           identifier: ${{ inputs.identifier }}
+          plan: ${{ needs.get-plan.outputs.plan }}
           resource-mapping: ${{ inputs.resource-mapping }}
+          run-id: ${{ needs.get-plan.outputs.run-id }}
           working-directory: ${{ inputs.working-directory }}
           workflow-file: ${{ inputs.integration-test-workflow-file }}
           workflow-run-id: ${{ inputs.workflow-run-id }}
@@ -108,7 +121,7 @@ jobs:
     needs: [publish-charm]
     defaults:
       run:
-        working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Search for docs folder
