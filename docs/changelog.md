@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-06-09
+
+## Removed
+
+- Support from building charmcraft from source.
+
 ### 2025-05-30
 
 ### Added

@@ -18,14 +18,6 @@ on:
         description: Charmcraft channel to use for the integration test
         type: string
         default: latest/stable
-      charmcraft-ref:
-        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
-        type: string
-        default: ""
-      charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
-        type: string
-        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -245,15 +237,13 @@ jobs:
         if: ${{ inputs.charmcraftcache }}
         run: |
           pipx install charmcraftcache
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
           charmcraftcache: ${{ inputs.charmcraftcache }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
-          charmcraft-ref: ${{ inputs.charmcraft-ref }}
-          charmcraft-repository: ${{ inputs.charmcraft-repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
           rockcraft-ref: ${{ inputs.rockcraft-ref }}
@@ -344,8 +334,6 @@ jobs:
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
-      charmcraft-ref: ${{ inputs.charmcraft-ref }}
-      charmcraft-repository: ${{ inputs.charmcraft-repository }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
