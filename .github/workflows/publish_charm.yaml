@@ -118,7 +118,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
-    needs: [publish-charm]
+    needs: [get-plan]
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -139,7 +139,7 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir: ${{ needs.publish-charm.outputs.charm-directory }}
+          charm_dir: ${{ inputs.working-directory }}/${{ fromJSON(needs.get-plan.outputs.plan).build[0].source_directory }}
           base_branch: ${{ github.event.repository.default_branch }}
   release-charm-libs:
     name: Release charm libs
