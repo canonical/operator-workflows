@@ -94,6 +94,7 @@ jobs:
           ls -lah
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.7.0
+        if: ${{ steps.publish.outputs.charms != '' }}
         with:
           built-charm-path: ${{ steps.publish.outputs.charms }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}

@@ -76,7 +76,7 @@ class Publish {
     )
     for await (const resp of runIter) {
       if (resp.status !== 200) {
-        throw new Error(
+        core.warning(
           `failed to find integration workflow run: status ${resp.status}`
         )
       }
@@ -86,10 +86,11 @@ class Publish {
         }
       }
     }
-    throw new Error(
+    core.warning(
       `Failed to find integration test workflow run on tree id (${tree}).` +
         "Consider enabling the 'Require branches to be up to date before merging' setting to ensure that the integration tests are executed on the merged commit"
     )
+    return -1
   }
 
   async getPlan(runId: number): Promise<Plan> {
@@ -203,6 +204,9 @@ class Publish {
       return upload
     }
     const runId = await this.findWorkflowRunId()
+    if (runId == -1) {
+      return new Map()
+    }
     const plan = await this.getPlan(runId)
     for (const build of plan.build) {
       if (build.type === 'file') {
@@ -255,6 +259,9 @@ class Publish {
       return upload
     }
     const runId = await this.findWorkflowRunId()
+    if (runId == -1) {
+      return new Map()
+    }
     const plan = await this.getPlan(runId)
     let dockerLogin = false
     for (const build of plan.build) {
@@ -348,6 +355,13 @@ class Publish {
 
   async getCharms(): Promise<{ name: string; dir: string; files: string[] }> {
     const runId = await this.findWorkflowRunId()
+    if (runId == -1) {
+      return {
+        name: '',
+        dir: '',
+        files: []
+      }
+    }
     const plan = await this.getPlan(runId)
     // FIXME: a workaround for paas app charms
     let charmDir = this.workingDir
