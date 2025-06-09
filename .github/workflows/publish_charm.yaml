@@ -105,7 +105,6 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
-    needs: [publish-charm]
     defaults:
       run:
         working-directory: ${{ needs.publish-charm.outputs.charm-directory }}
@@ -131,7 +130,7 @@ jobs:
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-24.04
-    needs: [ publish-charm ]
+    needs: [publish-charm]
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Change directory
