@@ -389,3 +389,6 @@ jobs:
     needs:
       - integration-test
     timeout-minutes: 5
+    steps:
+      - run: |
+          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
