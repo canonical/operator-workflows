@@ -214,11 +214,11 @@ jobs:
           module = """${{ matrix.modules }}"""
           unique_artifact_suffix = str(uuid.uuid4())
           if series:
-              unique_artifact_suffix += "-{safe(series)}"
-              series = "--series {matrix.series}"
+              unique_artifact_suffix += f"-{safe(series)}"
+              series = f"--series {series}"
           if module:
-              unique_artifact_suffix += "-{safe(module)}"
-              module = "-k '{module}'"
+              unique_artifact_suffix += f"-{safe(module)}"
+              module = f"-k '{module}'"
           
           GITHUB_ENV_FILE.write(f"SERIES={series}\n")
           GITHUB_ENV_FILE.write(f"MODULE={module}\n")
