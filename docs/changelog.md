@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+### 2025-06-10
+
+### Changed
+
+- The logic to get the plan is extracted to a new action.
+
 ### 2025-06-09
 
 ### Changed
