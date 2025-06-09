@@ -30,3 +30,4 @@ async def test_build_and_deploy(ops_test: OpsTest, pytestconfig):
             apps=[app_name], status="active", raise_on_blocked=True, timeout=1000
         ),
     )
+    assert False
