@@ -229,7 +229,7 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
