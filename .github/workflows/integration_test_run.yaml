@@ -49,6 +49,11 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -116,6 +121,11 @@ on:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
         default: false
+      with-uv:
+        type: boolean
+        description: Whether to use tox with uv
+        required: false
+        default: false
       working-directory:
         type: string
         description: The working directory for jobs
@@ -169,6 +179,18 @@ jobs:
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || inputs.runs-on
       }}
+    env:
+      python-version: >-
+        ${{
+          inputs.python-version ||
+          inputs.self-hosted-runner &&
+          (
+            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
+            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
+            inputs.self-hosted-runner-image == 'focal' && '3.8'
+          ) ||
+          '3.10'
+        }}
     steps:
       - name: Disable snap autorefresh
         run: sudo snap refresh --hold=2h
@@ -192,7 +214,16 @@ jobs:
           fi
           echo "MODULE=$module" >> $GITHUB_ENV
           echo "UNIQUE_ARTIFACT_SUFFIX=$unique_artifact_suffix" >> $GITHUB_ENV
+      - name: Setup Astral UV
+        if: ${{ inputs.with-uv }}
+        uses: astral-sh/setup-uv@v6.1.0
+        with:
+          python-version: ${{ env.python-version }}
+      - name: Install tox with UV
+        if: ${{ inputs.with-uv }}
+        run: uv tool install tox --with tox-uv
       - name: Install tox
+        if: ${{ ! inputs.with-uv }}
         run: |
           if which tox &> /dev/null; then
             echo "tox is already installed."

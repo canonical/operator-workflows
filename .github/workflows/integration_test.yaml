@@ -84,6 +84,11 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       runs-on:
         type: string
         description: Image of the GitHub hosted runner to run the test job. This cannot be combined with self-hosted-runner=true.
@@ -157,6 +162,11 @@ on:
       use-canonical-k8s:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
+        default: false
+      with-uv:
+        type: boolean
+        description: Whether to use tox with uv
+        required: false
         default: false
       working-directory:
         type: string
@@ -345,6 +355,7 @@ jobs:
       plan: ${{ needs.plan.outputs.plan }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
+      python-version: ${{ inputs.python-version }}
       use-canonical-k8s: ${{ inputs.use-canonical-k8s }}
       registry: ghcr.io
       runs-on: ${{ inputs.runs-on || 'ubuntu-22.04' }}
@@ -361,6 +372,7 @@ jobs:
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
       zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
       zap-auth-header: ${{ inputs.zap-auth-header }}
