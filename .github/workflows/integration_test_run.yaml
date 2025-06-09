@@ -336,7 +336,7 @@ jobs:
           echo "ARGS=$args" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
-        if: ${{ inputs.provider == 'microk8s' }} || ${ inputs.provider == 'k8s' }
+        if: inputs.provider == 'microk8s' || inputs.provider == 'k8s'
         run: |
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :

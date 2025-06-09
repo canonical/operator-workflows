@@ -84,7 +84,8 @@ jobs:
             exit 1
           fi
 
-          CHARM_NAME=$(yq e '.name' charmcraft.yaml)
+          EXPANDED=$(CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS=1 charmcraft expand-extensions)
+          CHARM_NAME=$(echo "$EXPANDED" | yq '.name')
           if [[ -z "$CHARM_NAME" || "$CHARM_NAME" == "null" ]]; then
             echo "Error: Could not extract charm name from charmcraft.yaml."
             exit 1
