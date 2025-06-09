@@ -45,6 +45,10 @@ on:
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
+      vale-style-check:
+        description: Whether to make it required for the vale style check to be successful.
+        type: boolean
+        default: false
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -127,10 +131,10 @@ jobs:
       - name: Install styles
         uses: canonical/praecepta@1.0
       - name: Run Vale tests
-        uses: errata-ai/vale-action@reviewdog
+        uses: errata-ai/vale-action@v2.1.1
         with:
           files: ${{ inputs.charm-directory }}/docs
-          fail_on_error: false
+          fail_on_error: ${{ inputs.vale-style-check }}
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
@@ -449,6 +453,7 @@ jobs:
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
           charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+          base_branch: ${{ github.event.repository.default_branch }}
   license-headers-check:
     name: Check license headers
     runs-on: >-
@@ -504,6 +509,7 @@ jobs:
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
+      - vale
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -523,3 +529,4 @@ jobs:
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
+          [ '${{ needs.vale.result }}' = 'success' ] || (echo "vale style check failed" && false)

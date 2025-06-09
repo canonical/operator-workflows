@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+### 2025-06-09
+
+### Changed
+
+- gatekeeper is now called with a "base_branch" argument set to the default branch of the repository. This is to support documentation actions on repositories not using "main" as their main branch.
+
+## 2025-06-09
+
+### Added
+
+- Added support for installing `tox` with `uv` in the integration tests workflows.
+
+## 2025-06-09
+
+## Removed
+
+- Support from building charmcraft from source.
+
+### 2025-05-30
+
+### Added
+
+- Add support to make the vale style check mandatory via the `vale-style-check` input to the `test` workflow.
+
 ## 2025-05-27
 
 ### Fixed

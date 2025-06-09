@@ -70,8 +70,6 @@ async function buildInstallCharmcraft(
 interface BuildCharmParams {
   plan: BuildPlan
   charmcraftChannel: string
-  charmcraftRepository: string
-  charmcraftRef: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
@@ -86,12 +84,7 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftRepository && params.charmcraftRef) {
-    await buildInstallCharmcraft(
-      params.charmcraftRepository,
-      params.charmcraftRef
-    )
-  } else if (params.charmcraftChannel) {
+  if (params.charmcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -104,7 +97,10 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
   core.startGroup('charmcraft pack')
-  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
+  const charmcraftBin = core.getBooleanInput('charmcraftcache')
+    ? 'ccc'
+    : 'charmcraft'
+  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
@@ -374,9 +370,7 @@ export async function run(): Promise<void> {
       case 'charm':
         await buildCharm({
           plan,
-          charmcraftChannel: core.getInput('charmcraft-channel'),
-          charmcraftRef: core.getInput('charmcraft-ref'),
-          charmcraftRepository: core.getInput('charmcraft-repository')
+          charmcraftChannel: core.getInput('charmcraft-channel')
         })
         break
       case 'docker-image':

@@ -46,6 +46,15 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+  integration-with-uv:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      self-hosted-runner: false
+      with-uv: true
+      python-version: "3.12"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -60,16 +69,6 @@ jobs:
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-  integration-craft:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-rock/"
-      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-      charmcraft-repository: canonical/charmcraft
-      charmcraft-ref: main
-      rockcraft-repository: canonical/rockcraft
-      rockcraft-ref: main
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -109,7 +108,6 @@ jobs:
       - integration-self-hosted
       - integration-rock
       - integration-rock-artifact
-      - integration-craft
       - publish
       - publish-artifact
       - allure-report
@@ -121,7 +119,6 @@ jobs:
           [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock-artifact failed && false)
-          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
@@ -142,3 +139,11 @@ jobs:
       self-hosted-runner: true
       self-hosted-runner-image: noble
       self-hosted-runner-label: large
+  integration-charmcraftcache:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      charmcraftcache: true
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      trivy-severity-config: "CRITICAL,HIGH"
