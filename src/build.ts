@@ -374,9 +374,7 @@ export async function run(): Promise<void> {
       case 'charm':
         await buildCharm({
           plan,
-          charmcraftChannel: core.getInput('charmcraft-channel'),
-          charmcraftRef: core.getInput('charmcraft-ref'),
-          charmcraftRepository: core.getInput('charmcraft-repository')
+          charmcraftChannel: core.getInput('charmcraft-channel')
         })
         break
       case 'docker-image':
