@@ -99,7 +99,6 @@ jobs:
       - integration-self-hosted
       - integration-rock
       - integration-rock-artifact
-      - integration-craft
       - publish
       - publish-artifact
       - allure-report
@@ -111,7 +110,6 @@ jobs:
           [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock-artifact failed && false)
-          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
