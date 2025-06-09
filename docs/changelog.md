@@ -12,7 +12,13 @@ Each revision is versioned by the date of the revision.
 
 - Added support for installing `tox` with `uv` in the integration tests workflows.
 
-## 2025-05-30
+## 2025-06-09
+
+## Removed
+
+- Support from building charmcraft from source.
+
+### 2025-05-30
 
 ### Added
 
