@@ -72,6 +72,12 @@ jobs:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@improve-integration-testing
         id: get-plan
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: ${{ inputs.working-directory }}
+          workflow-file: ${{ inputs.integration-test-workflow-file }}
+          workflow-run-id: ${{ inputs.workflow-run-id }}
+          identifier: ${{ inputs.identifier }}
 
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
