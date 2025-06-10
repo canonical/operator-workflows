@@ -25,4 +25,4 @@ outputs:
     description: the JSON plan.
 runs:
   using: node20
-  main: ../../dist/get-plan/get-plan.js
+  main: ../../dist/get-plan/index.js
