@@ -233,7 +233,7 @@ jobs:
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
-    runs-on: ${{ inputs.builder-runner-label }}
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
