@@ -238,7 +238,8 @@ jobs:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
-      - run: echo ${{ toJson(github.event) }}
+      - name: Echo github obj
+        run: echo ${{ toJson(github.event) }}ç
       - uses: canonical/setup-lxd@v0.1.3
       - name: Set LXC security nesting
         if: ${{ inputs.rockcraft-enable-security-nesting }}
