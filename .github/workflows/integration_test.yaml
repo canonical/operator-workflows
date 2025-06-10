@@ -246,7 +246,7 @@ jobs:
           echo "$GITHUB_CONTEXT"
           echo "${{ github.event.pull_request.base.ref }}"
           git log -n 1 --pretty=format:"%H" origin/main
-          git log -n 1 --pretty=format:"%H" "${{ github.event.pull_request.base.ref }}"
+          git log -n 1 --pretty=format:"%H" "$(git remote show)" "${{ github.event.pull_request.base.ref }}"
           BASE_SHA=$(git log -n 1 --pretty=format:"%H" "${{ github.event.pull_request.base.ref }}")
           git diff --name-only "$BASE_SHA" "${{ github.event.pull_request.head.sha }}"
           exit 1
