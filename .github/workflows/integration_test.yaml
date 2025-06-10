@@ -246,6 +246,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "$GITHUB_CONTEXT"
+          echo "git diff --name-only --merge-base $(git remote show)/${{ github.event.pull_request.base.ref }} ${{ github.event.pull_request.head.sha }}"
           git diff --name-only --merge-base "$(git remote show)/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}"
           exit 1
       - uses: canonical/setup-lxd@v0.1.3
