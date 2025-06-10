@@ -242,11 +242,8 @@ jobs:
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-          BASE_SHA: ${{ github.event.pull_request.base.ref }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "$GITHUB_CONTEXT"
-          DEFAULT
           BASE_SHA=$(git log -n 1 --pretty=format:"%H" "${{ github.event.pull_request.base.ref }}")
           git diff --name-only "$BASE_SHA" "${{ github.event.pull_request.head.sha }}"
           exit 1
