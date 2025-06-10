@@ -243,6 +243,7 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
+          git diff --name-only ${{ github.event.after }} ${{ github.event.before }}
           exit 1
       - uses: canonical/setup-lxd@v0.1.3
       - name: Set LXC security nesting
