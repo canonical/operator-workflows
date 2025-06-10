@@ -244,6 +244,7 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
+          git log -n 1 --pretty=format:"%H" "${{ github.event.pull_request.base.ref }}"
           BASE_SHA=$(git log -n 1 --pretty=format:"%H" "${{ github.event.pull_request.base.ref }}")
           git diff --name-only "$BASE_SHA" "${{ github.event.pull_request.head.sha }}"
           exit 1
