@@ -70,7 +70,7 @@ jobs:
       run-id: ${{ steps.get-plan.outputs.runId }}
     steps:
       - name: Get plan
-        uses: canonical/operator-workflows/internal/get-plan@improve-integration-testing
+        uses: canonical/operator-workflows/internal/get-plan@main
         id: get-plan
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
