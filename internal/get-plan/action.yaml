@@ -1,0 +1,28 @@
+name: Get plan
+description: Get test plan.
+author: is-devops-team@canonical.com
+inputs:
+  charmhub-token:
+    description: charmhub-token.
+    required: true
+  github-token:
+    description: github-token.
+    required: true
+  workflow-file:
+    description: workflow-file.
+    default: 'integration_test.yaml'
+  working-directory:
+    description: working-directory.
+    default: '.'
+  workflow-run-id:
+    description: workflow-run-id.
+    default: ''
+  identifier:
+    description: identifier
+    default: ''
+outputs:
+  plan:
+    description: the JSON plan.
+runs:
+  using: node20
+  main: ../../dist/publish/get-plan.js
