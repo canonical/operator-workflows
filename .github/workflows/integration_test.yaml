@@ -242,13 +242,13 @@ jobs:
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-          MERGE_BASE: ${{ github.event.base.ref }}
-          HEAD_SHA: ${{ github.head.sha }}
+          BASE_SHA: ${{ github.event.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           echo "$GITHUB_CONTEXT"
           echo "$MERGE_BASE"
           echo "$HEAD_SHA"
-          git diff --name-only --merge-base "$MERGE_BASE" "$HEAD_SHA"
+          git diff --name-only "${{ github.event.base.sha }}" "${{ github.event.pull_request.head.sha }}"
           exit 1
       - uses: canonical/setup-lxd@v0.1.3
       - name: Set LXC security nesting
