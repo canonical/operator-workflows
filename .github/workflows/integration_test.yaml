@@ -239,6 +239,8 @@ jobs:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
