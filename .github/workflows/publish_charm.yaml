@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plan: ${{ steps.get-plan.outputs.plan }}
-      run-id: ${{ steps.get-plan.outputs.runId }}
+      run-id: ${{ steps.get-plan.outputs.run-id }}
     steps:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@main
