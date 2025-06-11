@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plan: ${{ steps.get-plan.outputs.plan }}
-      run-id: ${{ steps.get-plan.outputs.runId }}
+      run-id: ${{ steps.get-plan.outputs.run-id }}
     steps:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@main
@@ -99,7 +99,7 @@ jobs:
           plan: ${{ needs.get-plan.outputs.plan }}
           resource-mapping: ${{ inputs.resource-mapping }}
           working-directory: ${{ inputs.working-directory }}
-          workflow-run-id: ${{ inputs.workflow-run-id }}
+          run-id: ${{ needs.get-plan.outputs.run-id }}
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)

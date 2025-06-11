@@ -243,6 +243,9 @@ class Publish {
     }
     const charm = charms[0]
     const tmp = mkdtemp()
+    core.info(
+      `download charm artifact from integration workflow (run id: ${runId})`
+    )
     const artifact = (
       await this.artifact.getArtifact(charm.output, {
         findBy: {
@@ -276,7 +279,7 @@ class Publish {
     try {
       core.startGroup('retrieve image info')
       const plan: Plan = JSON.parse(core.getInput('plan'))
-      const runId: number = +core.getInput('workflow-run-id')
+      const runId: number = +core.getInput('run-id')
       const imageResources = await this.getImages(plan, runId)
       const fileResources = await this.getFiles(plan, runId)
       core.endGroup()
