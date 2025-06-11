@@ -276,7 +276,7 @@ class Publish {
     try {
       core.startGroup('retrieve image info')
       const plan: Plan = JSON.parse(core.getInput('plan'))
-      const runId: number = +core.getInput('run-id')
+      const runId: number = +core.getInput('workflow-run-id')
       const imageResources = await this.getImages(plan, runId)
       const fileResources = await this.getFiles(plan, runId)
       core.endGroup()
