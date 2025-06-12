@@ -400,10 +400,9 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
-      - plan
       - scan
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.plan.outputs.has_code_changes }}' == 'True' ] || [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
+          [ '${{ needs.integration-test.result }}' = 'skipped' ] || [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
