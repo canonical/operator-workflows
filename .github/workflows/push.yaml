@@ -13,6 +13,9 @@ jobs:
     outputs:
       has-code-changes: ${{ steps.changes.outputs.has-code-changes }}
     steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+            fetch-depth: 0
       - name: Find changes
         id: changes
         run: |
