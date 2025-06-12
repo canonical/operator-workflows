@@ -273,7 +273,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ build ]
+    needs: [ build, plan ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
