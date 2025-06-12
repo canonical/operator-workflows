@@ -274,7 +274,8 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan, build ]
+    needs: [ plan ]
+    if: ${{ needs.plan.outputs.has_code_changes == 'True' }}
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
@@ -286,7 +287,7 @@ jobs:
   scan:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan-scan ]
+    needs: [ build, plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
@@ -352,7 +353,7 @@ jobs:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [ plan, build ]
-    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]') && needs.plan.outputs.has_code_changes == 'True'
+    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
