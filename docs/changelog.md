@@ -12,8 +12,7 @@ Each revision is versioned by the date of the revision.
 
 - Skip building and scanning artifacts if there are only documentation changes
 - Skip integration tests if there are only documentation changes
-- Require image scan as part of the required check
-- Improve parallelism by reorganizing dependencies
+- Make image scanning a required check
 
 ### 2025-06-10
 
