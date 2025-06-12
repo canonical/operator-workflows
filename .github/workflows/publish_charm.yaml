@@ -89,7 +89,7 @@ jobs:
       - name: Find changes
         id: changes
         run: |
-          if [[ "${{ inputs.force-publish }}" == "true" ]]; then ]]; then
+          if [[ "${{ inputs.force-publish }}" == "true" ]]; then
             echo "has_code_changes=True"
             exit 0
           fi
