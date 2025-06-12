@@ -406,4 +406,4 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ ${{ needs.plan.outputs.has_code_changes }}' == 'True' || '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
+          [ '${{ needs.plan.outputs.has_code_changes }}' == 'True' || '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
