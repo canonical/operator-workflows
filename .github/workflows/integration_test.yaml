@@ -273,7 +273,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan ]
+    needs: [ build ]
     if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
