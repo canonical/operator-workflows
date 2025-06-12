@@ -243,6 +243,9 @@ class Publish {
     }
     const charm = charms[0]
     const tmp = mkdtemp()
+    core.info(
+      `download charm artifact from integration workflow (run id: ${runId})`
+    )
     const artifact = (
       await this.artifact.getArtifact(charm.output, {
         findBy: {

@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       plan: ${{ steps.get-plan.outputs.plan }}
-      run-id: ${{ steps.get-plan.outputs.runId }}
+      run-id: ${{ steps.get-plan.outputs.run-id }}
     steps:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@main
@@ -96,13 +96,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
-          identifier: ${{ inputs.identifier }}
           plan: ${{ needs.get-plan.outputs.plan }}
           resource-mapping: ${{ inputs.resource-mapping }}
-          run-id: ${{ needs.get-plan.outputs.run-id }}
           working-directory: ${{ inputs.working-directory }}
-          workflow-file: ${{ inputs.integration-test-workflow-file }}
-          workflow-run-id: ${{ inputs.workflow-run-id }}
+          run-id: ${{ needs.get-plan.outputs.run-id }}
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)

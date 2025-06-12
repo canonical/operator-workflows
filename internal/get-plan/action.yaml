@@ -20,6 +20,8 @@ inputs:
 outputs:
   plan:
     description: the JSON plan.
+  run-id:
+    description: the integration test run id corresponding to the plan
 runs:
   using: node20
   main: ../../dist/get-plan/index.js
