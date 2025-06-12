@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+### 2025-06-12
+
+### Changed
+
+- Skip building and scanning artifacts if there are only documentation changes
+- Skip integration tests if there are only documentation changes
+- Require image scan as part of the required check
+- Improve parallelism by reorganizing dependencies
+
 ### 2025-06-10
 
 ### Changed
