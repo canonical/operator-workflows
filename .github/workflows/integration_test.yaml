@@ -214,6 +214,7 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
+      has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Validate input
         run: |
@@ -223,16 +224,26 @@ jobs:
                 exit 1
             fi
       - uses: actions/checkout@v4.2.2
+        with:
+            fetch-depth: 0
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
           upload-image: ${{ inputs.upload-image }}
           working-directory: ${{ inputs.working-directory }}
+      - name: Find changes
+        id: changes
+        run: |
+          REMOTE=$(git remote show)
+          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+          CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
+          echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
@@ -262,7 +273,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan, build ]
+    needs: [ build, plan ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
@@ -274,7 +285,7 @@ jobs:
   scan:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan-scan ]
+    needs: [ build, plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
@@ -388,8 +399,10 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
+      - scan
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
+          [ '${{ needs.scan.result }}' = 'skipped' ] || [ '${{ needs.scan.result }}' = 'success' ] || (echo scan failed && false)
+          [ '${{ needs.integration-test.result }}' = 'skipped' ] || [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
