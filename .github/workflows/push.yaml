@@ -22,8 +22,6 @@ jobs:
           echo ${{ github.event.before }}
           echo ${{ github.event.after }}
           CHANGED_FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}")
-          echo $CHANGED_FILES
           CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
-          echo "has_code_changes=False"
-          # echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
+          echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 

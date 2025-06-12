@@ -62,13 +62,13 @@ jobs:
         uses: canonical/charming-actions/channel@2.7.0
         id: select-channel
         continue-on-error: true
-  get-plan:
+  plan:
     name: Get plan
     runs-on: ubuntu-latest
     outputs:
-      has-code-changes: ${{ steps.changes.outputs.has-code-changes }}
       plan: ${{ steps.get-plan.outputs.plan }}
       run-id: ${{ steps.get-plan.outputs.run-id }}
+      has-code-changes: ${{ steps.changes.outputs.has-code-changes }}
     steps:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@main
@@ -79,21 +79,21 @@ jobs:
           workflow-file: ${{ inputs.integration-test-workflow-file }}
           workflow-run-id: ${{ inputs.workflow-run-id }}
           identifier: ${{ inputs.identifier }}
+      - uses: actions/checkout@v4.2.2
+        with:
+            fetch-depth: 0
       - name: Find changes
         id: changes
         run: |
-          echo ${{ github.event.before }}
-          echo ${{ github.event.after }}
           CHANGED_FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}")
-          echo $CHANGED_FILES
           CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
-          echo "has_code_changes=False"
-          # echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
+          echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
   publish-charm:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
-    needs: [get-plan, select-channel]
+    needs: [ plan, select-channel ]
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
@@ -132,7 +132,7 @@ jobs:
   draft-publish-docs:
     name: Draft publish docs
     runs-on: ubuntu-24.04
-    needs: [get-plan]
+    needs: [ plan ]
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
@@ -158,7 +158,8 @@ jobs:
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-24.04
-    needs: [ publish-charm ]
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
+    needs: [ plan, publish-charm ]
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Change directory
