@@ -397,8 +397,9 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     needs:
       - integration-test
+      - plan
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.integration-test.result }}' = 'success' ] || ${{ steps.changes.outputs.has_code_changes == 'True' }} || (echo integration-test failed && false)
+          [ '${{ needs.integration-test.result }}' = 'success' ] || ${{ needs.plan.outputs.has_code_changes == 'True' }} || (echo integration-test failed && false)
