@@ -18,8 +18,8 @@ on:
       resource-mapping:
         type: string
         description: >-
-          Associate rock image names with corresponding resource names specified in the charm metadata. 
-          If not defined, the suffix '-image' to the rock image name will be append. 
+          Associate rock image names with corresponding resource names specified in the charm metadata.
+          If not defined, the suffix '-image' to the rock image name will be append.
           For instance, a rock image named 'my-rock' will be uploaded as the charm OCI resource named 'my-rock-image'.
         default: "{}"
       working-directory:
@@ -41,8 +41,8 @@ on:
         default: "integration_test.yaml"
       workflow-run-id:
         description: >-
-          Use the newly built charms and images in this workflow run as the new version to upload. 
-          If these are not provided, the system will default to using charms and rocks from the most 
+          Use the newly built charms and images in this workflow run as the new version to upload.
+          If these are not provided, the system will default to using charms and rocks from the most
           recent successful integration test that matches the git tree ID.
         type: string
         default: ""
@@ -107,10 +107,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
-          plan: ${{ needs.get-plan.outputs.plan }}
+          plan: ${{ needs.plan.outputs.plan }}
           resource-mapping: ${{ inputs.resource-mapping }}
           working-directory: ${{ inputs.working-directory }}
-          run-id: ${{ needs.get-plan.outputs.run-id }}
+          run-id: ${{ needs.plan.outputs.run-id }}
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -144,7 +144,7 @@ jobs:
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && env.discourse_api_username != '' && env.discourse_api_key != '' }}
         uses: canonical/discourse-gatekeeper@stable
-        env: 
+        env:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
         with:
@@ -153,7 +153,7 @@ jobs:
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
           dry_run: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir: ${{ inputs.working-directory }}/${{ fromJSON(needs.get-plan.outputs.plan).build[0].source_directory }}
+          charm_dir: ${{ inputs.working-directory }}/${{ fromJSON(needs.plan.outputs.plan).build[0].source_directory }}
           base_branch: ${{ github.event.repository.default_branch }}
   release-charm-libs:
     name: Release charm libs
