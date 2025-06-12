@@ -214,7 +214,7 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
-      has_code_changes: ${{ steps.changes.outputs.has_code_changes }}
+      has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Validate input
         run: |
@@ -244,7 +244,7 @@ jobs:
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
-    if: ${{ needs.plan.outputs.has_code_changes == 'True' }}
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
@@ -275,7 +275,7 @@ jobs:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
     needs: [ plan ]
-    if: ${{ needs.plan.outputs.has_code_changes == 'True' }}
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
