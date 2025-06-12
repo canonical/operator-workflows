@@ -238,6 +238,7 @@ jobs:
           REMOTE=$(git remote show)
           CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
           CODE_FILE_CHANGES = $(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
+          echo $CODE_FILE_CHANGES
           echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
   build:
