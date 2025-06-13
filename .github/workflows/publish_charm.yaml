@@ -72,7 +72,7 @@ jobs:
     outputs:
       plan: ${{ steps.get-plan.outputs.plan }}
       run-id: ${{ steps.get-plan.outputs.run-id }}
-      has-code-changes: ${{ steps.changes.outputs.has-code-changes }}
+      has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Get plan
         uses: canonical/operator-workflows/internal/get-plan@main
