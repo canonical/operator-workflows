@@ -167,13 +167,13 @@ jobs:
     name: Release charm libs
     runs-on: ubuntu-24.04
     if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
-    needs: [ plan, publish-charm ]
+    needs: [ plan ]
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
-          cp -rp ./${{ needs.publish-charm.outputs.charm-directory }}/. $TEMP_DIR
+          cp -rp ./${{ inputs.working-directory }}/${{ fromJSON(needs.plan.outputs.plan).build[0].source_directory }}/. $TEMP_DIR
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
