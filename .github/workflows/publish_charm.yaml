@@ -74,8 +74,9 @@ jobs:
       run-id: ${{ steps.get-plan.outputs.run-id }}
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
+      - uses: actions/checkout@v4.2.2
       - name: Get plan
-        uses: canonical/operator-workflows/internal/get-plan@main
+        uses: ./internal/get-plan
         id: get-plan
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -110,7 +111,7 @@ jobs:
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
       - run: sudo snap install rockcraft --classic
-      - uses: canonical/operator-workflows/internal/publish@main
+      - uses: ./internal/publish
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

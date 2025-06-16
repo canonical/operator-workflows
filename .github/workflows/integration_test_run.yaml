@@ -204,12 +204,12 @@ jobs:
           import os
           import re
           import uuid
-          
+
           def safe(s):
               return re.sub('[^0-9a-zA-Z-_]+', '-', s)
-          
+
           GITHUB_ENV_FILE = open(os.environ["GITHUB_ENV"], "a")
-          
+
           series = """${{ matrix.series }}"""
           module = """${{ matrix.modules }}"""
           unique_artifact_suffix = str(uuid.uuid4())
@@ -219,11 +219,11 @@ jobs:
           if module:
               unique_artifact_suffix += f"-{safe(module)}"
               module = f"-k '{module}'"
-          
+
           GITHUB_ENV_FILE.write(f"SERIES={series}\n")
           GITHUB_ENV_FILE.write(f"MODULE={module}\n")
           GITHUB_ENV_FILE.write(f"UNIQUE_ARTIFACT_SUFFIX={unique_artifact_suffix}\n")
-          
+
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
@@ -285,7 +285,7 @@ jobs:
         id: canonical-k8s
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
-          
+
           cat << EOF | sudo k8s bootstrap --file -
           containerd-base-dir: /opt/containerd
           EOF
@@ -298,7 +298,7 @@ jobs:
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
-          
+
           IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
           LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
@@ -311,13 +311,13 @@ jobs:
           credentials-yaml: ${{ steps.canonical-k8s.outputs.kubeconfig }}
           microk8s-addons: >-
             ${{
-              ( 
-                github.event.pull_request.head.repo.full_name != github.repository && 
+              (
+                github.event.pull_request.head.repo.full_name != github.repository &&
                 !contains(inputs.microk8s-addons, 'registry')
               ) &&
               (
-                inputs.microk8s-addons == '' && 
-                'registry' || 
+                inputs.microk8s-addons == '' &&
+                'registry' ||
                 format('registry {0}', inputs.microk8s-addons)
               ) ||
               inputs.microk8s-addons
@@ -361,7 +361,7 @@ jobs:
 
       - run: sudo apt install skopeo -y
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@main
+        uses: ./internal/plan-integration
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
@@ -387,9 +387,9 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
-            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
           else
-            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
           fi
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}

@@ -55,7 +55,6 @@ on:
         required: false
         default: false
 
-        
 concurrency:
   group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
@@ -249,12 +248,13 @@ jobs:
         if: steps.metadata-yaml.outputs.exists == 'true'
         id: run-lint
         run: |
+          REF="${{ github.action_ref || 'main' }}"
           options=""
           if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
             options+=" --break-system-packages"
           fi
           python3 -m pip install check-jsonschema $options
-          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
+          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/${REF}/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
@@ -296,7 +296,7 @@ jobs:
       - name: Install tox
         if: ${{ ! inputs.with-uv }}
         run: pip install tox
-          
+
       # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
@@ -443,7 +443,7 @@ jobs:
       - name: Publish documentation
         if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork && env.discourse_api_username != '' && env.discourse_api_key != '' }}
         uses: canonical/discourse-gatekeeper@stable
-        env: 
+        env:
           discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
           discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
         with:
@@ -474,7 +474,8 @@ jobs:
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
-          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
+          REF="${{ github.action_ref || 'main' }}"
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/${REF}/.github/files/.licenserc.yaml
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
         with:

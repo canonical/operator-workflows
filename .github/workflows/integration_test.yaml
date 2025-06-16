@@ -153,10 +153,10 @@ on:
       upload-image:
         type: string
         description: >-
-          Can be either 'artifact' or 'registry', which determines the method by which images used 
-          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
-          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
-          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
+          Can be either 'artifact' or 'registry', which determines the method by which images used
+          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub
+          action artifacts. If set to 'registry', the images will be uploaded to ghcr.
+          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests
           originating from forked repositories, and 'registry' for all other cases.
         default: ""
       use-canonical-k8s:
@@ -226,7 +226,7 @@ jobs:
       - uses: actions/checkout@v4.2.2
         with:
             fetch-depth: 0
-      - uses: canonical/operator-workflows/internal/plan@main
+      - uses: ./internal/plan
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -259,7 +259,7 @@ jobs:
         run: |
           pipx install charmcraftcache
       - uses: actions/checkout@v4.2.2
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: ./internal/build
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -277,7 +277,8 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: actions/checkout@v4.2.2
+      - uses: ./internal/plan-scan
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
