@@ -218,6 +218,10 @@ jobs:
       plan: ${{ steps.plan.outputs.plan }}
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
+      - name: Dump github context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
       - name: Validate input
         run: |
           # exit if runs-on and self-hosted-runner is both set
