@@ -62,6 +62,9 @@ concurrency:
 env:
   CONCURRENCY_GROUP: operator-workflows-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
   REPORT_NAME: "report"
+  WORKFLOW_REF: ${{ github.action_ref || github.ref }}
+  WORKFLOW_REPO: ${{ github.action_repository || github.repository }}
+
 
 jobs:
   inclusive-naming-check:
@@ -254,7 +257,7 @@ jobs:
             options+=" --break-system-packages"
           fi
           python3 -m pip install check-jsonschema $options
-          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/${REF}/.github/files/metadata.schema
+          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/${WORKFLOW_REPO}/${WORKFLOW_REF}/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
   lint-and-unit-test:
     name: Lint and unit tests
@@ -474,8 +477,7 @@ jobs:
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
-          REF="${{ github.action_ref || 'main' }}"
-          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/${REF}/.github/files/.licenserc.yaml
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/${WORKFLOW_REPO}/${WORKFLOW_REF}/.github/files/.licenserc.yaml
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
         with:

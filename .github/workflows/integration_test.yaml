@@ -207,6 +207,8 @@ on:
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
+  WORKFLOW_REF: ${{ github.action_ref || github.ref }}
+  WORKFLOW_REPO: ${{ github.action_repository || github.repository }}
 
 jobs:
   plan:
@@ -225,8 +227,13 @@ jobs:
             fi
       - uses: actions/checkout@v4.2.2
         with:
-            fetch-depth: 0
-      - uses: ./internal/plan
+          fetch-depth: 0
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
+      - uses: ./_workflow_repo/internal/plan
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -259,7 +266,12 @@ jobs:
         run: |
           pipx install charmcraftcache
       - uses: actions/checkout@v4.2.2
-      - uses: ./internal/build
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
+      - uses: ./_workflow_repo/internal/build
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -278,7 +290,11 @@ jobs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: ./internal/plan-scan
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
+      - uses: ./_workflow_repo/internal/plan-scan
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}

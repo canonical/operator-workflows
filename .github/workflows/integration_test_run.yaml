@@ -162,6 +162,10 @@ on:
         description: Rules file to ignore any alerts from the ZAP scan
         type: string
 
+env:
+  WORKFLOW_REF: ${{ github.action_ref || github.ref }}
+  WORKFLOW_REPO: ${{ github.action_repository || github.repository }}
+
 jobs:
   integration-test:
     name: Integration tests
@@ -360,8 +364,13 @@ jobs:
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
       - run: sudo apt install skopeo -y
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
       - name: Plan Integration
-        uses: ./internal/plan-integration
+        uses: ./_workflow_repo/internal/plan-integration
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}

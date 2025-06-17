@@ -55,6 +55,8 @@ env:
   OWNER: ${{ github.repository_owner }}
   CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
   ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "true"
+  WORKFLOW_REF: ${{ github.action_ref || github.ref }}
+  WORKFLOW_REPO: ${{ github.action_repository || github.repository }}
 
 jobs:
   select-channel:
@@ -75,8 +77,12 @@ jobs:
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
       - name: Get plan
-        uses: ./internal/get-plan
+        uses: ./_workflow_repo/internal/get-plan
         id: get-plan
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -111,7 +117,12 @@ jobs:
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
       - run: sudo snap install rockcraft --classic
-      - uses: ./internal/publish
+      - uses: actions/checkout@v4.2.2
+        with:
+          repository: ${{ env.WORKFLOW_REPO }}
+          ref: ${{ env.WORKFLOW_REF }}
+          path: _workflow_repo
+      - uses: ./_workflow_repo/internal/publish
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
