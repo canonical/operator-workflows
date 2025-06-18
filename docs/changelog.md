@@ -8,17 +8,21 @@ Each revision is versioned by the date of the revision.
 
 ### 2025-06-12
 
+### Changed
+
+- Define required secrets in the promote workflow.
+
 ### Fixed
 
-- Bug getting the directory when publishing the charm libraries
+- Bug getting the directory when publishing the charm libraries.
 
 ### 2025-06-12
 
 ### Changed
 
-- Skip building and scanning artifacts if there are only documentation changes
-- Skip integration tests if there are only documentation changes
-- Make image scanning a required check
+- Skip building and scanning artifacts if there are only documentation changes.
+- Skip integration tests if there are only documentation changes.
+- Make image scanning a required check.
 
 ### 2025-06-10
 
