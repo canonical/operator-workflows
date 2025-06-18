@@ -10,27 +10,6 @@ on:
         type: string
         required: false
         description: 'Destination Channel'
-      identifier:
-        type: string
-        description: >-
-          The matching integration test workflow job identifier, see identifier in the integration test workflow input.
-        default: ""
-      resource-mapping:
-        type: string
-        description: >-
-          Associate rock image names with corresponding resource names specified in the charm metadata.
-          If not defined, the suffix '-image' to the rock image name will be append.
-          For instance, a rock image named 'my-rock' will be uploaded as the charm OCI resource named 'my-rock-image'.
-        default: "{}"
-      working-directory:
-        type: string
-        description: The working directory for jobs
-        default: "./"
-      tag-prefix:
-        type: string
-        required: false
-        description: |
-          Tag prefix, useful when bundling multiple charms in the same repo.
       charmcraft-channel:
         description: Charmcraft channel to use for publishing the charm and resources
         type: string
@@ -39,10 +18,39 @@ on:
         description: Evaluate the detection of changes different from documentation to True
         type: boolean
         default: false
+      identifier:
+        type: string
+        description: >-
+          The matching integration test workflow job identifier, see identifier in the integration test workflow input.
+        default: ""
       integration-test-workflow-file:
         description: The filename of the integration test workflow file.
         type: string
         default: "integration_test.yaml"
+      publish-docs:
+        type: boolean
+        description: >-
+          Whether to draft publish the documentation to Discourse.
+          If set to false, the documentation will not be published.
+        default: true
+      publish-libs:
+        type: boolean
+        description: >-
+          Whether to release charm libraries.
+          If set to false, the libraries will not be released.
+        default: true
+      resource-mapping:
+        type: string
+        description: >-
+          Associate rock image names with corresponding resource names specified in the charm metadata.
+          If not defined, the suffix '-image' to the rock image name will be append.
+          For instance, a rock image named 'my-rock' will be uploaded as the charm OCI resource named 'my-rock-image'.
+        default: "{}"
+      tag-prefix:
+        type: string
+        required: false
+        description: |
+          Tag prefix, useful when bundling multiple charms in the same repo.
       workflow-run-id:
         description: >-
           Use the newly built charms and images in this workflow run as the new version to upload.
@@ -50,6 +58,10 @@ on:
           recent successful integration test that matches the git tree ID.
         type: string
         default: ""
+      working-directory:
+        type: string
+        description: The working directory for jobs
+        default: "./"
 env:
   REGISTRY: ghcr.io
   OWNER: ${{ github.repository_owner }}
@@ -139,6 +151,7 @@ jobs:
           upload-image: false
   draft-publish-docs:
     name: Draft publish docs
+    if: ${{ inputs.publish-docs }}
     runs-on: ubuntu-24.04
     needs: [ plan ]
     defaults:
@@ -166,7 +179,7 @@ jobs:
   release-charm-libs:
     name: Release charm libs
     runs-on: ubuntu-24.04
-    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
+    if: ${{ inputs.publish-libs && needs.plan.outputs.has-code-changes == 'True' }}
     needs: [ plan ]
     steps:
       - uses: actions/checkout@v4.2.2
