@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+### 2025-06-18
+
+### Changed
+
+Revert Make publish libs independent from charm publishing
+
 ### 2025-06-12
 
 ### Changed
