@@ -8,6 +8,12 @@ Each revision is versioned by the date of the revision.
 
 ### 2025-06-12
 
+### Fixed
+
+- Bug getting the directory when publishing the charm libraries
+
+### 2025-06-12
+
 ### Changed
 
 - Skip building and scanning artifacts if there are only documentation changes
