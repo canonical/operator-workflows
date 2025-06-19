@@ -10,21 +10,31 @@ Each revision is versioned by the date of the revision.
 
 ### Changed
 
+- Revert "Define required secrets in the promote workflow".
+
+### 2025-06-18
+
+### Changed
+
 Revert Make publish libs independent from charm publishing
-
-### 2025-06-12
-
-### Fixed
-
-- Bug getting the directory when publishing the charm libraries
 
 ### 2025-06-12
 
 ### Changed
 
-- Skip building and scanning artifacts if there are only documentation changes
-- Skip integration tests if there are only documentation changes
-- Make image scanning a required check
+- Define required secrets in the promote workflow.
+
+### Fixed
+
+- Bug getting the directory when publishing the charm libraries.
+
+### 2025-06-12
+
+### Changed
+
+- Skip building and scanning artifacts if there are only documentation changes.
+- Skip integration tests if there are only documentation changes.
+- Make image scanning a required check.
 
 ### 2025-06-10
 
