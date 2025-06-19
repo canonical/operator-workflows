@@ -45,11 +45,6 @@ on:
         description: Charmcraft channel to use for promoting the charm.
         type: string
         default: latest/stable
-    secrets:
-      CHARMHUB_TOKEN:
-        required: true
-      GITHUB_TOKEN:
-        required: true
 
 jobs:
   validate-channels:
