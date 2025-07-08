@@ -286,6 +286,7 @@ jobs:
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
 
+          if [ -n "$DOCKERHUB_MIRROR" ]; then
           MIRROR_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/hosts.d/docker.io
 
           sudo mkdir -p ${MIRROR_CONFIG}
@@ -294,6 +295,7 @@ jobs:
           [host."$DOCKERHUB_MIRROR"]
           capabilities = ["pull", "resolve"]
           EOF
+          fi
           
           cat << EOF | sudo k8s bootstrap --file -
           containerd-base-dir: /opt/containerd
