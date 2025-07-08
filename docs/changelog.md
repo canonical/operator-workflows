@@ -6,19 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-### 2025-06-19
+## 2025-07-08
+
+### Added
+
+- Support for `DOCKERHUB_MIRROR` in Canonicak Kubernetes configuration.
+
+## 2025-06-19
 
 ### Changed
 
 - Revert "Define required secrets in the promote workflow".
 
-### 2025-06-18
+## 2025-06-18
 
 ### Changed
 
 Revert Make publish libs independent from charm publishing
 
-### 2025-06-12
+## 2025-06-12
 
 ### Changed
 
@@ -28,7 +34,7 @@ Revert Make publish libs independent from charm publishing
 
 - Bug getting the directory when publishing the charm libraries.
 
-### 2025-06-12
+## 2025-06-12
 
 ### Changed
 
@@ -36,13 +42,13 @@ Revert Make publish libs independent from charm publishing
 - Skip integration tests if there are only documentation changes.
 - Make image scanning a required check.
 
-### 2025-06-10
+## 2025-06-10
 
 ### Changed
 
 - The logic to get the plan is extracted to a new action.
 
-### 2025-06-09
+## 2025-06-09
 
 ### Changed
 
@@ -60,7 +66,7 @@ Revert Make publish libs independent from charm publishing
 
 - Support from building charmcraft from source.
 
-### 2025-05-30
+## 2025-05-30
 
 ### Added
 
