@@ -496,7 +496,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Check libs
-        if: ${{ !github.event.pull_request.head.repo.fork }} && ${{ inputs.requirer-check-lib }}
+        if: ${{ !github.event.pull_request.head.repo.fork && inputs.requirer-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
@@ -529,7 +529,7 @@ jobs:
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo 'Warning: The "Draft Publish Docs" job failed. The workflow will still be considered successful.' )
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
-          if [ '${{ inputs.require-check-lib }}' == 'true' ] || [ '${{ needs.lib-check.result }}' = 'success' ]; then (echo lib-check failed && false); fi
+          if [ '${{ inputs.require-check-lib }}' = 'true' ] || [ '${{ needs.lib-check.result }}' = 'success' ]; then (echo lib-check failed && false); fi
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
