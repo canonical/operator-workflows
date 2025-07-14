@@ -54,6 +54,11 @@ on:
         type: boolean
         required: false
         default: false
+      require-check-lib:
+        description: Whether to make it required for the check-lib check to be successful.
+        type: boolean
+        required: false
+        default: true
 
         
 concurrency:
@@ -498,6 +503,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
+          fail_on_error: ${{ inputs.require-check-lib }}
   required_status_checks:
     name: Required Test Status Checks
     needs:
