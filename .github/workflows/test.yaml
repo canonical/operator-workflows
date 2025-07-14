@@ -503,7 +503,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
-          fail_on_error: ${{ inputs.require-check-lib }}
   required_status_checks:
     name: Required Test Status Checks
     needs:
@@ -530,7 +529,7 @@ jobs:
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo 'Warning: The "Draft Publish Docs" job failed. The workflow will still be considered successful.' )
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
-          [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
+          if [ '${{ needs.lib-check.result }}' = 'success' ] || [ '${{ inputs.require-check-lib }}' == 'true' ]; then (echo lib-check failed && false); fi
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
