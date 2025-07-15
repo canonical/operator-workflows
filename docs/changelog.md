@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-07-14
+
+### Added
+
+- Add option to disable check-lib test.
+
 ## 2025-07-08
 
 ### Added
