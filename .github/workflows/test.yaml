@@ -55,7 +55,7 @@ on:
         required: false
         default: false
       require-check-lib:
-        description: Whether to make it required for the check-lib check to be successful.
+        description: Whether to run the check-libraries action.
         type: boolean
         required: false
         default: true
