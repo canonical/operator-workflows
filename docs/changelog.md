@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-07-16
+
+### Changed
+
+- Remove draft publish from the list of required checks #722
+
 ## 2025-07-14
 
 ### Added
