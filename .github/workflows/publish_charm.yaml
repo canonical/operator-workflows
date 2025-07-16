@@ -55,7 +55,7 @@ on:
         description: >-
           Use the newly built charms and images in this workflow run as the new version to upload.
           If these are not provided, the system will default to using charms and rocks from the most
-          recent successful integration test that matches the git tree ID.
+          recent integration test that matches the git tree ID.
         type: string
         default: ""
       working-directory:
