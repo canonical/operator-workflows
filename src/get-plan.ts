@@ -60,7 +60,6 @@ export class GetPlan {
         owner,
         repo,
         workflow_id: workflowResp.data.id,
-        status: 'success',
         created: `>${new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}`
       }
     )
