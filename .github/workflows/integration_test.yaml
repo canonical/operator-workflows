@@ -236,7 +236,18 @@ jobs:
         id: changes
         run: |
           REMOTE=$(git remote show)
-          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_REF="$REMOTE/${{ github.event.pull_request.base.ref }}"
+            HEAD_REF="${{ github.event.pull_request.head.sha }}"
+          else
+            # fallback for push events
+            BASE_REF="${{ github.event.before }}"
+            HEAD_REF="${{ github.sha }}"
+          fi
+
+          echo "Comparing $BASE_REF to $HEAD_REF"
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_REF" "$HEAD_REF" || echo "")
           CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
           echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
