@@ -235,9 +235,16 @@ jobs:
       - name: Find changes
         id: changes
         run: |
-          REMOTE=$(git remote show)
-          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
-          CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
+          PREV_COMMIT_SHA="${{ github.event.before }}"
+          CURRENT_COMMIT_SHA="${{ github.sha }}"
+
+          # If there are no commits before the current event, we can assume all files have changed
+          if [ -z $PREV_COMMIT_SHA ]; then
+            CODE_FILE_CHANGES=1
+          else
+            CHANGED_FILES=$(git diff --name-only "$PREV_COMMIT_SHA" "$CURRENT_COMMIT_SHA")
+            CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
+          fi
           echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
   build:
