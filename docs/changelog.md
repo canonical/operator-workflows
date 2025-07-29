@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-07-29
+
+### Changed
+
+- Use tj-actions/changed-files action in integration_test.yaml to make it reusable in any GitHub event, not just Pull Requests.
+
 ## 2025-07-16
 
 ### Changed
