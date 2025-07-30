@@ -140,6 +140,7 @@ jobs:
         with:
           files: ${{ inputs.charm-directory }}/docs
           fail_on_error: ${{ inputs.vale-style-check }}
+          filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
