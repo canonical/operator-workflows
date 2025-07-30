@@ -10,7 +10,7 @@ Each revision is versioned by the date of the revision.
 
 ### Changed
 
-- Use tj-actions/changed-files action in integration_test.yaml to make it reusable in any GitHub event, not just Pull Requests.
+- Refactor integration_test.yaml to make it reusable in any GitHub event, not just Pull Requests.
 
 ## 2025-07-16
 
