@@ -134,7 +134,7 @@ jobs:
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
-        uses: canonical/praecepta@main
+        uses: swetha1654/praecepta@main
       - name: Install Vale
         run: |
           sudo snap install vale
