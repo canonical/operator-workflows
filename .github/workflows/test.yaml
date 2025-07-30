@@ -135,18 +135,11 @@ jobs:
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
         uses: swetha1654/documentation-style-guide@main
-      - name: Install Vale
-        run: |
-          sudo snap install vale
       - name: Run Vale tests
-        run: |
-          echo "Vale ini contents"
-          cat vale.ini
-          if [ "${{ inputs.vale-style-check }}" = "true" ]; then
-            vale ./docs/
-          else
-            vale ./docs/ --no-exit
-          fi
+        uses: errata-ai/vale-action@v2.1.1
+        with:
+          files: ${{ inputs.charm-directory }}/docs
+          fail_on_error: ${{ inputs.vale-style-check }}
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
