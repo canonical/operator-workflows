@@ -140,7 +140,8 @@ jobs:
           sudo snap install vale
       - name: Run Vale tests
         run: |
-          # Check if vale style check is required
+          echo "Vale ini contents"
+          cat vale.ini
           if [ "${{ inputs.vale-style-check }}" = "true" ]; then
             vale ./docs/
           else
