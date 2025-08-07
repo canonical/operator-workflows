@@ -338,10 +338,14 @@ jobs:
       - uses: actions/checkout@v4.2.2
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
+      - name: show iptables
+        run: sudo iptables-legacy -t nat -L -n -v --line-numbers
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
         uses: canonical/setup-devstack-swift@v1
+      - name: show iptables
+        run: sudo iptables-legacy -t nat -L -n -v --line-numbers
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
