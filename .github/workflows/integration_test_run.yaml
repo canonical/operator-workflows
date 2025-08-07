@@ -361,6 +361,8 @@ jobs:
           password = \"${{ secrets.GITHUB_TOKEN }}\"
           " >> /var/snap/microk8s/current/args/containerd-template.toml'
           sudo su -c 'systemctl restart snap.microk8s.daemon-containerd.service && microk8s status --wait-ready'
+      - name: show iptables
+        run: sudo iptables-legacy -t nat -L -n -v --line-numbers
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
@@ -421,6 +423,8 @@ jobs:
           else
             tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
           fi
+      - name: show iptables
+        run: sudo iptables-legacy -t nat -L -n -v --line-numbers
       - name: Upload Allure results
         timeout-minutes: 3
         if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
