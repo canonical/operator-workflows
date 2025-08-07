@@ -8,6 +8,12 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-07-29
 
+### Fixed
+
+- Move setup devstack-swift before setup operator environment to avoid a Kubernetes network issue.
+
+## 2025-07-29
+
 ### Changed
 
 - Refactor integration_test.yaml to make it reusable in any GitHub event, not just Pull Requests.
