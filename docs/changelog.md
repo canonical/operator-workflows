@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-08-11
+
+### Fixed
+
+- Make trivy exit-code configuration an input in the integration_test.yaml workflow
+
 ## 2025-07-29
 
 ### Fixed
