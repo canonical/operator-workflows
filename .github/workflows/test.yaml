@@ -49,6 +49,10 @@ on:
         description: Whether to make it required for the vale style check to be successful.
         type: boolean
         default: false
+      vale-files:
+        description: A JSON-formatted list of file or directory arguments to run vale check against.
+        type: string
+        default: '["${{ inputs.charm-directory }}/docs", "${{ inputs.charm-directory }}/README.md", "${{ inputs.charm-directory }}/CONTRIBUTING.md"]'
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -138,7 +142,7 @@ jobs:
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
-          files: '["${{ inputs.charm-directory }}/docs", "${{ inputs.charm-directory }}/README.md", "${{ inputs.charm-directory }}/CONTRIBUTING.md"]'
+          files: ${{ inputs.vale-files }}
           fail_on_error: ${{ inputs.vale-style-check }}
           filter_mode: nofilter
   shellcheck-lint:
