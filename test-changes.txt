@@ -1,5 +1,0 @@
-.custom_wordlist.txt
-README.md
-docs/explanation/charm-architecture.md
-docs/index.md
-docs/tutorial/deploy-irc-bridge.md
