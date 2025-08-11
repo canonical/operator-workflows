@@ -240,7 +240,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             REMOTE=$(git remote show)
             CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
-            IGNORED_PATTERNS="\.md$|\.custom_wordlist\.txt$|^LICENSE$|integration_test.yaml$"
+            IGNORED_PATTERNS="\.md$|\.custom_wordlist\.txt$|^LICENSE$"
             CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev "$IGNORED_PATTERNS" | wc -l)
             has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
           fi
