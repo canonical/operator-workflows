@@ -244,7 +244,7 @@ jobs:
             CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
             echo "Changed files detected: $CHANGED_FILES"
             IGNORED_PATTERNS="\.md$|\.custom_wordlist\.txt$|^LICENSE$|integration_test.yaml$"
-            CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev -c "$IGNORED_PATTERNS")
+            CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev "$IGNORED_PATTERNS" | wc -l)
             echo "Count of code file changes (non-ignored): $CODE_FILE_CHANGES"
             has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
             echo "Has code changes: $has_code_changes"
