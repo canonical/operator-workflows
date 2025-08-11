@@ -236,13 +236,18 @@ jobs:
       - name: Find changes
         id: changes
         run: |
+          set -x
           has_code_changes=True
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             REMOTE=$(git remote show)
+            echo $REMOTE
             CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+            echo $CHANGED_FILES
             IGNORED_PATTERNS="\.md$|\.custom_wordlist\.txt$|^LICENSE$"
             CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev -c "$IGNORED_PATTERNS")
+            echo $CODE_FILE_CHANGES
             has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
+            echo $has_code_changes
           fi
           echo "has_code_changes=$has_code_changes" >> $GITHUB_OUTPUT
 
