@@ -22,7 +22,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
       - name: Checkout GitHub pages branch 
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4.3.0
         with:
           ref: gh-pages
           path: repo/ 
