@@ -132,6 +132,10 @@ on:
         description: Timeout in minutes to keep tmate debugging session.
         type: number
         default: 30
+      trivy-exit-code:
+        description: Exit code when specified vulnerabilities are found.
+        type: string
+        default: '1'
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -328,7 +332,7 @@ jobs:
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
-          exit-code: '1'
+          exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
