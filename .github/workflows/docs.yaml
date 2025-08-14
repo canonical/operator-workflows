@@ -19,7 +19,7 @@ on:
       linkcheck-files:
         type: string
         description: Where Lychee will look for files to lint
-        default: "'./**/*.md' './**/*.html' './**/*.rst'"
+        default: "'./**/*.md' './**/*.rst'"
         required: false
       linkcheck-fail-on-error:
         description: Exit with 1 when at least one error was reported.
