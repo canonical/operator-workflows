@@ -338,19 +338,39 @@ jobs:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           if [ -f ".trivyignore" ]
           then
-            output=$(trivy image $ROCK_IMAGE --severity ${{ inputs.trivy-severity-config }} -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            ignored_cves=$(trivy image "$ROCK_IMAGE" \
+              --severity "CRITICAL,HIGH" \
+              --show-suppressed \
+              -q -f json \
+              | jq -r '.Results[].ExperimentalModifiedFindings[]? 
+                      | select(.Status == "ignored") 
+                      | .Finding.VulnerabilityID' \
+              | sort -u)
+            # Loop through .trivyignore and check if each CVE is still ignored
             line=0
-            while read CVE;
-            do
+            while read -r CVE; do
               line=$(( line + 1 ))
-              if [[ "$output" != *"$CVE"* ]] && [[ ! "$CVE" =~ ^#.* ]]
-              then
-              echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
+              [[ "$CVE" =~ ^#.*$ || -z "$CVE" ]] && continue
+              if ! grep -q -F "$CVE" <<< "$ignored_cves"; then
+                echo "$CVE" >> unused_cves.txt
               fi
             done < .trivyignore
+
+            # If unused CVEs found, post PR comment
+            if [ -s unused_cves.txt ]; then
+              {
+                echo "### Unused entries in .trivyignore"
+                echo ""
+                echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
+                echo ""
+                cat unused_cves.txt | sed 's/^/- /'
+              } > pr_comment.md
+
+              gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
+            fi
           fi
         env:
           TRIVY_USERNAME: ${{ github.actor }}
