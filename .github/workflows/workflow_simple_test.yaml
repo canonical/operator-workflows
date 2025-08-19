@@ -22,6 +22,7 @@ jobs:
       self-hosted-runner: false
       python-version: ${{ matrix.python-version }}
       vale-files: '["docs/", "README.md"]'
+      vale-style-check: true
   simple-uv:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -38,6 +39,7 @@ jobs:
       python-version: ${{ matrix.python-version }}
       with-uv: true
       vale-files: '["docs/", "README.md"]'
+      vale-style-check: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -46,6 +48,7 @@ jobs:
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
       vale-files: '["docs/", "README.md"]'
+      vale-style-check: true
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
