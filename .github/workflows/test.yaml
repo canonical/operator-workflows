@@ -142,17 +142,20 @@ jobs:
       - name: Resolve Vale file paths
         id: resolve_vale_files
         run: |
-          set -x  # trace commands
+          set -euo pipefail
           shopt -s globstar nullglob
 
           patterns='${{ inputs.vale-files }}'
-          working_directory="$(echo ${{ inputs.working-directory }} | sed 's:/*$::')"
+          working_directory="$(echo "${{ inputs.working-directory }}" | sed 's:/*$::')"
 
-          files=$(echo "$patterns" | jq -r '.[]' | while read -r pattern; do
-            for f in $working_directory/$pattern; do
-              [ -e "$f" ] && echo "$f"
-            done
-          done | jq -R -s -c 'split("\n")[:-1]' )
+          files=$(
+            while IFS= read -r pattern; do
+              for f in "${working_directory}"/$pattern; do
+                [[ -e "$f" ]] && printf '%s\n' "$f"
+              done
+            done < <(jq -r '.[]' <<<"$patterns") \
+            | jq -R -s -c 'split("\n") | map(select(length>0))'
+          )
 
           echo "Files identified for Vale check: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"
