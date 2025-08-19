@@ -52,7 +52,7 @@ on:
       vale-files:
         description: A JSON-formatted list of file or directory arguments to run vale check against.
         type: string
-        default: '["${{ inputs.working-directory }}/${{ inputs.charm-directory }}/docs", "${{ inputs.working-directory }}/${{ inputs.charm-directory }}/README.md", "${{ inputs.working-directory }}/${{ inputs.charm-directory }}/CONTRIBUTING.md"]'
+        default: '["docs/", "README.md", "CONTRIBUTING.md"]'
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -131,11 +131,12 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: "${{ inputs.working-directory }}/${{ inputs.charm-directory }}"
     steps:
       - name: Checkout repo to runner
         uses: actions/checkout@v5.0.0
       - run: |
+          echo "${{ inputs.working-directory }}/${{ inputs.charm-directory }}"
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
         uses: canonical/documentation-style-guide@main
