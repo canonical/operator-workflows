@@ -21,7 +21,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
       python-version: ${{ matrix.python-version }}
-      vale-files: '["docs/", "README.md"]'
+      vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
   simple-uv:
     uses: ./.github/workflows/test.yaml
@@ -38,7 +38,7 @@ jobs:
       self-hosted-runner: false
       python-version: ${{ matrix.python-version }}
       with-uv: true
-      vale-files: '["docs/", "README.md"]'
+      vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
@@ -47,7 +47,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
-      vale-files: '["docs/", "README.md"]'
+      vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
   check:
     runs-on: ubuntu-latest
