@@ -143,10 +143,10 @@ jobs:
         id: resolve_vale_files
         run: |
           set -x  # trace commands
-          shopt -s globstar
+          shopt -s globstar nullglob
 
-          patterns='["docs/**/*.md", "README.md"]'
-          working_directory="$(echo "tests/workflows/integration/test-upload-charm/" | sed 's:/*$::')"
+          patterns='${{ inputs.vale-files }}'
+          working_directory="$(echo ${{ inputs.working-directory }} | sed 's:/*$::')"
 
           files=$(echo "$patterns" | jq -r '.[]' | while read -r pattern; do
             for f in $working_directory/$pattern; do
