@@ -49,6 +49,10 @@ on:
         description: Whether to make it required for the vale style check to be successful.
         type: boolean
         default: false
+      vale-files:
+        description: A JSON-formatted list of glob patterns to run vale check against.
+        type: string
+        default: '["docs/**/*.md", "README.md", "CONTRIBUTING.md"]' 
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -134,12 +138,30 @@ jobs:
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
-        uses: canonical/praecepta@1.0
+        uses: canonical/documentation-style-guide@main
+      - name: Resolve Vale file paths
+        id: resolve_vale_files
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          patterns='${{ inputs.vale-files }}'
+          files=$(
+            while IFS= read -r pattern; do
+              for f in $pattern; do
+                [[ -e "$f" ]] && realpath "$f"
+              done
+            done < <(jq -r '.[]' <<<"$patterns") \
+            | jq -R -s -c 'split("\n") | map(select(length>0))'
+          )
+
+          echo "Files identified for Vale check: $files"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
-          files: ${{ inputs.charm-directory }}/docs
+          files: ${{ steps.resolve_vale_files.outputs.files }}
           fail_on_error: ${{ inputs.vale-style-check }}
+          filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-

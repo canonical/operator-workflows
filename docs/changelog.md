@@ -8,6 +8,10 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-08-19
 
+### Fixed
+
+- Fix the vale workflow to point to the latest version and enable `nofilter`.
+
 ### Changed
 
 - Auto-approve PRs opened by dependabot[bot].
