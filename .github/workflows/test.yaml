@@ -142,6 +142,7 @@ jobs:
       - name: Resolve Vale file paths
         id: resolve_vale_files
         run: |
+          set -x
           set -euo pipefail
           shopt -s globstar nullglob
 
