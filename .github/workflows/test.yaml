@@ -148,9 +148,10 @@ jobs:
 
           patterns='${{ inputs.vale-files }}'
           working_directory="$(echo "${{ inputs.working-directory }}" | sed 's:/*$::')"
-
+          ls -l "${working_directory}"
           files=$(
             while IFS= read -r pattern; do
+              ls -l "${working_directory}"/$pattern
               for f in "${working_directory}"/$pattern; do
                 [[ -e "$f" ]] && printf '%s\n' "$f"
               done
