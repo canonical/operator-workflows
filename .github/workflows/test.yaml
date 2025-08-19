@@ -52,7 +52,7 @@ on:
       vale-files:
         description: A JSON-formatted list of file or directory arguments to run vale check against.
         type: string
-        default: '["${{ inputs.charm-directory }}/docs", "${{ inputs.charm-directory }}/README.md", "${{ inputs.charm-directory }}/CONTRIBUTING.md"]'
+        default: '["${{ inputs.working-directory }}/${{ inputs.charm-directory }}/docs", "${{ inputs.working-directory }}/${{ inputs.charm-directory }}/README.md", "${{ inputs.working-directory }}/${{ inputs.charm-directory }}/CONTRIBUTING.md"]'
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
