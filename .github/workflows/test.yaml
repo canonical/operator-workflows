@@ -141,21 +141,16 @@ jobs:
         uses: canonical/documentation-style-guide@main
       - name: Resolve Vale file paths
         id: resolve_vale_files
-        uses: actions/github-script@v7.0.1
-        with:
-          script: |
-            const working_directory = `${{ inputs.working-directory }}`
-            const patterns = JSON.parse(`${{ inputs.vale-files }}`); 
+        run: |
+          patterns='${{ inputs.vale-files }}'
+          working_directory=${{ inputs.working-directory }}
 
-            let matched = [];
-            for (const pattern of patterns) {
-              const globber = await require('@actions/glob').create(`${working_directory}/${pattern}`);
-              const files = await globber.glob();
-              matched.push(...files);
-            }
+          files=$(echo "$patterns" | jq -r '.[]' | while read -r pattern; do
+            ls -1 "$working_directory"/$pattern 2>/dev/null || true
+          done | jq -R -s -c 'split("\n")[:-1]')
 
-            console.log("Resolved Vale files:", JSON.stringify(matched, null, 2));
-            core.setOutput('files', JSON.stringify(matched));
+          echo "Files identified for Vale check: $files"
+          echo "files=$files" >> $GITHUB_OUTPUT
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
