@@ -136,17 +136,25 @@ jobs:
       - name: Checkout repo to runner
         uses: actions/checkout@v5.0.0
       - run: |
-          echo "${{ inputs.working-directory }}"
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
         uses: canonical/documentation-style-guide@main
-      - run: |
-          pwd
-          ls -l
+      - name: Resolve Vale file paths
+        id: resolve_vale_files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const wd = `${{ inputs.working-directory }}`;
+            const files = JSON.parse(`${{ inputs.vale-files }}`);
+            const prefixed = files.map(p =>
+              p.startsWith('/') || p.startsWith(wd + '/') ? p : `${wd}/${p}`
+            );
+            console.log("Resolved Vale files:", JSON.stringify(prefixed, null, 2));
+            core.setOutput('files', JSON.stringify(prefixed));
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
-          files: ${{ inputs.vale-files }}
+          files: ${{ steps.resolve_vale_files.outputs.files }}
           fail_on_error: ${{ inputs.vale-style-check }}
           filter_mode: nofilter
   shellcheck-lint:
