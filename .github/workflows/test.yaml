@@ -142,13 +142,13 @@ jobs:
       - name: Resolve Vale file paths
         id: resolve_vale_files
         run: |
-          patterns='${{ inputs.vale-files }}''
+          patterns='${{ inputs.vale-files }}'
           working_directory='${{ inputs.working-directory }}'
           echo "$patterns" | jq -r '.[]' | while read -r pattern; do
-            ls -1 "$working_directory"/$pattern; done
-            
+            ls -1 $working_directory/$pattern; done
+
           files=$(echo "$patterns" | jq -r '.[]' | while read -r pattern; do
-            ls -1 "$working_directory"/$pattern 2>/dev/null || true
+            ls -1 $working_directory/$pattern 2>/dev/null || true
           done | jq -R -s -c 'split("\n")[:-1]')
 
           echo "Files identified for Vale check: $files"
