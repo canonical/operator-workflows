@@ -197,7 +197,7 @@ jobs:
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
         timeout-minutes: 10
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
       - name: Integration tests variable setting
         shell: python
         run: |
@@ -227,7 +227,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v6.4.3
+        uses: astral-sh/setup-uv@v6.5.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -315,6 +315,10 @@ jobs:
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
           sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
+      - name: Setup Devstack Swift
+        if: ${{ inputs.setup-devstack-swift }}
+        id: setup-devstack-swift
+        uses: canonical/setup-devstack-swift@v1
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
@@ -335,13 +339,9 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v5.0.0
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
-      - name: Setup Devstack Swift
-        if: ${{ inputs.setup-devstack-swift }}
-        id: setup-devstack-swift
-        uses: canonical/setup-devstack-swift@v1
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
