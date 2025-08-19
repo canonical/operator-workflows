@@ -21,6 +21,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: false
       python-version: ${{ matrix.python-version }}
+      vale-files: '["docs/", "README.md"]'
   simple-uv:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -36,6 +37,7 @@ jobs:
       self-hosted-runner: false
       python-version: ${{ matrix.python-version }}
       with-uv: true
+      vale-files: '["docs/", "README.md"]'
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -43,6 +45,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+      vale-files: '["docs/", "README.md"]'
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()

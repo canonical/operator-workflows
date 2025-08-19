@@ -131,7 +131,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: "${{ inputs.working-directory }}"
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout repo to runner
         uses: actions/checkout@v5.0.0
