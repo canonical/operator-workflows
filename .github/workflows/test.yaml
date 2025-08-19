@@ -50,7 +50,7 @@ on:
         type: boolean
         default: false
       vale-files:
-        description: A JSON-formatted list of file or directory arguments to run vale check against.
+        description: A JSON-formatted list of glob patterns to run vale check against.
         type: string
         default: '["docs/**/*.md", "README.md", "CONTRIBUTING.md"]' 
       with-uv:
@@ -144,17 +144,16 @@ jobs:
         uses: actions/github-script@v7.0.1
         with:
           script: |
-            const glob = require('@actions/glob');
             const working_directory = `${{ inputs.working-directory }}`
             const patterns = JSON.parse(`${{ inputs.vale-files }}`); 
 
             let matched = [];
             for (const pattern of patterns) {
-              const globber = await glob.create(`${working_directory}/${pattern}`);
+              const globber = await require('@actions/glob').create(`${working_directory}/${pattern}`);
               const files = await globber.glob();
               matched.push(...files);
             }
-            
+
             console.log("Resolved Vale files:", JSON.stringify(matched, null, 2));
             core.setOutput('files', JSON.stringify(matched));
       - name: Run Vale tests
