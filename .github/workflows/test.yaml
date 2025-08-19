@@ -143,21 +143,16 @@ jobs:
         id: resolve_vale_files
         run: |
           set -x  # trace commands
-          shopt -s globstar nullglob
+          shopt -s globstar
 
-          patterns='["docs/", "README.md"]'
+          patterns='["docs/**/*.md", "README.md"]'
           working_directory="$(echo "tests/workflows/integration/test-upload-charm/" | sed 's:/*$::')"
 
           files=$(echo "$patterns" | jq -r '.[]' | while read -r pattern; do
-            echo "Checking pattern: $working_directory/$pattern" >&2
             for f in $working_directory/$pattern; do
-              echo "  candidate: $f" >&2
               [ -e "$f" ] && echo "$f"
             done
-          done | jq -R -s -c 'split("\n")[:-1]' ) || {
-            echo "jq failed with input above" >&2
-            exit 1
-          }
+          done | jq -R -s -c 'split("\n")[:-1]' )
 
           echo "Files identified for Vale check: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"
