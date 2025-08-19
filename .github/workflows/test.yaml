@@ -131,15 +131,18 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: "${{ inputs.working-directory }}/${{ inputs.charm-directory }}"
+        working-directory: "${{ inputs.working-directory }}"
     steps:
       - name: Checkout repo to runner
         uses: actions/checkout@v5.0.0
       - run: |
-          echo "${{ inputs.working-directory }}/${{ inputs.charm-directory }}"
+          echo "${{ inputs.working-directory }}"
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
         uses: canonical/documentation-style-guide@main
+      - run: |
+          pwd
+          ls -l
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
