@@ -52,7 +52,7 @@ on:
       vale-files:
         description: A JSON-formatted list of file or directory arguments to run vale check against.
         type: string
-        default: '["docs/", "README.md", "CONTRIBUTING.md"]'
+        default: '["docs/**/*.md", "README.md", "CONTRIBUTING.md"]' 
       with-uv:
         description: Whether to run the unit tests with tox-uv
         type: boolean
@@ -141,16 +141,22 @@ jobs:
         uses: canonical/documentation-style-guide@main
       - name: Resolve Vale file paths
         id: resolve_vale_files
-        uses: actions/github-script@v7
+        uses: actions/github-script@v7.0.1
         with:
           script: |
-            const wd = `${{ inputs.working-directory }}`;
-            const files = JSON.parse(`${{ inputs.vale-files }}`);
-            const prefixed = files.map(p =>
-              p.startsWith('/') || p.startsWith(wd + '/') ? p : `${wd}/${p}`
-            );
-            console.log("Resolved Vale files:", JSON.stringify(prefixed, null, 2));
-            core.setOutput('files', JSON.stringify(prefixed));
+            const glob = require('@actions/glob');
+            const working_directory = `${{ inputs.working-directory }}`
+            const patterns = JSON.parse(`${{ inputs.vale-files }}`); 
+
+            let matched = [];
+            for (const pattern of patterns) {
+              const globber = await glob.create(`${working_directory}/${pattern}`);
+              const files = await globber.glob();
+              matched.push(...files);
+            }
+            
+            console.log("Resolved Vale files:", JSON.stringify(matched, null, 2));
+            core.setOutput('files', JSON.stringify(matched));
       - name: Run Vale tests
         uses: errata-ai/vale-action@v2.1.1
         with:
