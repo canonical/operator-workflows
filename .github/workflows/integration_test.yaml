@@ -364,6 +364,7 @@ jobs:
             if [ -s unused_cves.txt ]; then
               {
                 echo "### Unused entries in .trivyignore"
+                echo "Image: $ROCK_IMAGE"
                 echo ""
                 echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
                 echo ""
