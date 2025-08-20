@@ -10,7 +10,7 @@ Each revision is versioned by the date of the revision.
 
 ### Fixed
 
-- Skip the vale action entirely if `vale_style_check` is disabled.
+- Skip the vale action entirely if `vale_style_check` is disabled to temporarily mitigate `fail_on_error` issue. See https://github.com/errata-ai/vale-action/issues/89.
 
 ## 2025-08-19
 
