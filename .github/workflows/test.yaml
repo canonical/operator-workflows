@@ -46,7 +46,7 @@ on:
         description: Path to the bash script to be run before the integration tests
         type: string
       vale-style-check:
-        description: Whether to make it required for the vale style check to be successful.
+        description: Whether to enable vale style check.
         type: boolean
         default: false
       vale-files:
@@ -121,6 +121,7 @@ jobs:
           woke-version: latest
   vale:
     name: Style checker
+    if: ${{ inputs.vale-style-check }}
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
