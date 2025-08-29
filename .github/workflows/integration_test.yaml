@@ -57,6 +57,9 @@ on:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
+      pre-build-script:
+        description: Path to the bash script to be run before the build step
+        type: string
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -269,6 +272,9 @@ jobs:
         run: |
           pipx install charmcraftcache
       - uses: actions/checkout@v5.0.0
+      - name: Pre-build script
+        if: ${{ inputs.pre-build-script != '' }}
+        run: bash -xe ${{ inputs.pre-build-script }}
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:

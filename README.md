@@ -58,6 +58,8 @@ charm = pytestconfig.getoption("--charm-file")[0] # the charm only has one base
 
 tmate can be run on failed tests either by setting the `tmate-debug` input to 'true' or by re-running a job with the "Enable debug logging" checkbox checked.
 
+By providing a file path to `pre-build-script` variable, a script can be run before the build step. This is especially valuable if a set of operations need to be done before packing the rock or charm.
+
 ### Publish Charm Workflow (`canonical/operator-workflows/.github/workflows/publish_charm.yaml@main`)
 Publishes the charm and its resources to appropriate channel, as defined [here](https://github.com/canonical/charming-actions/tree/main/channel).
 
