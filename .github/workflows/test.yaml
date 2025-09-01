@@ -121,7 +121,7 @@ jobs:
           woke-version: latest
   vale:
     name: Style checker
-    if: ${{ inputs.vale-style-check }}
+    if: ${{ inputs.vale-style-check == 'true' }}
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
