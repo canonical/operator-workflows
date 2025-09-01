@@ -119,6 +119,14 @@ jobs:
           woke-args: "${{ inputs.working-directory }} -c /tmp/config.yml"
           filter-mode: nofilter
           woke-version: latest
+  debug-inputs:
+    runs-on: ubuntu-22.04
+    steps:
+      - run: |
+          echo "vale-style-check raw -> '${{ inputs.vale-style-check }}'"
+          echo "type is true? -> ${{ inputs.vale-style-check == true }}"
+          echo "type is 'true'? -> ${{ inputs.vale-style-check == 'true' }}"
+          echo "type is 'false'? -> ${{ inputs.vale-style-check == 'false' }}"
   vale:
     name: Style checker
     if: ${{ inputs.vale-style-check == 'true' }}
