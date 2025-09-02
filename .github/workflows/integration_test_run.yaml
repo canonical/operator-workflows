@@ -77,7 +77,7 @@ on:
       self-hosted-runner-image:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
-        default: "jammy"
+        default: "noble"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.

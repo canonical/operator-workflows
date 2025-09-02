@@ -41,7 +41,7 @@ on:
       self-hosted-runner-image:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
-        default: "jammy"
+        default: "noble"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
