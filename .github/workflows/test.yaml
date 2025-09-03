@@ -373,7 +373,6 @@ jobs:
           EXPECTED_LINT_CMDS="\
               pydocstyle \
               codespell \
-              flake8 \
               isort \
               black \
               mypy \
