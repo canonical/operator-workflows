@@ -175,7 +175,7 @@ jobs:
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+        fromJSON(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || inputs.runs-on
       }}
