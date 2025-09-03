@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-09-03
+
+### Changed
+
+- Eject `flake8` from linting dependencies due to `pflake8` no longer being supported on "noble".
+
 ## 2025-09-02
 
 ### Changed
