@@ -278,7 +278,7 @@ jobs:
         id: run-lint
         run: |
           options=""
-          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
+          if [[ "${{ inputs.self-hosted-runner }}" == "true" && "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
             options+=" --break-system-packages"
           fi
           python3 -m pip install check-jsonschema $options

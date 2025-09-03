@@ -12,6 +12,10 @@ Each revision is versioned by the date of the revision.
 
 - Default self-hosted runners are updated to "noble" from "jammy".
 
+### Fixed
+
+- Add break-system-packages parameter only if runner is self-hosted and image is "noble".
+
 ## 2025-08-21
 
 ### Added
