@@ -272,7 +272,7 @@ jobs:
         if: env.ENABLE_ALLURE == 'true'
         working-directory: ${{ inputs.working-directory }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.TMP_INTEGRATION_TEST_ARGS }}
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
