@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-09-04
+- Allow cross-track charm promotions. Validation of the track name is removed when promote a charm.
+
 ## 2025-09-02
 
 ### Changed
