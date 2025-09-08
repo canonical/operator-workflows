@@ -303,18 +303,12 @@ jobs:
 
           # Note: the previous --file arguments override the default bootstrap options
           #       resulting in the following not being enabled by default
-          sudo k8s enable network dns load-balancer local-storage gateway
+          sudo k8s enable network dns local-storage gateway
           sudo k8s status --wait-ready --timeout 5m
 
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
-          
-          IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
-          LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
-          LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
-          LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
-          sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
       - name: Patch Canonical K8s defaults 
         if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
         run: |
