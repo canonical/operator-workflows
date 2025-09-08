@@ -7,7 +7,7 @@ on:
     inputs:
       terraform-directory:
         type: string
-        description: The working directory for the terraform
+        description: A comma-separated list of working directories for Terraform
         default: "terraform"
 
 jobs:
@@ -23,12 +23,21 @@ jobs:
       with:
         working-dir: ${{ inputs.terraform-directory }}
         output-file: README.md
-        output-method: replace
-    - uses: planetscale/ghcommit-action@v0.2.17
+        output-method: inject
+
+    # terraform-docs/gh-actions changes the permissions of repository files
+    - name: Change file ownership
+      run: sudo chown $USER -R .
+
+    - name: Create pull request
+      uses: canonical/create-pull-request@main
+      if: ${{ github.event_name != 'pull_request' }}
       with:
-        commit_message: "terraform-docs: automated action"
-        repo: ${{ github.event.pull_request.head.repo.full_name }}
-        branch: ${{ github.event.pull_request.head.ref }}
-        file_pattern: '${{ inputs.terraform-directory }}/*.md'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore(docs): Update Terraform documentation"
+        branch-name: terraform-docs
+        title: "chore(docs): Update Terraform documentation"
+        body: "Update Terraform documentation in `${{ inputs.terraform-directory }}`."
+        upsert: true
+        ignore-no-changes: true
+        auto-merge: true
