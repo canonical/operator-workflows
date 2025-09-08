@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-09-08
+- The `generate_terraform_docs` workflow now creates a pull request when used outside of a pull request.
+
 ## 2025-09-04
 - Allow cross-track charm promotions. Validation of the track name is removed when promote a charm.
 
