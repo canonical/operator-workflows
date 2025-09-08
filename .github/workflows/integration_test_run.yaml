@@ -318,10 +318,17 @@ jobs:
       - name: Patch Canonical K8s defaults 
         if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
         run: |
-          kubectl annotate storageclass local-storage \
-            storageclass.kubernetes.io/is-default-class="true" --overwrite || true
-          kubectl get sc -o wide || true
-          kubectl get nodes -o wide || true
+          echo ">>> Checking StorageClasses..."
+          kubectl get sc -o wide
+          
+          DEFAULT_SC=$(kubectl get sc -o jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
+          if [ -z "$DEFAULT_SC" ]; then
+            echo ">>> No default StorageClass found. Setting csi-rawfile-default..."
+            kubectl annotate storageclass csi-rawfile-default \
+              storageclass.kubernetes.io/is-default-class="true" --overwrite
+          else
+            echo ">>> Default StorageClass already set to: $DEFAULT_SC"
+          fi
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
