@@ -390,7 +390,7 @@ jobs:
           done
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v7.1.0
         with:
           script: |
             const no_color = (text) => {
