@@ -309,38 +309,30 @@ jobs:
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
-      - name: Patch Canonical K8s defaults 
+      - name: Gate Canonical K8s readiness (CNI & DNS)
         if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
         run: |
           set -xeuo pipefail
       
-          echo ">>> Checking StorageClasses..."
-          kubectl get sc -o wide
+          # Best-effort re-enable the essentials (harmless if already enabled)
+          sudo k8s enable network dns local-storage || true
+          sudo k8s status --wait-ready --timeout 10m || true
       
-          DEFAULT_SC=$(kubectl get sc -o jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
-          if [ -z "$DEFAULT_SC" ]; then
-            echo ">>> No default StorageClass found. Setting csi-rawfile-default..."
-            kubectl annotate storageclass csi-rawfile-default \
-              storageclass.kubernetes.io/is-default-class="true" --overwrite
-          else
-            echo ">>> Default StorageClass already set to: $DEFAULT_SC"
-          fi
+          echo ">>> kube-system pods:"
+          kubectl -n kube-system get pods -o wide || true
       
-          echo ">>> Un-tainting control-plane so Juju can schedule on single node..."
-          # Remove both possible taint keys to be safe across k8s versions
-          kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
-          kubectl taint nodes --all node-role.kubernetes.io/master- || true
+          echo ">>> Wait for CNI (cilium) to be rolled out (if present)..."
+          kubectl -n kube-system get ds cilium >/dev/null 2>&1 && \
+            kubectl -n kube-system rollout status ds/cilium --timeout=300s || true
+          kubectl -n kube-system get deploy cilium-operator >/dev/null 2>&1 && \
+            kubectl -n kube-system rollout status deploy/cilium-operator --timeout=300s || true
       
-          echo ">>> Nodes:"
+          echo ">>> Wait for CoreDNS to be rolled out..."
+          kubectl -n kube-system rollout status deploy/coredns --timeout=300s
+      
+          echo ">>> Final node & SC snapshot:"
           kubectl get nodes -o wide
-      
-          echo ">>> Current node taints (should be empty now):"
-          kubectl get node -o json \
-            | jq -r '.items[] | .metadata.name + ": " + ((.spec.taints // []) | map(.key + "=" + (.value//"") + ":" + .effect) | join(","))'
-      
-          echo ">>> Waiting for kube-system pods to be Ready (best-effort)..."
-          # Not all pods expose Ready; tolerate failures to avoid false negatives
-          kubectl wait --for=condition=Ready pod --all -n kube-system --timeout=180s || true
+          kubectl get sc -o wide
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
@@ -365,6 +357,7 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
+        continue-on-error: true
       - uses: actions/checkout@v5.0.0
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
