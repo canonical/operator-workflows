@@ -303,7 +303,7 @@ jobs:
 
           # Note: the previous --file arguments override the default bootstrap options
           #       resulting in the following not being enabled by default
-          sudo k8s enable network dns local-storage gateway ingress
+          sudo k8s enable network dns local-storage gateway ingress load-balancer
           sudo k8s status --wait-ready --timeout 10m
 
           mkdir -p ~/.kube
@@ -312,9 +312,11 @@ jobs:
       - name: Patch Canonical K8s defaults 
         if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
         run: |
+          set -xeuo pipefail
+      
           echo ">>> Checking StorageClasses..."
           kubectl get sc -o wide
-          
+      
           DEFAULT_SC=$(kubectl get sc -o jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
           if [ -z "$DEFAULT_SC" ]; then
             echo ">>> No default StorageClass found. Setting csi-rawfile-default..."
@@ -323,6 +325,22 @@ jobs:
           else
             echo ">>> Default StorageClass already set to: $DEFAULT_SC"
           fi
+      
+          echo ">>> Un-tainting control-plane so Juju can schedule on single node..."
+          # Remove both possible taint keys to be safe across k8s versions
+          kubectl taint nodes --all node-role.kubernetes.io/control-plane- || true
+          kubectl taint nodes --all node-role.kubernetes.io/master- || true
+      
+          echo ">>> Nodes:"
+          kubectl get nodes -o wide
+      
+          echo ">>> Current node taints (should be empty now):"
+          kubectl get node -o json \
+            | jq -r '.items[] | .metadata.name + ": " + ((.spec.taints // []) | map(.key + "=" + (.value//"") + ":" + .effect) | join(","))'
+      
+          echo ">>> Waiting for kube-system pods to be Ready (best-effort)..."
+          # Not all pods expose Ready; tolerate failures to avoid false negatives
+          kubectl wait --for=condition=Ready pod --all -n kube-system --timeout=180s || true
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
