@@ -333,6 +333,17 @@ jobs:
           echo ">>> Final node & SC snapshot:"
           kubectl get nodes -o wide
           kubectl get sc -o wide
+      - name: Wait for storage (Rawfile CSI)
+        if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
+        run: |
+          set -xeuo pipefail
+          # Ensure the Canonical Rawfile CSI is ready so Juju's controller PVC can bind
+          kubectl -n kube-system rollout status statefulset/ck-storage-rawfile-csi-controller --timeout=300s
+          kubectl -n kube-system rollout status daemonset/ck-storage-rawfile-csi-node --timeout=300s
+      
+          echo ">>> Storage snapshot:"
+          kubectl -n kube-system get pods -l app.kubernetes.io/name=rawfile-csi -o wide
+          kubectl get sc -o wide
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
