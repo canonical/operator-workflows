@@ -394,7 +394,7 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
-          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.TMP_INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
@@ -409,7 +409,7 @@ jobs:
           export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
           export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
           export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
-          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
+          export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.TMP_INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
