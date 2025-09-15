@@ -75,9 +75,10 @@ jobs:
         with:
           fail: ${{ inputs.linkcheck-fail-on-error }}
           args: >-
+            --user-agent "Lychee CI run ${{ github.sha }}"
             --verbose
             --no-progress ${{ inputs.linkcheck-files }}
-            --max-concurrency 5
+            --max-concurrency 2
             --retry-wait-time 5
             --max-retries 5
             --cache
