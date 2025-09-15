@@ -26,6 +26,11 @@ on:
         type: boolean
         default: true
         required: false
+      linkcheck-clear-cache:
+        description: Clear Lychee cache before running
+        type: boolean
+        default: false
+        required: false
 
 jobs:
   vale:
@@ -56,6 +61,13 @@ jobs:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
           restore-keys: cache-lychee-
+
+      # Optionally clear Lychee cache
+      - name: Clear Lychee cache
+        if: ${{ inputs.linkcheck-clear-cache }}
+        run: |
+          echo "Clearing Lychee cache..."
+          rm -rf .lycheecache
 
       - name: Link Checker
         id: lychee
