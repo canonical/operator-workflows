@@ -90,3 +90,9 @@ jobs:
         with:
           path: .lycheecache
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+
+      - name: Upload Lychee cache
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: lychee-cache
+          path: .lycheecache
