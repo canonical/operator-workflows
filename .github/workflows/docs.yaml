@@ -48,9 +48,31 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5.0.0
 
+      # Cache lychee results (e.g. to avoid hitting rate limits)
+      - name: Restore lychee cache
+        id: restore-cache
+        uses: actions/cache/restore@v4.2.4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
       - name: Link Checker
         id: lychee
         uses: lycheeverse/lychee-action@v2.6.1
         with:
           fail: ${{ inputs.linkcheck-fail-on-error }}
-          args: --verbose --no-progress ${{ inputs.linkcheck-files }} --max-concurrency 10
+          args: >-
+            --verbose
+            --no-progress ${{ inputs.linkcheck-files }}
+            --max-concurrency 5
+            --cache
+            --max-cache-age 5d
+            --cache-exclude-status '429, 500..502'
+      
+      - name: Save lychee cache
+        uses: actions/cache/save@v4.2.4
+        if: always()
+        with:
+          path: .lycheecache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
