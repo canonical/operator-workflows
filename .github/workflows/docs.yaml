@@ -94,6 +94,7 @@ jobs:
 
       - name: Upload Lychee cache
         uses: actions/upload-artifact@v4.6.2
+        if: always()
         with:
           name: lychee-cache
           path: .lycheecache
