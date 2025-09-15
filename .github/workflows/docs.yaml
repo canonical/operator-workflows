@@ -66,9 +66,11 @@ jobs:
             --verbose
             --no-progress ${{ inputs.linkcheck-files }}
             --max-concurrency 5
+            --retry-wait-time 5
+            --max-retries 5
             --cache
             --max-cache-age 5d
-            --cache-exclude-status '429, 500..502'
+            --cache-exclude-status '..100, 404, 429, 500..'
       
       - name: Save lychee cache
         uses: actions/cache/save@v4.2.4
