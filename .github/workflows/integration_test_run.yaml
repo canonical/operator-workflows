@@ -205,7 +205,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get update
-          VALID_PACKAGE_RE='^[a-zA-Z0-9][a-zA-Z0-9+._-]*$'
+          VALID_PACKAGE_RE='^[a-zA-Z0-9][a-zA-Z0-9+._-=]*$'
           read -a PACKAGES <<< "${{ inputs.install-packages }}"
           for package in "${PACKAGES[@]}"; do
             if [[ ! "$package" =~ $VALID_PACKAGE_RE ]]; then
