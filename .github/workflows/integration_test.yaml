@@ -35,16 +35,21 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
-      juju-channel:
-        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
-        type: string
-        default: 2.9/stable
       identifier:
         type: string
         description: >-
           Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
           running within the same workflow. It is recommended to set this identifier to the job name.
         default: ""
+      install-packages:
+        type: string
+        description: >-
+          Space separated list of apt pacakges to install.
+        default: ""
+      juju-channel:
+        description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        type: string
+        default: 2.9/stable
       load-test-enabled:
         type: boolean
         description: Whether load testing is enabled
@@ -396,6 +401,7 @@ jobs:
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
+      install-packages: ${{ inputs.install-packages }}
       juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}

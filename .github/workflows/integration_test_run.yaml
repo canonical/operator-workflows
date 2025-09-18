@@ -19,6 +19,11 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
+      install-packages:
+        type: string
+        description: >-
+          Space separated list of apt pacakges to install.
+        default: ""
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -197,6 +202,18 @@ jobs:
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
         timeout-minutes: 10
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          VALID_PACKAGE_RE='^[a-zA-Z0-9][a-zA-Z0-9+._-]*$'
+          read -a PACKAGES <<< "${{ inputs.install-packages }}"
+          for package in "${PACKAGES[@]}"; do
+            if [[ ! "$package" =~ $VALID_PACKAGE_RE ]]; then
+              echo "Invalid package $package";
+              exit 1;
+            fi
+          done;
+          sudo apt-get install -y ${{ inputs.install-packages }}
       - uses: actions/checkout@v5.0.0
       - name: Integration tests variable setting
         shell: python
