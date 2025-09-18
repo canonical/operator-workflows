@@ -22,7 +22,7 @@ on:
       install-packages:
         type: string
         description: >-
-          Space separated list of apt pacakges to install.
+          Space separated list of apt packages to install.
         default: ""
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
