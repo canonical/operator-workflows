@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-09-12
+- Introduce `install-packages` option for integration tests to allow system pacakge installation.
+
 ## 2025-09-08
 - Fix the checkout step in `generate_terraform_docs.yaml`
 
