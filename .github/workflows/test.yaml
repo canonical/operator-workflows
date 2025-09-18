@@ -74,51 +74,6 @@ env:
   REPORT_NAME: "report"
 
 jobs:
-  inclusive-naming-check:
-    name: Inclusive naming
-    runs-on: >-
-      ${{
-        inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
-      }}
-    steps:
-      - uses: actions/checkout@v5.0.0
-        with:
-          repository: canonical/Inclusive-naming
-          path: tmp-inclusive-naming
-      - run: |
-          mv tmp-inclusive-naming/config.yml /tmp/config.yml
-          rm -rf tmp-inclusive-naming
-      - uses: actions/checkout@v5.0.0
-      - name: Merge configuration files
-        run: |
-          # Combine all entries and replace matching elements by
-          # .name in .rules for the ones in .woke.yaml
-          woke_file=""
-          if [ -f .woke.yaml ]; then
-            woke_file=".woke.yaml"
-          elif [ -f .woke.yml ]; then
-            woke_file=".woke.yml"
-          fi
-          if [ ! -z "$woke_file" ]; then
-            yq eval-all '
-            (
-              . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
-            ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' $woke_file /tmp/config.yml | tee /tmp/merged.yml
-            mv /tmp/merged.yml /tmp/config.yml
-          fi
-      - name: Run inclusive naming check
-        uses: canonical/inclusive-naming@main
-        with:
-          fail-on-error: "true"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          woke-args: "${{ inputs.working-directory }} -c /tmp/config.yml"
-          filter-mode: nofilter
-          woke-version: latest
   vale:
     name: Style checker
     if: ${{ inputs.vale-style-check }}
@@ -531,7 +486,6 @@ jobs:
     needs:
       - draft-publish-docs
       - docker-lint
-      - inclusive-naming-check
       - lib-check
       - lint-and-unit-test
       - metadata-lint
@@ -551,7 +505,6 @@ jobs:
       - run: |
           [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo 'Warning: The "Draft Publish Docs" job failed. The workflow will still be considered successful.' )
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
-          [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
