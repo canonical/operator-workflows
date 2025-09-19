@@ -32,7 +32,7 @@ on:
         description: >-
           Whether to draft publish the documentation to Discourse.
           If set to false, the documentation will not be published.
-        default: true
+        default: false
       publish-libs:
         type: boolean
         description: >-
