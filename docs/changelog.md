@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-09-19
+- Remove draft-publish-docs.
+
 ## 2025-09-18
 - Removing the dedicated inclusive check job within the tests workflow.
 
