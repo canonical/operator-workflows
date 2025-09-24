@@ -56,7 +56,7 @@ jobs:
       # Cache lychee results (e.g. to avoid hitting rate limits)
       - name: Restore lychee cache
         id: restore-cache
-        uses: actions/cache/restore@v4.2.4
+        uses: actions/cache/restore@v4.3.0
         with:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
@@ -87,7 +87,7 @@ jobs:
             ${{ inputs.linkcheck-files }}
       
       - name: Save lychee cache
-        uses: actions/cache/save@v4.2.4
+        uses: actions/cache/save@v4.3.0
         if: always()
         with:
           path: .lycheecache
