@@ -262,7 +262,6 @@ jobs:
           echo "Installing tox with pipx..."
           pipx install tox
       - name: Check Allure
-        if: env.ENABLE_ALLURE == 'true'
         working-directory: ${{ inputs.working-directory }}
         run: |
           tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1
