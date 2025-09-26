@@ -315,6 +315,18 @@ jobs:
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
           sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
+      - name: Relocate rawfile-storage to /mnt
+        if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
+        run: |
+          echo ">>> Moving rawfile-storage from root disk to /mnt for extra space..."
+          sudo mkdir -p /mnt/rawfile-storage
+          if [ -d /var/snap/k8s/common/rawfile-storage ]; then
+            sudo rsync -a /var/snap/k8s/common/rawfile-storage/ /mnt/rawfile-storage/ || true
+            sudo rm -rf /var/snap/k8s/common/rawfile-storage
+          fi
+          sudo ln -s /mnt/rawfile-storage /var/snap/k8s/common/rawfile-storage
+          echo ">>> rawfile-storage relocated. Current usage:"
+          df -h /mnt /var/snap/k8s/common/rawfile-storage
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
@@ -339,6 +351,7 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
+        continue-on-error: true
       - uses: actions/checkout@v5.0.0
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
