@@ -84,7 +84,7 @@ async function planBuildRock(
   outputType: 'file' | 'registry'
 ): Promise<BuildPlan[]> {
   const rockcraftFiles = await (
-    await glob.create(path.join(workingDir, '**', 'rockcraft.yaml'))
+    await glob.create(path.join(workingDir, '**', '*rockcraft.yaml'))
   ).glob()
   return rockcraftFiles.map((rockcraftFile: string) => {
     const file = path.join(workingDir, path.relative(workingDir, rockcraftFile))
