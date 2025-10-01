@@ -16,7 +16,7 @@ containers:
   test:
     resource: test-image
 resources:
-  test-image:
+  test-foo-image:
     type: oci-image
     description: Test image
 
