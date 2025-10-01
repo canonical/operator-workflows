@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Each revision is versioned by the date of the revision.
 
 ## 2025-10-01
-- Allow alternative rockcraft.yaml names.
+- Allow alternative rockcraft.yaml names. Rocks will be build and published for every rock in a file with a `rockcraft.yaml` suffix (e.g. `webhook-gateway_rockcraft.yaml`). This is to allow multiple rockcrafts in the same directory (currently not supported by rockcraft).
 
 ## 2025-09-24
 - If the build step failed in the integration tests, fail the required_status_check.
