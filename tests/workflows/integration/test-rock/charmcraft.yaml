@@ -1,7 +1,7 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-type: charm-foo
+type: charm
 bases:
   - build-on:
     - name: ubuntu
