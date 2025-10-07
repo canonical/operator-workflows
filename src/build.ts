@@ -248,6 +248,14 @@ async function buildRock({
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
+  if (path.basename(plan.source_file) != 'rockcraft.yaml') {
+    const rockcraftYamlFile = path.join(
+      path.dirname(plan.source_file),
+      'rockcraft.yaml'
+    )
+    core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
+    fs.renameSync(plan.source_file, rockcraftYamlFile)
+  }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,

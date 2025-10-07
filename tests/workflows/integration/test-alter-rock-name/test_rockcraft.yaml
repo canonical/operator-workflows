@@ -1,0 +1,17 @@
+# Copyright 2024 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: test
+summary: Test rock.
+description: Test rock.
+version: "1.0"
+base: bare
+build-base: ubuntu:22.04
+license: Apache-2.0
+platforms:
+  amd64:
+parts:
+  nginx:
+    plugin: nil
+    stage-packages:
+      - nginx
