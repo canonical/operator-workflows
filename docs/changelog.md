@@ -13,6 +13,9 @@ Each revision is versioned by the date of the revision.
 - If the build step failed in the integration tests, fail the required_status_check.
 - Temporarily disable link checks for terraform due to aggressive throttling.
 
+## 2025-09-19
+- Remove draft-publish-docs.
+
 ## 2025-09-18
 - Removing the dedicated inclusive check job within the tests workflow.
 
