@@ -315,7 +315,7 @@ jobs:
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
           sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
-          sudo k8s add-model testing
+          juju add-model testing
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
