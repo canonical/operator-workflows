@@ -315,7 +315,6 @@ jobs:
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
           LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
           sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
-          juju add-model testing
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
@@ -398,6 +397,9 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          if [${{ inputs.use-canonical-k8s }} == "true"]; then
+            juju add-model testing
+          fi
           if [ "$ENABLE_ALLURE" == "true" ]; then
             tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
           else
