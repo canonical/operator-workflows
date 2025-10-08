@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-10-08
+- Add `testing` model in the canonical-k8s setup.
+
 ## 2025-10-01
 - Allow alternative rockcraft.yaml names. Rocks will be build and published for every rock in a file with a `rockcraft.yaml` suffix (e.g. `webhook-gateway_rockcraft.yaml`). This is to allow multiple rockcrafts in the same directory (currently not supported by rockcraft).
 
