@@ -352,7 +352,7 @@ jobs:
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
               -q --format template \
-              --template $'{{- range . }}{{- range .ModifiedFindings }}{{ if eq .Status "ignored" }}{{ .Finding.VulnerabilityID }}\n{{ end }}{{- end }}{{- end }}'
+              --template $'{{- range . }}{{- range .ModifiedFindings }}{{ if eq .Status "ignored" }}{{ .Finding.VulnerabilityID }}\n{{ end }}{{- end }}{{- end }}' \
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
