@@ -283,7 +283,7 @@ jobs:
       # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ env.python-version }}
 
@@ -453,7 +453,6 @@ jobs:
   required_status_checks:
     name: Required Test Status Checks
     needs:
-      - draft-publish-docs
       - docker-lint
       - lib-check
       - lint-and-unit-test
@@ -472,7 +471,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo 'Warning: The "Draft Publish Docs" job failed. The workflow will still be considered successful.' )
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)

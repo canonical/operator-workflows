@@ -153,7 +153,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: '80'
+        default: "80"
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -204,12 +204,12 @@ jobs:
           import os
           import re
           import uuid
-          
+
           def safe(s):
               return re.sub('[^0-9a-zA-Z-_]+', '-', s)
-          
+
           GITHUB_ENV_FILE = open(os.environ["GITHUB_ENV"], "a")
-          
+
           series = """${{ matrix.series }}"""
           module = """${{ matrix.modules }}"""
           unique_artifact_suffix = str(uuid.uuid4())
@@ -219,15 +219,15 @@ jobs:
           if module:
               unique_artifact_suffix += f"-{safe(module)}"
               module = f"-k '{module}'"
-          
+
           GITHUB_ENV_FILE.write(f"SERIES={series}\n")
           GITHUB_ENV_FILE.write(f"MODULE={module}\n")
           GITHUB_ENV_FILE.write(f"UNIQUE_ARTIFACT_SUFFIX={unique_artifact_suffix}\n")
-          
+
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v6.8.0
+        uses: astral-sh/setup-uv@v7.0.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -296,7 +296,7 @@ jobs:
           capabilities = ["pull", "resolve"]
           EOF
           fi
-          
+
           cat << EOF | sudo k8s bootstrap --file -
           containerd-base-dir: /opt/containerd
           EOF
@@ -309,7 +309,7 @@ jobs:
           mkdir -p ~/.kube
           sudo k8s config > ~/.kube/config
           echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
-          
+
           IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
           LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
           LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
@@ -397,6 +397,9 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          if [ "${{ inputs.use-canonical-k8s }}" == "true" ]; then
+            juju add-model testing
+          fi
           if [ "$ENABLE_ALLURE" == "true" ]; then
             tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
           else
