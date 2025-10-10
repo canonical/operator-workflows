@@ -351,10 +351,8 @@ jobs:
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
-              -q -f json \
-              | jq -r '.Results[].ExperimentalModifiedFindings[]? 
-                      | select(.Status == "ignored") 
-                      | .Finding.VulnerabilityID' \
+              -q --format template \
+              --template $'{{- range . }}{{- range .ModifiedFindings }}{{ if eq .Status "ignored" }}{{ .Finding.VulnerabilityID }}\n{{ end }}{{- end }}{{- end }}'
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
