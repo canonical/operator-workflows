@@ -356,6 +356,9 @@ jobs:
                       | select(.Status == "ignored") 
                       | .Finding.VulnerabilityID' \
               | sort -u)
+            file=${{ matrix.scan.file }}
+            image=${{ matrix.scan.image }}
+            scan=${{ matrix.scan }}
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
             while IFS= read -r line_content; do
