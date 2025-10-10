@@ -355,7 +355,7 @@ jobs:
               | jq -r '.Results[].ExperimentalModifiedFindings[]? 
                       | select(.Status == "ignored") 
                       | .Finding.VulnerabilityID' \
-              sort -u)
+              | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
             while IFS= read -r line_content; do
