@@ -138,7 +138,7 @@ on:
       trivy-exit-code:
         description: Exit code when specified vulnerabilities are found.
         type: string
-        default: "1"
+        default: '1'
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -202,7 +202,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: "80"
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -232,7 +232,7 @@ jobs:
             fi
       - uses: actions/checkout@v5.0.0
         with:
-          fetch-depth: 0
+            fetch-depth: 0
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -247,7 +247,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             REMOTE=$(git remote show)
             CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
-            IGNORED_PATTERNS="\.md$|\.rst$|\.custom_wordlist\.txt$|^LICENSE$"
+            IGNORED_PATTERNS="\.md$|\.custom_wordlist\.txt$|^LICENSE$"
             CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev "$IGNORED_PATTERNS" | wc -l)
             has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
           fi
@@ -255,7 +255,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
-    needs: [plan]
+    needs: [ plan ]
     if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
@@ -289,7 +289,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [build, plan]
+    needs: [ build, plan ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
@@ -301,7 +301,7 @@ jobs:
   scan:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [build, plan-scan]
+    needs: [ build, plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
@@ -358,8 +358,6 @@ jobs:
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
-            
-            image=${{ matrix.scan.image }}; name=${image##*/}; name=${name%%:*}; echo "$name"
             while IFS= read -r line_content; do
               line=$(( line + 1 ))
               # skip empty or whitespace-only lines
@@ -368,20 +366,8 @@ jobs:
               [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
               # extract token up to the first whitespace (the CVE id)
               cve=${line_content%%[[:space:]]*}
-              # extract trailing comment after '#' (if any) and trim whitespace
-              comment=''
-              if [[ "$line_content" == *#* ]]; then
-                comment="${line_content#*#}"
-                # trim leading/trailing whitespace
-                comment="$(echo "$comment" | awk '{$1=$1;print}')"
-              fi
-              # Consider this .trivyignore entry if either:
-              # - there is no comment (global ignore), or
-              # - the comment matches the image (image-specific ignore)
-              if [[ -z "$comment" || "$comment" = "$image" ]]; then
-                if ! grep -q -F "$cve" <<< "$ignored_cves"; then
-                  echo "$line_content" >> unused_cves.txt
-                fi
+              if ! grep -q -F "$cve" <<< "$ignored_cves"; then
+                echo "$line_content" >> unused_cves.txt
               fi
             done < .trivyignore
 
@@ -408,7 +394,7 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [plan, build]
+    needs: [ plan, build ]
     if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
     secrets: inherit
     with:
