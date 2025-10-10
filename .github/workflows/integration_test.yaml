@@ -356,11 +356,16 @@ jobs:
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
-            while read -r CVE; do
+            while IFS= read -r line_content; do
               line=$(( line + 1 ))
-              [[ "$CVE" =~ ^#.*$ || -z "$CVE" ]] && continue
-              if ! grep -q -F "$CVE" <<< "$ignored_cves"; then
-                echo "$CVE" >> unused_cves.txt
+              # skip empty or whitespace-only lines
+              [[ -z "${line_content//[[:space:]]/}" ]] && continue
+              # skip lines that start with a comment (allow leading whitespace)
+              [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
+              # extract token up to the first whitespace (the CVE id)
+              cve=${line_content%%[[:space:]]*}
+              if ! grep -q -F "$cve" <<< "$ignored_cves"; then
+                echo "$line_content" >> unused_cves.txt
               fi
             done < .trivyignore
 
