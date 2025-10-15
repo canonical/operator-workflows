@@ -340,7 +340,7 @@ jobs:
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
-          trivyignores: ${{ matrix.scan.ignore }}, ""
+          trivyignores: ${{ matrix.scan.ignore }}, ".trivyignore"
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
