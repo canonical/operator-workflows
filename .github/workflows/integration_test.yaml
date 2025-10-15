@@ -340,53 +340,55 @@ jobs:
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
+          trivyignores: ${{ matrix.scan.ignore }}, ""
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
-          if [ -f ".trivyignore" ]
-          then
-            ignored_cves=$(trivy image "$ROCK_IMAGE" \
-              --severity "CRITICAL,HIGH" \
-              --show-suppressed \
-              --ignorefile ${{ matrix.scan.dir }}/.trivyignore \
-              --ignorefile .trivyignore \
-              -q -f json \
-              | jq -r '.Results[].ExperimentalModifiedFindings[]? 
-                      | select(.Status == "ignored") 
-                      | .Finding.VulnerabilityID' \
-              | sort -u)
-            # Loop through .trivyignore and check if each CVE is still ignored
-            line=0
-            ignore_dir = ${{ matrix.scan.dir }}
-            while IFS= read -r line_content; do
-              line=$(( line + 1 ))
-              # skip empty or whitespace-only lines
-              [[ -z "${line_content//[[:space:]]/}" ]] && continue
-              # skip lines that start with a comment (allow leading whitespace)
-              [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
-              # extract token up to the first whitespace (the CVE id)
-              cve=${line_content%%[[:space:]]*}
-              if ! grep -q -F "$cve" <<< "$ignored_cves"; then
-                echo "$line_content" >> unused_cves.txt
-              fi
-            done < .trivyignore
+          ignore_file = "${{ matrix.scan.dir }}/.trivyignore"
+          if [ -f ".trivyignore" ] then
+            ignore_file = ".trivyignore"
+          fi
 
-            # If unused CVEs found, post PR comment
-            if [ -s unused_cves.txt ]; then
-              {
-                echo "### Unused entries in .trivyignore"
-                echo "Image: $ROCK_IMAGE"
-                echo ""
-                echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
-                echo ""
-                cat unused_cves.txt | sed 's/^/- /'
-              } > pr_comment.md
-
-              gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
+          ignored_cves=$(trivy image "$ROCK_IMAGE" \
+            --severity "CRITICAL,HIGH" \
+            --show-suppressed \
+            --ignorefile "$ignore_file" \
+            -q -f json \
+            | jq -r '.Results[].ExperimentalModifiedFindings[]? 
+                    | select(.Status == "ignored") 
+                    | .Finding.VulnerabilityID' \
+            | sort -u)
+          # Loop through .trivyignore and check if each CVE is still ignored
+          line=0
+          ignore_dir = ${{ matrix.scan.dir }}
+          while IFS= read -r line_content; do
+            line=$(( line + 1 ))
+            # skip empty or whitespace-only lines
+            [[ -z "${line_content//[[:space:]]/}" ]] && continue
+            # skip lines that start with a comment (allow leading whitespace)
+            [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
+            # extract token up to the first whitespace (the CVE id)
+            cve=${line_content%%[[:space:]]*}
+            if ! grep -q -F "$cve" <<< "$ignored_cves"; then
+              echo "$line_content" >> unused_cves.txt
             fi
+          done < .trivyignore
+
+          # If unused CVEs found, post PR comment
+          if [ -s unused_cves.txt ]; then
+            {
+              echo "### Unused entries in .trivyignore"
+              echo "Image: $ROCK_IMAGE"
+              echo ""
+              echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
+              echo ""
+              cat unused_cves.txt | sed 's/^/- /'
+            } > pr_comment.md
+
+            gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
           fi
         env:
           TRIVY_USERNAME: ${{ github.actor }}
