@@ -351,6 +351,8 @@ jobs:
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
+              --ignorefile ${{ matrix.scan.dir }}/.trivyignore \
+              --ignorefile .trivyignore \
               -q -f json \
               | jq -r '.Results[].ExperimentalModifiedFindings[]? 
                       | select(.Status == "ignored") 
@@ -358,6 +360,7 @@ jobs:
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
             line=0
+            ignore_dir = ${{ matrix.scan.dir }}
             while IFS= read -r line_content; do
               line=$(( line + 1 ))
               # skip empty or whitespace-only lines

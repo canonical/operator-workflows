@@ -1,15 +1,16 @@
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
-import * as core from '@actions/core'
-import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
 import fs from 'fs'
+import { Plan } from './model'
 
 interface Scan {
   artifact: string
   file: string
   image: string
+  dir: string
 }
 
 export async function run(): Promise<void> {
@@ -37,7 +38,8 @@ export async function run(): Promise<void> {
           files.map(f => ({
             artifact: build.output,
             file: f,
-            image: ''
+            image: '',
+            dir: build.source_directory
           }))
         )
       }
@@ -47,7 +49,8 @@ export async function run(): Promise<void> {
           images.map(i => ({
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
-            image: i
+            image: i,
+            dir: build.source_directory
           }))
         )
       }
