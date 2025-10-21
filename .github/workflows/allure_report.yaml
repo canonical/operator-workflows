@@ -14,15 +14,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5.0.0
-
       - name: Create gh-pages branch if not exists
         run: |
-          git fetch origin gh-pages || true
-          # check if gh-pages exists
-          if ! git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
+          if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
             echo "gh-pages branch not found. Creating it..."
-            git clone --depth=1 "https://github.com/${{ github.repository }}" tmp-repo
-            cd tmp-repo
             git checkout --orphan gh-pages
             git rm -rf .
             touch .nojekyll
@@ -31,8 +26,6 @@ jobs:
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "Initial commit"
             git push origin gh-pages
-            cd ..
-            rm -rf tmp-repo
           else
             echo "gh-pages branch already exists."
           fi
