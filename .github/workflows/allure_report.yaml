@@ -12,6 +12,23 @@ jobs:
     timeout-minutes: 5
     if: always() && !cancelled() && github.run_attempt == '1'
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+      - name: Create gh-pages branch if not exists
+        run: |
+          if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages branch not found. Creating it..."
+            git checkout --orphan gh-pages
+            git rm -rf .
+            touch .nojekyll
+            git add .nojekyll
+            git config user.name "GitHub Actions"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Initial commit"
+            git push origin gh-pages
+          else
+            echo "gh-pages branch already exists."
+          fi
       - name: Download Allure
         # Following instructions from  https://allurereport.org/docs/install-for-linux/#install-from-a-deb-package
         run: gh release download --repo allure-framework/allure2 --pattern 'allure_*.deb'
@@ -49,8 +66,7 @@ jobs:
         run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-default-results-dir=allure-collection-fallback-results
       - name: Load test report history
         run: |
-          if [[ -d repo/_latest/history/ ]]
-          then
+          if [[ -d repo/_latest/history/ ]]; then
             echo 'Loading history'
             cp -r repo/_latest/history/ allure-results/
           fi
