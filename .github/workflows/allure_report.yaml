@@ -12,6 +12,9 @@ jobs:
     timeout-minutes: 5
     if: always() && !cancelled()
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5.0.0
+
       - name: Create gh-pages branch if not exists
         run: |
           git ls-remote --exit-code origin gh-pages
