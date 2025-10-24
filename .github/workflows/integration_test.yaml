@@ -349,8 +349,6 @@ jobs:
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           
           # Extract repo name from image for comment parsing
-          this_is_a_test="${{ matrix.scan.image }}"
-           --- IGNORE ---
           image="${{ matrix.scan.image }}"
           repo_name="${image##*/}"
           repo_name="${repo_name%%:*}"
