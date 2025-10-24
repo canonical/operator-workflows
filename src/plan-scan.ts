@@ -1,15 +1,16 @@
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
-import * as core from '@actions/core'
-import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
 import fs from 'fs'
+import { Plan } from './model'
 
 interface Scan {
   artifact: string
   file: string
   image: string
+  dir: string
 }
 
 export async function run(): Promise<void> {
@@ -37,17 +38,26 @@ export async function run(): Promise<void> {
           files.map(f => ({
             artifact: build.output,
             file: f,
-            image: ''
+            image: '',
+            dir: build.source_directory
           }))
         )
       }
       if ('images' in manifest) {
         const images = manifest.images as string[]
+        core.info(`build target: ${build.build_target}`)
+        core.info(`build name: ${build.name}`)
+        core.info(`build source directory: ${build.source_directory}`)
+        core.info(`build source file: ${build.source_file}`)
+        core.info(`build output: ${build.output}`)
+        core.info(`build output type: ${build.output_type}`)
+
         scans = scans.concat(
           images.map(i => ({
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
-            image: i
+            image: i,
+            dir: build.source_directory
           }))
         )
       }
