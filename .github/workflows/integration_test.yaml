@@ -347,9 +347,27 @@ jobs:
         if: matrix.scan.image != ''
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
-          ignore_file = "${{ matrix.scan.dir }}/.trivyignore"
-          if [ -f ".trivyignore" ] then
-            ignore_file = ".trivyignore"
+          
+          # Extract repo name from image for comment parsing
+          this_is_a_test="${{ matrix.scan.image }}"
+           --- IGNORE ---
+          image="${{ matrix.scan.image }}"
+          repo_name="${image##*/}"
+          repo_name="${repo_name%%:*}"
+          
+          # Determine ignore file location - check rocks folder first
+          ignore_file="rocks/.trivyignore"
+          if [ ! -f "$ignore_file" ]; then
+            ignore_file="${{ matrix.scan.dir }}/.trivyignore"
+            if [ ! -f "$ignore_file" ]; then
+              ignore_file=".trivyignore"
+            fi
+          fi
+          
+          # Skip if no ignore file exists
+          if [ ! -f "$ignore_file" ]; then
+            echo "No .trivyignore file found, skipping check"
+            exit 0
           fi
 
           ignored_cves=$(trivy image "$ROCK_IMAGE" \
@@ -361,31 +379,49 @@ jobs:
                     | select(.Status == "ignored") 
                     | .Finding.VulnerabilityID' \
             | sort -u)
+          
+          # Prepare output file (truncate if exists)
+          : > unused_cves.txt
+          
           # Loop through .trivyignore and check if each CVE is still ignored
           line=0
-          ignore_dir = ${{ matrix.scan.dir }}
           while IFS= read -r line_content; do
             line=$(( line + 1 ))
             # skip empty or whitespace-only lines
             [[ -z "${line_content//[[:space:]]/}" ]] && continue
             # skip lines that start with a comment (allow leading whitespace)
             [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
-            # extract token up to the first whitespace (the CVE id)
+            
+            # extract CVE ID (token up to the first whitespace)
             cve=${line_content%%[[:space:]]*}
+            
+            # parse trailing comment if exists
+            if [[ "$line_content" == *"#"* ]]; then
+              comment_part="${line_content#*#}"
+              comment_part="${comment_part// /}"  # trim spaces
+              
+              # only check this CVE if comment matches repo name or if no comment
+              if [ -n "$comment_part" ] && [ "$comment_part" != "$repo_name" ]; then
+                continue
+              fi
+            fi
+            
+            # check if CVE is not in ignored list
             if ! grep -q -F "$cve" <<< "$ignored_cves"; then
               echo "$line_content" >> unused_cves.txt
             fi
-          done < .trivyignore
+          done < "$ignore_file"
 
           # If unused CVEs found, post PR comment
           if [ -s unused_cves.txt ]; then
             {
               echo "### Unused entries in .trivyignore"
               echo "Image: $ROCK_IMAGE"
+              echo "Ignore file: $ignore_file"
               echo ""
               echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
               echo ""
-              cat unused_cves.txt | sed 's/^/- /'
+              sed 's/^/- /' unused_cves.txt
             } > pr_comment.md
 
             gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
