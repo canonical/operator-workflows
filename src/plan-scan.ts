@@ -45,6 +45,13 @@ export async function run(): Promise<void> {
       }
       if ('images' in manifest) {
         const images = manifest.images as string[]
+        core.info(`build target: ${build.build_target}`);
+        core.info(`build name: ${build.name}`);
+        core.info(`build source directory: ${build.source_directory}`);
+        core.info(`build source file: ${build.source_file}`);
+        core.info(`build output: ${build.output}`);
+        core.info(`build output type: ${build.output_type}`);
+
         scans = scans.concat(
           images.map(i => ({
             artifact: '',
