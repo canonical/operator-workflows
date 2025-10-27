@@ -276,7 +276,7 @@ jobs:
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-default/
@@ -423,7 +423,7 @@ jobs:
       - name: Upload Allure results
         timeout-minutes: 3
         if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/
