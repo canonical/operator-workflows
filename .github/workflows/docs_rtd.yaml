@@ -1,0 +1,25 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: RTD workflows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    paths: 
+      - 'docs/**'
+
+jobs:
+  automatic-doc-checks:
+    name: Automatic doc checks
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/automatic-doc-checks.yml@main
+  check-removed-urls:
+    name: Check removed URLs
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/check-removed-urls.yml@main
+  markdown-style-checks:
+    name: Markdown style checks
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/markdown-style-checks.yml@main
+  sphinx-python-dependency-build-checks:
+    name: Sphinx and Python dependency build checks
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@main
