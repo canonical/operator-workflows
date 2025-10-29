@@ -260,31 +260,36 @@ async function cacheCraftContainer(
   await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
   for (const container of containerNames) {
     const relocatableName = container.replaceAll(inode, '__INODE__')
-    await shellExec('lxc', [
-      'snapshot',
-      '--project',
-      project,
-      '--quiet',
-      container,
-      relocatableName
-    ])
-    await shellExec('lxc', [
-      'publish',
-      '--project',
-      project,
-      `${container}/${relocatableName}`,
-      '--alias',
-      relocatableName
-    ])
-    await shellExec('lxc', [
-      'image',
-      'export',
-      '--project',
-      project,
-      relocatableName,
-      path.join(cacheDir, relocatableName)
-    ])
-    await shellExec('sudo', [
+    await exec.exec(
+      'lxc',
+      ['snapshot', '--project', project, '--quiet', container, relocatableName],
+      { input: Buffer.alloc(0) }
+    )
+    await exec.exec(
+      'lxc',
+      [
+        'publish',
+        '--project',
+        project,
+        `${container}/${relocatableName}`,
+        '--alias',
+        relocatableName
+      ],
+      { input: Buffer.alloc(0) }
+    )
+    await exec.exec(
+      'lxc',
+      [
+        'image',
+        'export',
+        '--project',
+        project,
+        relocatableName,
+        path.join(cacheDir, relocatableName)
+      ],
+      { input: Buffer.alloc(0) }
+    )
+    await exec.exec('sudo', [
       'gzip',
       '--decompress',
       `${path.join(cacheDir, relocatableName)}.tar.gz`
@@ -323,17 +328,23 @@ async function restoreCraftContainer(
     .filter(n => n.startsWith(project) && n.includes('__INODE__'))
   for (const imageFile of imageFiles) {
     const image = imageFile.replaceAll('.tar', '')
-    await shellExec('lxc', [
-      'image',
-      'import',
-      '--project',
-      project,
-      path.join(cacheDir, imageFile),
-      '--alias',
-      image
-    ])
+    await exec.exec(
+      'lxc',
+      [
+        'image',
+        'import',
+        '--project',
+        project,
+        path.join(cacheDir, imageFile),
+        '--alias',
+        image
+      ],
+      { input: Buffer.alloc(0) }
+    )
     const container = image.replaceAll('__INODE__', inode)
-    await shellExec('lxc', ['init', '--project', project, image, container])
+    await exec.exec('lxc', ['init', '--project', project, image, container], {
+      input: Buffer.alloc(0)
+    })
     const configFile = path
       .join(cacheDir, imageFile)
       .replaceAll('.tar', '.config.json')
