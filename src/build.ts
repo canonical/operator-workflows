@@ -228,7 +228,7 @@ interface BuildRockParams {
   token: string
 }
 
-async function execShell(command: string, args?: string[]) {
+async function shellExec(command: string, args?: string[]) {
   if (!args) {
     args = []
   }
@@ -260,7 +260,7 @@ async function cacheCraftContainer(
   await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
   for (const container of containerNames) {
     const relocatableName = container.replaceAll(inode, '__INODE__')
-    await exec.exec('lxc', [
+    await shellExec('lxc', [
       'snapshot',
       '--project',
       project,
@@ -268,7 +268,7 @@ async function cacheCraftContainer(
       container,
       relocatableName
     ])
-    await exec.exec('lxc', [
+    await shellExec('lxc', [
       'publish',
       '--project',
       project,
@@ -276,7 +276,7 @@ async function cacheCraftContainer(
       '--alias',
       relocatableName
     ])
-    await exec.exec('lxc', [
+    await shellExec('lxc', [
       'image',
       'export',
       '--project',
@@ -284,7 +284,7 @@ async function cacheCraftContainer(
       relocatableName,
       path.join(cacheDir, relocatableName)
     ])
-    await exec.exec('sudo', [
+    await shellExec('sudo', [
       'gzip',
       '--decompress',
       `${path.join(cacheDir, relocatableName)}.tar.gz`
@@ -323,7 +323,7 @@ async function restoreCraftContainer(
     .filter(n => n.startsWith(project) && n.includes('__INODE__'))
   for (const imageFile of imageFiles) {
     const image = imageFile.replaceAll('.tar', '')
-    await exec.exec('lxc', [
+    await shellExec('lxc', [
       'image',
       'import',
       '--project',
@@ -333,7 +333,7 @@ async function restoreCraftContainer(
       image
     ])
     const container = image.replaceAll('__INODE__', inode)
-    await exec.exec('lxc', ['init', '--project', project, image, container])
+    await shellExec('lxc', ['init', '--project', project, image, container])
     const configFile = path
       .join(cacheDir, imageFile)
       .replaceAll('.tar', '.config.json')
