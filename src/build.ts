@@ -289,11 +289,6 @@ async function cacheCraftContainer(
       ],
       { input: Buffer.alloc(0) }
     )
-    await exec.exec('sudo', [
-      'gzip',
-      '--decompress',
-      `${path.join(cacheDir, relocatableName)}.tar.gz`
-    ])
     const containerConfigOutput = await exec.getExecOutput('lxc', [
       'config',
       'show',
