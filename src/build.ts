@@ -6,6 +6,7 @@ import * as exec from '@actions/exec'
 import * as glob from '@actions/glob'
 import * as cache from '@actions/cache'
 import * as github from '@actions/github'
+import * as yaml from 'js-yaml'
 
 import { BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
@@ -226,6 +227,138 @@ interface BuildRockParams {
   token: string
 }
 
+async function cacheCraftContainer(
+  project: string,
+  craftPath: string,
+  cacheKey: string,
+  cacheDir: string = '/opt/operator-workflows/caches'
+): Promise<void> {
+  const inode = String(fs.statSync(craftPath).ino)
+  const lxdListOutput = await exec.getExecOutput('sudo', [
+    'lxc',
+    'image',
+    'list',
+    '--project',
+    project,
+    '--format',
+    'json'
+  ])
+  const imageList: { name: string }[] = JSON.parse(lxdListOutput.stdout)
+  const imageNames = imageList
+    .map(i => i.name)
+    .filter(n => n.startsWith(project) && n.includes(inode))
+  cacheDir = path.join(cacheDir, project)
+  await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
+  for (const image of imageNames) {
+    const relocatableName = image.replaceAll(inode, '__INODE__')
+    await exec.exec('sudo', [
+      'lxc',
+      'snapshot',
+      '--project',
+      project,
+      image,
+      relocatableName
+    ])
+    await exec.exec('sudo', [
+      'lxc',
+      'publish',
+      '--project',
+      project,
+      `${image}/${relocatableName}`,
+      '--alias',
+      relocatableName
+    ])
+    await exec.exec('sudo', [
+      'lxc',
+      'image',
+      'export',
+      '--project',
+      project,
+      relocatableName,
+      path.join(cacheDir, relocatableName)
+    ])
+    await exec.exec('sudo', [
+      'gzip',
+      '--decompress',
+      `${path.join(cacheDir, relocatableName)}.tar.gz`
+    ])
+    const containerConfigOutput = await exec.getExecOutput('sudo', [
+      'lxc',
+      'config',
+      'show',
+      '--project',
+      project,
+      image
+    ])
+    const containerConfig = yaml.load(containerConfigOutput.stdout)
+    fs.writeFileSync(
+      `${path.join(cacheDir, relocatableName)}.config.json`,
+      JSON.stringify(containerConfig, null, 2)
+    )
+  }
+  await exec.exec('sudo', ['chmod', '777', '-R', cacheDir])
+  await cache.saveCache([cacheDir], cacheKey)
+}
+
+async function restoreCraftContainer(
+  project: string,
+  craftPath: string,
+  cacheKey: string,
+  cacheDir: string = '/opt/operator-workflows/caches'
+): Promise<void> {
+  cacheDir = path.join(cacheDir, project)
+  const inode = String(fs.statSync(craftPath).ino)
+  const restored = await cache.restoreCache([cacheDir], cacheKey)
+  if (!restored) {
+    return
+  }
+  const imageFiles = fs
+    .readdirSync(cacheDir)
+    .filter(n => n.startsWith(project) && n.includes('__INODE__'))
+  for (const imageFile of imageFiles) {
+    const image = imageFile.replaceAll('.tar', '')
+    await exec.exec('sudo', [
+      'lxc',
+      'image',
+      'import',
+      '--project',
+      project,
+      path.join(cacheDir, imageFile),
+      '--alias',
+      image
+    ])
+    const container = image.replaceAll('__INODE__', inode)
+    await exec.exec('sudo', [
+      'lxc',
+      'init',
+      '--project',
+      project,
+      image,
+      container
+    ])
+    const configFile = path
+      .join(cacheDir, imageFile)
+      .replaceAll('.tar', '.config.json')
+    const containerConfig: { config: { [key: string]: string } } = JSON.parse(
+      fs.readFileSync(configFile, 'utf8')
+    )
+    for (const configKey in containerConfig.config) {
+      if (configKey.startsWith('volatile.')) {
+        continue
+      }
+      await exec.exec('sudo', [
+        'lxc',
+        'config',
+        'set',
+        '--project',
+        project,
+        container,
+        `${configKey}=${containerConfig.config[configKey]}`
+      ])
+    }
+  }
+}
+
 async function buildRock({
   plan,
   rockcraftChannel,
@@ -256,6 +389,11 @@ async function buildRock({
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
+  await restoreCraftContainer(
+    'rockcraft',
+    plan.source_directory,
+    plan.source_file
+  )
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
@@ -325,6 +463,11 @@ async function buildRock({
       plan.source_directory
     )
   }
+  await cacheCraftContainer(
+    'rockcraft',
+    plan.source_directory,
+    plan.source_file
+  )
 }
 
 export async function run(): Promise<void> {
