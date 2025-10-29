@@ -260,8 +260,7 @@ async function cacheCraftContainer(
   await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
   for (const container of containerNames) {
     const relocatableName = container.replaceAll(inode, '__INODE__')
-    await execShell('sudo', [
-      'lxc',
+    await exec.exec('lxc', [
       'snapshot',
       '--project',
       project,
@@ -269,8 +268,7 @@ async function cacheCraftContainer(
       container,
       relocatableName
     ])
-    await execShell('sudo', [
-      'lxc',
+    await exec.exec('lxc', [
       'publish',
       '--project',
       project,
@@ -278,8 +276,7 @@ async function cacheCraftContainer(
       '--alias',
       relocatableName
     ])
-    await execShell('sudo', [
-      'lxc',
+    await exec.exec('lxc', [
       'image',
       'export',
       '--project',
@@ -287,13 +284,12 @@ async function cacheCraftContainer(
       relocatableName,
       path.join(cacheDir, relocatableName)
     ])
-    await execShell('sudo', [
+    await exec.exec('sudo', [
       'gzip',
       '--decompress',
       `${path.join(cacheDir, relocatableName)}.tar.gz`
     ])
-    const containerConfigOutput = await exec.getExecOutput('sudo', [
-      'lxc',
+    const containerConfigOutput = await exec.getExecOutput('lxc', [
       'config',
       'show',
       '--project',
@@ -327,8 +323,7 @@ async function restoreCraftContainer(
     .filter(n => n.startsWith(project) && n.includes('__INODE__'))
   for (const imageFile of imageFiles) {
     const image = imageFile.replaceAll('.tar', '')
-    await execShell('sudo', [
-      'lxc',
+    await exec.exec('lxc', [
       'image',
       'import',
       '--project',
@@ -338,14 +333,7 @@ async function restoreCraftContainer(
       image
     ])
     const container = image.replaceAll('__INODE__', inode)
-    await execShell('sudo', [
-      'lxc',
-      'init',
-      '--project',
-      project,
-      image,
-      container
-    ])
+    await exec.exec('lxc', ['init', '--project', project, image, container])
     const configFile = path
       .join(cacheDir, imageFile)
       .replaceAll('.tar', '.config.json')
@@ -356,8 +344,7 @@ async function restoreCraftContainer(
       if (configKey.startsWith('volatile.')) {
         continue
       }
-      await execShell('sudo', [
-        'lxc',
+      await exec.exec('lxc', [
         'config',
         'set',
         '--project',
