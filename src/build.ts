@@ -352,7 +352,10 @@ devices:
   })
   const imageFiles = fs
     .readdirSync(cacheDir)
-    .filter(n => n.startsWith(project) && n.includes('__INODE__'))
+    .filter(
+      n =>
+        n.startsWith(project) && n.endsWith('.tar') && n.includes('__INODE__')
+    )
   for (const imageFile of imageFiles) {
     const image = imageFile.replaceAll('.tar', '')
     await exec.exec(
