@@ -257,6 +257,7 @@ async function cacheCraftContainer(
       'snapshot',
       '--project',
       project,
+      '--quiet',
       container,
       relocatableName
     ])
