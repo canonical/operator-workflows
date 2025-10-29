@@ -318,6 +318,38 @@ async function restoreCraftContainer(
   if (!restored) {
     return false
   }
+  await exec.exec(
+    'lxc',
+    [
+      'project',
+      'create',
+      project,
+      '--config',
+      'features.images=true',
+      '--config',
+      'features.profiles=true',
+      '--config',
+      'features.storage.buckets=true',
+      '--config',
+      'features.storage.volumes=true'
+    ],
+    { input: Buffer.alloc(0) }
+  )
+  await exec.exec('lxc', ['profile', 'edit', '--project', project, 'default'], {
+    input: Buffer.from(`
+name: default
+description: Default LXD profile
+config: {}
+devices:
+  eth0:
+    name: eth0
+    network: lxdbr0
+    type: nic
+  root:
+    path: /
+    pool: default
+    type: disk`)
+  })
   const imageFiles = fs
     .readdirSync(cacheDir)
     .filter(n => n.startsWith(project) && n.includes('__INODE__'))
