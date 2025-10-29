@@ -236,27 +236,28 @@ async function cacheCraftContainer(
   const inode = String(fs.statSync(craftPath).ino)
   const lxdListOutput = await exec.getExecOutput('sudo', [
     'lxc',
-    'image',
     'list',
     '--project',
     project,
     '--format',
     'json'
   ])
-  const imageList: { name: string }[] = JSON.parse(lxdListOutput.stdout)
-  const imageNames = imageList
+  const containerListOutput: { name: string }[] = JSON.parse(
+    lxdListOutput.stdout
+  )
+  const containerNames = containerListOutput
     .map(i => i.name)
     .filter(n => n.startsWith(project) && n.includes(inode))
   cacheDir = path.join(cacheDir, project)
   await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
-  for (const image of imageNames) {
-    const relocatableName = image.replaceAll(inode, '__INODE__')
+  for (const container of containerNames) {
+    const relocatableName = container.replaceAll(inode, '__INODE__')
     await exec.exec('sudo', [
       'lxc',
       'snapshot',
       '--project',
       project,
-      image,
+      container,
       relocatableName
     ])
     await exec.exec('sudo', [
@@ -264,7 +265,7 @@ async function cacheCraftContainer(
       'publish',
       '--project',
       project,
-      `${image}/${relocatableName}`,
+      `${container}/${relocatableName}`,
       '--alias',
       relocatableName
     ])
@@ -288,7 +289,7 @@ async function cacheCraftContainer(
       'show',
       '--project',
       project,
-      image
+      container
     ])
     const containerConfig = yaml.load(containerConfigOutput.stdout)
     fs.writeFileSync(
