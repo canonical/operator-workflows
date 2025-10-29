@@ -306,12 +306,12 @@ async function restoreCraftContainer(
   craftPath: string,
   cacheKey: string,
   cacheDir: string = '/opt/operator-workflows/caches'
-): Promise<void> {
+): Promise<boolean> {
   cacheDir = path.join(cacheDir, project)
   const inode = String(fs.statSync(craftPath).ino)
   const restored = await cache.restoreCache([cacheDir], cacheKey)
   if (!restored) {
-    return
+    return false
   }
   const imageFiles = fs
     .readdirSync(cacheDir)
@@ -358,6 +358,7 @@ async function restoreCraftContainer(
       ])
     }
   }
+  return true
 }
 
 async function buildRock({
@@ -390,7 +391,7 @@ async function buildRock({
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
-  await restoreCraftContainer(
+  const restored = await restoreCraftContainer(
     'rockcraft',
     plan.source_directory,
     plan.source_file
@@ -464,11 +465,13 @@ async function buildRock({
       plan.source_directory
     )
   }
-  await cacheCraftContainer(
-    'rockcraft',
-    plan.source_directory,
-    plan.source_file
-  )
+  if (!restored) {
+    await cacheCraftContainer(
+      'rockcraft',
+      plan.source_directory,
+      plan.source_file
+    )
+  }
 }
 
 export async function run(): Promise<void> {
