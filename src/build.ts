@@ -13,6 +13,7 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { ExecOptions } from 'node:child_process'
 
 async function installSnapcraft(): Promise<void> {
   const snapcraftInfo = (
@@ -227,6 +228,13 @@ interface BuildRockParams {
   token: string
 }
 
+async function execShell(command: string, args?: string[]) {
+  if (!args) {
+    args = []
+  }
+  return await exec.exec('bash', ['-c', [command, ...args].join(' ')])
+}
+
 async function cacheCraftContainer(
   project: string,
   craftPath: string,
@@ -252,7 +260,7 @@ async function cacheCraftContainer(
   await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
   for (const container of containerNames) {
     const relocatableName = container.replaceAll(inode, '__INODE__')
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'lxc',
       'snapshot',
       '--project',
@@ -261,7 +269,7 @@ async function cacheCraftContainer(
       container,
       relocatableName
     ])
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'lxc',
       'publish',
       '--project',
@@ -270,7 +278,7 @@ async function cacheCraftContainer(
       '--alias',
       relocatableName
     ])
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'lxc',
       'image',
       'export',
@@ -279,7 +287,7 @@ async function cacheCraftContainer(
       relocatableName,
       path.join(cacheDir, relocatableName)
     ])
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'gzip',
       '--decompress',
       `${path.join(cacheDir, relocatableName)}.tar.gz`
@@ -319,7 +327,7 @@ async function restoreCraftContainer(
     .filter(n => n.startsWith(project) && n.includes('__INODE__'))
   for (const imageFile of imageFiles) {
     const image = imageFile.replaceAll('.tar', '')
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'lxc',
       'image',
       'import',
@@ -330,7 +338,7 @@ async function restoreCraftContainer(
       image
     ])
     const container = image.replaceAll('__INODE__', inode)
-    await exec.exec('sudo', [
+    await execShell('sudo', [
       'lxc',
       'init',
       '--project',
@@ -348,7 +356,7 @@ async function restoreCraftContainer(
       if (configKey.startsWith('volatile.')) {
         continue
       }
-      await exec.exec('sudo', [
+      await execShell('sudo', [
         'lxc',
         'config',
         'set',
