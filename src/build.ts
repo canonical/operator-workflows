@@ -265,7 +265,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
     ? 'ccc'
     : 'charmcraft'
-  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
+  await exec.exec(charmcraftBin, ['pack'], {
     cwd: params.plan.source_directory,
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
@@ -494,7 +494,7 @@ async function buildRock({
   restoreTime = Date.now() - start
   start = Date.now()
   core.startGroup('rockcraft pack')
-  await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
+  await exec.exec('rockcraft', ['pack'], {
     cwd: plan.source_directory,
     env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
