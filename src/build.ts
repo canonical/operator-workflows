@@ -83,7 +83,7 @@ async function cacheCraftContainer(
     await exec.exec('lxc', ['delete', '--project', project, container])
   }
   await exec.exec('sudo', ['chmod', '777', '-R', cacheDir])
-  await cache.saveCache([cacheDir, '~/snap/'], cacheKey)
+  await cache.saveCache([cacheDir, '~/snap/'], `${project}-cache`)
 }
 
 async function restoreCraftContainer(
@@ -94,7 +94,10 @@ async function restoreCraftContainer(
 ): Promise<boolean> {
   cacheDir = path.join(cacheDir, project)
   const inode = String(fs.statSync(craftPath).ino)
-  const restored = await cache.restoreCache([cacheDir, '~/snap/'], cacheKey)
+  const restored = await cache.restoreCache(
+    [cacheDir, '~/snap/'],
+    '__NOT_EXISTS__'
+  )
   if (!restored) {
     return false
   }
