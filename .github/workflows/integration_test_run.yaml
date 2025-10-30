@@ -54,6 +54,15 @@ on:
         required: false
         description: Python version to use when installing tox
         default: ""
+      mattermost-message:
+        type: string
+        required: false
+        description: |
+          Requires MM_WEBHOOK_URL secret value to be configured on the repository, and
+          `secrets: inherit` is configured on the workflow calling the reusable workflow.
+          Mattermost message contents to send. To ping relevant users, use Mattermost handles as
+          value, i.e. Test failed, @charlie4284!
+        default: ""
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -427,6 +436,17 @@ jobs:
         with:
           name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/
+      - name: Ping Mattermost
+        if: ${{ always() && inputs.mattermost-message }}
+        uses: mattermost/action-mattermost-notify@master
+        with:
+          MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
+          PAYLOAD: |-
+            {
+              "text": "Integration test result available: [${{ github.repository }}](https://github.com/${{github.repository}}/actions/runs/${{ github.run_id }}) \n
+              ${{inputs.mattermost-message}}",
+              "icon": "https://cdn3.iconfinder.com/data/icons/system-basic-vol-4-1/20/icon-note-attention-alt3-512.png"
+            }
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
         uses: canonical/action-tmate@main

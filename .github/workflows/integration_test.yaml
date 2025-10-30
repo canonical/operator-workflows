@@ -53,6 +53,15 @@ on:
         type: string
         description: Command line arguments for the load test execution
         default: ""
+      mattermost-message:
+        type: string
+        required: false
+        description: |
+          Requires MM_WEBHOOK_URL secret value to be configured on the repository, and
+          `secrets: inherit` is configured on the workflow calling the reusable workflow.
+          Mattermost message contents to send. To ping relevant users, use Mattermost handles as
+          value, i.e. Test failed, @charlie4284!
+        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -399,6 +408,7 @@ jobs:
       juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
+      mattermost-message: ${{ inputs.mattermost-message }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
