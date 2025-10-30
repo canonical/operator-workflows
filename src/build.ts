@@ -299,9 +299,9 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     cacheTime = Date.now() - start
   }
   core.startGroup('timing statistic')
-  core.info(`pack time: ${packTime / 1000} seconds`)
-  core.info(`cache time: ${cacheTime / 1000} seconds`)
-  core.info(`restore time: ${restoreTime / 1000} seconds`)
+  core.info(`timing statistic: pack time: ${packTime / 1000} seconds`)
+  core.info(`timing statistic: cache time: ${cacheTime / 1000} seconds`)
+  core.info(`timing statistic: restore time: ${restoreTime / 1000} seconds`)
   core.endGroup()
 }
 
@@ -569,9 +569,9 @@ async function buildRock({
     cacheTime = Date.now() - start
   }
   core.startGroup('timing statistic')
-  core.info(`pack time: ${packTime / 1000} seconds`)
-  core.info(`cache time: ${cacheTime / 1000} seconds`)
-  core.info(`restore time: ${restoreTime / 1000} seconds`)
+  core.info(`timing statistic: pack time: ${packTime / 1000} seconds`)
+  core.info(`timing statistic: cache time: ${cacheTime / 1000} seconds`)
+  core.info(`timing statistic: restore time: ${restoreTime / 1000} seconds`)
   core.endGroup()
 }
 
