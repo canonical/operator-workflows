@@ -157,9 +157,22 @@ devices:
     const configFile = path
       .join(cacheDir, imageFile)
       .replaceAll('.tar', '.config.json')
-    await exec.exec('lxc', ['config', 'set', '--project', project, container], {
-      input: fs.readFileSync(configFile)
-    })
+    const containerConfig: { config: { [key: string]: string } } = JSON.parse(
+      fs.readFileSync(configFile, 'utf8')
+    )
+    for (const configKey in containerConfig.config) {
+      if (configKey.startsWith('volatile.')) {
+        continue
+      }
+      await exec.exec('lxc', [
+        'config',
+        'set',
+        '--project',
+        project,
+        container,
+        `${configKey}=${containerConfig.config[configKey]}`
+      ])
+    }
   }
   return true
 }
