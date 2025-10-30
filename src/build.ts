@@ -164,6 +164,35 @@ devices:
   return true
 }
 
+function weekNumber(date: Date): number {
+  date = new Date(date.valueOf())
+  const dayNumber = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - dayNumber + 3)
+  const firstThursday = date.valueOf()
+  date.setMonth(0, 1)
+  if (date.getDay() !== 4) {
+    date.setMonth(0, 1 + ((4 - date.getDay() + 7) % 7))
+  }
+  return 1 + Math.ceil((firstThursday - date.valueOf()) / 604800000)
+}
+
+function buildCacheKey(project: string, sourceFile: string): string {
+  const base = 'https://example.com/'
+  const url = new URL(`operator-workflows/${project}`, base)
+  const sp = url.searchParams
+  const date = new Date()
+  const params: { [key: string]: string } = {
+    version: '1',
+    file: sourceFile,
+    'used-by': `${date.getFullYear()}-W${String(weekNumber(date)).padStart(2, '0')}`
+  }
+  Object.keys(params)
+    .sort()
+    .forEach(k => sp.set(k, params[k]))
+
+  return url.toString().replace(base, '')
+}
+
 async function installSnapcraft(): Promise<void> {
   const snapcraftInfo = (
     await exec.getExecOutput('snap', ['info', 'snapcraft'])
@@ -203,10 +232,11 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
+  const cacheKey = buildCacheKey('charmcraft', params.plan.source_file)
   const restored = await restoreCraftContainer(
     'charmcraft',
     params.plan.source_directory,
-    params.plan.source_file
+    cacheKey
   )
   core.startGroup('charmcraft pack')
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
@@ -239,7 +269,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await cacheCraftContainer(
       'charmcraft',
       params.plan.source_directory,
-      params.plan.source_file
+      cacheKey
     )
   }
 }
@@ -419,10 +449,11 @@ async function buildRock({
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
+  const cacheKey = buildCacheKey('rockcraft', plan.source_file)
   const restored = await restoreCraftContainer(
     'rockcraft',
     plan.source_directory,
-    plan.source_file
+    cacheKey
   )
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
@@ -494,11 +525,7 @@ async function buildRock({
     )
   }
   if (!restored) {
-    await cacheCraftContainer(
-      'rockcraft',
-      plan.source_directory,
-      plan.source_file
-    )
+    await cacheCraftContainer('rockcraft', plan.source_directory, cacheKey)
   }
 }
 
