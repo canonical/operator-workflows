@@ -13,7 +13,156 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { ExecOptions } from 'node:child_process'
+
+async function cacheCraftContainer(
+  project: string,
+  craftPath: string,
+  cacheKey: string,
+  cacheDir: string = '/opt/operator-workflows/caches'
+): Promise<void> {
+  const inode = String(fs.statSync(craftPath).ino)
+  const lxdListOutput = await exec.getExecOutput('sudo', [
+    'lxc',
+    'list',
+    '--project',
+    project,
+    '--format',
+    'json'
+  ])
+  const containerListOutput: { name: string }[] = JSON.parse(
+    lxdListOutput.stdout
+  )
+  const containerNames = containerListOutput
+    .map(i => i.name)
+    .filter(n => n.startsWith(project) && n.includes(inode))
+  cacheDir = path.join(cacheDir, project)
+  await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
+  for (const container of containerNames) {
+    const relocatableName = container.replaceAll(inode, '__INODE__')
+    await exec.exec(
+      'lxc',
+      ['snapshot', '--project', project, '--quiet', container, relocatableName],
+      { input: Buffer.alloc(0) }
+    )
+    await exec.exec(
+      'lxc',
+      [
+        'publish',
+        '--project',
+        project,
+        `${container}/${relocatableName}`,
+        '--alias',
+        relocatableName
+      ],
+      { input: Buffer.alloc(0) }
+    )
+    await exec.exec(
+      'lxc',
+      [
+        'image',
+        'export',
+        '--project',
+        project,
+        relocatableName,
+        path.join(cacheDir, relocatableName)
+      ],
+      { input: Buffer.alloc(0) }
+    )
+    const containerConfigOutput = await exec.getExecOutput('lxc', [
+      'config',
+      'show',
+      '--project',
+      project,
+      container
+    ])
+    const containerConfig = yaml.load(containerConfigOutput.stdout)
+    fs.writeFileSync(
+      `${path.join(cacheDir, relocatableName)}.config.json`,
+      JSON.stringify(containerConfig, null, 2)
+    )
+  }
+  await exec.exec('sudo', ['chmod', '777', '-R', cacheDir])
+  await cache.saveCache([cacheDir, '~/snap/'], cacheKey)
+}
+
+async function restoreCraftContainer(
+  project: string,
+  craftPath: string,
+  cacheKey: string,
+  cacheDir: string = '/opt/operator-workflows/caches'
+): Promise<boolean> {
+  cacheDir = path.join(cacheDir, project)
+  const inode = String(fs.statSync(craftPath).ino)
+  const restored = await cache.restoreCache([cacheDir, '~/snap/'], cacheKey)
+  if (!restored) {
+    return false
+  }
+  await exec.exec(
+    'lxc',
+    [
+      'project',
+      'create',
+      project,
+      '--config',
+      'features.images=true',
+      '--config',
+      'features.profiles=true',
+      '--config',
+      'features.storage.buckets=true',
+      '--config',
+      'features.storage.volumes=true'
+    ],
+    { input: Buffer.alloc(0) }
+  )
+  await exec.exec('lxc', ['profile', 'edit', '--project', project, 'default'], {
+    input: Buffer.from(`
+name: default
+description: Default LXD profile
+config: {}
+devices:
+  eth0:
+    name: eth0
+    network: lxdbr0
+    type: nic
+  root:
+    path: /
+    pool: default
+    type: disk`)
+  })
+  const imageFiles = fs
+    .readdirSync(cacheDir)
+    .filter(
+      n =>
+        n.startsWith(project) && n.endsWith('.tar') && n.includes('__INODE__')
+    )
+  for (const imageFile of imageFiles) {
+    const image = imageFile.replaceAll('.tar', '')
+    await exec.exec(
+      'lxc',
+      [
+        'image',
+        'import',
+        '--project',
+        project,
+        path.join(cacheDir, imageFile),
+        '--alias',
+        image
+      ],
+      { input: Buffer.alloc(0) }
+    )
+    const container = image.replaceAll('__INODE__', inode)
+    await exec.exec('lxc', ['init', '--project', project, image, container], {
+      input: Buffer.alloc(0)
+    })
+    const configFile = path
+      .join(cacheDir, imageFile)
+      .replaceAll('.tar', '.config.json')
+    await exec.exec('lxc', ['config', 'set', '--project', project, container], {
+      input: fs.readFileSync(configFile)
+    })
+  }
+  return true
+}
 
 async function installSnapcraft(): Promise<void> {
   const snapcraftInfo = (
@@ -54,6 +203,11 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
+  const restored = await restoreCraftContainer(
+    'charmcraft',
+    params.plan.source_directory,
+    params.plan.source_file
+  )
   core.startGroup('charmcraft pack')
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
     ? 'ccc'
@@ -81,6 +235,13 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     [...charmFiles, manifestFile],
     params.plan.source_directory
   )
+  if (!restored) {
+    await cacheCraftContainer(
+      'charmcraft',
+      params.plan.source_directory,
+      params.plan.source_file
+    )
+  }
 }
 
 interface BuildDockerImageParams {
@@ -226,163 +387,6 @@ interface BuildRockParams {
   rockcraftRef: string
   user: string
   token: string
-}
-
-async function shellExec(command: string, args?: string[]) {
-  if (!args) {
-    args = []
-  }
-  return await exec.exec('bash', ['-c', [command, ...args].join(' ')])
-}
-
-async function cacheCraftContainer(
-  project: string,
-  craftPath: string,
-  cacheKey: string,
-  cacheDir: string = '/opt/operator-workflows/caches'
-): Promise<void> {
-  const inode = String(fs.statSync(craftPath).ino)
-  const lxdListOutput = await exec.getExecOutput('sudo', [
-    'lxc',
-    'list',
-    '--project',
-    project,
-    '--format',
-    'json'
-  ])
-  const containerListOutput: { name: string }[] = JSON.parse(
-    lxdListOutput.stdout
-  )
-  const containerNames = containerListOutput
-    .map(i => i.name)
-    .filter(n => n.startsWith(project) && n.includes(inode))
-  cacheDir = path.join(cacheDir, project)
-  await exec.exec('sudo', ['mkdir', '-p', '-m', '777', cacheDir])
-  for (const container of containerNames) {
-    const relocatableName = container.replaceAll(inode, '__INODE__')
-    await exec.exec(
-      'lxc',
-      ['snapshot', '--project', project, '--quiet', container, relocatableName],
-      { input: Buffer.alloc(0) }
-    )
-    await exec.exec(
-      'lxc',
-      [
-        'publish',
-        '--project',
-        project,
-        `${container}/${relocatableName}`,
-        '--alias',
-        relocatableName
-      ],
-      { input: Buffer.alloc(0) }
-    )
-    await exec.exec(
-      'lxc',
-      [
-        'image',
-        'export',
-        '--project',
-        project,
-        relocatableName,
-        path.join(cacheDir, relocatableName)
-      ],
-      { input: Buffer.alloc(0) }
-    )
-    const containerConfigOutput = await exec.getExecOutput('lxc', [
-      'config',
-      'show',
-      '--project',
-      project,
-      container
-    ])
-    const containerConfig = yaml.load(containerConfigOutput.stdout)
-    fs.writeFileSync(
-      `${path.join(cacheDir, relocatableName)}.config.json`,
-      JSON.stringify(containerConfig, null, 2)
-    )
-  }
-  await exec.exec('sudo', ['chmod', '777', '-R', cacheDir])
-  await cache.saveCache([cacheDir], cacheKey)
-}
-
-async function restoreCraftContainer(
-  project: string,
-  craftPath: string,
-  cacheKey: string,
-  cacheDir: string = '/opt/operator-workflows/caches'
-): Promise<boolean> {
-  cacheDir = path.join(cacheDir, project)
-  const inode = String(fs.statSync(craftPath).ino)
-  const restored = await cache.restoreCache([cacheDir], cacheKey)
-  if (!restored) {
-    return false
-  }
-  await exec.exec(
-    'lxc',
-    [
-      'project',
-      'create',
-      project,
-      '--config',
-      'features.images=true',
-      '--config',
-      'features.profiles=true',
-      '--config',
-      'features.storage.buckets=true',
-      '--config',
-      'features.storage.volumes=true'
-    ],
-    { input: Buffer.alloc(0) }
-  )
-  await exec.exec('lxc', ['profile', 'edit', '--project', project, 'default'], {
-    input: Buffer.from(`
-name: default
-description: Default LXD profile
-config: {}
-devices:
-  eth0:
-    name: eth0
-    network: lxdbr0
-    type: nic
-  root:
-    path: /
-    pool: default
-    type: disk`)
-  })
-  const imageFiles = fs
-    .readdirSync(cacheDir)
-    .filter(
-      n =>
-        n.startsWith(project) && n.endsWith('.tar') && n.includes('__INODE__')
-    )
-  for (const imageFile of imageFiles) {
-    const image = imageFile.replaceAll('.tar', '')
-    await exec.exec(
-      'lxc',
-      [
-        'image',
-        'import',
-        '--project',
-        project,
-        path.join(cacheDir, imageFile),
-        '--alias',
-        image
-      ],
-      { input: Buffer.alloc(0) }
-    )
-    const container = image.replaceAll('__INODE__', inode)
-    await exec.exec('lxc', ['init', '--project', project, image, container], {
-      input: Buffer.alloc(0)
-    })
-    const configFile = path
-      .join(cacheDir, imageFile)
-      .replaceAll('.tar', '.config.json')
-    await exec.exec('lxc', ['config', 'set', '--project', project, container], {
-      input: fs.readFileSync(configFile)
-    })
-  }
-  return true
 }
 
 async function buildRock({
