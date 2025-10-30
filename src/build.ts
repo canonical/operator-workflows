@@ -52,6 +52,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   } else {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
+  const start = Date.now()
   core.startGroup('charmcraft pack')
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
     ? 'ccc'
@@ -61,6 +62,8 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
+  const packTime = Date.now() - start
+  core.info(`timing statistic: pack time: ${packTime / 1000} seconds`)
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
   ).glob()
@@ -256,12 +259,16 @@ async function buildRock({
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
+  const start = Date.now()
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
     env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
+  const packTime = Date.now() - start
+  core.info(`timing statistic: pack time: ${packTime / 1000} seconds`)
+
   const rocks = await (
     await glob.create(path.join(plan.source_directory, '*.rock'))
   ).glob()
