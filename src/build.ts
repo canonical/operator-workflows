@@ -182,6 +182,7 @@ function buildCacheKey(project: string, sourceFile: string): string {
   const sp = url.searchParams
   const date = new Date()
   const params: { [key: string]: string } = {
+    arch: process.arch,
     version: '1',
     file: sourceFile,
     'used-by': `${date.getFullYear()}-W${String(weekNumber(date)).padStart(2, '0')}`
@@ -220,6 +221,10 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
+  let packTime = 0
+  let cacheTime = 0
+  let restoreTime = 0
+  let start = Date.now()
   if (params.charmcraftChannel) {
     await exec.exec('sudo', [
       'snap',
@@ -233,11 +238,14 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
   const cacheKey = buildCacheKey('charmcraft', params.plan.source_file)
+  start = Date.now()
   const restored = await restoreCraftContainer(
     'charmcraft',
     params.plan.source_directory,
     cacheKey
   )
+  restoreTime = Date.now() - start
+  start = Date.now()
   core.startGroup('charmcraft pack')
   const charmcraftBin = core.getBooleanInput('charmcraftcache')
     ? 'ccc'
@@ -247,6 +255,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
+  packTime = Date.now() - start
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
   ).glob()
@@ -266,12 +275,19 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     params.plan.source_directory
   )
   if (!restored) {
+    start = Date.now()
     await cacheCraftContainer(
       'charmcraft',
       params.plan.source_directory,
       cacheKey
     )
+    cacheTime = Date.now() - start
   }
+  core.startGroup('timing statistic')
+  core.info(`pack time: ${packTime / 1000} seconds`)
+  core.info(`cache time: ${cacheTime / 1000} seconds`)
+  core.info(`restore time: ${restoreTime / 1000} seconds`)
+  core.endGroup()
 }
 
 interface BuildDockerImageParams {
@@ -427,6 +443,10 @@ async function buildRock({
   user,
   token
 }: BuildRockParams): Promise<void> {
+  let packTime = 0
+  let cacheTime = 0
+  let restoreTime = 0
+  let start = Date.now()
   if (rockcraftRepository && rockcraftRef) {
     await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
   } else if (rockcraftChannel) {
@@ -450,17 +470,21 @@ async function buildRock({
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
   const cacheKey = buildCacheKey('rockcraft', plan.source_file)
+  start = Date.now()
   const restored = await restoreCraftContainer(
     'rockcraft',
     plan.source_directory,
     cacheKey
   )
+  restoreTime = Date.now() - start
+  start = Date.now()
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
     env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
+  packTime = Date.now() - start
   const rocks = await (
     await glob.create(path.join(plan.source_directory, '*.rock'))
   ).glob()
@@ -525,8 +549,15 @@ async function buildRock({
     )
   }
   if (!restored) {
+    start = Date.now()
     await cacheCraftContainer('rockcraft', plan.source_directory, cacheKey)
+    cacheTime = Date.now() - start
   }
+  core.startGroup('timing statistic')
+  core.info(`pack time: ${packTime / 1000} seconds`)
+  core.info(`cache time: ${cacheTime / 1000} seconds`)
+  core.info(`restore time: ${restoreTime / 1000} seconds`)
+  core.endGroup()
 }
 
 export async function run(): Promise<void> {
