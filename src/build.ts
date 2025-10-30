@@ -80,6 +80,7 @@ async function cacheCraftContainer(
       `${path.join(cacheDir, relocatableName)}.config.json`,
       JSON.stringify(containerConfig, null, 2)
     )
+    await exec.exec('lxc', ['delete', '--project', project, container])
   }
   await exec.exec('sudo', ['chmod', '777', '-R', cacheDir])
   await cache.saveCache([cacheDir, '~/snap/'], cacheKey)
@@ -150,6 +151,7 @@ devices:
       ],
       { input: Buffer.alloc(0) }
     )
+    fs.unlinkSync(path.join(cacheDir, imageFile))
     const container = image.replaceAll('__INODE__', inode)
     await exec.exec('lxc', ['init', '--project', project, image, container], {
       input: Buffer.alloc(0)
