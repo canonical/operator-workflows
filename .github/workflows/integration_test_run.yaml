@@ -443,8 +443,7 @@ jobs:
           MATTERMOST_WEBHOOK_URL: ${{ secrets.MM_WEBHOOK_URL }}
           PAYLOAD: |-
             {
-              "text": "Integration test result available: [${{ github.repository }}](https://github.com/${{github.repository}}/actions/runs/${{ github.run_id }}) \n
-              ${{inputs.mattermost-message}}",
+              "text": "[${{ github.repository }}](https://github.com/${{github.repository}}/actions/runs/${{ github.run_id }}) ${{inputs.mattermost-message}}",
               "icon": "https://cdn3.iconfinder.com/data/icons/system-basic-vol-4-1/20/icon-note-attention-alt3-512.png"
             }
       - name: Tmate debugging session (self-hosted)
