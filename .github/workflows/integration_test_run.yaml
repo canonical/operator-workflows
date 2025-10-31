@@ -340,8 +340,6 @@ jobs:
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
       - uses: actions/checkout@v5.0.0
-      - name: Remove Android SDK
-        run: sudo rm -rf /usr/local/lib/android
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
