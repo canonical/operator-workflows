@@ -101633,9 +101633,47 @@ const fs_1 = __importDefault(__nccwpck_require__(79896));
 const path_1 = __importDefault(__nccwpck_require__(16928));
 const os_1 = __importDefault(__nccwpck_require__(70857));
 const exec = __importStar(__nccwpck_require__(95236));
+const github = __importStar(__nccwpck_require__(93228));
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+async function waitBuild() {
+    const octokit = github.getOctokit(core.getInput('github-token'));
+    while (true) {
+        const jobs = await octokit.paginate(octokit.rest.actions.listJobsForWorkflowRunAttempt, {
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            run_id: github.context.runId,
+            attempt_number: github.context.runAttempt,
+            per_page: 100
+        });
+        const targetJobs = jobs.filter(j => (j.name || '').startsWith('Build'));
+        if (targetJobs.length === 0) {
+            core.info('no build jobs');
+            return;
+        }
+        const completed = targetJobs.filter(j => j.status === 'completed');
+        const successes = completed.filter(j => j.conclusion === 'success');
+        const failed = completed.filter(j => j.conclusion && j.conclusion !== 'success');
+        const pending = targetJobs.filter(j => j.status !== 'completed');
+        core.info(`build job: ${successes.length} success, ${failed.length} failed, ${pending.length} in progress.`);
+        if (failed.length > 0) {
+            for (const j of failed) {
+                core.error(`${j.name} => ${j.conclusion} (${j.html_url})`);
+            }
+            throw new Error(`build failed`);
+        }
+        if (pending.length === 0 && successes.length === targetJobs.length) {
+            for (const j of successes) {
+                core.info(`${j.name} => success (${j.html_url})`);
+            }
+            return;
+        }
+        await sleep(5000);
+    }
+}
 async function run() {
     try {
         const plan = JSON.parse(core.getInput('plan'));
+        waitBuild();
         const artifact = new artifact_1.DefaultArtifactClient();
         let args = [];
         for (const build of plan.build) {
