@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-10-31
+- Add `mattermost-message` option that enables pinging a Matter most channel with a custom message.
+
 ## 2025-10-28
 - Fix breaking integration tests for VM charms when INTEGRATION_TEST_SECRET_ENV_NAME variables are not set.
 
