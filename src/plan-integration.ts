@@ -26,7 +26,7 @@ async function waitBuild(): Promise<void> {
         per_page: 100
       }
     )
-    const targetJobs = jobs.filter(j => (j.name || '').startsWith('Build'))
+    const targetJobs = jobs.filter(j => (j.name || '').includes('/ Build'))
     if (targetJobs.length === 0) {
       core.info('no build jobs')
       return
