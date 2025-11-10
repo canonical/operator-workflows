@@ -1,0 +1,11 @@
+[32mINFO    [0m pytest_operator.plugin:plugin.py:675 Connecting to existing model github-pr-210fb-microk8s:testing on unspecified cloud
+[32mINFO    [0m pytest_operator.plugin:plugin.py:784 Model status:
+
+Model    Controller                Cloud/Region        Version  SLA          Timestamp
+testing  github-pr-210fb-microk8s  microk8s/localhost  2.9.52   unsupported  12:32:12Z
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:790 Juju error logs:
+
+
+[32mINFO    [0m pytest_operator.plugin:plugin.py:856 Forgetting main...
