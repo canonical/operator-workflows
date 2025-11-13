@@ -237,7 +237,14 @@ jobs:
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
-          upload-image: ${{ inputs.upload-image }}
+          upload-image: ${{ 
+            inputs.upload-image == '' && 
+            ( 
+              startsWith(github.head_ref,  'copilot/') && 
+              'artifact' || 
+              '' 
+            ) || 
+            inputs.upload-image }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Find changes
@@ -399,7 +406,15 @@ jobs:
       juju-channel: ${{ inputs.juju-channel }}
       load-test-enabled: ${{ inputs.load-test-enabled }}
       load-test-run-args: ${{ inputs.load-test-run-args }}
-      microk8s-addons: ${{ inputs.microk8s-addons }}
+      microk8s-addons: ${{ 
+          contains(inputs.microk8s-addons, 'registry') && 
+          inputs.microk8s-addons || 
+          ( 
+              startsWith(github.head_ref,  'copilot/') && 
+              format('registry {0}', inputs.microk8s-addons) || 
+              inputs.microk8s-addons 
+          )
+        }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
       plan: ${{ needs.plan.outputs.plan }}
