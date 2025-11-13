@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-11-13
+- Add uv.lock to the .locenserc.yaml ignore list
+
 ## 2025-11-07
 - Remove the expectation of specific linters to be run on the test workflow.
 
