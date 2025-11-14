@@ -9,6 +9,57 @@ import path from 'path'
 import os from 'os'
 import * as exec from '@actions/exec'
 
+import * as github from '@actions/github'
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function waitBuild(): Promise<void> {
+  const octokit = github.getOctokit(core.getInput('github-token'))
+
+  while (true) {
+    const jobs = await octokit.paginate(
+      octokit.rest.actions.listJobsForWorkflowRunAttempt,
+      {
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        run_id: github.context.runId,
+        attempt_number: github.context.runAttempt,
+        per_page: 100
+      }
+    )
+    const targetJobs = jobs.filter(j => (j.name || '').includes('/ Build'))
+    if (targetJobs.length === 0) {
+      core.info('no build jobs')
+      return
+    }
+    let successes = 0
+    core.info('build status:')
+    for (const job of targetJobs) {
+      if (job.status == 'completed') {
+        if (job.conclusion == 'success') {
+          core.info(`[SUCCESS] ${job.name}`)
+          successes++
+        } else if (job.conclusion == 'skipped') {
+          core.info(`[SKIPPED] ${job.name}`)
+          successes++
+        } else {
+          throw new Error(
+            `build job ${job.name} failed with conclusion: ${job.conclusion}`
+          )
+        }
+      } else {
+        core.info(`[${job.status.toUpperCase()}] ${job.name}`)
+      }
+    }
+    if (targetJobs.length === successes) {
+      return
+    }
+    await sleep(5000)
+  }
+}
+
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
