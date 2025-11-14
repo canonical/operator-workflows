@@ -34,4 +34,5 @@ header:
     - 'dist/**'
     - 'internal/**'
     - 'tests/workflows/integration/**'
+    - 'uv.lock'
   comment: on-failure
