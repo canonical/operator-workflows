@@ -101701,7 +101701,7 @@ async function downloadArtifact(artifact, id) {
 async function run() {
     try {
         const plan = JSON.parse(core.getInput('plan'));
-        await waitBuild(core.getInput('githubToken'));
+        await waitBuild(core.getInput('github-token'));
         const artifact = new artifact_1.DefaultArtifactClient();
         let args = [];
         for (const build of plan.build) {

@@ -88,7 +88,7 @@ async function downloadArtifact(
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
-    await waitBuild(core.getInput('githubToken'))
+    await waitBuild(core.getInput('github-token'))
     const artifact = new DefaultArtifactClient()
     let args: string[] = []
     for (const build of plan.build) {
