@@ -6,8 +6,8 @@ name: Allure Report Generation
 on: [workflow_call]
 
 jobs:
-  allure-report-skip:
-    name: Skip Allure report on retry
+  allure-report-skip-check:
+    name: Skip Allure report on retried run attempts
     runs-on: ubuntu-latest
     timeout-minutes: 1
     if: always() && !cancelled() && github.run_attempt != '1'
