@@ -15,7 +15,7 @@ function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function waitBuild(githubToken: string, jobId: number): Promise<void> {
+async function waitBuild(githubToken: string): Promise<void> {
   const octokit = github.getOctokit(githubToken)
 
   while (true) {
@@ -31,7 +31,7 @@ async function waitBuild(githubToken: string, jobId: number): Promise<void> {
       }
     )
     core.info(`github.context.job=${github.context.job}`)
-    const thisJob = jobs.find(job => job.id === jobId)
+    const thisJob = jobs.find(job => job.id === Number(github.context.job))
     const jobPrefix = thisJob!.name.split('/')[0]
     core.info(`looking for build jobs under ${jobPrefix}`)
     const targetJobs = jobs.filter(j =>
@@ -97,10 +97,7 @@ async function downloadArtifact(
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
-    await waitBuild(
-      core.getInput('github-token'),
-      Number(core.getInput('job-id'))
-    )
+    await waitBuild(core.getInput('github-token'))
     const artifact = new DefaultArtifactClient()
     let args: string[] = []
     for (const build of plan.build) {

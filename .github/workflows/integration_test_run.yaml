@@ -377,7 +377,6 @@ jobs:
         with:
           plan: ${{ inputs.plan }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          job-id: ${{ github.job }}
       - name: Charm name setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
