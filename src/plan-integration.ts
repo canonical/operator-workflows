@@ -17,8 +17,8 @@ function sleep(ms: number) {
 
 async function waitBuild(githubToken: string, jobId: number): Promise<void> {
   const octokit = github.getOctokit(githubToken)
-
-  while (true) {
+  const deadline = Date.now() + 3 * 3600 * 1000
+  while (Date.now() <= deadline) {
     await sleep(5000)
     const jobs = await octokit.paginate(
       octokit.rest.actions.listJobsForWorkflowRunAttempt,
@@ -66,6 +66,7 @@ async function waitBuild(githubToken: string, jobId: number): Promise<void> {
       core.info('')
     }
   }
+  throw new Error('timeout waiting for build jobs')
 }
 
 async function downloadArtifact(

@@ -101639,7 +101639,8 @@ function sleep(ms) {
 }
 async function waitBuild(githubToken, jobId) {
     const octokit = github.getOctokit(githubToken);
-    while (true) {
+    const deadline = Date.now() + 3 * 3600 * 1000;
+    while (Date.now() <= deadline) {
         await sleep(5000);
         const jobs = await octokit.paginate(octokit.rest.actions.listJobsForWorkflowRunAttempt, {
             owner: github.context.repo.owner,
@@ -101684,6 +101685,7 @@ async function waitBuild(githubToken, jobId) {
             core.info('');
         }
     }
+    throw new Error('timeout waiting for build jobs');
 }
 async function downloadArtifact(artifact, id) {
     // When build jobs have just finished, the artifacts might not be fully available yet.
