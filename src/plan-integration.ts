@@ -30,7 +30,12 @@ async function waitBuild(githubToken: string): Promise<void> {
         per_page: 100
       }
     )
-    const targetJobs = jobs.filter(j => (j.name || '').includes('Build'))
+    const thisJob = jobs.find(job => job.run_id == github.context.runId)
+    const jobPrefix = thisJob!.name.split('/')[0]
+    core.info(`looking for build jobs under ${jobPrefix}`)
+    const targetJobs = jobs.filter(j =>
+      (j.name || '').startsWith(`${jobPrefix}/ Build`)
+    )
     if (targetJobs.length === 0) {
       core.info('no build jobs')
       return
@@ -56,6 +61,9 @@ async function waitBuild(githubToken: string): Promise<void> {
     }
     if (targetJobs.length === successes) {
       return
+    } else {
+      // newline to increase readability
+      core.info('')
     }
   }
 }
