@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-11-17
+- Add allure report passing condition for subsequent run attempts following failure.
+
 ## 2025-11-13
 - Add uv.lock to the .licenserc.yaml ignore list
 
