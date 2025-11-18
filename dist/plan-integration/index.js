@@ -101648,6 +101648,7 @@ async function waitBuild(githubToken) {
             attempt_number: github.context.runAttempt,
             per_page: 100
         });
+        core.info(`github.context.job=${github.context.job}`);
         const thisJob = jobs.find(job => job.id === Number(github.context.job));
         const jobPrefix = thisJob.name.split('/')[0];
         core.info(`looking for build jobs under ${jobPrefix}`);
