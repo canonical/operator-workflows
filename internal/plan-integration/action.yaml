@@ -8,6 +8,9 @@ inputs:
   github-token:
     description: github token
     required: true
+  job-id:
+    description: job id
+    required: true
 outputs:
   scans:
     description: required scans.
