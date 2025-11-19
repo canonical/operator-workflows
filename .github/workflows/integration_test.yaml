@@ -348,82 +348,72 @@ jobs:
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           
-          # Extract repo name from image for comment parsing
-          image="${{ matrix.scan.image }}"
-          repo_name="${image##*/}"
-          repo_name="${repo_name%%:*}"
+          # Prepare a temporary combined ignore file
+          COMBINED_TRIVYIGNORE=$(mktemp)
           
-          # Determine ignore file location - check rocks folder first
-          ignore_file="rocks/.trivyignore"
-          if [ ! -f "$ignore_file" ]; then
-            ignore_file="${{ matrix.scan.dir }}/.trivyignore"
-            if [ ! -f "$ignore_file" ]; then
-              ignore_file=".trivyignore"
+          # Add global .trivyignore if it exists
+          if [ -f ".trivyignore" ]; then
+            cat .trivyignore >> "$COMBINED_TRIVYIGNORE"
+          fi
+          
+          # Add rock-specific .trivyignore if it exists
+          ROCK_TRIVYIGNORE="${{ matrix.scan.dir }}/.trivyignore"
+          if [ -f "$ROCK_TRIVYIGNORE" ]; then
+            # Add a newline if the combined file is not empty, to prevent syntax errors
+            if [ -s "$COMBINED_TRIVYIGNORE" ]; then
+              echo "" >> "$COMBINED_TRIVYIGNORE"
             fi
+            cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRIVYIGNORE"
           fi
           
           # Skip if no ignore file exists
-          if [ ! -f "$ignore_file" ]; then
-            echo "No .trivyignore file found, skipping check"
+          if [ ! -s "$COMBINED_TRIVYIGNORE" ]; then
+            echo "No .trivyignore files found, skipping check"
             exit 0
           fi
-
+          
+          # Get the list of CVEs that are actually being ignored by Trivy
           ignored_cves=$(trivy image "$ROCK_IMAGE" \
             --severity "CRITICAL,HIGH" \
             --show-suppressed \
-            --ignorefile "$ignore_file" \
+            --ignorefile "$COMBINED_TRIVYIGNORE" \
             -q -f json \
-            | jq -r '.Results[].ExperimentalModifiedFindings[]? 
-                    | select(.Status == "ignored") 
-                    | .Finding.VulnerabilityID' \
+            | jq -r '.Results[].ExperimentalModifiedFindings[]? | select(.Status == "ignored") | .Finding.VulnerabilityID' \
             | sort -u)
           
-          # Prepare output file (truncate if exists)
+          # Prepare output file for unused CVEs
           : > unused_cves.txt
           
-          # Loop through .trivyignore and check if each CVE is still ignored
-          line=0
+          # Check each entry in the combined .trivyignore file
           while IFS= read -r line_content; do
-            line=$(( line + 1 ))
-            # skip empty or whitespace-only lines
+            # Skip empty lines and comments
             [[ -z "${line_content//[[:space:]]/}" ]] && continue
-            # skip lines that start with a comment (allow leading whitespace)
             [[ "$line_content" =~ ^[[:space:]]*# ]] && continue
             
-            # extract CVE ID (token up to the first whitespace)
             cve=${line_content%%[[:space:]]*}
             
-            # parse trailing comment if exists
-            if [[ "$line_content" == *"#"* ]]; then
-              comment_part="${line_content#*#}"
-              comment_part="${comment_part// /}"  # trim spaces
-              
-              # only check this CVE if comment matches repo name or if no comment
-              if [ -n "$comment_part" ] && [ "$comment_part" != "$repo_name" ]; then
-                continue
-              fi
-            fi
-            
-            # check if CVE is not in ignored list
+            # Check if the CVE is not in the list of ignored CVEs from the scan
             if ! grep -q -F "$cve" <<< "$ignored_cves"; then
               echo "$line_content" >> unused_cves.txt
             fi
-          done < "$ignore_file"
-
-          # If unused CVEs found, post PR comment
+          done < "$COMBINED_TRIVYIGNORE"
+          
+          # If there are unused CVEs, post a comment on the PR
           if [ -s unused_cves.txt ]; then
             {
               echo "### Unused entries in .trivyignore"
               echo "Image: $ROCK_IMAGE"
-              echo "Ignore file: $ignore_file"
               echo ""
-              echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
+              echo "The following CVEs are in your .trivyignore files but were not found by Trivy:"
               echo ""
               sed 's/^/- /' unused_cves.txt
             } > pr_comment.md
 
             gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
           fi
+          
+          # Clean up the temporary file
+          rm "$COMBINED_TRIVYIGNORE"
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
