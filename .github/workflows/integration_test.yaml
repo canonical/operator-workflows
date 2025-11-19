@@ -333,6 +333,21 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
+      - name: Prepare Trivy ignore file
+        id: trivy-prepare
+        run: |
+          COMBINED_TRIVYIGNORE=$(mktemp)
+          if [ -f ".trivyignore" ]; then
+            cat .trivyignore >> "$COMBINED_TRIVYIGNORE"
+          fi
+          ROCK_TRIVYIGNORE="${{ matrix.scan.dir }}/.trivyignore"
+          if [ -f "$ROCK_TRIVYIGNORE" ]; then
+            if [ -s "$COMBINED_TRIVYIGNORE" ]; then
+              echo "" >> "$COMBINED_TRIVYIGNORE"
+            fi
+            cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRVIGNORE"
+          fi
+          echo "ignore-file=$COMBINED_TRIVYIGNORE" >> $GITHUB_OUTPUT
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
         with:
@@ -340,7 +355,7 @@ jobs:
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
-          # trivyignores: ${{ matrix.scan.ignore }}/.trivyignore, .trivyignore
+          ignore-file: ${{ steps.trivy-prepare.outputs.ignore-file }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
@@ -348,24 +363,8 @@ jobs:
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           
-          # Prepare a temporary combined ignore file
-          COMBINED_TRIVYIGNORE=$(mktemp)
-          
-          # Add global .trivyignore if it exists
-          if [ -f ".trivyignore" ]; then
-            cat .trivyignore >> "$COMBINED_TRIVYIGNORE"
-          fi
-          
-          # Add rock-specific .trivyignore if it exists
-          ROCK_TRIVYIGNORE="${{ matrix.scan.dir }}/.trivyignore"
-          if [ -f "$ROCK_TRIVYIGNORE" ]; then
-            # Add a newline if the combined file is not empty, to prevent syntax errors
-            if [ -s "$COMBINED_TRIVYIGNORE" ]; then
-              echo "" >> "$COMBINED_TRIVYIGNORE"
-            fi
-            cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRIVYIGNORE"
-          fi
-          
+          COMBINED_TRIVYIGNORE="${{ steps.trivy-prepare.outputs.ignore-file }}"
+
           # Skip if no ignore file exists
           if [ ! -s "$COMBINED_TRIVYIGNORE" ]; then
             echo "No .trivyignore files found, skipping check"
@@ -411,9 +410,6 @@ jobs:
 
             gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
           fi
-          
-          # Clean up the temporary file
-          rm "$COMBINED_TRIVYIGNORE"
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
