@@ -10,6 +10,10 @@ on:
         description: Whether to enable the Sphinx and Python dependency build checks.
         type: boolean
         default: true
+      makefile-location:
+        description: The location of the RTD Makefile
+        type: string
+        default: "docs/Makefile"
   pull_request:
     paths: 
       - 'docs/**'
@@ -26,7 +30,7 @@ jobs:
       - name: Check if Makefile exists
         id: check
         run: |
-          if [ -f "docs/Makefile" ]; then
+          if [ -f ${{ inputs.makefile-location }} ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
