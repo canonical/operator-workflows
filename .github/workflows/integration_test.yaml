@@ -355,7 +355,7 @@ jobs:
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
-          ignore-file: ${{ steps.trivy-prepare.outputs.ignore-file }}
+          trivyignores: ${{ steps.trivy-prepare.outputs.ignore-file }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
