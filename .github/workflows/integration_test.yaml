@@ -336,17 +336,30 @@ jobs:
       - name: Prepare Trivy ignore file
         id: trivy-prepare
         run: |
-          COMBINED_TRIVYIGNORE=$(mktemp)
+          TEMP_DIR=$(mktemp -d)
+          COMBINED_TRIVYIGNORE="$TEMP_DIR/.trivyignore"
+          touch "$COMBINED_TRIVYIGNORE"
+          
+          echo "Global .trivyignore:"
+          cat .trivyignore || echo "No global .trivyignore"
           if [ -f ".trivyignore" ]; then
             cat .trivyignore >> "$COMBINED_TRIVYIGNORE"
           fi
+          
           ROCK_TRIVYIGNORE="${{ matrix.scan.dir }}/.trivyignore"
+          echo "Rock-specific .trivyignore ($ROCK_TRIVYIGNORE):"
+          cat "$ROCK_TRIVYIGNORE" || echo "No rock-specific .trivyignore"
           if [ -f "$ROCK_TRIVYIGNORE" ]; then
             if [ -s "$COMBINED_TRIVYIGNORE" ]; then
               echo "" >> "$COMBINED_TRIVYIGNORE"
             fi
             cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRIVYIGNORE"
           fi
+          
+          echo "--- Combined .trivyignore content ---"
+          cat "$COMBINED_TRIVYIGNORE"
+          echo "-------------------------------------"
+          
           echo "ignore-file=$COMBINED_TRIVYIGNORE" >> $GITHUB_OUTPUT
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
