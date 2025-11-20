@@ -14,6 +14,10 @@ on:
         description: The location of the RTD Makefile
         type: string
         default: "docs/Makefile"
+      working-directory:
+        description: Working directory for the RTD project.
+        type: string
+        default: "docs"
   pull_request:
     paths: 
       - 'docs/**'
@@ -40,6 +44,8 @@ jobs:
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
     uses: canonical/sphinx-docs-starter-pack/.github/workflows/automatic-doc-checks.yml@dev
+    with:
+      working-directory: "${{ inputs.working-directory }}"
   check-removed-urls:
     name: Check removed URLs
     needs: check-makefile
@@ -50,9 +56,13 @@ jobs:
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
     uses: canonical/sphinx-docs-starter-pack/.github/workflows/markdown-style-checks.yml@dev
+    with:
+      working-directory: "${{ inputs.working-directory }}"
   sphinx-python-dependency-build-checks:
     name: Sphinx and Python dependency build checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' && inputs.enable-sphinx-python-dependency-build-checks }}
     uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@dev
+    with:
+      working-directory: "${{ inputs.working-directory }}"
 
