@@ -345,7 +345,7 @@ jobs:
             if [ -s "$COMBINED_TRIVYIGNORE" ]; then
               echo "" >> "$COMBINED_TRIVYIGNORE"
             fi
-            cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRVIGNORE"
+            cat "$ROCK_TRIVYIGNORE" >> "$COMBINED_TRIVYIGNORE"
           fi
           echo "ignore-file=$COMBINED_TRIVYIGNORE" >> $GITHUB_OUTPUT
       - name: Run Github Trivy Image Action
