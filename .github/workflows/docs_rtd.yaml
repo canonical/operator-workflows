@@ -30,7 +30,7 @@ jobs:
       - name: Check if Makefile exists
         id: check
         run: |
-          if [ -f ${{ inputs.makefile-location }} ]; then
+          if [ -f "${{ inputs.makefile-location }}" ]; then
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
