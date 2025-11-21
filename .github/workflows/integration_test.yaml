@@ -389,8 +389,8 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ plan, build ]
-    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
+    needs: [ plan ]
+    if: always() && needs.plan.result == 'success'
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}

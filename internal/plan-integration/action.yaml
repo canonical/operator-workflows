@@ -5,6 +5,12 @@ inputs:
   plan:
     description: operator-workflows plan.
     required: true
+  github-token:
+    description: github token
+    required: true
+  check-run-id:
+    description: check run id
+    required: true
 outputs:
   scans:
     description: required scans.

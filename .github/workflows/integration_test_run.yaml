@@ -372,10 +372,12 @@ jobs:
 
       - run: sudo apt install skopeo -y
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@main
+        uses: canonical/operator-workflows/internal/plan-integration@parallel-build
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          check-run-id: ${{ job.check_run_id }}
       - name: Charm name setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
