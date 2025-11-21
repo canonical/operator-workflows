@@ -90,7 +90,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout repo to runner
-        uses: actions/checkout@v5.0.0
+        uses: actions/checkout@v5.0.1
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
@@ -131,7 +131,7 @@ jobs:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -201,7 +201,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -224,7 +224,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -264,7 +264,7 @@ jobs:
           '3.10'
         }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
@@ -374,7 +374,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -396,7 +396,7 @@ jobs:
         )) || 'ubuntu-22.04'
       }}
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.requirer-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0

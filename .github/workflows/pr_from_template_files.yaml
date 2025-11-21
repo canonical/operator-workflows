@@ -16,7 +16,7 @@ jobs:
   create-pr-from-template-files:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5.0.0
+      - uses: actions/checkout@v5.0.1
       - name: pull-request
         run: |
           gh pr create --title "Changes in template files" --body "Syncing changes on changed template files for the repo."
