@@ -134,7 +134,7 @@ jobs:
       extra-arguments: |
         --kube-config=~/.kube/config
       use-canonical-k8s: true
-      juju-channel: 3.5/stable
+      juju-channel: 3.6/stable
       channel: edge
       charmcraft-channel: latest/edge
       # We need large runners to be able to deploy canonical k8s
