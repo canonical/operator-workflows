@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5.0.1
+        uses: actions/checkout@v6.0.0
 
       - name: Run Vale Linter
         uses: errata-ai/vale-action@v2.1.1
@@ -51,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5.0.1
+        uses: actions/checkout@v6.0.0
 
       # Cache lychee results (e.g. to avoid hitting rate limits)
       - name: Restore lychee cache
