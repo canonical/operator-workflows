@@ -293,7 +293,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: canonical/operator-workflows/internal/plan-scan@test-trivy
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
