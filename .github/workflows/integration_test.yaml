@@ -346,6 +346,13 @@ jobs:
         if: matrix.scan.image != ''
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
+          echo "Trivy start $ROCK_IMAGE"
+          trivy image "$ROCK_IMAGE" \
+              --severity "CRITICAL,HIGH" \
+              --show-suppressed \
+              -q -f json \
+              | jq -r '.Results[]'
+          echo "Trivy end"
           if [ -f ".trivyignore" ]
           then
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
