@@ -346,6 +346,7 @@ jobs:
         if: matrix.scan.image != ''
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
+          echo "$SCAN"
           echo "Trivy start $ROCK_IMAGE"
           trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
@@ -391,6 +392,7 @@ jobs:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ matrix.scan.image }}
+          SCAN: ${{ matrix.scan }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   integration-test:
