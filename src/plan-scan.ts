@@ -52,6 +52,8 @@ export async function run(): Promise<void> {
         )
       }
     }
+    core.info('output')
+    core.info(JSON.stringify(scans, null, 2))
     core.setOutput('scans', JSON.stringify(scans, null, 2))
   } catch (error) {
     // Fail the workflow run if an error occurs
