@@ -2,7 +2,7 @@
 // See LICENSE file for licensing details.
 
 import * as core from '@actions/core'
-import { Plan } from './model'
+import { BuildPlan, Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 
@@ -10,6 +10,7 @@ interface Scan {
   artifact: string
   file: string
   image: string
+  build_plan: BuildPlan
 }
 
 export async function run(): Promise<void> {
@@ -37,7 +38,8 @@ export async function run(): Promise<void> {
           files.map(f => ({
             artifact: build.output,
             file: f,
-            image: ''
+            image: '',
+            build_plan: build
           }))
         )
       }
@@ -47,13 +49,12 @@ export async function run(): Promise<void> {
           images.map(i => ({
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
-            image: i
+            image: i,
+            build_plan: build
           }))
         )
       }
     }
-    core.info('output')
-    core.info(JSON.stringify(scans, null, 2))
     core.setOutput('scans', JSON.stringify(scans, null, 2))
   } catch (error) {
     // Fail the workflow run if an error occurs

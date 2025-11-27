@@ -101648,7 +101648,8 @@ async function run() {
                 scans = scans.concat(files.map(f => ({
                     artifact: build.output,
                     file: f,
-                    image: ''
+                    image: '',
+                    build_plan: build
                 })));
             }
             if ('images' in manifest) {
@@ -101656,12 +101657,11 @@ async function run() {
                 scans = scans.concat(images.map(i => ({
                     artifact: '',
                     file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
-                    image: i
+                    image: i,
+                    build_plan: build
                 })));
             }
         }
-        core.info('output');
-        core.info(JSON.stringify(scans, null, 2));
         core.setOutput('scans', JSON.stringify(scans, null, 2));
     }
     catch (error) {
