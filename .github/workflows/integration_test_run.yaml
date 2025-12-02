@@ -189,7 +189,7 @@ jobs:
             inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
             inputs.self-hosted-runner-image == 'focal' && '3.8'
           ) ||
-          '3.10'
+          '3.12'
         }}
     steps:
       - name: Disable snap autorefresh
