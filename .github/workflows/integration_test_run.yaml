@@ -372,7 +372,7 @@ jobs:
 
       - run: sudo apt install skopeo -y
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@parallel-build
+        uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
