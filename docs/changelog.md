@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-12-02
+- Add 5 more integration test secrets mapping slots.
+
 ## 2025-11-19
 - Update `docs_rtd` workflow to point to a new branch where the starter pack workflows are callable.
 
