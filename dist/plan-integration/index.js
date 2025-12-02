@@ -101660,12 +101660,12 @@ async function waitBuild(githubToken, jobId) {
         let successes = 0;
         core.info('waiting for build jobs:');
         for (const job of targetJobs) {
-            if (job.status == 'completed') {
-                if (job.conclusion == 'success') {
+            if (job.status === 'completed') {
+                if (job.conclusion === 'success') {
                     core.info(`[SUCCESS] ${job.name}`);
                     successes++;
                 }
-                else if (job.conclusion == 'skipped') {
+                else if (job.conclusion === 'skipped') {
                     core.info(`[SKIPPED] ${job.name}`);
                     successes++;
                 }
