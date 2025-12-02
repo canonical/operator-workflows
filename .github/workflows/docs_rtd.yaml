@@ -22,7 +22,7 @@ jobs:
       makefile-exists: ${{ steps.check.outputs.exists }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Check if Makefile exists
         id: check
         run: |

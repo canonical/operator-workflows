@@ -6,15 +6,6 @@ name: Allure Report Generation
 on: [workflow_call]
 
 jobs:
-  allure-report-skip-check:
-    name: Skip Allure report on retried run attempts
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    if: always() && !cancelled() && github.run_attempt != '1'
-    steps:
-      - name: Skip Allure report generation
-        run: echo "Skipping Allure report generation for retry attempt ${{ github.run_attempt }}"
-
   allure-report:
     name: Publish Allure report
     runs-on: ubuntu-latest
@@ -22,7 +13,7 @@ jobs:
     if: always() && !cancelled() && github.run_attempt == '1'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5.0.1
+        uses: actions/checkout@v6.0.0
       - name: Create gh-pages branch if not exists
         run: |
           if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
@@ -48,7 +39,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
       - name: Checkout GitHub pages branch 
-        uses: actions/checkout@v5.0.1
+        uses: actions/checkout@v6.0.0
         with:
           ref: gh-pages
           path: repo/ 

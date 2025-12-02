@@ -189,7 +189,7 @@ jobs:
             inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
             inputs.self-hosted-runner-image == 'focal' && '3.8'
           ) ||
-          '3.10'
+          '3.12'
         }}
     steps:
       - name: Disable snap autorefresh
@@ -197,7 +197,7 @@ jobs:
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
         timeout-minutes: 10
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v6.0.0
       - name: Integration tests variable setting
         shell: python
         run: |
@@ -227,7 +227,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.1.3
+        uses: astral-sh/setup-uv@v7.1.4
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -339,7 +339,7 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v6.0.0
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Create OpenStack credential file
@@ -399,6 +399,12 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_6 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_7 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_8 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_9 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_10 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_11 }}" || :
           if [ "${{ inputs.use-canonical-k8s }}" == "true" ]; then
             juju add-model testing
           fi
@@ -417,6 +423,12 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_6 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_7 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_8 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_9 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_10 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_11 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
             tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
           else

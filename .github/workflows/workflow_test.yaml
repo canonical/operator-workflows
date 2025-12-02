@@ -21,7 +21,7 @@ jobs:
       identifier: test-upload
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      juju-channel: 3/stable
+      juju-channel: 3.6/stable
       channel: 1.38-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
@@ -32,7 +32,7 @@ jobs:
       identifier: test-upload-artifact
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      juju-channel: 3/stable
+      juju-channel: 3.6/stable
       channel: 1.38-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
@@ -134,7 +134,7 @@ jobs:
       extra-arguments: |
         --kube-config=~/.kube/config
       use-canonical-k8s: true
-      juju-channel: 3.5/stable
+      juju-channel: 3.6/stable
       channel: edge
       charmcraft-channel: latest/edge
       # We need large runners to be able to deploy canonical k8s
