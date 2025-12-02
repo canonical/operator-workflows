@@ -376,6 +376,8 @@ jobs:
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          check-run-id: ${{ job.check_run_id }}
       - name: Charm name setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |

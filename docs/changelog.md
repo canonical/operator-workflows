@@ -8,6 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-12-02
 - Add 5 more integration test secrets mapping slots.
+- Update the integration test workflow to run the build process concurrently with the setup phase of the integration tests.
 
 ## 2025-11-19
 - Update `docs_rtd` workflow to point to a new branch where the starter pack workflows are callable.

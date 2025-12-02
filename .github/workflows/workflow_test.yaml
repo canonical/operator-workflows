@@ -22,7 +22,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       juju-channel: 3.6/stable
-      channel: 1.30-strict/stable
+      channel: 1.32-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
   integration-artifact:
@@ -33,7 +33,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       juju-channel: 3.6/stable
-      channel: 1.30-strict/stable
+      channel: 1.32-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
       upload-image: artifact
