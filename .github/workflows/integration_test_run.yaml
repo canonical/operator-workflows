@@ -197,7 +197,7 @@ jobs:
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
         timeout-minutes: 10
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@v6.0.1
       - name: Integration tests variable setting
         shell: python
         run: |
@@ -339,7 +339,7 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@v6.0.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Create OpenStack credential file
