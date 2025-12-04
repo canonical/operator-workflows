@@ -101650,9 +101650,10 @@ async function waitBuild(githubToken, jobId) {
             per_page: 100
         });
         const thisJob = jobs.find(job => job.id === jobId);
-        const jobPrefix = thisJob.name.split('/')[0];
+        const jobPrefix = thisJob.name.split(' / ')[0];
         core.info(`looking for build jobs under ${jobPrefix}`);
-        const targetJobs = jobs.filter(j => (j.name || '').startsWith(`${jobPrefix}/ Build`));
+        const targetJobs = jobs.filter(j => (j.name || '').startsWith(`${jobPrefix}`) &&
+            (j.name || '').includes(' / Build'));
         if (targetJobs.length === 0) {
             core.info('no build jobs');
             return;
