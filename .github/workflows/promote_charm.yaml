@@ -57,7 +57,7 @@ jobs:
       channel: ${{ steps.set-base-outputs.outputs.channel }}
       architecture: ${{ steps.set-base-outputs.outputs.architecture }}
     steps:
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@v6.0.1
       - name: Install charmcraft
         run: |
           set -e
@@ -145,7 +145,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-charm-base ]
     steps:
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@v6.0.1
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.7.0
         with:
@@ -166,7 +166,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v6.0.0
+      - uses: actions/checkout@v6.0.1
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
