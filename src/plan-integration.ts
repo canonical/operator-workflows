@@ -31,7 +31,7 @@ async function waitBuild(githubToken: string, jobId: number): Promise<void> {
       }
     )
     const thisJob = jobs.find(job => job.id === jobId)!
-    const jobPrefix = thisJob!.name.split(' / ')[0]
+    const jobPrefix = thisJob.name.split(' / ')[0]
     core.info(`looking for build jobs under ${jobPrefix}`)
     const targetJobs = jobs.filter(
       j =>
