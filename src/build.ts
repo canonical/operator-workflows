@@ -277,6 +277,7 @@ async function restoreRock(plan: BuildPlan): Promise<boolean> {
     return false
   }
   const key = await generateRockCacheKey(plan)
+  core.info(`looking for rock cache ${key}`)
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
   const restored = await cache.restoreCache([manifestFile], key)
   if (restored) {
