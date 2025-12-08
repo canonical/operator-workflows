@@ -275,7 +275,7 @@ jobs:
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
-      - uses: canonical/operator-workflows/internal/build@cache-rock
+      - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
