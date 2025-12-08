@@ -280,6 +280,7 @@ async function restoreRock(plan: BuildPlan): Promise<boolean> {
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
   const restored = await cache.restoreCache([manifestFile], key)
   if (restored) {
+    core.info(`restored rock cache from ${key}`)
     const artifact = new DefaultArtifactClient()
     await artifact.uploadArtifact(
       plan.output,
@@ -297,6 +298,7 @@ async function cacheRock(plan: BuildPlan): Promise<void> {
   }
   const key = await generateRockCacheKey(plan)
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  core.info(`caching rock into ${key}`)
   await cache.saveCache([manifestFile], key)
 }
 
@@ -308,6 +310,9 @@ async function buildRock({
   user,
   token
 }: BuildRockParams): Promise<void> {
+  if (await restoreRock(plan)) {
+    return
+  }
   if (rockcraftRepository && rockcraftRef) {
     await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
   } else if (rockcraftChannel) {
@@ -329,9 +334,6 @@ async function buildRock({
     )
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
-  }
-  if (await restoreRock(plan)) {
-    return
   }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
