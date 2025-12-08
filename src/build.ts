@@ -226,6 +226,80 @@ interface BuildRockParams {
   token: string
 }
 
+function weekNumber(date: Date): number {
+  date = new Date(date.valueOf())
+  const dayNumber = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - dayNumber + 3)
+  const firstThursday = date.valueOf()
+  date.setMonth(0, 1)
+  if (date.getDay() !== 4) {
+    date.setMonth(0, 1 + ((4 - date.getDay() + 7) % 7))
+  }
+  return 1 + Math.ceil((firstThursday - date.valueOf()) / 604800000)
+}
+
+async function generateRockCacheKey(plan: BuildPlan): Promise<string> {
+  const base = 'https://example.com/'
+  const url = new URL(
+    path.join('operator-workflows/build/rock/', plan.source_file),
+    base
+  )
+  const sp = url.searchParams
+  const date = new Date()
+  const params: { [key: string]: string } = {
+    arch: process.arch,
+    version: '1',
+    hash: await glob.hashFiles(plan.source_directory),
+    'used-by': `${date.getFullYear()}-W${String(weekNumber(date)).padStart(2, '0')}`
+  }
+  Object.keys(params)
+    .sort()
+    .forEach(k => sp.set(k, params[k]))
+  return url.toString().replace(base, '')
+}
+
+async function isPaasCharmRock(plan: BuildPlan): Promise<boolean> {
+  const patterns = [
+    `${plan.source_directory}/**/charmcraft.yaml`,
+    `${plan.source_directory}/**/charmcraft.yml`
+  ]
+  const charmcraftGlob = await glob.create(patterns.join('\n'))
+  const charmcraftFiles = await charmcraftGlob.glob()
+  return charmcraftFiles.length > 0
+}
+
+async function restoreRock(plan: BuildPlan): Promise<boolean> {
+  // We don't cache rocks inside 12-factor projects
+  // as they change more frequently compared to normal charms.
+  // And we only cache registry-typed rocks as they are more common
+  // and their cache are smaller.
+  if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
+    return false
+  }
+  const key = await generateRockCacheKey(plan)
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  const restored = await cache.restoreCache([manifestFile], key)
+  if (restored) {
+    const artifact = new DefaultArtifactClient()
+    await artifact.uploadArtifact(
+      plan.output,
+      [manifestFile],
+      plan.source_directory
+    )
+    return true
+  }
+  return false
+}
+
+async function cacheRock(plan: BuildPlan): Promise<void> {
+  if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
+    return
+  }
+  const key = await generateRockCacheKey(plan)
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  await cache.saveCache([manifestFile], key)
+}
+
 async function buildRock({
   plan,
   rockcraftChannel,
@@ -255,6 +329,9 @@ async function buildRock({
     )
     core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
     fs.renameSync(plan.source_file, rockcraftYamlFile)
+  }
+  if (await restoreRock(plan)) {
+    return
   }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
@@ -319,6 +396,7 @@ async function buildRock({
         2
       )
     )
+    await cacheRock(plan)
     await artifact.uploadArtifact(
       plan.output,
       [manifestFile],
