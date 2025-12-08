@@ -249,7 +249,7 @@ async function generateRockCacheKey(plan: BuildPlan): Promise<string> {
   const params: { [key: string]: string } = {
     arch: process.arch,
     version: '1',
-    hash: await glob.hashFiles(plan.source_directory),
+    hash: await glob.hashFiles(path.join(plan.source_directory, '**')),
     'used-by': `${date.getFullYear()}-W${String(weekNumber(date)).padStart(2, '0')}`
   }
   Object.keys(params)
