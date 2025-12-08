@@ -268,7 +268,10 @@ async function isPaasCharmRock(plan: BuildPlan): Promise<boolean> {
   return charmcraftFiles.length > 0
 }
 
-async function restoreRock(plan: BuildPlan): Promise<boolean> {
+async function restoreRock(
+  plan: BuildPlan,
+  cacheKey: string
+): Promise<boolean> {
   // We don't cache rocks inside 12-factor projects
   // as they change more frequently compared to normal charms.
   // And we only cache registry-typed rocks as they are more common
@@ -276,12 +279,11 @@ async function restoreRock(plan: BuildPlan): Promise<boolean> {
   if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
     return false
   }
-  const key = await generateRockCacheKey(plan)
-  core.info(`looking for rock cache ${key}`)
+  core.info(`looking for rock cache ${cacheKey}`)
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
-  const restored = await cache.restoreCache([manifestFile], key)
+  const restored = await cache.restoreCache([manifestFile], cacheKey)
   if (restored) {
-    core.info(`restored rock cache from ${key}`)
+    core.info(`restored rock cache from ${cacheKey}`)
     const artifact = new DefaultArtifactClient()
     await artifact.uploadArtifact(
       plan.output,
@@ -293,14 +295,13 @@ async function restoreRock(plan: BuildPlan): Promise<boolean> {
   return false
 }
 
-async function cacheRock(plan: BuildPlan): Promise<void> {
+async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
   if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
     return
   }
-  const key = await generateRockCacheKey(plan)
   const manifestFile = path.join(plan.source_directory, 'manifest.json')
-  core.info(`caching rock into ${key}`)
-  await cache.saveCache([manifestFile], key)
+  core.info(`caching rock into ${cacheKey}`)
+  await cache.saveCache([manifestFile], cacheKey)
 }
 
 async function buildRock({
@@ -311,7 +312,8 @@ async function buildRock({
   user,
   token
 }: BuildRockParams): Promise<void> {
-  if (await restoreRock(plan)) {
+  const cacheKey = await generateRockCacheKey(plan)
+  if (await restoreRock(plan, cacheKey)) {
     return
   }
   if (rockcraftRepository && rockcraftRef) {
@@ -399,7 +401,7 @@ async function buildRock({
         2
       )
     )
-    await cacheRock(plan)
+    await cacheRock(plan, cacheKey)
     await artifact.uploadArtifact(
       plan.output,
       [manifestFile],
