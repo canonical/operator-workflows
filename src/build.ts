@@ -226,6 +226,7 @@ interface BuildRockParams {
   token: string
 }
 
+// Returns the ISO 8601 week number for the given date.
 function weekNumber(date: Date): number {
   date = new Date(date.valueOf())
   const dayNumber = (date.getDay() + 6) % 7
