@@ -389,7 +389,7 @@ jobs:
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ plan ]
+    needs: [ build, plan ]
     if: always() && needs.plan.result == 'success'
     secrets: inherit
     with:
