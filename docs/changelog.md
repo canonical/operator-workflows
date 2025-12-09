@@ -8,6 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2025-12-09
 - Update the default juju bootstrap bootstrap-constraints to "cores=2 mem=4G root-disk=10G". 
+- Fix the integration test job in documentation pull requests
 
 ## 2025-12-04
 - Fix the build job lookup algorithm in the integration test workflow.
