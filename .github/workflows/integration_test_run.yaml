@@ -339,6 +339,7 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
+          bootstrap-constraints: "cores=2 mem=4G root-disk=10G"
       - uses: actions/checkout@v6.0.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
