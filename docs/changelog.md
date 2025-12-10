@@ -10,6 +10,9 @@ Each revision is versioned by the date of the revision.
 - Update the default juju bootstrap bootstrap-constraints to "cores=2 mem=4G root-disk=10G". 
 - Fix the integration test job in documentation pull requests
 
+## 2025-12-08
+- Add a new `auto-merge` parameter for the `generate_terraform_docs` workflow.
+
 ## 2025-12-04
 - Fix the build job lookup algorithm in the integration test workflow.
 
