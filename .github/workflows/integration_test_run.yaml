@@ -227,7 +227,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.1.4
+        uses: astral-sh/setup-uv@v7.1.5
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
