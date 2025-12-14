@@ -356,7 +356,7 @@ jobs:
         run: |
           echo "REPORT_NAME=report-${CONCURRENCY_GROUP//\//_}" >> $GITHUB_ENV
       - name: Upload coverage report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: ${{ env.REPORT_NAME }}
