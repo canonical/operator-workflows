@@ -1,7 +1,7 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: Generate terraform docs
+name: Generate terraform docs and propose the changes in a new PR.
 on:
   workflow_call:
     inputs:
@@ -9,6 +9,10 @@ on:
         type: string
         description: A comma-separated list of working directories for Terraform
         default: "terraform"
+      auto-merge:
+        type: boolean
+        description: Whether to enable auto-merge for the created pull request.
+        default: true
 
 jobs:
   docs:
@@ -38,4 +42,4 @@ jobs:
         body: "Update Terraform documentation in `${{ inputs.terraform-directory }}`."
         upsert: true
         ignore-no-changes: true
-        auto-merge: true
+        auto-merge: ${{ inputs.auto-merge }}

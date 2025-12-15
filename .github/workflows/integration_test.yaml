@@ -390,7 +390,7 @@ jobs:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
     needs: [ plan ]
-    if: always() && needs.plan.result == 'success'
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.has-code-changes == 'True'
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}

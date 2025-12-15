@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2025-12-08
+## 2025-12-15
 - Cache rock build results for register-typed rocks.
+
+## 2025-12-09
+- Update the default juju bootstrap bootstrap-constraints to "cores=2 mem=4G root-disk=10G". 
+- Fix the integration test job in documentation pull requests
+
+## 2025-12-08
+- Add a new `auto-merge` parameter for the `generate_terraform_docs` workflow.
 
 ## 2025-12-04
 - Fix the build job lookup algorithm in the integration test workflow.
