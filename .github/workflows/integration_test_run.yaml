@@ -371,7 +371,9 @@ jobs:
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
-      - run: sudo apt install skopeo -y
+      - run: |
+          sudo apt update
+          sudo apt install skopeo -y
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration

@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2025-12-19
+- Fix a problem in the integration test caused by a missing `apt install`.
+
 ## 2025-12-09
 - Update the default juju bootstrap bootstrap-constraints to "cores=2 mem=4G root-disk=10G". 
 - Fix the integration test job in documentation pull requests
