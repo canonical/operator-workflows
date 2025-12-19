@@ -8,6 +8,7 @@ header:
   paths:
     - '**'
   paths-ignore:
+    - '.github/.jira_sync_config.yaml'
     - '.github/files/**'
     - '**/*.j2'
     - '**/*.json'
