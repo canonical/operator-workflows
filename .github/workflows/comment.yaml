@@ -59,7 +59,7 @@ jobs:
     if: ${{ needs.setup-env.outputs.IS_PR }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v6.0.0
+        uses: actions/download-artifact@v7.0.0
         with:
           pattern: "${{ env.ARTIFACT_NAME }}-*"
           github-token: ${{ secrets.GITHUB_TOKEN }}
