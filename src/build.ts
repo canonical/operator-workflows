@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
 import * as core from '@actions/core'
@@ -23,55 +23,9 @@ async function installSnapcraft(): Promise<void> {
   await exec.exec('sudo', ['snap', 'install', 'snapcraft', '--classic'])
 }
 
-async function buildInstallCharmcraft(
-  repository: string,
-  ref: string
-): Promise<void> {
-  const workingDir = '/opt/operator-workflows/charmcraft'
-  await exec.exec('sudo', ['mkdir', workingDir, '-p'])
-  await exec.exec('sudo', ['chown', os.userInfo().username, workingDir])
-  await exec.exec('git', [
-    'clone',
-    `https://github.com/${repository}.git`,
-    '--branch',
-    ref,
-    workingDir
-  ])
-  const charmcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
-  ).stdout.trim()
-  const cacheKey = `charmcraft-${charmcraftSha}`
-  const charmcraftGlob = path.join(workingDir, 'charmcraft*.snap')
-  const restored = await cache.restoreCache([charmcraftGlob], cacheKey)
-  if (!restored) {
-    await installSnapcraft()
-    core.startGroup('snapcraft pack (charmcraft)')
-    await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
-      cwd: workingDir
-    })
-    core.endGroup()
-  }
-  const charmcraftSnaps = await (await glob.create(charmcraftGlob)).glob()
-  if (charmcraftSnaps.length == 0) {
-    throw new Error("can't find charmcraft snap")
-  }
-  await exec.exec('sudo', [
-    'snap',
-    'install',
-    charmcraftSnaps[0],
-    '--classic',
-    '--dangerous'
-  ])
-  if (!restored) {
-    await cache.saveCache([charmcraftGlob], cacheKey)
-  }
-}
-
 interface BuildCharmParams {
   plan: BuildPlan
   charmcraftChannel: string
-  charmcraftRepository: string
-  charmcraftRef: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
@@ -86,12 +40,7 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftRepository && params.charmcraftRef) {
-    await buildInstallCharmcraft(
-      params.charmcraftRepository,
-      params.charmcraftRef
-    )
-  } else if (params.charmcraftChannel) {
+  if (params.charmcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -104,9 +53,12 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
   core.startGroup('charmcraft pack')
-  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
+  const charmcraftBin = core.getBooleanInput('charmcraftcache')
+    ? 'ccc'
+    : 'charmcraft'
+  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
-    env: { CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const charmFiles = await (
@@ -133,6 +85,35 @@ interface BuildDockerImageParams {
   plan: BuildPlan
   user: string
   token: string
+}
+
+async function buildFileResource(plan: BuildPlan): Promise<void> {
+  core.startGroup(`Build resource ${plan.name}`)
+  if (!plan.build_target) {
+    throw new Error('build_target is required for file resources')
+  }
+  await exec.exec(`./${plan.source_file}`, [plan.build_target], {
+    cwd: plan.source_directory
+  })
+  core.endGroup()
+  const resourceFiles = await (
+    await glob.create(path.join(plan.source_directory, plan.build_target))
+  ).glob()
+  const artifact = new DefaultArtifactClient()
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  fs.writeFileSync(
+    manifestFile,
+    JSON.stringify(
+      { name: plan.name, files: resourceFiles.map(f => path.basename(f)) },
+      null,
+      2
+    )
+  )
+  await artifact.uploadArtifact(
+    plan.output,
+    [...resourceFiles, manifestFile],
+    plan.source_directory
+  )
 }
 
 async function buildDockerImage({
@@ -267,10 +248,18 @@ async function buildRock({
   } else {
     await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
+  if (path.basename(plan.source_file) != 'rockcraft.yaml') {
+    const rockcraftYamlFile = path.join(
+      path.dirname(plan.source_file),
+      'rockcraft.yaml'
+    )
+    core.info(`rename ${plan.source_file} to ${rockcraftYamlFile}`)
+    fs.renameSync(plan.source_file, rockcraftYamlFile)
+  }
   core.startGroup('rockcraft pack')
   await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
     cwd: plan.source_directory,
-    env: { ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const rocks = await (
@@ -345,9 +334,7 @@ export async function run(): Promise<void> {
       case 'charm':
         await buildCharm({
           plan,
-          charmcraftChannel: core.getInput('charmcraft-channel'),
-          charmcraftRef: core.getInput('charmcraft-ref'),
-          charmcraftRepository: core.getInput('charmcraft-repository')
+          charmcraftChannel: core.getInput('charmcraft-channel')
         })
         break
       case 'docker-image':
@@ -366,6 +353,10 @@ export async function run(): Promise<void> {
           user: github.context.actor,
           token: core.getInput('github-token')
         })
+        break
+      case 'file':
+        await buildFileResource(plan)
+        break
     }
   } catch (error) {
     // Fail the workflow run if an error occurs

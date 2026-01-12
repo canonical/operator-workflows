@@ -8,21 +8,18 @@ inputs:
   github-token:
     description: github-token.
     required: true
-  workflow-file:
-    description: workflow-file.
-    default: 'integration_test.yaml'
+  plan:
+    description: operator-workflows plan.
+    required: true
+  run-id:
+    description: workflow un ID.
+    required: true
   working-directory:
     description: working-directory.
     default: '.'
   resource-mapping:
     description: resource-mapping.
     default: '{}'
-  workflow-run-id:
-    description: workflow-run-id.
-    default: ''
-  identifier:
-    description: identifier
-    default: ''
 outputs:
   charms:
     description: charms.

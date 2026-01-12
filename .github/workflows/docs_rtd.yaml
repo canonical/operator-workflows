@@ -1,0 +1,54 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: RTD workflows
+
+on:
+  workflow_call:
+    inputs:
+      enable-sphinx-python-dependency-build-checks:
+        description: Whether to enable the Sphinx and Python dependency build checks.
+        type: boolean
+        default: true
+  pull_request:
+    paths: 
+      - 'docs/**'
+
+jobs:
+  check-makefile:
+    name: Check for Makefile
+    runs-on: ubuntu-latest
+    outputs:
+      makefile-exists: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+      - name: Check if Makefile exists
+        id: check
+        run: |
+          if [ -f "docs/Makefile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+  automatic-doc-checks:
+    name: Automatic doc checks
+    needs: check-makefile
+    if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/automatic-doc-checks.yml@dev
+  check-removed-urls:
+    name: Check removed URLs
+    needs: check-makefile
+    if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/check-removed-urls.yml@dev
+  markdown-style-checks:
+    name: Markdown style checks
+    needs: check-makefile
+    if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/markdown-style-checks.yml@dev
+  sphinx-python-dependency-build-checks:
+    name: Sphinx and Python dependency build checks
+    needs: check-makefile
+    if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' && inputs.enable-sphinx-python-dependency-build-checks }}
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@dev
+

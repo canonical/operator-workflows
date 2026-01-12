@@ -1,11 +1,26 @@
 # Copyright 2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
+name: test-upload
+summary: A simple charm for testing charm uploads.
+description: A simple charm for testing charm uploads.
+parts:
+  charm:
+    plugin: charm
+    source: .
 type: charm
-bases:
-  - build-on:
-    - name: ubuntu
-      channel: "22.04"
-    run-on:
-    - name: ubuntu
-      channel: "22.04"
+config:
+  options: {}
+platforms:
+  ubuntu@22.04:amd64:
+containers:
+  test:
+    resource: test-image
+resources:
+  test-image:
+    type: oci-image
+    description: Test image
+  test-file:
+    type: file
+    description: Test file
+    filename: test-file.txt

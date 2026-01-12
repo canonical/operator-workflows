@@ -5,15 +5,12 @@ inputs:
   build-plan:
     description: Build plan.
     required: true
+  charmcraftcache:
+    description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
+    default: "false"
   charmcraft-channel:
     description: Charmcraft channel to use for the integration test
     default: latest/stable
-  charmcraft-ref:
-    description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
-    default: ""
-  charmcraft-repository:
-    description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
-    default: ""
   github-token:
     description: github token.
     required: true

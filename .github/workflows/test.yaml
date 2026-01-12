@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: Tests
@@ -8,7 +8,7 @@ on:
     inputs:
       charm-directory:
         type: string
-        description: The working directory for the docs
+        description: The working directory for the charm
         default: "."
       charmcraft-channel:
         description: Charmcraft channel to use
@@ -18,6 +18,11 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       shellcheck-working-directory:
         type: string
         description: The working directory for the shellcheck-lint job
@@ -36,18 +41,42 @@ on:
       self-hosted-runner-image:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
-        default: "jammy"
+        default: "noble"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
+      vale-style-check:
+        description: Whether to enable vale style check.
+        type: boolean
+        default: false
+      vale-files:
+        description: A JSON-formatted list of glob patterns to run vale check against.
+        type: string
+        default: '["docs/**/*.md", "README.md", "CONTRIBUTING.md"]' 
+      with-uv:
+        description: Whether to run the unit tests with tox-uv
+        type: boolean
+        required: false
+        default: false
+      require-check-lib:
+        description: Whether to run the check-libraries action.
+        type: boolean
+        required: false
+        default: true
 
+        
 concurrency:
-  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}
+  group: operator-workflows-${{ github.workflow }}-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
   cancel-in-progress: true
 
+env:
+  CONCURRENCY_GROUP: operator-workflows-${{ inputs.working-directory }}-tests-${{ github.ref }}-self-hosted-${{ inputs.self-hosted-runner }}-py${{ inputs.python-version }}-uv-${{ inputs.with-uv }}
+  REPORT_NAME: "report"
+
 jobs:
-  inclusive-naming-check:
-    name: Inclusive naming
+  vale:
+    name: Style checker
+    if: ${{ inputs.vale-style-check }}
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -57,42 +86,38 @@ jobs:
       }}
     defaults:
       run:
+        shell: bash
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
-        with:
-          repository: canonical/Inclusive-naming
-          path: ${{ inputs.working-directory }}
-      - run: mv * /tmp
-      - uses: actions/checkout@v4.2.1
-      - name: Merge configuration files
+      - name: Checkout repo to runner
+        uses: actions/checkout@v6.0.1
+      - run: |
+          sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
+      - name: Install styles
+        uses: canonical/documentation-style-guide@main
+      - name: Resolve Vale file paths
+        id: resolve_vale_files
         run: |
-          # Combine all entries and replace matching elements by
-          # .name in .rules for the ones in .woke.yaml
-          woke_file=""
-          if [ -f .woke.yaml ]; then
-            woke_file=".woke.yaml"
-          elif [ -f .woke.yml ]; then
-            woke_file=".woke.yml"
-          fi
-          if [ ! -z "$woke_file" ]; then
-            yq eval-all '
-            (
-              . as $item ireduce ({}; . *+ $item) | .rules | unique_by(.name)
-            ) as $mergedArray | . as $item ireduce ({}; . *+ $item) | .rules = $mergedArray
-            ' $woke_file /tmp/config.yml | tee /tmp/merged.yml
-            mv /tmp/merged.yml /tmp/config.yml
-          fi
-      - name: Run inclusive naming check
-        uses: canonical/inclusive-naming@main
+          set -euo pipefail
+          shopt -s globstar nullglob
+          patterns='${{ inputs.vale-files }}'
+          files=$(
+            while IFS= read -r pattern; do
+              for f in $pattern; do
+                [[ -e "$f" ]] && realpath "$f"
+              done
+            done < <(jq -r '.[]' <<<"$patterns") \
+            | jq -R -s -c 'split("\n") | map(select(length>0))'
+          )
+
+          echo "Files identified for Vale check: $files"
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+      - name: Run Vale tests
+        uses: errata-ai/vale-action@v2.1.1
         with:
-          fail-on-error: "true"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review
-          woke-args: ". -c /tmp/config.yml"
-          filter-mode: nofilter
-          workdir: ${{ inputs.working-directory }}
-          woke-version: latest
+          files: ${{ steps.resolve_vale_files.outputs.files }}
+          fail_on_error: ${{ inputs.vale-style-check }}
+          filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
     runs-on: >-
@@ -106,7 +131,7 @@ jobs:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -176,7 +201,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -199,7 +224,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -208,7 +233,7 @@ jobs:
         id: run-lint
         run: |
           options=""
-          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
+          if [[ "${{ inputs.self-hosted-runner }}" == "true" && "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
             options+=" --break-system-packages"
           fi
           python3 -m pip install check-jsonschema $options
@@ -226,18 +251,46 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    env:
+      python-version: >-
+        ${{
+          inputs.python-version ||
+          inputs.self-hosted-runner &&
+          (
+            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
+            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
+            inputs.self-hosted-runner-image == 'focal' && '3.8'
+          ) ||
+          '3.10'
+        }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
+
+      # Test with tox and regular python
+      - name: Setup Python
+        if: ${{ ! inputs.with-uv }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.python-version }}
+
       - name: Install tox
-        run: |
-          options=""
-          if [[ "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
-            options+=" --break-system-packages"
-          fi
-          python3 -m pip install tox $options
+        if: ${{ ! inputs.with-uv }}
+        run: pip install tox
+          
+      # Test with tox-uv and python setup by UV
+      - name: Setup Astral UV
+        if: ${{ inputs.with-uv }}
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ env.python-version }}
+
+      - name: Install tox with UV
+        if: ${{ inputs.with-uv }}
+        run: uv tool install tox --with tox-uv
+
       - name: Run tests
         id: run-tests
         run: |
@@ -245,54 +298,9 @@ jobs:
           STDOUT_LOG=$(mktemp --suffix=stdout.log)
           echo STDOUT_LOG=$STDOUT_LOG >> $GITHUB_ENV
           tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
-      - name: Check lint and test stdout
-        run: |
-          # Check dependencies
-          EXPECTED_LINT_DEPS="\
-              mypy \
-              isort \
-              black \
-              flake8-docstrings \
-              flake8-docstrings-complete \
-              flake8-builtins \
-              flake8-test-docs \
-              pep8-naming \
-              codespell \
-              pylint \
-              pydocstyle \
-              "
-          for EXPECTED_LINT_DEP in $EXPECTED_LINT_DEPS; do
-              # Check that there is a `lint...<dependency>` line for each of the expected dependencies
-              DEP_REGEX="lint.*$EXPECTED_LINT_DEP"
-              if ! grep -q "$DEP_REGEX" $STDOUT_LOG ; then
-                  # Write to stderr
-                  >&2 echo "$EXPECTED_LINT_DEP should be in deps of [testenv:lint] environment in tox.ini"
-                  exit 1
-              fi
-          done
-
-          # Check commands
-          EXPECTED_LINT_CMDS="\
-              pydocstyle \
-              codespell \
-              flake8 \
-              isort \
-              black \
-              mypy \
-              pylint \
-              "
-          for EXPECTED_LINT_CMD in $EXPECTED_LINT_CMDS; do
-              # Check that there is a `lint...commands...<command>` line for each of the expected commands
-              CMD_REGEX="lint.*commands.*$EXPECTED_LINT_CMD"
-              if ! grep -q "$CMD_REGEX" $STDOUT_LOG ; then
-                  # Write to stderr
-                  >&2 echo "$EXPECTED_LINT_CMD should be in commands of [testenv:lint] environment in tox.ini"
-                  exit 1
-              fi
-          done
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v7.0.1
+        uses: actions/github-script@v8.0.0
         with:
           script: |
             const no_color = (text) => {
@@ -301,7 +309,7 @@ jobs:
 
             const sha = '${{ github.event.pull_request.head.sha }}';
             const fs = require('fs');
-            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}test-result.json')).testenvs;
+            const result = JSON.parse(fs.readFileSync('${{ inputs.working-directory }}/test-result.json')).testenvs;
 
             let lint_result = result.lint.test;
             let lint_success = true;
@@ -343,40 +351,16 @@ jobs:
             );
             let json = JSON.stringify(reports);
             fs.writeFileSync('report.json', json);
+      - name: Name test Report
+        if: always() && github.event_name == 'pull_request' && !cancelled()
+        run: |
+          echo "REPORT_NAME=report-${CONCURRENCY_GROUP//\//_}" >> $GITHUB_ENV
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
-          name: report
+          name: ${{ env.REPORT_NAME }}
           path: report.json
-          overwrite: true
-  draft-publish-docs:
-    name: Draft publish docs
-    runs-on: >-
-      ${{
-        inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
-      }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-    steps:
-      - uses: actions/checkout@v4.2.1
-      - name: Search for docs folder
-        id: docs-exist
-        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
-      - name: Publish documentation
-        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && !github.event.pull_request.head.repo.fork }}
-        uses: canonical/discourse-gatekeeper@stable
-        with:
-          discourse_host: discourse.charmhub.io
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
-          dry_run: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
   license-headers-check:
     name: Check license headers
     runs-on: >-
@@ -390,7 +374,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -412,25 +396,25 @@ jobs:
         )) || 'ubuntu-22.04'
       }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - uses: actions/checkout@v6.0.1
       - name: Check libs
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        uses: canonical/charming-actions/check-libraries@2.6.3
+        if: ${{ !github.event.pull_request.head.repo.fork && inputs.requirer-check-lib }}
+        uses: canonical/charming-actions/check-libraries@2.7.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
   required_status_checks:
     name: Required Test Status Checks
     needs:
-      - draft-publish-docs
       - docker-lint
-      - inclusive-naming-check
       - lib-check
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
       - license-headers-check
+      - vale
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -442,11 +426,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.draft-publish-docs.result }}' = 'success' ] || (echo draft-publish-docs failed && false)
           [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
-          [ '${{ needs.inclusive-naming-check.result }}' = 'success' ] || (echo inclusive-naming-check failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
+          [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)

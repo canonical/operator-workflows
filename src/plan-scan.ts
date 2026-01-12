@@ -1,4 +1,4 @@
-// Copyright 2024 Canonical Ltd.
+// Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
 import * as core from '@actions/core'
@@ -18,7 +18,8 @@ export async function run(): Promise<void> {
     const artifact = new DefaultArtifactClient()
     let scans: Scan[] = []
     for (const build of plan.build) {
-      if (build.type === 'charm') {
+      if (['charm', 'file'].includes(build.type)) {
+        core.info(`Skipping ${build.type} build`)
         continue
       }
       fs.readdirSync('.').forEach(file =>

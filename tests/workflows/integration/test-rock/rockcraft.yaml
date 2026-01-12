@@ -1,7 +1,7 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright024 Canonical  2024 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: test
+name: test-foo
 summary: Test rock.
 description: Test rock.
 version: "1.0"

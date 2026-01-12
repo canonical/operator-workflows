@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: Integration tests
@@ -10,18 +10,14 @@ on:
         description: Label for building the charm
         type: string
         default: ubuntu-latest
+      charmcraftcache:
+        description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
+        type: boolean
+        default: false
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
         default: latest/stable
-      charmcraft-ref:
-        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
-        type: string
-        default: ""
-      charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version (this means that the `charmcraft-channel` input will be ignored).
-        type: string
-        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -39,11 +35,6 @@ on:
           Each mapping will be injected into the matrix section of the integration-test.
         type: string
         default: "{}"
-      image-build-args:
-        description: |
-          List of build args to pass to the build image job
-        type: string
-        default: ""
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -66,6 +57,9 @@ on:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
         default: '[""]'
+      pre-build-script:
+        description: Path to the bash script to be run before the build step
+        type: string
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -93,6 +87,14 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
+      runs-on:
+        type: string
+        description: Image of the GitHub hosted runner to run the test job. This cannot be combined with self-hosted-runner=true.
       self-hosted-runner:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
@@ -101,6 +103,10 @@ on:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
         default: "x64"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "noble"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -129,6 +135,10 @@ on:
         description: Timeout in minutes to keep tmate debugging session.
         type: number
         default: 30
+      trivy-exit-code:
+        description: Exit code when specified vulnerabilities are found.
+        type: string
+        default: '1'
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -156,6 +166,15 @@ on:
           If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
           originating from forked repositories, and 'registry' for all other cases.
         default: ""
+      use-canonical-k8s:
+        type: boolean
+        description: (Experimental) Whether to use canonical k8s instead of microk8s
+        default: false
+      with-uv:
+        type: boolean
+        description: Whether to use tox with uv
+        required: false
+        default: false
       working-directory:
         type: string
         description: The working directory for jobs
@@ -183,7 +202,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: '80'
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -202,8 +221,18 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
+      has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
-      - uses: actions/checkout@v4.2.1
+      - name: Validate input
+        run: |
+          # exit if runs-on and self-hosted-runner is both set
+            if [ -n "${{ inputs.runs-on }}" ] && [ "${{ inputs.self-hosted-runner }}" = "true" ]; then
+                echo "::error Both runs-on and self-hosted-runner cannot be set at the same time."
+                exit 1
+            fi
+      - uses: actions/checkout@v6.0.1
+        with:
+            fetch-depth: 0
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -211,27 +240,47 @@ jobs:
           upload-image: ${{ inputs.upload-image }}
           working-directory: ${{ inputs.working-directory }}
 
+      - name: Find changes
+        id: changes
+        run: |
+          has_code_changes=True
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            REMOTE=$(git remote show)
+            CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+            IGNORED_PATTERNS="\.md$|\.rst$|\.custom_wordlist\.txt$|^LICENSE$"
+            CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev "$IGNORED_PATTERNS" | wc -l)
+            has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
+          fi
+          echo "has_code_changes=$has_code_changes" >> $GITHUB_OUTPUT
+
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
         build: ${{ fromJSON(needs.plan.outputs.plan).build }}
     steps:
-      - uses: canonical/setup-lxd@v0.1.1
+      - uses: canonical/setup-lxd@v0.1.3
       - name: Set LXC security nesting
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
-      - uses: actions/checkout@v4
+      - name: Install charmcraftcache
+        if: ${{ inputs.charmcraftcache }}
+        run: |
+          pipx install charmcraftcache
+      - uses: actions/checkout@v6.0.1
+      - name: Pre-build script
+        if: ${{ inputs.pre-build-script != '' }}
+        run: bash -xe ${{ inputs.pre-build-script }}
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
+          charmcraftcache: ${{ inputs.charmcraftcache }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
-          charmcraft-ref: ${{ inputs.charmcraft-ref }}
-          charmcraft-repository: ${{ inputs.charmcraft-repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
           rockcraft-ref: ${{ inputs.rockcraft-ref }}
@@ -240,7 +289,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan, build ]
+    needs: [ build, plan ]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
@@ -252,14 +301,22 @@ jobs:
   scan:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ plan-scan ]
+    needs: [ build, plan-scan ]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v4.2.1
-      - uses: actions/download-artifact@v4.1.8
+      - uses: actions/checkout@v6.0.1
+      - name: Change directory
+        run: |
+          TEMP_DIR=$(mktemp -d)
+          cp -rp ./${{ inputs.working-directory }}/. $TEMP_DIR
+          rm -rf .* * || :
+          cp -rp $TEMP_DIR/. .
+          rm -rf $TEMP_DIR
+          ls -lah
+      - uses: actions/download-artifact@v7.0.0
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
@@ -267,7 +324,7 @@ jobs:
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v3.3.0
+      - uses: docker/login-action@v3.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -277,46 +334,66 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
-          exit-code: '1'
+          exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
         env:
-          TRIVY_USERNAME: ${{ github.actor }}
-          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
+        if: matrix.scan.image != ''
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.46.0
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           if [ -f ".trivyignore" ]
           then
-            output=$(trivy image $ROCK_IMAGE --severity ${{ inputs.trivy-severity-config }} -q -f json --ignorefile "" | jq -r '.Results[].Vulnerabilities[].VulnerabilityID' 2>/dev/null || echo "No vulnerabilities found")
+            ignored_cves=$(trivy image "$ROCK_IMAGE" \
+              --severity "CRITICAL,HIGH" \
+              --show-suppressed \
+              -q -f json \
+              | jq -r '.Results[].ExperimentalModifiedFindings[]? 
+                      | select(.Status == "ignored") 
+                      | .Finding.VulnerabilityID' \
+              | sort -u)
+            # Loop through .trivyignore and check if each CVE is still ignored
             line=0
-            while read CVE;
-            do
+            while read -r CVE; do
               line=$(( line + 1 ))
-              if [[ "$output" != *"$CVE"* ]] && [[ ! "$CVE" =~ ^#.* ]]
-              then
-              echo "::notice file=.trivyignore,line=${line}::$CVE not present anymore, can be safely removed."
+              [[ "$CVE" =~ ^#.*$ || -z "$CVE" ]] && continue
+              if ! grep -q -F "$CVE" <<< "$ignored_cves"; then
+                echo "$CVE" >> unused_cves.txt
               fi
             done < .trivyignore
+
+            # If unused CVEs found, post PR comment
+            if [ -s unused_cves.txt ]; then
+              {
+                echo "### Unused entries in .trivyignore"
+                echo "Image: $ROCK_IMAGE"
+                echo ""
+                echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
+                echo ""
+                cat unused_cves.txt | sed 's/^/- /'
+              } > pr_comment.md
+
+              gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
+            fi
           fi
         env:
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          ROCK_IMAGE: ${{ env.IMAGE_REF }}
+          ROCK_IMAGE: ${{ matrix.scan.image }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ plan, build ]
-    if: always() && needs.plan.result == 'success' && (needs.build.result == 'success' || toJSON(fromJSON(needs.plan.outputs.plan).build) == '[]')
+    needs: [ plan ]
+    if: always() && needs.plan.result == 'success' && needs.plan.outputs.has-code-changes == 'True'
     secrets: inherit
     with:
       channel: ${{ inputs.channel }}
-      charmcraft-ref: ${{ inputs.charmcraft-ref }}
-      charmcraft-repository: ${{ inputs.charmcraft-repository }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
@@ -328,8 +405,12 @@ jobs:
       plan: ${{ needs.plan.outputs.plan }}
       pre-run-script: ${{ inputs.pre-run-script }}
       provider: ${{ inputs.provider }}
+      python-version: ${{ inputs.python-version }}
+      use-canonical-k8s: ${{ inputs.use-canonical-k8s }}
       registry: ghcr.io
+      runs-on: ${{ inputs.runs-on || 'ubuntu-24.04' }}
       self-hosted-runner-arch: ${{ inputs.self-hosted-runner-arch }}
+      self-hosted-runner-image: ${{ inputs.self-hosted-runner-image }}
       self-hosted-runner-label: ${{ inputs.self-hosted-runner-label }}
       self-hosted-runner: ${{ inputs.self-hosted-runner }}
       series: ${{ inputs.series }}
@@ -341,6 +422,7 @@ jobs:
       trivy-fs-config: ${{ inputs.trivy-fs-config }}
       trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
+      with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
       zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
       zap-auth-header: ${{ inputs.zap-auth-header }}
@@ -355,9 +437,13 @@ jobs:
     name: Required Integration Test Status Checks
     runs-on: ${{ inputs.builder-runner-label }}
     needs:
+      - build
       - integration-test
+      - scan
     if: always() && !cancelled()
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)
+          [ '${{ needs.scan.result }}' = 'skipped' ] || [ '${{ needs.scan.result }}' = 'success' ] || (echo scan failed && false)
+          [ '${{ needs.build.result }}' = 'skipped' ] || [ '${{ needs.build.result }}' = 'success' ] || (echo build failed && false)
+          [ '${{ needs.integration-test.result }}' = 'skipped' ] || [ '${{ needs.integration-test.result }}' = 'success' ] || (echo integration-test failed && false)

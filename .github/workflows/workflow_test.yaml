@@ -1,25 +1,12 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: Workflow test
+name: Workflow Integration tests
 
 on:
   pull_request:
 
 jobs:
-  simple:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      self-hosted-runner: false
-  simple-self-hosted:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      self-hosted-runner: true
-      self-hosted-runner-label: "edge"
   integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -34,8 +21,8 @@ jobs:
       identifier: test-upload
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      juju-channel: 3.3/stable
-      channel: 1.30-strict/stable
+      juju-channel: 3.6/stable
+      channel: 1.32-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
   integration-artifact:
@@ -45,8 +32,8 @@ jobs:
       identifier: test-upload-artifact
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      juju-channel: 3.3/stable
-      channel: 1.30-strict/stable
+      juju-channel: 3.6/stable
+      channel: 1.32-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
       upload-image: artifact
@@ -59,6 +46,15 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
+  integration-with-uv:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      self-hosted-runner: false
+      with-uv: true
+      python-version: "3.12"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -73,16 +69,6 @@ jobs:
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-  integration-craft:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-rock/"
-      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
-      charmcraft-repository: canonical/charmcraft
-      charmcraft-ref: main
-      rockcraft-repository: canonical/rockcraft
-      rockcraft-ref: main
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -90,6 +76,7 @@ jobs:
     with:
       identifier: test-upload
       channel: latest/edge
+      force-publish: true
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
@@ -100,35 +87,71 @@ jobs:
     with:
       identifier: test-upload-artifact
       channel: latest/edge
+      force-publish: true
       integration-test-workflow-file: workflow_test.yaml
       working-directory: tests/workflows/integration/test-upload-charm/
       workflow-run-id: ${{ github.run_id }}
+  allure-report:
+    if: always() && !cancelled()
+    needs:
+      - integration
+      - integration-juju3
+      - integration-artifact
+      - integration-self-hosted
+    uses: ./.github/workflows/allure_report.yaml
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     timeout-minutes: 5
     needs:
-      - simple
-      - simple-self-hosted
       - integration
       - integration-juju3
       - integration-artifact
       - integration-self-hosted
       - integration-rock
       - integration-rock-artifact
-      - integration-craft
       - publish
       - publish-artifact
+      - allure-report
     steps:
       - run: |
-          [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
-          [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
           [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
           [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration-artifact failed && false)
           [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
           [ '${{ needs.integration-rock-artifact.result }}' = 'success' ] || (echo integration-rock-artifact failed && false)
-          [ '${{ needs.integration-craft.result }}' = 'success' ] || (echo integration-craft failed && false)
           [ '${{ needs.publish.result }}' != 'failure' ] || (echo publish failed && false)
           [ '${{ needs.publish-artifact.result }}' != 'failure' ] || (echo publish failed && false)
+          [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
+  integration-canonical-k8s:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-rock/"
+      trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      provider: k8s
+      extra-arguments: |
+        --kube-config=~/.kube/config
+      use-canonical-k8s: true
+      juju-channel: 3.6/stable
+      channel: edge
+      charmcraft-channel: latest/edge
+      # We need large runners to be able to deploy canonical k8s
+      self-hosted-runner: true
+      self-hosted-runner-image: noble
+      self-hosted-runner-label: large
+  integration-charmcraftcache:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      charmcraftcache: true
+      working-directory: "tests/workflows/integration/test-upload-charm/"
+      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
+      trivy-severity-config: "CRITICAL,HIGH"
+  integration-alternative-rock-filename:
+    uses: ./.github/workflows/integration_test.yaml
+    secrets: inherit
+    with:
+      working-directory: "tests/workflows/integration/test-alter-rock-name/"
+      trivy-image-config: "tests/workflows/integration/test-alter-rock-name/trivy.yaml"

@@ -1,0 +1,27 @@
+name: Get plan
+description: Get test plan.
+author: is-devops-team@canonical.com
+inputs:
+  github-token:
+    description: github-token.
+    required: true
+  workflow-file:
+    description: workflow-file.
+    default: 'integration_test.yaml'
+  working-directory:
+    description: working-directory.
+    default: '.'
+  workflow-run-id:
+    description: workflow-run-id.
+    default: ''
+  identifier:
+    description: identifier
+    default: ''
+outputs:
+  plan:
+    description: the JSON plan.
+  run-id:
+    description: the integration test run id corresponding to the plan
+runs:
+  using: node20
+  main: ../../dist/get-plan/index.js

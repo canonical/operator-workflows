@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 # this workflow requires to provide JIRA webhook URL via JIRA_URL GitHub Secret

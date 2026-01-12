@@ -1,0 +1,96 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Documentation
+
+on:
+  workflow_call:
+    inputs:
+      vale-files:
+        type: string
+        description: Where Vale will look for files to lint
+        default: '["README.md","CONTRIBUTING.md","docs/"]'
+        required: false
+      vale-fail-on-error:
+        description: Exit with 1 when at least one error was reported.
+        type: boolean
+        default: true
+        required: false
+      linkcheck-files:
+        type: string
+        description: Where Lychee will look for files to lint
+        default: "'./**/*.md' './**/*.rst'"
+        required: false
+      linkcheck-fail-on-error:
+        description: Exit with 1 when at least one error was reported.
+        type: boolean
+        default: true
+        required: false
+      linkcheck-clear-cache:
+        description: Clear Lychee cache before running
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  vale:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.1
+
+      - name: Run Vale Linter
+        uses: errata-ai/vale-action@v2.1.1
+        with:
+          files: ${{ inputs.vale-files }}
+          fail_on_error: ${{ inputs.vale-fail-on-error }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  linkcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.1
+
+      # Cache lychee results (e.g. to avoid hitting rate limits)
+      - name: Restore lychee cache
+        id: restore-cache
+        uses: actions/cache/restore@v5.0.1
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      # Optionally clear Lychee cache
+      - name: Clear Lychee cache
+        if: ${{ inputs.linkcheck-clear-cache }}
+        run: |
+          echo "Clearing Lychee cache..."
+          rm -rf .lycheecache
+
+      - name: Link Checker
+        id: lychee
+        uses: lycheeverse/lychee-action@v2.7.0
+        with:
+          fail: ${{ inputs.linkcheck-fail-on-error }}
+          args: >-
+            --user-agent "Lychee CI run ${{ github.sha }}"
+            --verbose
+            --no-progress
+            --max-concurrency 2
+            --retry-wait-time 5
+            --max-retries 5
+            --cache
+            --max-cache-age 5d
+            --cache-exclude-status '..100, 404, 429, 500..'
+            --exclude terraform.io
+            --exclude hashicorp.com
+            ${{ inputs.linkcheck-files }}
+      
+      - name: Save lychee cache
+        uses: actions/cache/save@v5.0.1
+        if: always()
+        with:
+          path: .lycheecache
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}

@@ -1,4 +1,4 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: Run integration tests
@@ -6,14 +6,6 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
-      charmcraft-ref:
-        description: Used in conjunction with charmcraft-repository to pull and build charmcraft from source instead of using snapstore version.
-        type: string
-        default: ""
-      charmcraft-repository:
-        description: Pull and build charmcraft from source instead of using snapstore version.
-        type: string
-        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -57,6 +49,11 @@ on:
         description: Actions operator provider as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: microk8s
+      python-version:
+        type: string
+        required: false
+        description: Python version to use when installing tox
+        default: ""
       microk8s-addons:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
@@ -67,7 +64,7 @@ on:
         default: ""
       runs-on:
         type: string
-        description: Image runner for building the images
+        description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
         default: ubuntu-22.04
       self-hosted-runner:
         type: boolean
@@ -77,6 +74,10 @@ on:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
         default: "x64"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "noble"
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
@@ -116,6 +117,15 @@ on:
         type: string
         description: Target directory to do the Trivy testing
         default: "."
+      use-canonical-k8s:
+        type: boolean
+        description: (Experimental) Whether to use canonical k8s instead of microk8s
+        default: false
+      with-uv:
+        type: boolean
+        description: Whether to use tox with uv
+        required: false
+        default: false
       working-directory:
         type: string
         description: The working directory for jobs
@@ -143,7 +153,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: 80
+        default: "80"
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -164,17 +174,156 @@ jobs:
       fail-fast: false
     runs-on: >-
       ${{
-        inputs.runs-on == 'ubuntu-22.04' &&
         inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''jammy'', ''{1}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label
+        fromJSON(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
         )) || inputs.runs-on
       }}
+    env:
+      python-version: >-
+        ${{
+          inputs.python-version ||
+          inputs.self-hosted-runner &&
+          (
+            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
+            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
+            inputs.self-hosted-runner-image == 'focal' && '3.8'
+          ) ||
+          '3.12'
+        }}
     steps:
+      - name: Disable snap autorefresh
+        run: sudo snap refresh --hold=2h
+      - name: Wait for last autorefresh
+        run: sudo snap watch --last=auto-refresh?
+        timeout-minutes: 10
+      - uses: actions/checkout@v6.0.1
+      - name: Integration tests variable setting
+        shell: python
+        run: |
+          import os
+          import re
+          import uuid
+
+          def safe(s):
+              return re.sub('[^0-9a-zA-Z-_]+', '-', s)
+
+          GITHUB_ENV_FILE = open(os.environ["GITHUB_ENV"], "a")
+
+          series = """${{ matrix.series }}"""
+          module = """${{ matrix.modules }}"""
+          unique_artifact_suffix = str(uuid.uuid4())
+          if series:
+              unique_artifact_suffix += f"-{safe(series)}"
+              series = f"--series {series}"
+          if module:
+              unique_artifact_suffix += f"-{safe(module)}"
+              module = f"-k '{module}'"
+
+          GITHUB_ENV_FILE.write(f"SERIES={series}\n")
+          GITHUB_ENV_FILE.write(f"MODULE={module}\n")
+          GITHUB_ENV_FILE.write(f"UNIQUE_ARTIFACT_SUFFIX={unique_artifact_suffix}\n")
+
+          GITHUB_ENV_FILE.close()
+      - name: Setup Astral UV
+        if: ${{ inputs.with-uv }}
+        uses: astral-sh/setup-uv@v7.2.0
+        with:
+          python-version: ${{ env.python-version }}
+      - name: Install tox with UV
+        if: ${{ inputs.with-uv }}
+        run: uv tool install tox --with tox-uv
+      - name: Install tox
+        if: ${{ ! inputs.with-uv }}
+        run: |
+          if which tox &> /dev/null; then
+            echo "tox is already installed."
+            tox --version
+          fi
+
+          pip_path=$(which pip 2>/dev/null)
+          SYSTEM_PIP_PATH="/usr/bin/pip"
+          if [ -n "$pip_path" ] && [ "$pip_path" != "$SYSTEM_PIP_PATH" ]; then
+              echo "Pip is available and not system-managed. Installing tox"
+              pip install tox
+          fi
+
+          if which pipx &> /dev/null; then
+              echo "Pipx is available. Installing tox"
+              pipx install tox
+          fi
+
+          echo "Neither pip nor pipx are available. Installing pipx via apt..."
+          sudo apt-get update -yqq
+          sudo apt-get install -yqq pipx
+          pipx ensurepath
+          sudo pipx ensurepath
+
+          echo "Installing tox with pipx..."
+          pipx install tox
+      - name: Check Allure
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1
+          tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1 | grep -q allure \
+            && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
+            || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
+      - name: Collect tests for Allure
+        if: env.ENABLE_ALLURE == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+      - name: Upload Default Allure results
+        if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
+        timeout-minutes: 3
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
+          path: ${{ inputs.working-directory }}allure-default/
+      - name: Setup Canonical k8s
+        if: inputs.use-canonical-k8s && inputs.provider == 'k8s'
+        id: canonical-k8s
+        run: |
+          sudo snap install k8s --channel=${{ inputs.channel }} --classic
+
+          if [ -n "$DOCKERHUB_MIRROR" ]; then
+          MIRROR_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/hosts.d/docker.io
+
+          sudo mkdir -p ${MIRROR_CONFIG}
+          sudo chown $USER ${MIRROR_CONFIG}
+          cat << EOF > ${MIRROR_CONFIG}/hosts.toml
+          [host."$DOCKERHUB_MIRROR"]
+          capabilities = ["pull", "resolve"]
+          EOF
+          fi
+
+          cat << EOF | sudo k8s bootstrap --file -
+          containerd-base-dir: /opt/containerd
+          EOF
+
+          # Note: the previous --file arguments override the default bootstrap options
+          #       resulting in the following not being enabled by default
+          sudo k8s enable network dns load-balancer local-storage gateway
+          sudo k8s status --wait-ready --timeout 5m
+
+          mkdir -p ~/.kube
+          sudo k8s config > ~/.kube/config
+          echo "kubeconfig=$(sudo k8s config | base64 -w 0)" >> $GITHUB_OUTPUT
+
+          IPADDR=$(ip -4 -j route get 2.2.2.2 | jq -r '.[] | .prefsrc')
+          LB_FIRST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,100}' OFS='.')"
+          LB_LAST_ADDR="$(echo "${IPADDR}" | awk -F'.' '{print $1,$2,$3,255}' OFS='.')"
+          LB_ADDR_RANGE="${LB_FIRST_ADDR}-${LB_LAST_ADDR}"
+          sudo k8s set load-balancer.cidrs=$LB_ADDR_RANGE load-balancer.enabled=true load-balancer.l2-mode=true
+      - name: Setup Devstack Swift
+        if: ${{ inputs.setup-devstack-swift }}
+        id: setup-devstack-swift
+        uses: canonical/setup-devstack-swift@v1
       - name: Setup operator environment
         uses: charmed-kubernetes/actions-operator@main
         with:
           provider: ${{ inputs.provider }}
+          credentials-yaml: ${{ steps.canonical-k8s.outputs.kubeconfig }}
           microk8s-addons: >-
             ${{
               ( 
@@ -190,53 +339,10 @@ jobs:
             }}
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
-      - uses: actions/checkout@v4
-        if: inputs.charmcraft-repository != ''
-        with:
-          repository: ${{ inputs.charmcraft-repository }}
-          ref: ${{ inputs.charmcraft-ref }}
-          path: ./charmcraft
-          fetch-depth: 0
-      - name: Get Charmcraft SHA
-        if: inputs.charmcraft-repository != ''
-        id: charmcraft-sha
-        working-directory: ./charmcraft
-        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-      - name: Restore Charmcraft Cache
-        if: inputs.charmcraft-repository != ''
-        id: restore-charmcraft
-        uses: actions/cache/restore@v4
-        with:
-          path: ./charmcraft*.snap
-          key: charmcraft-${{ steps.charmcraft-sha.outputs.sha }}
-      - name: Install Snapcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        run: sudo snap install snapcraft --classic
-      - name: Build Charmcraft
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        working-directory: ./charmcraft
-        run: |
-          snapcraft --use-lxd
-          cp charmcraft*.snap ../
-      - name: Save Charmcraft Cache
-        uses: actions/cache/save@v4
-        if: steps.restore-charmcraft.outputs.cache-hit != 'true' && inputs.charmcraft-repository != ''
-        with:
-          path: ./charmcraft*.snap
-          key: ${{ steps.restore-charmcraft.outputs.cache-primary-key }}
-      - name: Install charmcraft
-        if: inputs.charmcraft-repository != ''
-        run: sudo snap install --dangerous --classic charmcraft*.snap
-      - name: Clean up
-        if: inputs.charmcraft-repository != ''
-        run: rm -rf *
-      - uses: actions/checkout@v4.2.1
+          bootstrap-constraints: "cores=2 mem=4G root-disk=10G"
+      - uses: actions/checkout@v6.0.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
-      - name: Setup Devstack Swift
-        if: ${{ inputs.setup-devstack-swift }}
-        id: setup-devstack-swift
-        uses: canonical/setup-devstack-swift@v1
       - name: Create OpenStack credential file
         working-directory: ${{ inputs.working-directory }}
         run: echo "${{ steps.setup-devstack-swift.outputs.credentials }}" > openrc
@@ -265,15 +371,17 @@ jobs:
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
-      - run: sudo apt install skopeo -y
-
+      - run: |
+          sudo apt update
+          sudo apt install skopeo -y
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
-
-      - name: Integration tests variable setting
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          check-run-id: ${{ job.check_run_id }}
+      - name: Charm name setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
           CHARM_NAME="$([ -f metadata.yaml ] && yq '.name' metadata.yaml || echo UNKNOWN)"
@@ -284,26 +392,58 @@ jobs:
 
           args="${{ steps.plan-integration.outputs.args }}"
           echo "ARGS=$args" >> $GITHUB_ENV
-          series=""
-          if [ ! -z ${{ matrix.series }} ]; then
-            series="--series ${{ matrix.series }}"
-          fi
-          echo "SERIES=$series" >> $GITHUB_ENV
-          module=""
-          if [ ! -z ${{ matrix.modules }} ]; then
-            module="-k ${{ matrix.modules }}"
-          fi
-          echo "MODULE=$module" >> $GITHUB_ENV
       - name: Run k8s integration tests
         working-directory: ${{ inputs.working-directory }}
-        if: ${{ inputs.provider == 'microk8s' }}
+        if: inputs.provider == 'microk8s' || inputs.provider == 'k8s'
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_6 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_7 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_8 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_9 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_10 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_11 }}" || :
+          if [ "${{ inputs.use-canonical-k8s }}" == "true" ]; then
+            juju add-model testing
+          fi
+          if [ "$ENABLE_ALLURE" == "true" ]; then
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+          else
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+          fi
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
         if: ${{ inputs.provider == 'lxd' }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_1 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_1 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_2 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_2 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_3 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_3 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_4 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_4 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_5 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_5 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_6 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_6 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_7 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_7 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_8 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_8 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_9 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_9 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_10 }}" || :
+          [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_11 }}" || :
+          if [ "$ENABLE_ALLURE" == "true" ]; then
+            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          else
+            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          fi
+      - name: Upload Allure results
+        timeout-minutes: 3
+        if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
+        uses: actions/upload-artifact@v6
+        with:
+          name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
+          path: ${{ inputs.working-directory }}allure-results/
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
         uses: canonical/action-tmate@main
@@ -318,6 +458,15 @@ jobs:
         with:
           app: ${{ env.CHARM_NAME }}
           model: testing
+      - name: Juju debug-log
+        if: failure()
+        run: |
+          juju models
+          for model in $(juju models --format json | jq -r '.models[].name')
+          do
+            echo ==== debug-log in model: $model
+            juju debug-log --replay --no-tail -m $model
+          done
       - name: Install k6s
         if: ${{ inputs.load-test-enabled }}
         run: sudo snap install k6
@@ -326,11 +475,13 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.25.0
+        uses: aquasecurity/trivy-action@0.33.1
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
@@ -344,7 +495,7 @@ jobs:
           ZAP_TARGET: ${{ env.ZAP_TARGET }}
       - name: Run Github Zap Action
         if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.13.0
+        uses: zaproxy/action-baseline@v0.15.0
         env:
           ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
           ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
@@ -354,3 +505,4 @@ jobs:
           target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
           cmd_options: ${{ inputs.zap-cmd-options }}
           rules_file_name: ${{ inputs.zap-rules-file-name }}
+          artifact_name: zap-scan-${{ env.UNIQUE_ARTIFACT_SUFFIX }}

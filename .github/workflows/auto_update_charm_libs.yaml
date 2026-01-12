@@ -1,10 +1,14 @@
-# Copyright 2024 Canonical Ltd.
+# Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
 name: Auto-update Charm Libraries
 on:
   workflow_call:
     inputs:
+      charmcraft-channel:
+        description: Charmcraft channel to use for publishing the charm and resources
+        type: string
+        default: latest/stable
       working-directory:
         type: string
         description: The working directory for jobs
@@ -20,20 +24,20 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.1
+        uses: actions/checkout@v6.0.1
         with:
           fetch-depth: 0
       - name: Check libs
         working-directory: ${{ inputs.working-directory }}
         run: |
-          sudo snap install charmcraft --classic --channel latest/stable
+          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
           charmcraft fetch-lib
         env:
           CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
       - name: Create pull request
         uses: canonical/create-pull-request@main
         with:
-          github-token: ${{ secrets.REPO_ACCESS_TOKEN || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update charm libraries"
           branch-name: "chore/auto-libs"
           title: Update charm libraries

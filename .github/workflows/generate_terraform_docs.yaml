@@ -1,0 +1,45 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Generate terraform docs and propose the changes in a new PR.
+on:
+  workflow_call:
+    inputs:
+      terraform-directory:
+        type: string
+        description: A comma-separated list of working directories for Terraform
+        default: "terraform"
+      auto-merge:
+        type: boolean
+        description: Whether to enable auto-merge for the created pull request.
+        default: true
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6.0.1
+
+    - name: Render terraform docs and push changes back to PR
+      uses: terraform-docs/gh-actions@v1.4.1
+      with:
+        working-dir: ${{ inputs.terraform-directory }}
+        output-file: README.md
+        output-method: inject
+
+    # terraform-docs/gh-actions changes the permissions of repository files
+    - name: Change file ownership
+      run: sudo chown $USER -R .
+
+    - name: Create pull request
+      uses: canonical/create-pull-request@main
+      if: ${{ github.event_name != 'pull_request' }}
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "chore(docs): Update Terraform documentation"
+        branch-name: terraform-docs
+        title: "chore(docs): Update Terraform documentation"
+        body: "Update Terraform documentation in `${{ inputs.terraform-directory }}`."
+        upsert: true
+        ignore-no-changes: true
+        auto-merge: ${{ inputs.auto-merge }}

@@ -1,0 +1,115 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Allure Report Generation
+
+on: [workflow_call]
+
+jobs:
+  allure-report:
+    name: Publish Allure report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: always() && !cancelled() && github.run_attempt == '1'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.1
+      - name: Create gh-pages branch if not exists
+        run: |
+          if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages branch not found. Creating it..."
+            git checkout --orphan gh-pages
+            git rm -rf .
+            touch .nojekyll
+            git add .nojekyll
+            git config user.name "GitHub Actions"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Initial commit"
+            git push origin gh-pages
+          else
+            echo "gh-pages branch already exists."
+          fi
+      - name: Download Allure
+        # Following instructions from  https://allurereport.org/docs/install-for-linux/#install-from-a-deb-package
+        run: gh release download --repo allure-framework/allure2 --pattern 'allure_*.deb'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Allure
+        run: |
+          sudo apt-get update
+          sudo apt-get install ./allure_*.deb -y
+      - name: Checkout GitHub pages branch 
+        uses: actions/checkout@v6.0.1
+        with:
+          ref: gh-pages
+          path: repo/ 
+        # The `gh-pages` branch is used to host the Allure report site.
+        # With every workflow run, the workflow creates a new folder with the run_number and stores the test results there
+      - name: Download fallback test results
+        uses: actions/download-artifact@v7.0.0
+        with:
+          path: allure-collection-fallback-results/
+          pattern: allure-fallback-results*
+          merge-multiple: true
+      - name: Download actual test results
+        uses: actions/download-artifact@v7.0.0
+        with:
+          path: allure-results/
+          pattern: allure-results*
+          merge-multiple: true
+      - name: Install CLI
+        run: pipx install git+https://github.com/canonical/data-platform-workflows@v24.0.0#subdirectory=python/cli
+      - name: Combine Allure fallback results & actual results
+        # For every test: if actual result available, use that. Otherwise, use fallback result
+        # So that, if actual result not available, Allure report will show "unknown"/"failed" test result
+        # instead of omitting the test
+        run: allure-add-default-for-missing-results --allure-results-dir=allure-results --allure-collection-default-results-dir=allure-collection-fallback-results
+      - name: Load test report history
+        run: |
+          if [[ -d repo/_latest/history/ ]]; then
+            echo 'Loading history'
+            cp -r repo/_latest/history/ allure-results/
+          fi
+      - name: Create executor.json
+        shell: python
+        run: |
+          # Reverse engineered from https://github.com/simple-elf/allure-report-action/blob/eca283b643d577c69b8e4f048dd6cd8eb8457cfd/entrypoint.sh
+          # Not using the original action due to security concerns over using 3rd party github actions and the risk of running arbitrary code
+          import json
+
+          DATA = {
+              "name": "GitHub Actions",
+              "type": "github",
+              "buildOrder": ${{ github.run_number }},  # TODO future improvement: use run ID
+              "buildName": "Run ${{ github.run_id }}",
+              "buildUrl": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "reportUrl": "../${{ github.run_number }}/",
+          }
+          with open("allure-results/executor.json", "w") as file:
+              json.dump(DATA, file)
+      - name: Generate Allure report
+        run: allure generate
+      - name: Create index.html
+        shell: python
+        run: |
+          DATA = f"""<!DOCTYPE html>
+          <meta charset="utf-8">
+          <meta http-equiv="cache-control" content="no-cache">
+          <meta http-equiv="refresh" content="0; url=${{ github.run_number }}">
+          """
+          with open("repo/index.html", "w") as file:
+              file.write(DATA)
+      - name: Update GitHub pages branch
+        working-directory: repo/
+        run: |
+          mkdir '${{ github.run_number }}'
+          rm -f _latest
+          ln -s '${{ github.run_number }}' _latest
+          cp -r ../allure-report/. _latest/
+          git add .
+          git config user.name "GitHub Actions"
+          # user.email obtained from https://github.com/actions/checkout/issues/13#issuecomment-724415212
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com" 
+          git commit -m "Allure report ${{ github.run_number }}"
+          # Uses token set in checkout step
+          git push origin gh-pages
