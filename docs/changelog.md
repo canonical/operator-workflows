@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-01-12
+- Fix bug with input parameter name for `check-libs` workflow.
+
 ## 2025-12-19
 - Fix a problem in the integration test caused by a missing `apt install`.
 
