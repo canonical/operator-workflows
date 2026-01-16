@@ -398,7 +398,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.1
       - name: Check libs
-        if: ${{ !github.event.pull_request.head.repo.fork && inputs.requirer-check-lib }}
+        if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}
