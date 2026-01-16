@@ -10,8 +10,8 @@ header:
   - license:
       spdx-id: Apache-2.0
       copyright-owner: Canonical Ltd.
-      content: |
-        Copyright [year] [owner]
+      pattern: |
+        Copyright \d{4} [owner]
         See LICENSE file for licensing details.
     paths:
       - '**'
