@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-01-20
+- Use author instead of actor to verify bot pull requests.
+
 ## 2026-01-16
 - Fix bug with license validation.
+
 ## 2026-01-12
 - Fix bug with input parameter name for `check-libs` workflow.
 
