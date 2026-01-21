@@ -20,7 +20,7 @@ jobs:
     - name: Checkout spread script
       uses: actions/checkout@v5
       with:
-        repository: canonical/operator-workflows@spread-test-workflow
+        repository: canonical/operator-workflows
         sparse-checkout: |
           tests/spread/create_spread_task_file.py
         sparse-checkout-cone-mode: false
