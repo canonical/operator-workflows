@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-01-21
+- Add `docs_spread` workflow to auto-generate testing materials and run Spread.
+
 ## 2026-01-20
 - Use author instead of actor to verify bot pull requests.
 
