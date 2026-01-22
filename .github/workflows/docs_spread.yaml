@@ -5,13 +5,24 @@ name: 'Create documentation testing materials and run Spread'
 
 on:
   workflow_call:
+    inputs:
+      input-file:
+        type: string
+        required: true
+        default: docs/tutorial.md
+        description: The input file to generate Spread materials and test
+      output-dir:
+        type: string
+        required: true
+        default: tests/spread/tutorial/
+        description: The directory where the Spread materials will be created
 
 jobs:
   run-spread-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spread_job: ['github-ci:ubuntu-24.04-64:tests/spread/tutorial']
+        spread_job: ['github-ci:ubuntu-24.04-64:tests/spread']
     steps: 
     - name: Checkout repo
       uses: actions/checkout@v5
@@ -31,7 +42,8 @@ jobs:
         python-version: '3.x'
     - name: Update task.yaml
       run: |
-        python3 workflow-scripts/tests/spread/create_spread_task_file.py docs/tutorial.md tests/spread/tutorial/
+        mkdir -p ${{ inputs.output-dir }}
+        python3 workflow-scripts/tests/spread/create_spread_task_file.py ${{ inputs.input-file }} ${{ inputs.output-dir }}
     - name: Set up Go
       uses: actions/setup-go@v6
       with:
