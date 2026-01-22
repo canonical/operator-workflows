@@ -227,7 +227,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.1.5
+        uses: astral-sh/setup-uv@v7.2.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -276,7 +276,7 @@ jobs:
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-default/
@@ -371,7 +371,9 @@ jobs:
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
 
-      - run: sudo apt install skopeo -y
+      - run: |
+          sudo apt update
+          sudo apt install skopeo -y
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
@@ -438,7 +440,7 @@ jobs:
       - name: Upload Allure results
         timeout-minutes: 3
         if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/

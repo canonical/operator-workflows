@@ -5,9 +5,13 @@ header:
     content: |
       Copyright [year] [owner]
       See LICENSE file for licensing details.
+    pattern: |
+      Copyright \d{4} Canonical Ltd.
+      See LICENSE file for licensing details.
   paths:
     - '**'
   paths-ignore:
+    - '.github/.jira_sync_config.yaml'
     - '.github/files/**'
     - '**/*.j2'
     - '**/*.json'

@@ -1,8 +1,8 @@
 header:
   - license:
       copyright-owner: Canonical Ltd.
-      content: |
-        Copyright [year] [owner]
+      pattern: |
+        Copyright \d{4} Canonical Ltd.
         Licensed under the Apache2.0. See LICENSE file in charm source for details.
     paths:
       - 'lib/**'
@@ -10,8 +10,8 @@ header:
   - license:
       spdx-id: Apache-2.0
       copyright-owner: Canonical Ltd.
-      content: |
-        Copyright [year] [owner]
+      pattern: |
+        Copyright \d{4} Canonical Ltd.
         See LICENSE file for licensing details.
     paths:
       - '**'

@@ -6,8 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2025-12-15
+## 2026-01-22
 - Cache rock build results for register-typed rocks.
+
+## 2026-01-20
+- Use author instead of actor to verify bot pull requests.
+
+## 2026-01-16
+- Fix bug with license validation.
+
+## 2026-01-12
+- Fix bug with input parameter name for `check-libs` workflow.
+
+## 2025-12-19
+- Fix a problem in the integration test caused by a missing `apt install`.
 
 ## 2025-12-09
 - Update the default juju bootstrap bootstrap-constraints to "cores=2 mem=4G root-disk=10G". 
