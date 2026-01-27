@@ -6,6 +6,10 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
+      internal-actions-ref:
+        required: false
+        type: string
+        default: main
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -372,7 +376,7 @@ jobs:
 
       - run: sudo apt install skopeo -y
       - name: Plan Integration
-        uses: ./internal/plan-integration
+        uses: canonical/operator-workflows/internal/plan-integration@${{ inputs.internal-actions-ref }}
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
