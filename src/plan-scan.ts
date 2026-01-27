@@ -1,15 +1,17 @@
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
-import * as core from '@actions/core'
-import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
 import fs from 'fs'
+import path from 'path'
+import { Plan } from './model'
 
 interface Scan {
   artifact: string
   file: string
   image: string
+  trivyignore: string
 }
 
 export async function run(): Promise<void> {
@@ -22,6 +24,13 @@ export async function run(): Promise<void> {
         core.info(`Skipping ${build.type} build`)
         continue
       }
+      const trivyignore =
+        build.type === 'rock'
+          ? path.join(
+              path.relative(plan.working_directory, build.source_directory),
+              '.trivyignore'
+            )
+          : ''
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
@@ -37,7 +46,8 @@ export async function run(): Promise<void> {
           files.map(f => ({
             artifact: build.output,
             file: f,
-            image: ''
+            image: '',
+            trivyignore
           }))
         )
       }
@@ -47,7 +57,8 @@ export async function run(): Promise<void> {
           images.map(i => ({
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
-            image: i
+            image: i,
+            trivyignore
           }))
         )
       }

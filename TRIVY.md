@@ -22,6 +22,10 @@ Default configuration: will fail with exit code 1 for high and critical vulnerab
 
 Custom configurations can be set in a ``trivy.yaml`` file stored in the repository for both types of testing. The location should be set in ``trivy-fs-config`` and/or ``trivy-image-config``parameters.
 
+## Trivyignore for rock images
+
+For OCI images built from rockcraft, the workflow will look for a ``.trivyignore`` file next to each ``rockcraft.yaml`` and use it for that image scan. This supports repositories that build multiple images with different ignore lists. If no per-rockcraft file is found, the workflow falls back to a repository-root ``.trivyignore`` when present.
+
 ## Examples
 
 ### Default

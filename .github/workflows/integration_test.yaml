@@ -333,6 +333,11 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
+      - name: Select trivyignore
+        run: |
+          if [ -n "${{ matrix.scan.trivyignore }}" ] && [ -f "${{ matrix.scan.trivyignore }}" ]; then
+            cp "${{ matrix.scan.trivyignore }}" .trivyignore
+          fi
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
         with:
@@ -346,8 +351,13 @@ jobs:
         if: matrix.scan.image != ''
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
-          if [ -f ".trivyignore" ]
-          then
+          TRIVYIGNORE_FILE=""
+          if [ -n "${{ matrix.scan.trivyignore }}" ] && [ -f "${{ matrix.scan.trivyignore }}" ]; then
+            TRIVYIGNORE_FILE="${{ matrix.scan.trivyignore }}"
+          elif [ -f ".trivyignore" ]; then
+            TRIVYIGNORE_FILE=".trivyignore"
+          fi
+          if [ -n "$TRIVYIGNORE_FILE" ]; then
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
@@ -364,7 +374,7 @@ jobs:
               if ! grep -q -F "$CVE" <<< "$ignored_cves"; then
                 echo "$CVE" >> unused_cves.txt
               fi
-            done < .trivyignore
+            done < "$TRIVYIGNORE_FILE"
 
             # If unused CVEs found, post PR comment
             if [ -s unused_cves.txt ]; then
@@ -372,7 +382,7 @@ jobs:
                 echo "### Unused entries in .trivyignore"
                 echo "Image: $ROCK_IMAGE"
                 echo ""
-                echo "The following CVEs are in \`.trivyignore\` but not ignored by Trivy anymore:"
+                echo "The following CVEs are in $TRIVYIGNORE_FILE but not ignored by Trivy anymore:"
                 echo ""
                 cat unused_cves.txt | sed 's/^/- /'
               } > pr_comment.md
