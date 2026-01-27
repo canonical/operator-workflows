@@ -13,6 +13,7 @@ Code blocks are defined by triple backticks (```), and blocks starting with
 import sys
 import re
 import argparse
+import logging
 
 
 def extract_spread_comments(content):
@@ -190,7 +191,26 @@ Examples:
         help='Path to the output YAML file or directory (default: task.yaml)'
     )
     
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Enable verbose output (DEBUG level)'
+    )
+    
+    parser.add_argument(
+        '-q', '--quiet',
+        action='store_true',
+        help='Suppress all output except errors'
+    )
+    
     args = parser.parse_args()
+    
+    # Configure logging
+    log_level = logging.WARNING if args.quiet else (logging.DEBUG if args.verbose else logging.INFO)
+    logging.basicConfig(
+        level=log_level,
+        format='%(levelname)s: %(message)s'
+    )
     
     file_path = args.markdown_file
     output_path = args.output_path
@@ -205,23 +225,20 @@ Examples:
     try:
         commands = extract_commands_from_markdown(file_path)
         
-        print(f"Found {len(commands)} command block(s) in {file_path}:\n")
+        logging.info(f"Found {len(commands)} command block(s) in {file_path}")
         
         for i, command in enumerate(commands, 1):
-            print(f"Command block {i}:")
-            print(command)
-            print("-" * 70)
-            print()
+            logging.debug(f"Command block {i}: {command}")
         
         # Write commands to task.yaml
         write_task_yaml(commands, output_file)
-        print(f"\nCommands written to {output_file}")
+        logging.info(f"Commands written to {output_file}")
         
     except FileNotFoundError:
-        print(f"Error: File '{file_path}' not found.")
+        logging.error(f"File '{file_path}' not found.")
         sys.exit(1)
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(f"{e}")
         sys.exit(1)
 
 
