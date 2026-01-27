@@ -12,6 +12,7 @@ Code blocks are defined by triple backticks (```), and blocks starting with
 
 import sys
 import re
+import argparse
 
 
 def extract_spread_comments(content):
@@ -166,26 +167,40 @@ def write_task_yaml(commands, output_path="task.yaml"):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python extract_commands.py <markdown_file> [output_path]")
-        print("Example: python extract_commands.py docs/tutorial.md")
-        print("Example: python extract_commands.py docs/tutorial.md tests/spread/tutorial/task.yaml")
-        print("Example: python extract_commands.py docs/tutorial.md tests/spread/tutorial/")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+        description="Extract commands from markdown files and generate task.yaml for Spread tests.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  %(prog)s docs/tutorial.md
+  %(prog)s docs/tutorial.md tests/spread/tutorial/task.yaml
+  %(prog)s docs/tutorial.md tests/spread/tutorial/
+        """
+    )
     
-    file_path = sys.argv[1]
+    parser.add_argument(
+        'markdown_file',
+        help='Path to the markdown file to extract commands from'
+    )
     
-    # Get output path from command line or use default
-    if len(sys.argv) >= 3:
-        output_path = sys.argv[2]
-        # If output_path is a directory, append task.yaml
-        import os
-        if os.path.isdir(output_path) or output_path.endswith('/'):
-            output_file = os.path.join(output_path, "task.yaml")
-        else:
-            output_file = output_path
+    parser.add_argument(
+        'output_path',
+        nargs='?',
+        default='task.yaml',
+        help='Path to the output YAML file or directory (default: task.yaml)'
+    )
+    
+    args = parser.parse_args()
+    
+    file_path = args.markdown_file
+    output_path = args.output_path
+    
+    # If output_path is a directory, append task.yaml
+    import os
+    if os.path.isdir(output_path) or output_path.endswith('/'):
+        output_file = os.path.join(output_path, "task.yaml")
     else:
-        output_file = "task.yaml"
+        output_file = output_path
     
     try:
         commands = extract_commands_from_markdown(file_path)
