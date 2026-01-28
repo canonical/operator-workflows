@@ -256,7 +256,7 @@ jobs:
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
     needs: [ plan ]
-    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
+    if: ${{ needs.plan.outputs.has-code-changes == 'True' && toJSON(fromJSON(needs.plan.outputs.plan).build) != '[]' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
       matrix:
