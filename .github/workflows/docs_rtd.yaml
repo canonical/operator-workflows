@@ -36,6 +36,9 @@ jobs:
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
     uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@main
+    with:
+      working-directory: "docs"
+      fetch-depth: 0
   check-removed-urls:
     name: Check removed URLs
     needs: check-makefile
