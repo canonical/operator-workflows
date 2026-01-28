@@ -155,3 +155,9 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-alter-rock-name/"
       trivy-image-config: "tests/workflows/integration/test-alter-rock-name/trivy.yaml"
+  spread-docs:
+    uses: ./.github/workflows/docs_spread.yaml
+    secrets: inherit
+    with:
+      input-file: tests/workflows/docs_spread/test_tutorial.md
+      output-dir: tests/spread/test_tutorial
