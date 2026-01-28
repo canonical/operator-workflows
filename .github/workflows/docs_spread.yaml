@@ -16,13 +16,18 @@ on:
         required: true
         default: tests/spread/tutorial/
         description: The directory where the Spread materials will be created
+      spread-job:
+        type: string
+        required: true
+        default: github-ci:ubuntu-24.04-64:tests/spread
+        description: The name of the Spread job to run
 
 jobs:
   run-spread-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        spread_job: ['github-ci:ubuntu-24.04-64:tests/spread']
+        spread_job: ['${{ inputs.spread-job }}']
     steps: 
     - name: Checkout repo
       uses: actions/checkout@v6.0.1
