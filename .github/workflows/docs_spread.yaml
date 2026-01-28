@@ -33,7 +33,7 @@ jobs:
       with:
         repository: canonical/operator-workflows
         sparse-checkout: |
-          tests/spread/create_spread_task_file.py
+          spread/create_spread_task_file.py
         sparse-checkout-cone-mode: false
         path: workflow-scripts
     - name: Set up Python
