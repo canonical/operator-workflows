@@ -30,14 +30,14 @@ def extract_spread_comments(content):
         ValueError: If a SPREAD comment block is not properly closed
     """
     spread_blocks = []
-    pattern = r'<!-- SPREAD\n(.*?)-->'
+    pattern = r'<!-- SPREAD\s*\n(.*?)-->'
     
     # First check for unclosed SPREAD blocks
-    unclosed_pattern = r'<!-- SPREAD(?!\n.*?-->)'
+    unclosed_pattern = r'<!-- SPREAD\s*(?!\n.*?-->)'
     unclosed_matches = list(re.finditer(unclosed_pattern, content, re.DOTALL))
     
     # More precise check: find all <!-- SPREAD and verify each has a closing -->
-    spread_starts = [m.start() for m in re.finditer(r'<!-- SPREAD', content)]
+    spread_starts = [m.start() for m in re.finditer(r'<!-- SPREAD\s*', content)]
     for start_pos in spread_starts:
         # Look for --> after this position
         remaining_content = content[start_pos:]

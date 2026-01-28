@@ -48,7 +48,7 @@ jobs:
     - name: Update task.yaml
       run: |
         mkdir -p ${{ inputs.output-dir }}
-        python3 workflow-scripts/spread/create_spread_task_file.py ${{ inputs.input-file }} ${{ inputs.output-dir }}
+        python3 workflow-scripts/spread/create_spread_task_file.py -v ${{ inputs.input-file }} ${{ inputs.output-dir }}
     - name: Set up Go
       uses: actions/setup-go@v6.2.0
       with:

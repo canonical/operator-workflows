@@ -161,4 +161,4 @@ jobs:
     with:
       input-file: tests/workflows/docs_spread/test_tutorial.md
       output-dir: tests/spread/test_tutorial
-      spread-job: github-ci:ubuntu-24.04-64:tests/spread
+      spread-job: github-ci:ubuntu-24.04-64:tests/spread/test_tutorial
