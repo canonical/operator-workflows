@@ -35,7 +35,7 @@ jobs:
     name: Automatic doc checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/sphinx-docs-starter-pack/.github/workflows/automatic-doc-checks.yml@dev
+    uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@main
   check-removed-urls:
     name: Check removed URLs
     needs: check-makefile
