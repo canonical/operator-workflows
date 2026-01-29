@@ -30,11 +30,11 @@ jobs:
         spread_job: ['${{ inputs.spread-job }}']
     steps: 
     - name: Checkout repo
-      uses: actions/checkout@v6.0.1
+      uses: actions/checkout@v6.0.2
       with:
         fetch-depth: 0
     - name: Checkout spread script
-      uses: actions/checkout@v6.0.1
+      uses: actions/checkout@v6.0.2
       with:
         repository: canonical/operator-workflows
         sparse-checkout: |
@@ -52,7 +52,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6.2.0
       with:
-        go-version: 1.24
+        go-version: 1.25
     - name: Install spread
       run: |
         go install github.com/snapcore/spread/cmd/spread@latest
