@@ -95,7 +95,7 @@ jobs:
           workflow-file: ${{ inputs.integration-test-workflow-file }}
           workflow-run-id: ${{ inputs.workflow-run-id }}
           identifier: ${{ inputs.identifier }}
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
         with:
             fetch-depth: 0
       - name: Find changes
@@ -117,7 +117,7 @@ jobs:
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
@@ -158,7 +158,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Search for docs folder
         id: docs-exist
         run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
@@ -182,7 +182,7 @@ jobs:
     if: ${{ inputs.publish-libs && needs.plan.outputs.has-code-changes == 'True' }}
     needs: [ plan, publish-charm ]
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
