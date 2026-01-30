@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
 
       - name: Run Vale Linter
         uses: errata-ai/vale-action@v2.1.1
@@ -51,12 +51,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
 
       # Cache lychee results (e.g. to avoid hitting rate limits)
       - name: Restore lychee cache
         id: restore-cache
-        uses: actions/cache/restore@v5.0.1
+        uses: actions/cache/restore@v5.0.3
         with:
           path: .lycheecache
           key: cache-lychee-${{ github.sha }}
@@ -89,7 +89,7 @@ jobs:
             ${{ inputs.linkcheck-files }}
       
       - name: Save lychee cache
-        uses: actions/cache/save@v5.0.1
+        uses: actions/cache/save@v5.0.3
         if: always()
         with:
           path: .lycheecache

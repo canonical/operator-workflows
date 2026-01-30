@@ -13,7 +13,7 @@ jobs:
     if: always() && !cancelled() && github.run_attempt == '1'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
       - name: Create gh-pages branch if not exists
         run: |
           if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
@@ -39,7 +39,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
       - name: Checkout GitHub pages branch 
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
         with:
           ref: gh-pages
           path: repo/ 
