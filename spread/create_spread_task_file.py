@@ -59,47 +59,82 @@ def extract_spread_comments(content):
     return spread_blocks
 
 
-def find_rst_spread_exclusions(content):
+def extract_rst_spread_comments(content):
     """
-    Extract all SPREAD exclusion blocks from reStructuredText content.
+    Extract all SPREAD comment blocks from reStructuredText content.
     
     Args:
         content: reStructuredText content as string
         
     Returns:
-        List of tuples (start_pos, end_pos) for SPREAD exclusion ranges
+        List of tuples (position, command_string) for SPREAD blocks
         
     Raises:
         ValueError: If a SPREAD block is not properly closed
     """
-    exclusion_ranges = []
+    spread_blocks = []
     
-    # Find all .. SPREAD and .. SPREAD END markers
-    spread_starts = []
-    spread_ends = []
+    # Pattern to match .. SPREAD\n content \n.. SPREAD END
+    pattern = r'^\.\. SPREAD\s*\n(.*?)^\.\. SPREAD END\s*$'
     
-    for match in re.finditer(r'^\.\. SPREAD\s*$', content, re.MULTILINE):
-        spread_starts.append(match.start())
-    
-    for match in re.finditer(r'^\.\. SPREAD END\s*$', content, re.MULTILINE):
-        spread_ends.append(match.start())
+    # Find all .. SPREAD and .. SPREAD END markers for validation
+    spread_starts = [m.start() for m in re.finditer(r'^\.\. SPREAD\s*$', content, re.MULTILINE)]
+    spread_ends = [m.start() for m in re.finditer(r'^\.\. SPREAD END\s*$', content, re.MULTILINE)]
     
     # Validate that all SPREAD blocks are closed
     if len(spread_starts) != len(spread_ends):
         raise ValueError(f"Mismatched SPREAD markers: found {len(spread_starts)} '.. SPREAD' but {len(spread_ends)} '.. SPREAD END'")
     
-    # Create exclusion ranges
+    # Validate proper ordering
     for start_pos, end_pos in zip(spread_starts, spread_ends):
         if start_pos >= end_pos:
             raise ValueError(f"Invalid SPREAD block: '.. SPREAD END' appears before '.. SPREAD' at position {start_pos}")
-        exclusion_ranges.append((start_pos, end_pos))
     
-    return exclusion_ranges
+    # Extract content from SPREAD blocks
+    for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
+        raw_content = match.group(1)
+        match_start = match.start()
+        
+        # Split into lines and strip .. prefix from each line
+        lines = raw_content.split('\n')
+        stripped_lines = []
+        for line in lines:
+            # Strip leading .. and optional space
+            if line.startswith('.. '):
+                stripped_lines.append(line[3:])
+            elif line.startswith('..'):
+                stripped_lines.append(line[2:])
+            else:
+                stripped_lines.append(line)
+        
+        # Dedent the content (remove common leading whitespace)
+        non_empty_lines = [line for line in stripped_lines if line.strip()]
+        
+        if not non_empty_lines:
+            continue
+        
+        # Find minimum indentation
+        min_indent = min(len(line) - len(line.lstrip()) for line in non_empty_lines)
+        
+        # Remove the common indentation
+        dedented_lines = []
+        for line in stripped_lines:
+            if line.strip():  # Non-empty line
+                dedented_lines.append(line[min_indent:])
+            else:  # Empty line
+                dedented_lines.append('')
+        
+        command_content = '\n'.join(dedented_lines).strip()
+        
+        if command_content:
+            spread_blocks.append((match_start, command_content))
+    
+    return spread_blocks
 
 
 def parse_rst_headers(content):
     """
-    Extract all headers from reStructuredText content.
+    Extract all headers from reStructuredText content using regex.
     
     In RST, headers are text followed by a line of special characters (=, -, ~, etc.)
     of the same length as the header text.
@@ -111,63 +146,50 @@ def parse_rst_headers(content):
         List of tuples (position, level, title) for each header
     """
     headers = []
-    lines = content.split('\n')
     
-    # Common RST header characters in order of typical hierarchy
-    header_chars = ['=', '-', '~', '^', '"', "'", '`', ':', '.', '_', '*', '+', '#']
+    # Pattern: capture title line, newline, and underline
+    # The underline must be the same character repeated
+    pattern = r'^(?P<title>.+)\n(?P<char>[=\-~^"\':._*+#`])(?P=char)+$'
+    
     char_to_level = {}
     current_level = 0
     
-    i = 0
-    position = 0
-    
-    while i < len(lines):
-        if i + 1 < len(lines):
-            line = lines[i].rstrip()
-            next_line = lines[i + 1].rstrip()
-            
-            # Check if next line is an underline (same length, all same special char)
-            if (line and next_line and 
-                len(line) == len(next_line) and 
-                len(set(next_line)) == 1 and 
-                next_line[0] in header_chars):
-                
-                char = next_line[0]
-                
-                # Assign level based on first appearance order
-                if char not in char_to_level:
-                    char_to_level[char] = current_level
-                    current_level += 1
-                
-                level = char_to_level[char]
-                title = line.strip()
-                headers.append((position, level, title))
-                
-                i += 2  # Skip the underline
-                position += len(lines[i - 2]) + len(lines[i - 1]) + 2  # +2 for newlines
-                continue
+    for match in re.finditer(pattern, content, re.MULTILINE):
+        title = match.group('title').strip()
+        char = match.group('char')
+        underline = match.group(0).split('\n')[1]
         
-        position += len(lines[i]) + 1  # +1 for newline
-        i += 1
+        # Validate that underline length matches title length
+        if len(title) != len(underline):
+            continue
+        
+        # Assign level based on first appearance order
+        if char not in char_to_level:
+            char_to_level[char] = current_level
+            current_level += 1
+        
+        level = char_to_level[char]
+        position = match.start()
+        headers.append((position, level, title))
     
     return headers
 
 
 def extract_commands_from_rst(file_path):
     """
-    Extract all commands from code blocks in a reStructuredText file.
+    Extract all commands from code blocks and SPREAD comments in a reStructuredText file.
     
     Args:
         file_path: Path to the reStructuredText file
         
     Returns:
-        List of command strings found in code blocks, in document order
+        List of command strings found in code blocks and SPREAD comments, in document order
     """
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Extract SPREAD exclusion ranges
-    spread_exclusion_ranges = find_rst_spread_exclusions(content)
+    # Extract SPREAD comment blocks (these are included in output)
+    spread_blocks = extract_rst_spread_comments(content)
     
     # Find sections to exclude: "What you'll need", "Requirements", or "Prerequisites"
     excluded_section_ranges = []
@@ -186,8 +208,8 @@ def extract_commands_from_rst(file_path):
                     break
             excluded_section_ranges.append((start_pos, end_pos))
     
-    # Combine all exclusion ranges
-    excluded_ranges = spread_exclusion_ranges + excluded_section_ranges
+    # Only excluded sections (not SPREAD blocks)
+    excluded_ranges = excluded_section_ranges
     
     # Find all code blocks: .. code-block:: followed by optional blank line and indented content
     # The pattern matches the directive and captures all consistently indented lines that follow
@@ -231,9 +253,12 @@ def extract_commands_from_rst(file_path):
         if code_content:
             code_blocks.append((match_start, code_content))
     
-    # Sort by position and extract content
-    code_blocks.sort(key=lambda x: x[0])
-    commands = [content for position, content in code_blocks]
+    # Combine code blocks and SPREAD blocks, then sort by position
+    all_blocks = code_blocks + spread_blocks
+    all_blocks.sort(key=lambda x: x[0])
+    
+    # Extract just the command content, maintaining order
+    commands = [content for position, content in all_blocks]
     
     return commands
 

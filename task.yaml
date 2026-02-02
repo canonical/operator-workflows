@@ -1,7 +1,0 @@
-summary: Tutorial test
-
-kill-timeout: 30m
-
-execute: |
-  echo "First command block that should be picked up"
-  echo "Second command block"
