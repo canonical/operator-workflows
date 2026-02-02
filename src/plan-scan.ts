@@ -53,13 +53,14 @@ export async function run(): Promise<void> {
         core.info(`Skipping ${build.type} build`)
         continue
       }
+      core.info(`Processing ${build.type} build`)
+      ConcatIgnores(build.dir)
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
       await artifact.downloadArtifact(
         (await artifact.getArtifact(build.output)).artifact.id
       )
-      ConcatIgnores(build.dir)
       const manifest = JSON.parse(
         fs.readFileSync('manifest.json', { encoding: 'utf-8' })
       ) as object
