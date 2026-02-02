@@ -3,15 +3,17 @@
 
 #!/usr/bin/env python3
 """
-Extract commands from markdown files.
+Extract commands from markdown and reStructuredText files.
 
-This script reads a markdown file and extracts all commands from code blocks.
-Code blocks are defined by triple backticks (```), and blocks starting with
+This script reads a markdown or reStructuredText file and extracts all commands from code blocks.
+For Markdown: Code blocks are defined by triple backticks (```), and blocks starting with
 {note} or {tip} are excluded.
+For reStructuredText: Code blocks are defined by .. code-block:: directive.
 """
 
 import sys
 import re
+import os
 import argparse
 import logging
 
@@ -55,6 +57,185 @@ def extract_spread_comments(content):
             spread_blocks.append((match.start(), command_content))
     
     return spread_blocks
+
+
+def find_rst_spread_exclusions(content):
+    """
+    Extract all SPREAD exclusion blocks from reStructuredText content.
+    
+    Args:
+        content: reStructuredText content as string
+        
+    Returns:
+        List of tuples (start_pos, end_pos) for SPREAD exclusion ranges
+        
+    Raises:
+        ValueError: If a SPREAD block is not properly closed
+    """
+    exclusion_ranges = []
+    
+    # Find all .. SPREAD and .. SPREAD END markers
+    spread_starts = []
+    spread_ends = []
+    
+    for match in re.finditer(r'^\.\. SPREAD\s*$', content, re.MULTILINE):
+        spread_starts.append(match.start())
+    
+    for match in re.finditer(r'^\.\. SPREAD END\s*$', content, re.MULTILINE):
+        spread_ends.append(match.start())
+    
+    # Validate that all SPREAD blocks are closed
+    if len(spread_starts) != len(spread_ends):
+        raise ValueError(f"Mismatched SPREAD markers: found {len(spread_starts)} '.. SPREAD' but {len(spread_ends)} '.. SPREAD END'")
+    
+    # Create exclusion ranges
+    for start_pos, end_pos in zip(spread_starts, spread_ends):
+        if start_pos >= end_pos:
+            raise ValueError(f"Invalid SPREAD block: '.. SPREAD END' appears before '.. SPREAD' at position {start_pos}")
+        exclusion_ranges.append((start_pos, end_pos))
+    
+    return exclusion_ranges
+
+
+def parse_rst_headers(content):
+    """
+    Extract all headers from reStructuredText content.
+    
+    In RST, headers are text followed by a line of special characters (=, -, ~, etc.)
+    of the same length as the header text.
+    
+    Args:
+        content: reStructuredText content as string
+        
+    Returns:
+        List of tuples (position, level, title) for each header
+    """
+    headers = []
+    lines = content.split('\n')
+    
+    # Common RST header characters in order of typical hierarchy
+    header_chars = ['=', '-', '~', '^', '"', "'", '`', ':', '.', '_', '*', '+', '#']
+    char_to_level = {}
+    current_level = 0
+    
+    i = 0
+    position = 0
+    
+    while i < len(lines):
+        if i + 1 < len(lines):
+            line = lines[i].rstrip()
+            next_line = lines[i + 1].rstrip()
+            
+            # Check if next line is an underline (same length, all same special char)
+            if (line and next_line and 
+                len(line) == len(next_line) and 
+                len(set(next_line)) == 1 and 
+                next_line[0] in header_chars):
+                
+                char = next_line[0]
+                
+                # Assign level based on first appearance order
+                if char not in char_to_level:
+                    char_to_level[char] = current_level
+                    current_level += 1
+                
+                level = char_to_level[char]
+                title = line.strip()
+                headers.append((position, level, title))
+                
+                i += 2  # Skip the underline
+                position += len(lines[i - 2]) + len(lines[i - 1]) + 2  # +2 for newlines
+                continue
+        
+        position += len(lines[i]) + 1  # +1 for newline
+        i += 1
+    
+    return headers
+
+
+def extract_commands_from_rst(file_path):
+    """
+    Extract all commands from code blocks in a reStructuredText file.
+    
+    Args:
+        file_path: Path to the reStructuredText file
+        
+    Returns:
+        List of command strings found in code blocks, in document order
+    """
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    # Extract SPREAD exclusion ranges
+    spread_exclusion_ranges = find_rst_spread_exclusions(content)
+    
+    # Find sections to exclude: "What you'll need", "Requirements", or "Prerequisites"
+    excluded_section_ranges = []
+    headers = parse_rst_headers(content)
+    
+    excluded_section_names = ["what you'll need", "requirements", "prerequisites"]
+    for i, (pos, level, title) in enumerate(headers):
+        if title.lower() in excluded_section_names:
+            start_pos = pos
+            # Find the next header at the same or higher level (fewer or equal number)
+            end_pos = len(content)
+            for j in range(i + 1, len(headers)):
+                next_pos, next_level, next_title = headers[j]
+                if next_level <= level:
+                    end_pos = next_pos
+                    break
+            excluded_section_ranges.append((start_pos, end_pos))
+    
+    # Combine all exclusion ranges
+    excluded_ranges = spread_exclusion_ranges + excluded_section_ranges
+    
+    # Find all code blocks: .. code-block:: followed by optional blank line and indented content
+    # The pattern matches the directive and captures all consistently indented lines that follow
+    pattern = r'^\.\. code-block::[^\n]*\n(?:\n)?((?:[ \t]+.+(?:\n|$))+)'  
+    matches = re.finditer(pattern, content, re.MULTILINE)
+    
+    code_blocks = []
+    for match in matches:
+        indented_content = match.group(1)
+        match_start = match.start()
+        match_end = match.end()
+        
+        # Skip blocks that are within excluded ranges
+        is_excluded = any(start <= match_start < end 
+                         for start, end in excluded_ranges)
+        if is_excluded:
+            continue
+        
+        # Dedent the content (remove common leading whitespace)
+        lines = indented_content.split('\n')
+        # Filter out empty lines for indentation calculation
+        non_empty_lines = [line for line in lines if line.strip()]
+        
+        if not non_empty_lines:
+            continue
+        
+        # Find minimum indentation
+        min_indent = min(len(line) - len(line.lstrip()) 
+                        for line in non_empty_lines)
+        
+        # Remove the common indentation
+        dedented_lines = []
+        for line in lines:
+            if line.strip():  # Non-empty line
+                dedented_lines.append(line[min_indent:])
+            else:  # Empty line
+                dedented_lines.append('')
+        
+        code_content = '\n'.join(dedented_lines).strip()
+        
+        if code_content:
+            code_blocks.append((match_start, code_content))
+    
+    # Sort by position and extract content
+    code_blocks.sort(key=lambda x: x[0])
+    commands = [content for position, content in code_blocks]
+    
+    return commands
 
 
 def extract_commands_from_markdown(file_path):
@@ -169,19 +350,20 @@ def write_task_yaml(commands, output_path="task.yaml"):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract commands from markdown files and generate task.yaml for Spread tests.",
+        description="Extract commands from markdown and reStructuredText files and generate task.yaml for Spread tests.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   %(prog)s docs/tutorial.md
+  %(prog)s docs/tutorial.rst
   %(prog)s docs/tutorial.md tests/spread/tutorial/task.yaml
-  %(prog)s docs/tutorial.md tests/spread/tutorial/
+  %(prog)s docs/tutorial.rst tests/spread/tutorial/
         """
     )
     
     parser.add_argument(
         'markdown_file',
-        help='Path to the markdown file to extract commands from'
+        help='Path to the markdown or reStructuredText file to extract commands from'
     )
     
     parser.add_argument(
@@ -216,14 +398,24 @@ Examples:
     output_path = args.output_path
     
     # If output_path is a directory, append task.yaml
-    import os
     if os.path.isdir(output_path) or output_path.endswith('/'):
         output_file = os.path.join(output_path, "task.yaml")
     else:
         output_file = output_path
     
+    # Determine file type based on extension
+    _, file_ext = os.path.splitext(file_path)
+    file_ext = file_ext.lower()
+    
     try:
-        commands = extract_commands_from_markdown(file_path)
+        # Extract commands based on file type
+        if file_ext in ['.rst', '.rest']:
+            commands = extract_commands_from_rst(file_path)
+        elif file_ext in ['.md', '.markdown']:
+            commands = extract_commands_from_markdown(file_path)
+        else:
+            logging.error(f"Unsupported file type '{file_ext}'. Supported types: .md, .markdown, .rst, .rest")
+            sys.exit(1)
         
         logging.info(f"Found {len(commands)} command block(s) in {file_path}")
         
