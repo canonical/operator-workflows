@@ -27,37 +27,32 @@ CVE-2025-68973
 `
 
 function ConcatIgnores(dir: string): string {
-  // find the nearest .trivyignore file by walking up from the parent of the given dir
+  // find a .trivyignore file in the given dir or any child dir (depth-first)
   // and write back the combined content
+  core.info(`looking at: ${dir}`)
   const startDir = path.resolve(dir)
-  const initialDir = path.dirname(startDir)
-  const searchRoots = [initialDir, process.cwd()]
-  let ignoreFile = ''
-  for (const root of searchRoots) {
-    let currentDir = root
-    let candidate = path.join(currentDir, '.trivyignore')
-    core.info(`Starting .trivyignore search at: ${currentDir}`)
-    while (!fs.existsSync(candidate)) {
-      const parentDir = path.dirname(currentDir)
-      if (parentDir === currentDir) {
-        break
+  let ignoreFile = path.join(startDir, '.trivyignore')
+  if (!fs.existsSync(ignoreFile)) {
+    const stack: string[] = [startDir]
+    while (stack.length > 0) {
+      const currentDir = stack.pop() as string
+      const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+      for (const entry of entries) {
+        const entryPath = path.join(currentDir, entry.name)
+        if (entry.isFile() && entry.name === '.trivyignore') {
+          ignoreFile = entryPath
+          stack.length = 0
+          break
+        }
+        if (entry.isDirectory()) {
+          stack.push(entryPath)
+        }
       }
-      core.info(
-        `parentDir: ${parentDir}, currentDir: ${currentDir}, ignoreFile: ${candidate}`
-      )
-      currentDir = parentDir
-      candidate = path.join(currentDir, '.trivyignore')
-      core.info(`Checking for .trivyignore at: ${candidate}`)
-    }
-    if (fs.existsSync(candidate)) {
-      ignoreFile = candidate
-      break
     }
   }
-  if (!ignoreFile) {
-    ignoreFile = path.join(initialDir, '.trivyignore')
-  }
-  const originalContent = fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
+  const originalContent = fs.existsSync(ignoreFile)
+    ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
+    : ''
   core.info(`Using .trivyignore at: ${ignoreFile}`)
   core.info(`Original .trivyignore content:\n${originalContent}`)
   let ignoreContent = commonIgnorePatterns
@@ -81,7 +76,7 @@ export async function run(): Promise<void> {
         continue
       }
       core.info(`Processing ${build.type} build`)
-      ConcatIgnores(build.dir)
+      ConcatIgnores(path.dirname(build.dir))
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
