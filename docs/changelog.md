@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-02-01
+- Update `docs_spread` workflow to support reStructuredText and more flexible
+  handling of skippable commands.
+- Update `workflow_test.yaml` to include a test for reStructuredText files.
+
 ## 2026-01-21
 - Add `docs_spread` workflow to auto-generate testing materials and run Spread.
 
