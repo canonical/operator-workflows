@@ -18,7 +18,7 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6.0.1
+    - uses: actions/checkout@v6.0.2
 
     - name: Render terraform docs and push changes back to PR
       uses: terraform-docs/gh-actions@v1.4.1

@@ -1,0 +1,54 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# NOTE: This file is for testing the docs_spread.yaml workflow
+
+project: operator-workflows
+
+path: /operator-workflows
+environment:
+  PROJECT_PATH: /operator-workflows
+
+  # important to ensure adhoc and linode/qemu behave the same
+  SUDO_USER: ""
+  SUDO_UID: ""
+
+  LANG: "C.UTF-8"
+  LANGUAGE: "en"
+
+exclude:
+  - .git
+  - .github
+  - .tox
+  - .venv
+  - .*_cache
+  - charmcraft
+  - libexec
+  - schema
+  - snap
+
+backends:
+  github-ci:
+    type: adhoc
+    allocate: |
+      echo "Allocating ad-hoc $SPREAD_SYSTEM"
+      if [ -z "${GITHUB_RUN_ID:-}" ]; then
+        FATAL "this back-end only works inside GitHub CI"
+        exit 1
+      fi
+      echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/99-spread-users
+      ADDRESS localhost:22
+    discard: |
+      echo "Discarding ad-hoc $SPREAD_SYSTEM"
+    systems:
+      - ubuntu-24.04-64:
+          username: ubuntu
+          password: ubuntu
+          workers: 1
+
+suites:
+  tests/spread/: 
+    summary: tutorial test
+    systems:
+      - ubuntu-24.04-64
+
