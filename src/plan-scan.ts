@@ -40,8 +40,8 @@ function ConcatIgnores(dir: string): string {
       }
     }
   }
-  printDirStructure(dir, '')
   const startDir = path.resolve(dir)
+  printDirStructure(startDir, '')
   let ignoreFile = path.join(startDir, '.trivyignore')
   if (!fs.existsSync(ignoreFile)) {
     const stack: string[] = [startDir]
