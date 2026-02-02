@@ -6,9 +6,20 @@
 Extract commands from markdown and reStructuredText files.
 
 This script reads a markdown or reStructuredText file and extracts all commands from code blocks.
-For Markdown: Code blocks are defined by triple backticks (```), and blocks starting with
-{note} or {tip} are excluded.
-For reStructuredText: Code blocks are defined by .. code-block:: directive.
+
+For Markdown:
+- Code blocks are defined by triple backticks (```).
+- Blocks starting with {note} or {tip} are excluded.
+- SPREAD comment blocks (<!-- SPREAD\n...\n-->) are included.
+- SPREAD SKIP markers (<!-- SPREAD SKIP --> ... <!-- SPREAD SKIP END -->) mark ranges to exclude.
+
+For reStructuredText:
+- Code blocks are defined by .. code-block:: directive.
+- SPREAD comment blocks (.. SPREAD\n...\n.. SPREAD END) are included.
+- SPREAD SKIP markers (.. SPREAD SKIP\n...\n.. SPREAD SKIP END) mark ranges to exclude.
+
+All command blocks (both code blocks and SPREAD blocks) within SPREAD SKIP ranges are excluded
+from the output.
 """
 
 import sys
@@ -18,7 +29,7 @@ import argparse
 import logging
 
 
-def extract_spread_comments(content):
+def extract_markdown_spread_comments(content):
     """
     Extract all SPREAD comment blocks from markdown content.
     
@@ -32,14 +43,11 @@ def extract_spread_comments(content):
         ValueError: If a SPREAD comment block is not properly closed
     """
     spread_blocks = []
-    pattern = r'<!-- SPREAD\s*\n(.*?)-->'
+    # Pattern that matches <!-- SPREAD but not <!-- SPREAD SKIP
+    pattern = r'<!-- SPREAD(?! SKIP)\s*\n(.*?)-->'
     
-    # First check for unclosed SPREAD blocks
-    unclosed_pattern = r'<!-- SPREAD\s*(?!\n.*?-->)'
-    unclosed_matches = list(re.finditer(unclosed_pattern, content, re.DOTALL))
-    
-    # More precise check: find all <!-- SPREAD and verify each has a closing -->
-    spread_starts = [m.start() for m in re.finditer(r'<!-- SPREAD\s*', content)]
+    # Find all <!-- SPREAD (not SPREAD SKIP) and verify each has a closing -->
+    spread_starts = [m.start() for m in re.finditer(r'<!-- SPREAD(?! SKIP)\s*', content)]
     for start_pos in spread_starts:
         # Look for --> after this position
         remaining_content = content[start_pos:]
@@ -57,6 +65,40 @@ def extract_spread_comments(content):
             spread_blocks.append((match.start(), command_content))
     
     return spread_blocks
+
+
+def extract_markdown_spread_skip_comments(content):
+    """
+    Extract all SPREAD SKIP comment blocks from markdown content.
+    
+    Args:
+        content: Markdown content as string
+        
+    Returns:
+        List of tuples (start_pos, end_pos) for SPREAD SKIP exclusion ranges
+        
+    Raises:
+        ValueError: If a SPREAD SKIP comment block is not properly closed
+    """
+    spread_skip_ranges = []
+    
+    # Find all <!-- SPREAD SKIP --> and <!-- SPREAD SKIP END --> markers for validation
+    spread_skip_starts = [m.start() for m in re.finditer(r'<!-- SPREAD SKIP -->', content)]
+    spread_skip_ends = [m.start() for m in re.finditer(r'<!-- SPREAD SKIP END -->', content)]
+    
+    # Validate that all SPREAD SKIP blocks are closed
+    if len(spread_skip_starts) != len(spread_skip_ends):
+        raise ValueError(f"Mismatched SPREAD SKIP markers: found {len(spread_skip_starts)} '<!-- SPREAD SKIP -->' but {len(spread_skip_ends)} '<!-- SPREAD SKIP END -->'")
+    
+    # Validate proper ordering and build ranges
+    for start_marker_pos, end_marker_pos in zip(spread_skip_starts, spread_skip_ends):
+        if start_marker_pos >= end_marker_pos:
+            raise ValueError(f"Invalid SPREAD SKIP block: '<!-- SPREAD SKIP END -->' appears before '<!-- SPREAD SKIP -->' at position {start_marker_pos}")
+        
+        # The range extends from the start marker to the end marker (inclusive of both markers)
+        spread_skip_ranges.append((start_marker_pos, end_marker_pos + len('<!-- SPREAD SKIP END -->')))
+    
+    return spread_skip_ranges
 
 
 def extract_rst_spread_comments(content):
@@ -132,47 +174,44 @@ def extract_rst_spread_comments(content):
     return spread_blocks
 
 
-def parse_rst_headers(content):
+def extract_rst_spread_skip_comments(content):
     """
-    Extract all headers from reStructuredText content using regex.
-    
-    In RST, headers are text followed by a line of special characters (=, -, ~, etc.)
-    of the same length as the header text.
+    Extract all SPREAD SKIP comment blocks from reStructuredText content.
     
     Args:
         content: reStructuredText content as string
         
     Returns:
-        List of tuples (position, level, title) for each header
+        List of tuples (start_pos, end_pos) for SPREAD SKIP exclusion ranges
+        
+    Raises:
+        ValueError: If a SPREAD SKIP block is not properly closed
     """
-    headers = []
+    spread_skip_ranges = []
     
-    # Pattern: capture title line, newline, and underline
-    # The underline must be the same character repeated
-    pattern = r'^(?P<title>.+)\n(?P<char>[=\-~^"\':._*+#`])(?P=char)+$'
+    # Pattern to match .. SPREAD SKIP\n content \n.. SPREAD SKIP END
+    pattern = r'^\.\. SPREAD SKIP\s*\n(.*?)^\.\. SPREAD SKIP END\s*$'
     
-    char_to_level = {}
-    current_level = 0
+    # Find all .. SPREAD SKIP and .. SPREAD SKIP END markers for validation
+    spread_skip_starts = [m.start() for m in re.finditer(r'^\.\. SPREAD SKIP\s*$', content, re.MULTILINE)]
+    spread_skip_ends = [m.start() for m in re.finditer(r'^\.\. SPREAD SKIP END\s*$', content, re.MULTILINE)]
     
-    for match in re.finditer(pattern, content, re.MULTILINE):
-        title = match.group('title').strip()
-        char = match.group('char')
-        underline = match.group(0).split('\n')[1]
-        
-        # Validate that underline length matches title length
-        if len(title) != len(underline):
-            continue
-        
-        # Assign level based on first appearance order
-        if char not in char_to_level:
-            char_to_level[char] = current_level
-            current_level += 1
-        
-        level = char_to_level[char]
-        position = match.start()
-        headers.append((position, level, title))
+    # Validate that all SPREAD SKIP blocks are closed
+    if len(spread_skip_starts) != len(spread_skip_ends):
+        raise ValueError(f"Mismatched SPREAD SKIP markers: found {len(spread_skip_starts)} '.. SPREAD SKIP' but {len(spread_skip_ends)} '.. SPREAD SKIP END'")
     
-    return headers
+    # Validate proper ordering
+    for start_pos, end_pos in zip(spread_skip_starts, spread_skip_ends):
+        if start_pos >= end_pos:
+            raise ValueError(f"Invalid SPREAD SKIP block: '.. SPREAD SKIP END' appears before '.. SPREAD SKIP' at position {start_pos}")
+    
+    # Extract ranges from SPREAD SKIP blocks
+    for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
+        start_pos = match.start()
+        end_pos = match.end()
+        spread_skip_ranges.append((start_pos, end_pos))
+    
+    return spread_skip_ranges
 
 
 def extract_commands_from_rst(file_path):
@@ -188,28 +227,14 @@ def extract_commands_from_rst(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Extract SPREAD comment blocks (these are included in output)
+    # Extract SPREAD comment blocks
     spread_blocks = extract_rst_spread_comments(content)
     
-    # Find sections to exclude: "What you'll need", "Requirements", or "Prerequisites"
-    excluded_section_ranges = []
-    headers = parse_rst_headers(content)
+    # Extract SPREAD SKIP ranges
+    spread_skip_ranges = extract_rst_spread_skip_comments(content)
     
-    excluded_section_names = ["what you'll need", "requirements", "prerequisites"]
-    for i, (pos, level, title) in enumerate(headers):
-        if title.lower() in excluded_section_names:
-            start_pos = pos
-            # Find the next header at the same or higher level (fewer or equal number)
-            end_pos = len(content)
-            for j in range(i + 1, len(headers)):
-                next_pos, next_level, next_title = headers[j]
-                if next_level <= level:
-                    end_pos = next_pos
-                    break
-            excluded_section_ranges.append((start_pos, end_pos))
-    
-    # Only excluded sections (not SPREAD blocks)
-    excluded_ranges = excluded_section_ranges
+    # Set excluded ranges to SPREAD SKIP ranges
+    excluded_ranges = spread_skip_ranges
     
     # Find all code blocks: .. code-block:: followed by optional blank line and indented content
     # The pattern matches the directive and captures all consistently indented lines that follow
@@ -253,8 +278,15 @@ def extract_commands_from_rst(file_path):
         if code_content:
             code_blocks.append((match_start, code_content))
     
-    # Combine code blocks and SPREAD blocks, then sort by position
-    all_blocks = code_blocks + spread_blocks
+    # Filter SPREAD blocks to exclude those within SPREAD SKIP ranges
+    filtered_spread_blocks = []
+    for pos, content in spread_blocks:
+        is_excluded = any(start <= pos < end for start, end in spread_skip_ranges)
+        if not is_excluded:
+            filtered_spread_blocks.append((pos, content))
+    
+    # Combine code blocks and filtered SPREAD blocks, then sort by position
+    all_blocks = code_blocks + filtered_spread_blocks
     all_blocks.sort(key=lambda x: x[0])
     
     # Extract just the command content, maintaining order
@@ -276,34 +308,11 @@ def extract_commands_from_markdown(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
     
-    # Extract SPREAD comment blocks first (these are never excluded)
-    spread_blocks = extract_spread_comments(content)
+    # Extract SPREAD comment blocks
+    spread_blocks = extract_markdown_spread_comments(content)
     
-    # Find sections to exclude: "What you'll need", "Requirements", or "Prerequisites"
-    excluded_section_ranges = []
-    header_pattern = r'^(#+)\s+(.+)$'
-    
-    # Find all headers in the document
-    headers = []
-    for match in re.finditer(header_pattern, content, re.MULTILINE):
-        level = len(match.group(1))
-        title = match.group(2).strip()
-        position = match.start()
-        headers.append((position, level, title))
-    
-    # Find all sections with names: "What you'll need", "Requirements", or "Prerequisites"
-    excluded_section_names = ["what you'll need", "requirements", "prerequisites"]
-    for i, (pos, level, title) in enumerate(headers):
-        if title.lower() in excluded_section_names:
-            start_pos = pos
-            # Find the next header at the same or higher level (fewer or equal #)
-            end_pos = len(content)
-            for j in range(i + 1, len(headers)):
-                next_pos, next_level, next_title = headers[j]
-                if next_level <= level:
-                    end_pos = next_pos
-                    break
-            excluded_section_ranges.append((start_pos, end_pos))
+    # Extract SPREAD SKIP ranges
+    spread_skip_ranges = extract_markdown_spread_skip_comments(content)
     
     # First, find all blocks with 4+ backticks to identify excluded regions
     excluded_ranges = []
@@ -311,8 +320,8 @@ def extract_commands_from_markdown(file_path):
     for match in re.finditer(pattern_4plus, content, re.DOTALL):
         excluded_ranges.append((match.start(), match.end()))
     
-    # Add all excluded sections to excluded ranges
-    excluded_ranges.extend(excluded_section_ranges)
+    # Add SPREAD SKIP ranges to excluded ranges
+    excluded_ranges.extend(spread_skip_ranges)
     
     # Find all code blocks: exactly 3 backticks (not more), optional language, content, then exactly 3 backticks
     # Use negative lookbehind and lookahead to ensure exactly 3 backticks
@@ -340,8 +349,15 @@ def extract_commands_from_markdown(file_path):
         if code_content.strip():
             code_blocks.append((match_start, code_content.strip()))
     
-    # Combine code blocks and SPREAD blocks, then sort by position
-    all_blocks = code_blocks + spread_blocks
+    # Filter SPREAD blocks to exclude those within SPREAD SKIP ranges
+    filtered_spread_blocks = []
+    for pos, content in spread_blocks:
+        is_excluded = any(start <= pos < end for start, end in spread_skip_ranges)
+        if not is_excluded:
+            filtered_spread_blocks.append((pos, content))
+    
+    # Combine code blocks and filtered SPREAD blocks, then sort by position
+    all_blocks = code_blocks + filtered_spread_blocks
     all_blocks.sort(key=lambda x: x[0])
     
     # Extract just the command content, maintaining order
@@ -383,6 +399,23 @@ Examples:
   %(prog)s docs/tutorial.rst
   %(prog)s docs/tutorial.md tests/spread/tutorial/task.yaml
   %(prog)s docs/tutorial.rst tests/spread/tutorial/
+
+Special Markers:
+  SPREAD blocks (always included):
+    Markdown: <!-- SPREAD
+              command content
+              -->
+    RST:      .. SPREAD
+              .. command content
+              .. SPREAD END
+  
+  SPREAD SKIP markers (exclude all commands in range):
+    Markdown: <!-- SPREAD SKIP -->
+              Content to skip (code blocks and SPREAD blocks)
+              <!-- SPREAD SKIP END -->
+    RST:      .. SPREAD SKIP
+              .. Content to skip
+              .. SPREAD SKIP END
         """
     )
     

@@ -3,6 +3,8 @@ Sample file to test the automated Spread test workflow
 
 Hello this is a tutorial for testing purposes only.
 
+.. SPREAD SKIP
+
 Requirements
 ------------
 
@@ -17,6 +19,8 @@ This command block should also be ignored
 .. code-block::
 
     echo "Hello I should also be ignored"
+
+.. SPREAD SKIP END
 
 Commands that should be picked up
 ---------------------------------
