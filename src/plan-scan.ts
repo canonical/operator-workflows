@@ -27,12 +27,25 @@ CVE-2025-68973
 `
 
 function ConcatIgnores(dir: string): string {
-  // find the .trivyignore file in the given dir and add the common ignores to it
+  // find the nearest .trivyignore file by walking up from the given dir
   // and write back the combined content
-  const ignoreFile = path.join(dir, '.trivyignore')
+  let currentDir = dir
+  let ignoreFile = path.join(currentDir, '.trivyignore')
+  while (!fs.existsSync(ignoreFile)) {
+    const parentDir = path.dirname(currentDir)
+    if (parentDir === currentDir) {
+      break
+    }
+    currentDir = parentDir
+    ignoreFile = path.join(currentDir, '.trivyignore')
+  }
+  if (!fs.existsSync(ignoreFile)) {
+    ignoreFile = path.join(dir, '.trivyignore')
+  }
   const originalContent = fs.existsSync(ignoreFile)
     ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
     : ''
+  core.info(`Using .trivyignore at: ${ignoreFile}`)
   core.info(`Original .trivyignore content:\n${originalContent}`)
   let ignoreContent = commonIgnorePatterns
   if (originalContent) {
