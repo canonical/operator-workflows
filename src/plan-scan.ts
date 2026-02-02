@@ -30,7 +30,8 @@ function ConcatIgnores(dir: string): string {
   // find the nearest .trivyignore file by walking up from the parent of the given dir
   // and write back the combined content
   const startDir = path.resolve(dir)
-  let currentDir = path.dirname(startDir)
+  const initialDir = path.dirname(startDir)
+  let currentDir = initialDir
   let ignoreFile = path.join(currentDir, '.trivyignore')
   while (!fs.existsSync(ignoreFile)) {
     const parentDir = path.dirname(currentDir)
@@ -42,9 +43,11 @@ function ConcatIgnores(dir: string): string {
     )
     currentDir = parentDir
     ignoreFile = path.join(currentDir, '.trivyignore')
+    core.info(`Checking for .trivyignore at: ${ignoreFile}`)
   }
+  core.info(`Found .trivyignore at: ${ignoreFile}`)
   if (!fs.existsSync(ignoreFile)) {
-    ignoreFile = path.join(startDir, '.trivyignore')
+    ignoreFile = path.join(initialDir, '.trivyignore')
   }
   const originalContent = fs.existsSync(ignoreFile)
     ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
