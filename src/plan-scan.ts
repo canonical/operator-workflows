@@ -57,9 +57,7 @@ function ConcatIgnores(dir: string): string {
   if (!ignoreFile) {
     ignoreFile = path.join(initialDir, '.trivyignore')
   }
-  const originalContent = fs.existsSync(ignoreFile)
-    ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
-    : ''
+  const originalContent = fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
   core.info(`Using .trivyignore at: ${ignoreFile}`)
   core.info(`Original .trivyignore content:\n${originalContent}`)
   let ignoreContent = commonIgnorePatterns
