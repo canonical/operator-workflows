@@ -30,6 +30,17 @@ function ConcatIgnores(dir: string): string {
   // find a .trivyignore file in the given dir or any child dir (depth-first)
   // and write back the combined content
   core.info(`looking at: ${dir}`)
+  // print the directory structure for debugging
+  function printDirStructure(currentDir: string, indent: string): void {
+    const entries = fs.readdirSync(currentDir, { withFileTypes: true })
+    for (const entry of entries) {
+      core.info(`${indent}- ${entry.name}`)
+      if (entry.isDirectory()) {
+        printDirStructure(path.join(currentDir, entry.name), indent + '  ')
+      }
+    }
+  }
+  printDirStructure(dir, '')
   const startDir = path.resolve(dir)
   let ignoreFile = path.join(startDir, '.trivyignore')
   if (!fs.existsSync(ignoreFile)) {
