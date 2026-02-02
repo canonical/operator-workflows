@@ -31,22 +31,30 @@ function ConcatIgnores(dir: string): string {
   // and write back the combined content
   const startDir = path.resolve(dir)
   const initialDir = path.dirname(startDir)
-  let currentDir = initialDir
-  let ignoreFile = path.join(currentDir, '.trivyignore')
-  while (!fs.existsSync(ignoreFile)) {
-    const parentDir = path.dirname(currentDir)
-    if (parentDir === currentDir) {
+  const searchRoots = [initialDir, process.cwd()]
+  let ignoreFile = ''
+  for (const root of searchRoots) {
+    let currentDir = root
+    let candidate = path.join(currentDir, '.trivyignore')
+    core.info(`Starting .trivyignore search at: ${currentDir}`)
+    while (!fs.existsSync(candidate)) {
+      const parentDir = path.dirname(currentDir)
+      if (parentDir === currentDir) {
+        break
+      }
+      core.info(
+        `parentDir: ${parentDir}, currentDir: ${currentDir}, ignoreFile: ${candidate}`
+      )
+      currentDir = parentDir
+      candidate = path.join(currentDir, '.trivyignore')
+      core.info(`Checking for .trivyignore at: ${candidate}`)
+    }
+    if (fs.existsSync(candidate)) {
+      ignoreFile = candidate
       break
     }
-    core.info(
-      `parentDir: ${parentDir}, currentDir: ${currentDir}, ignoreFile: ${ignoreFile}`
-    )
-    currentDir = parentDir
-    ignoreFile = path.join(currentDir, '.trivyignore')
-    core.info(`Checking for .trivyignore at: ${ignoreFile}`)
   }
-  core.info(`Found .trivyignore at: ${ignoreFile}`)
-  if (!fs.existsSync(ignoreFile)) {
+  if (!ignoreFile) {
     ignoreFile = path.join(initialDir, '.trivyignore')
   }
   const originalContent = fs.existsSync(ignoreFile)
