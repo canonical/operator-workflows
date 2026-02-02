@@ -49,6 +49,7 @@ export async function run(): Promise<void> {
     const artifact = new DefaultArtifactClient()
     let scans: Scan[] = []
     for (const build of plan.build) {
+      core.info(`Testing!`)
       if (['charm', 'file'].includes(build.type)) {
         core.info(`Skipping ${build.type} build`)
         continue
