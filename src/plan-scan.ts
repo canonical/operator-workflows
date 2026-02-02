@@ -76,7 +76,7 @@ export async function run(): Promise<void> {
         continue
       }
       core.info(`Processing ${build.type} build`)
-      ConcatIgnores(path.dirname(build.dir))
+      ConcatIgnores('.')
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
