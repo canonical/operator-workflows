@@ -359,7 +359,7 @@ jobs:
             {
               echo "### Entries already in .trivyignore"
               echo ""
-              echo "The following CVEs from common ignores already exist in the repository's .trivyignore:"
+              echo "The following CVEs from the repository's .trivyignore already exist in the common ignores:"
               echo ""
               cat existing_cves.txt | sed 's/^/- /'
             } > pr_comment_common_ignores.md
