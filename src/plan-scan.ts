@@ -4,8 +4,6 @@
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
 import fs from 'fs'
-import * as os from 'os'
-import * as path from 'path'
 import { Plan } from './model'
 
 interface Scan {
@@ -13,6 +11,7 @@ interface Scan {
   file: string
   image: string
   dir: string
+  common_ignores?: string
 }
 
 const commonIgnorePatterns = `#this is a list of common CVE's
@@ -26,58 +25,6 @@ CVE-2024-45337
 CVE-2025-68973
 `
 
-function ConcatIgnores(dir: string): string {
-  // find a .trivyignore file in the given dir or any child dir (depth-first)
-  // and write back the combined content
-  core.info(`looking at: ${dir}`)
-  // print the directory structure for debugging
-  function printDirStructure(currentDir: string, indent: string): void {
-    const entries = fs.readdirSync(currentDir, { withFileTypes: true })
-    for (const entry of entries) {
-      core.info(`${indent}- ${entry.name}`)
-      if (entry.isDirectory()) {
-        printDirStructure(path.join(currentDir, entry.name), indent + '  ')
-      }
-    }
-  }
-  const startDir = path.resolve(dir)
-  printDirStructure(startDir, '')
-  let ignoreFile = path.join(startDir, '.trivyignore')
-  if (!fs.existsSync(ignoreFile)) {
-    const stack: string[] = [startDir]
-    while (stack.length > 0) {
-      const currentDir = stack.pop() as string
-      const entries = fs.readdirSync(currentDir, { withFileTypes: true })
-      for (const entry of entries) {
-        const entryPath = path.join(currentDir, entry.name)
-        if (entry.isFile() && entry.name === '.trivyignore') {
-          ignoreFile = entryPath
-          stack.length = 0
-          break
-        }
-        if (entry.isDirectory()) {
-          stack.push(entryPath)
-        }
-      }
-    }
-  }
-  ignoreFile = path.resolve(
-    '/home/runner/work/netbox-k8s-operator/.trivyignore'
-  )
-  const originalContent = fs.existsSync(ignoreFile)
-    ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
-    : ''
-  core.info(`Using .trivyignore at: ${ignoreFile}`)
-  core.info(`Original .trivyignore content:\n${originalContent}`)
-  let ignoreContent = commonIgnorePatterns
-  if (originalContent) {
-    ignoreContent = originalContent + os.EOL + commonIgnorePatterns
-  }
-  core.info(`Final .trivyignore content:\n${ignoreContent}`)
-  fs.writeFileSync(ignoreFile, ignoreContent, { encoding: 'utf-8' })
-  return ignoreContent
-}
-
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
@@ -90,7 +37,6 @@ export async function run(): Promise<void> {
         continue
       }
       core.info(`Processing ${build.type} build`)
-      ConcatIgnores('.')
       fs.readdirSync('.').forEach(file =>
         fs.rmSync(file, { force: true, recursive: true })
       )
@@ -107,7 +53,8 @@ export async function run(): Promise<void> {
             artifact: build.output,
             file: f,
             image: '',
-            dir: build.source_directory
+            dir: build.source_directory,
+            common_ignores: commonIgnorePatterns
           }))
         )
       }
@@ -118,7 +65,8 @@ export async function run(): Promise<void> {
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
             image: i,
-            dir: build.source_directory
+            dir: build.source_directory,
+            common_ignores: commonIgnorePatterns
           }))
         )
       }
