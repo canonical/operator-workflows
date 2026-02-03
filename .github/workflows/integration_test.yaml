@@ -160,10 +160,10 @@ on:
       upload-image:
         type: string
         description: >-
-          Can be either 'artifact' or 'registry', which determines the method by which images used 
-          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
-          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
-          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
+          Can be either 'artifact' or 'registry', which determines the method by which images used
+          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub
+          action artifacts. If set to 'registry', the images will be uploaded to ghcr.
+          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests
           originating from forked repositories, and 'registry' for all other cases.
         default: ""
       use-canonical-k8s:
@@ -335,6 +335,7 @@ jobs:
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - if: matrix.scan.common_ignores != ''
         run: |
+          cp .trivyignore .oldtrivyignore
           echo "${{ matrix.scan.common_ignores }}" >> .trivyignore
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
@@ -345,6 +346,28 @@ jobs:
           severity: ${{ inputs.trivy-severity-config }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
+      - name: Check trivyignore against central trivyignore
+        if: matrix.scan.common_ignores != ''
+        run: |
+          while read -r CVE; do
+            [[ "$CVE" =~ ^#.*$ || -z "$CVE" ]] && continue
+            if grep -q -F "$CVE" .oldtrivyignore; then
+              echo "$CVE" >> existing_cves.txt
+            fi
+          done <<< "${{ matrix.scan.common_ignores }}"
+          if [ -s existing_cves.txt ]; then
+            {
+              echo "### Entries already in .trivyignore"
+              echo ""
+              echo "The following CVEs from common ignores already exist in the repository's .trivyignore:"
+              echo ""
+              cat existing_cves.txt | sed 's/^/- /'
+            } > pr_comment_common_ignores.md
+
+            gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment_common_ignores.md || true
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
@@ -355,8 +378,8 @@ jobs:
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
               -q -f json \
-              | jq -r '.Results[].ExperimentalModifiedFindings[]? 
-                      | select(.Status == "ignored") 
+              | jq -r '.Results[].ExperimentalModifiedFindings[]?
+                      | select(.Status == "ignored")
                       | .Finding.VulnerabilityID' \
               | sort -u)
             # Loop through .trivyignore and check if each CVE is still ignored
