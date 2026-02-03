@@ -406,6 +406,7 @@ jobs:
               gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file pr_comment.md || true
             fi
 
+            echo "${{ matrix.scan.common_ignores }}" >> .commontrivyignore
             # Loop through the central trivyignore and check if each CVE is still ignored
             line=0
             while read -r CVE; do
@@ -414,7 +415,7 @@ jobs:
               if ! grep -q -F "$CVE" <<< "$ignored_cves"; then
                 echo "$CVE" >> unused_central_cves.txt
               fi
-            done < "${{ matrix.scan.common_ignores }}"
+            done < .commontrivyignore
 
             # If unused CVEs found, post PR comment
             if [ -s unused_central_cves.txt ]; then
