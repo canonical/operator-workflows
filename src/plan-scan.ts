@@ -61,6 +61,9 @@ function ConcatIgnores(dir: string): string {
       }
     }
   }
+  ignoreFile = path.resolve(
+    '/home/runner/work/netbox-k8s-operator/.trivyignore'
+  )
   const originalContent = fs.existsSync(ignoreFile)
     ? fs.readFileSync(ignoreFile, { encoding: 'utf-8' })
     : ''
