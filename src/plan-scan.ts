@@ -4,6 +4,7 @@
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
 import fs from 'fs'
+import path from 'path'
 import { Plan } from './model'
 
 interface Scan {
@@ -14,24 +15,25 @@ interface Scan {
   common_ignores?: string
 }
 
-const commonIgnorePatterns = `#this is a list of common CVE's
-# statsd_exporter - golang
-# oauth2
-CVE-2025-22868
-# crypto
-CVE-2025-22869
-CVE-2024-45337
-# gnupg
-CVE-2025-68973
-`
+function getCommonIgnorePatterns(): string {
+  const ignoreFilePath = path.resolve(process.cwd(), 'common_trivyignores.txt')
+  try {
+    return fs.readFileSync(ignoreFilePath, { encoding: 'utf-8' })
+  } catch (error) {
+    core.warning(
+      `Failed to read common ignores at ${ignoreFilePath}; using defaults. ${error}`
+    )
+    return ''
+  }
+}
 
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
     const artifact = new DefaultArtifactClient()
+    const commonIgnorePatterns = getCommonIgnorePatterns()
     let scans: Scan[] = []
     for (const build of plan.build) {
-      core.info(`Testing!`)
       if (['charm', 'file'].includes(build.type)) {
         core.info(`Skipping ${build.type} build`)
         continue
