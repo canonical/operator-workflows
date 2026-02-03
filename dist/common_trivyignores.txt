@@ -1,0 +1,9 @@
+#this is a list of common CVE's
+# statsd_exporter - golang
+# oauth2
+CVE-2025-22868
+# crypto
+CVE-2025-22869
+CVE-2024-45337
+# gnupg
+CVE-2025-68973

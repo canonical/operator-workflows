@@ -16,15 +16,39 @@ interface Scan {
 }
 
 function getCommonIgnorePatterns(): string {
-  const ignoreFilePath = path.resolve(process.cwd(), 'common_trivyignores.txt')
-  try {
-    return fs.readFileSync(ignoreFilePath, { encoding: 'utf-8' })
-  } catch (error) {
-    core.warning(
-      `Failed to read common ignores at ${ignoreFilePath}; using defaults. ${error}`
-    )
-    return ''
+  const candidates = [
+    process.env.GITHUB_ACTION_PATH
+      ? path.resolve(
+          process.env.GITHUB_ACTION_PATH,
+          '..',
+          '..',
+          'common_trivyignores.txt'
+        )
+      : undefined,
+    process.env.GITHUB_ACTION_PATH
+      ? path.resolve(
+          process.env.GITHUB_ACTION_PATH,
+          '..',
+          '..',
+          'dist',
+          'common_trivyignores.txt'
+        )
+      : undefined,
+    path.resolve(process.cwd(), 'common_trivyignores.txt'),
+    path.resolve(process.cwd(), 'dist', 'common_trivyignores.txt'),
+    path.resolve(__dirname, '..', '..', 'common_trivyignores.txt')
+  ].filter((p): p is string => Boolean(p))
+
+  for (const ignoreFilePath of candidates) {
+    try {
+      return fs.readFileSync(ignoreFilePath, { encoding: 'utf-8' })
+    } catch {
+      // continue to next candidate
+    }
   }
+
+  core.warning(`Failed to read common ignores. Tried: ${candidates.join(', ')}`)
+  return ''
 }
 
 export async function run(): Promise<void> {

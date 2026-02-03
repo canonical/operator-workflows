@@ -30,7 +30,7 @@
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
-    "package": "ls src/*.ts | sed -E 's|.*/([^/]+)\\.ts|\\1|' | xargs -I{} npx ncc build src/{}.ts -o dist/{} --source-map",
+    "package": "ls src/*.ts | sed -E 's|.*/([^/]+)\\.ts|\\1|' | xargs -I{} npx ncc build src/{}.ts -o dist/{} --source-map && cp common_trivyignores.txt dist/common_trivyignores.txt",
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
