@@ -333,10 +333,18 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
-      - if: matrix.scan.common_ignores != ''
+      - name: Append central ignore lines
+        if: matrix.scan.common_ignores != ''
         run: |
           cp .trivyignore .oldtrivyignore
           echo "${{ matrix.scan.common_ignores }}" >> .trivyignore
+      - name: Find the ignore modules
+        run: |
+          echo "${{ matrix.scan.dir }}"
+          if [ -f "${{ matrix.scan.dir }}/.trivyignore"]; then
+            cat "${{ matrix.scan.dir }}/.trivyignore" >> .trivyignore
+            cat .trivyignore
+          fi
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
         with:
