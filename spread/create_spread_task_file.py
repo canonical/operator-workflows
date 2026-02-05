@@ -27,6 +27,49 @@ import re
 import os
 import argparse
 import logging
+from pathlib import Path
+
+
+def validate_paired_markers(content, start_pattern, end_pattern, marker_name, flags=0):
+    """
+    Validate that markers are properly paired and ordered using a stack-based approach.
+    
+    Args:
+        content: Content to validate
+        start_pattern: Regex pattern for start marker
+        end_pattern: Regex pattern for end marker
+        marker_name: Name of marker for error messages
+        flags: Optional regex flags (e.g., re.MULTILINE)
+        
+    Returns:
+        List of tuples (start_pos, end_pos) for valid marker pairs
+        
+    Raises:
+        ValueError: If markers are not properly paired or ordered
+    """
+    starts = [(m.start(), 'start') for m in re.finditer(start_pattern, content, flags)]
+    ends = [(m.start(), 'end') for m in re.finditer(end_pattern, content, flags)]
+    
+    # Merge and sort by position
+    all_markers = sorted(starts + ends, key=lambda x: x[0])
+    
+    # Use stack to validate pairing
+    stack = []
+    pairs = []
+    
+    for pos, marker_type in all_markers:
+        if marker_type == 'start':
+            stack.append(pos)
+        else:  # marker_type == 'end'
+            if not stack:
+                raise ValueError(f"Found closing {marker_name} marker without corresponding opening marker at position {pos}")
+            start_pos = stack.pop()
+            pairs.append((start_pos, pos))
+    
+    if stack:
+        raise ValueError(f"Unclosed {marker_name} marker found at position {stack[0]}")
+    
+    return pairs
 
 
 def extract_markdown_spread_comments(content):
@@ -80,23 +123,19 @@ def extract_markdown_spread_skip_comments(content):
     Raises:
         ValueError: If a SPREAD SKIP comment block is not properly closed
     """
+    # Validate pairing using stack-based validation
+    start_pattern = r'<!-- SPREAD SKIP -->'
+    end_pattern = r'<!-- SPREAD SKIP END -->'
+    pairs = validate_paired_markers(content, start_pattern, end_pattern, "SPREAD SKIP")
+    
+    # Convert pairs to ranges (end position should include the end marker)
     spread_skip_ranges = []
-    
-    # Find all <!-- SPREAD SKIP --> and <!-- SPREAD SKIP END --> markers for validation
-    spread_skip_starts = [m.start() for m in re.finditer(r'<!-- SPREAD SKIP -->', content)]
-    spread_skip_ends = [m.start() for m in re.finditer(r'<!-- SPREAD SKIP END -->', content)]
-    
-    # Validate that all SPREAD SKIP blocks are closed
-    if len(spread_skip_starts) != len(spread_skip_ends):
-        raise ValueError(f"Mismatched SPREAD SKIP markers: found {len(spread_skip_starts)} '<!-- SPREAD SKIP -->' but {len(spread_skip_ends)} '<!-- SPREAD SKIP END -->'")
-    
-    # Validate proper ordering and build ranges
-    for start_marker_pos, end_marker_pos in zip(spread_skip_starts, spread_skip_ends):
-        if start_marker_pos >= end_marker_pos:
-            raise ValueError(f"Invalid SPREAD SKIP block: '<!-- SPREAD SKIP END -->' appears before '<!-- SPREAD SKIP -->' at position {start_marker_pos}")
-        
-        # The range extends from the start marker to the end marker (inclusive of both markers)
-        spread_skip_ranges.append((start_marker_pos, end_marker_pos + len('<!-- SPREAD SKIP END -->')))
+    for start_pos, end_pos in pairs:
+        # end_pos is the start of the end marker, so we add its length
+        end_marker_match = re.search(end_pattern, content[end_pos:])
+        if end_marker_match:
+            full_end_pos = end_pos + end_marker_match.end()
+            spread_skip_ranges.append((start_pos, full_end_pos))
     
     return spread_skip_ranges
 
@@ -114,23 +153,15 @@ def extract_rst_spread_comments(content):
     Raises:
         ValueError: If a SPREAD block is not properly closed
     """
+    # Validate pairing using stack-based validation
+    start_pattern = r'^\.\. SPREAD\s*$'
+    end_pattern = r'^\.\. SPREAD END\s*$'
+    validate_paired_markers(content, start_pattern, end_pattern, "SPREAD", re.MULTILINE)
+    
     spread_blocks = []
     
     # Pattern to match .. SPREAD\n content \n.. SPREAD END
     pattern = r'^\.\. SPREAD\s*\n(.*?)^\.\. SPREAD END\s*$'
-    
-    # Find all .. SPREAD and .. SPREAD END markers for validation
-    spread_starts = [m.start() for m in re.finditer(r'^\.\. SPREAD\s*$', content, re.MULTILINE)]
-    spread_ends = [m.start() for m in re.finditer(r'^\.\. SPREAD END\s*$', content, re.MULTILINE)]
-    
-    # Validate that all SPREAD blocks are closed
-    if len(spread_starts) != len(spread_ends):
-        raise ValueError(f"Mismatched SPREAD markers: found {len(spread_starts)} '.. SPREAD' but {len(spread_ends)} '.. SPREAD END'")
-    
-    # Validate proper ordering
-    for start_pos, end_pos in zip(spread_starts, spread_ends):
-        if start_pos >= end_pos:
-            raise ValueError(f"Invalid SPREAD block: '.. SPREAD END' appears before '.. SPREAD' at position {start_pos}")
     
     # Extract content from SPREAD blocks
     for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
@@ -187,23 +218,15 @@ def extract_rst_spread_skip_comments(content):
     Raises:
         ValueError: If a SPREAD SKIP block is not properly closed
     """
+    # Validate pairing using stack-based validation
+    start_pattern = r'^\.\. SPREAD SKIP\s*$'
+    end_pattern = r'^\.\. SPREAD SKIP END\s*$'
+    validate_paired_markers(content, start_pattern, end_pattern, "SPREAD SKIP", re.MULTILINE)
+    
     spread_skip_ranges = []
     
     # Pattern to match .. SPREAD SKIP\n content \n.. SPREAD SKIP END
     pattern = r'^\.\. SPREAD SKIP\s*\n(.*?)^\.\. SPREAD SKIP END\s*$'
-    
-    # Find all .. SPREAD SKIP and .. SPREAD SKIP END markers for validation
-    spread_skip_starts = [m.start() for m in re.finditer(r'^\.\. SPREAD SKIP\s*$', content, re.MULTILINE)]
-    spread_skip_ends = [m.start() for m in re.finditer(r'^\.\. SPREAD SKIP END\s*$', content, re.MULTILINE)]
-    
-    # Validate that all SPREAD SKIP blocks are closed
-    if len(spread_skip_starts) != len(spread_skip_ends):
-        raise ValueError(f"Mismatched SPREAD SKIP markers: found {len(spread_skip_starts)} '.. SPREAD SKIP' but {len(spread_skip_ends)} '.. SPREAD SKIP END'")
-    
-    # Validate proper ordering
-    for start_pos, end_pos in zip(spread_skip_starts, spread_skip_ends):
-        if start_pos >= end_pos:
-            raise ValueError(f"Invalid SPREAD SKIP block: '.. SPREAD SKIP END' appears before '.. SPREAD SKIP' at position {start_pos}")
     
     # Extract ranges from SPREAD SKIP blocks
     for match in re.finditer(pattern, content, re.MULTILINE | re.DOTALL):
@@ -224,8 +247,7 @@ def extract_commands_from_rst(file_path):
     Returns:
         List of command strings found in code blocks and SPREAD comments, in document order
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    content = Path(file_path).read_text(encoding='utf-8')
     
     # Extract SPREAD comment blocks
     spread_blocks = extract_rst_spread_comments(content)
@@ -305,8 +327,7 @@ def extract_commands_from_markdown(file_path):
     Returns:
         List of command strings found in code blocks and SPREAD comments, in document order
     """
-    with open(file_path, 'r', encoding='utf-8') as f:
-        content = f.read()
+    content = Path(file_path).read_text(encoding='utf-8')
     
     # Extract SPREAD comment blocks
     spread_blocks = extract_markdown_spread_comments(content)
@@ -373,8 +394,9 @@ def write_task_yaml(commands, output_path="task.yaml"):
         commands: List of command strings to write
         output_path: Path to the output YAML file
     """
+    output_file = Path(output_path)
     
-    with open(output_path, 'w', encoding='utf-8') as f:
+    with output_file.open('w', encoding='utf-8') as f:
         # Write the header
         f.write("summary: Tutorial test\n")
         f.write("\n")
@@ -452,18 +474,17 @@ Special Markers:
         format='%(levelname)s: %(message)s'
     )
     
-    file_path = args.markdown_file
-    output_path = args.output_path
+    file_path = Path(args.markdown_file)
+    output_path = Path(args.output_path)
     
     # If output_path is a directory, append task.yaml
-    if os.path.isdir(output_path) or output_path.endswith('/'):
-        output_file = os.path.join(output_path, "task.yaml")
+    if output_path.is_dir() or str(output_path).endswith('/'):
+        output_file = output_path / "task.yaml"
     else:
         output_file = output_path
     
     # Determine file type based on extension
-    _, file_ext = os.path.splitext(file_path)
-    file_ext = file_ext.lower()
+    file_ext = file_path.suffix.lower()
     
     try:
         # Extract commands based on file type
