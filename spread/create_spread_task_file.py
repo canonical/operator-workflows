@@ -258,8 +258,10 @@ def extract_commands_from_rst(file_path):
     # Set excluded ranges to SPREAD SKIP ranges
     excluded_ranges = spread_skip_ranges
     
-    # Find all code blocks: .. code-block:: followed by optional blank line and indented content
-    # The pattern matches the directive and captures all consistently indented lines that follow
+    # Find all code blocks in RST:
+    # - Match a ".. code-block::" directive line (with any trailing options),
+    # - Allow a single optional blank line immediately after the directive,
+    # - Then capture (in group 1) all subsequent indented content lines as the code block body.
     pattern = r'^\.\. code-block::[^\n]*\n(?:\n)?((?:[ \t]+.+(?:\n|$))+)'  
     matches = re.finditer(pattern, content, re.MULTILINE)
     
