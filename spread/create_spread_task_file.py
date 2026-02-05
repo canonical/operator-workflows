@@ -3,15 +3,15 @@
 
 #!/usr/bin/env python3
 """
-Extract commands from markdown and reStructuredText files.
+Extract commands from Markdown and reStructuredText files.
 
-This script reads a markdown or reStructuredText file and extracts all commands from code blocks.
+This script reads a Markdown or reStructuredText file and extracts all commands from code blocks.
 
 For Markdown:
 - Code blocks are defined by triple backticks (```).
 - Blocks starting with {note} or {tip} are excluded.
-- SPREAD comment blocks (<!-- SPREAD\n...\n-->) are included.
-- SPREAD SKIP markers (<!-- SPREAD SKIP --> ... <!-- SPREAD SKIP END -->) mark ranges to exclude.
+- "SPREAD" HTML comment blocks are included.
+- "SPREAD SKIP" markers in HTML comment blocks mark ranges to exclude.
 
 For reStructuredText:
 - Code blocks are defined by .. code-block:: directive.
