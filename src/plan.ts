@@ -1,15 +1,15 @@
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
 
-import * as core from '@actions/core'
-import * as glob from '@actions/glob'
-import * as path from 'path'
-import * as yaml from 'js-yaml'
-import * as fs from 'fs'
-import * as github from '@actions/github'
-import { Plan, BuildPlan, CharmResource } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
+import * as github from '@actions/github'
+import * as glob from '@actions/glob'
+import * as fs from 'fs'
+import * as yaml from 'js-yaml'
 import * as os from 'os'
+import * as path from 'path'
+import { BuildPlan, CharmResource, Plan } from './model'
 
 function normalizePath(p: string): string {
   return path.normalize(p).replace(/\/+$/, '')
@@ -73,7 +73,8 @@ async function planBuildCharm(
       source_directory: path.dirname(file),
       build_target: undefined,
       output_type: 'file',
-      output: sanitizeArtifactName(`${id}__build__output__charm__${name}`)
+      output: sanitizeArtifactName(`${id}__build__output__charm__${name}`),
+      dir: path.dirname(file)
     }
   })
 }
@@ -100,7 +101,8 @@ async function planBuildRock(
       source_directory: path.dirname(file),
       build_target: undefined,
       output_type: outputType,
-      output: sanitizeArtifactName(`${id}__build__output__rock__${name}`)
+      output: sanitizeArtifactName(`${id}__build__output__rock__${name}`),
+      dir: path.dirname(file)
     }
   })
 }
@@ -125,7 +127,8 @@ async function planBuildDockerImage(
       output_type: outputType,
       output: sanitizeArtifactName(
         `${id}__build__output__docker-image__${name}`
-      )
+      ),
+      dir: path.dirname(file)
     }
   })
 }
@@ -193,7 +196,8 @@ async function planBuildFileResource(
             output_type: 'file',
             output: sanitizeArtifactName(
               `${id}__build__output__file__${charmName}__${resourceName}`
-            )
+            ),
+            dir: path.dirname(file)
           })
         }
         return acc

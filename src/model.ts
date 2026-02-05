@@ -14,6 +14,7 @@ export interface BuildPlan {
   build_target: string | undefined
   output_type: 'file' | 'registry'
   output: string
+  dir: string
 }
 
 export interface CharmResource {
