@@ -240,7 +240,7 @@ jobs:
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
   terraform-lint:
-    name: Lint terraform files
+    name: Terraform lint
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
