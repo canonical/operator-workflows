@@ -253,12 +253,12 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 2
       - name: Check if TF files changed
         id: tf-changed
         run: |
-          if git diff --name-only HEAD~1 | grep -q '\.tf$'; then
+          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}")
+          echo "Changed files: $CHANGED_FILES"
+          if echo $CHANGED_FILES | grep -q '\.tf$'; then
             echo "tf_changed=true" >> $GITHUB_OUTPUT
           else
             echo "tf_changed=false" >> $GITHUB_OUTPUT
