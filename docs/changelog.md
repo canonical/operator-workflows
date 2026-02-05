@@ -11,6 +11,9 @@ Each revision is versioned by the date of the revision.
   handling of skippable commands.
 - Update `workflow_test.yaml` to include a test for reStructuredText files.
 
+## 2026-01-28
+- Update `docs_rtd` workflow to use `canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@main`.
+
 ## 2026-01-21
 - Add `docs_spread` workflow to auto-generate testing materials and run Spread.
 
