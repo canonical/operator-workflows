@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-01-28
+- Update `docs_rtd` workflow to use `canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@main`.
+
 ## 2026-01-21
 - Add `docs_spread` workflow to auto-generate testing materials and run Spread.
 
