@@ -6,6 +6,11 @@ name: Integration tests
 on:
   workflow_call:
     inputs:
+      bootstrap-options:
+        description: |
+          Additional options to pass to juju bootstrap, excluding constraints.
+          See https://github.com/charmed-kubernetes/actions-operator#usage for details.
+        type: string
       builder-runner-label:
         description: Label for building the charm
         type: string
@@ -393,6 +398,7 @@ jobs:
     if: always() && needs.plan.result == 'success' && needs.plan.outputs.has-code-changes == 'True'
     secrets: inherit
     with:
+      bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
