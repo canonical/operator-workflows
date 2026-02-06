@@ -74,10 +74,32 @@ env:
   REPORT_NAME: "report"
 
 jobs:
+  changes:
+    name: List changed files
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
+        )) || 'ubuntu-22.04'
+      }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+      - name: List changed files
+        id: list-changed-files
+        run: |
+          REMOTE=$(git remote show)
+          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+          echo "Changed files: $CHANGED_FILES"
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
   vale:
     name: Style checker
-    if: ${{ inputs.vale-style-check }}
-    runs-on: >-
+    if: ${{ inputs.vale-style-check && (contains(needs.changes.outputs.changed_files, '.md') || contains(needs.changes.outputs.changed_files, '.rst')) }}  runs-on: >-
       ${{
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
@@ -120,6 +142,7 @@ jobs:
           filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
+    if: contains(${{ needs.changes.outputs.changed_files }}, '.sh')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -190,6 +213,7 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
+    if: contains(${{ needs.changes.outputs.changed_files }}, 'Dockerfile')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -213,6 +237,7 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
+    if: contains(${{ needs.changes.outputs.changed_files }}, 'metadata.yaml')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -241,6 +266,7 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   terraform-lint:
     name: Terraform lint
+    if: contains(${{ needs.changes.outputs.changed_files }}, '.tf')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -253,26 +279,11 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-      - name: Check if TF files changed
-        id: tf-changed
-        run: |
-          REMOTE=$(git remote show)
-          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
-          echo "Changed files: $CHANGED_FILES"
-          if grep -qE '\.tf$' <<<"$CHANGED_FILES"; then
-            echo "tf_changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "tf_changed=false" >> $GITHUB_OUTPUT
-          fi
       - name: Setup Tflint
-        if: steps.tf-changed.outputs.tf_changed == 'true'
         uses: terraform-linters/setup-tflint@v6.2.1
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
-        if: steps.tf-changed.outputs.tf_changed == 'true'
         run: |
           tflint --version
           tflint --init
