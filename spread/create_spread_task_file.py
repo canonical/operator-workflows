@@ -255,9 +255,6 @@ def extract_commands_from_rst(file_path):
     # Extract SPREAD SKIP ranges
     spread_skip_ranges = extract_rst_spread_skip_comments(content)
     
-    # Set excluded ranges to SPREAD SKIP ranges
-    excluded_ranges = spread_skip_ranges
-    
     # Find all code blocks in RST:
     # - Match a ".. code-block::" directive line (with any trailing options),
     # - Allow a single optional blank line immediately after the directive,
@@ -273,7 +270,7 @@ def extract_commands_from_rst(file_path):
         
         # Skip blocks that are within excluded ranges
         is_excluded = any(start <= match_start < end 
-                         for start, end in excluded_ranges)
+                         for start, end in spread_skip_ranges)
         if is_excluded:
             continue
         
