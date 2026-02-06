@@ -99,6 +99,7 @@ jobs:
           echo changed_files="$CHANGED_FILES" >> $GITHUB_OUTPUT
   vale:
     name: Style checker
+    needs: changes
     if: inputs.vale-style-check && (contains(needs.changes.outputs.changed_files, '.md') || contains(needs.changes.outputs.changed_files, '.rst'))
     runs-on: >-
       ${{
@@ -143,6 +144,7 @@ jobs:
           filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
+    needs: changes
     if: contains(needs.changes.outputs.changed_files, '.sh')
     runs-on: >-
       ${{
@@ -214,6 +216,7 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
+    needs: changes
     if: contains(needs.changes.outputs.changed_files, 'Dockerfile')
     runs-on: >-
       ${{
@@ -238,6 +241,7 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
+    needs: changes
     if: contains(needs.changes.outputs.changed_files, 'metadata.yaml')
     runs-on: >-
       ${{
@@ -267,6 +271,7 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   terraform-lint:
     name: Terraform lint
+    needs: changes
     if: contains(needs.changes.outputs.changed_files, '.tf')
     runs-on: >-
       ${{
