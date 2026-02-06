@@ -256,8 +256,7 @@ jobs:
       - name: Check if TF files changed
         id: tf-changed
         run: |
-          base_ref="${{ github.event.pull_request.base.ref }}"
-          changed_files=$(git diff --name-only "origin/$base_ref")
+          changed_files=$(git show | grep diff | grep "\.tf")
           echo "Changed files: $changed_files"
           if grep -qE '\.tf$' <<<"$changed_files"; then
             echo "tf_changed=true" >> $GITHUB_OUTPUT
