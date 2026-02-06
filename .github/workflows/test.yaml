@@ -96,7 +96,11 @@ jobs:
           REMOTE=$(git remote show)
           CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
           echo "Changed files: $CHANGED_FILES"
-          echo changed_files="$CHANGED_FILES" >> $GITHUB_OUTPUT
+          {
+            echo "changed_files<<EOF"
+            echo "$CHANGED_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
   vale:
     name: Style checker
     needs: changes
