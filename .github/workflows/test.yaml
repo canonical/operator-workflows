@@ -419,7 +419,6 @@ jobs:
           name: ${{ env.REPORT_NAME }}
           path: report.json
   license-headers-check:
-    needs: changes
     name: Check license headers
     runs-on: >-
       ${{
@@ -435,12 +434,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
-        run: |
-          echo "DEBUG"
-          echo ${{ needs.changes.outputs.changed_files }}
-          echo ${{ contains(needs.changes.outputs.changed_files, '.tf')  }}
-          echo ${{ contains(needs.changes.outputs.changed_files, 'test')  }}
-          echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+        run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
@@ -490,10 +484,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
+          [ '${{ needs.docker-lint.result }}' = 'success' ] || [ "${{ needs.docker-lint.result }}" = "skipped" ] || (echo docker-lint failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
-          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
+          [ '${{ needs.metadata-lint.result }}' = 'success' ] || [ "${{ needs.metadata-lint.result }}" = "skipped" ] || (echo metadata-lint failed && false)
+          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || [ "${{ needs.shellcheck-lint.result }}" = "skipped" ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
           [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)
+          [ "${{ needs.terraform-lint.result }}" = "success" ] || [ "${{ needs.terraform-lint.result }}" = "skipped" ] || (echo terraform-lint failed && false)
