@@ -399,7 +399,6 @@ jobs:
     if: always() && needs.plan.result == 'success' && needs.plan.outputs.has-code-changes == 'True'
     secrets: inherit
     with:
-      bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
