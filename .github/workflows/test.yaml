@@ -432,11 +432,15 @@ jobs:
       - uses: actions/checkout@v6.0.2
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
-        run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
+        run: |
+          echo "DEBUG"
+          echo ${{ needs.changes.outputs.changed_files }}
+          echo ${{ contains(needs.changes.outputs.changed_files, '.tf')  }}
+          echo ${{ contains(needs.changes.outputs.changed_files, 'test')  }}
+          echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
-          echo ${{ needs.changes.outputs.changed_files }}
           curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
