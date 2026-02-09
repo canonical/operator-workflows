@@ -417,6 +417,7 @@ jobs:
           name: ${{ env.REPORT_NAME }}
           path: report.json
   license-headers-check:
+    needs: changes
     name: Check license headers
     runs-on: >-
       ${{
