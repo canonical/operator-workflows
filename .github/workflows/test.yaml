@@ -86,6 +86,8 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
+    outputs:
+      changed_files: ${{ steps.list-changed-files.outputs.changed_files }}
     steps:
       - uses: actions/checkout@v6.0.2
         with:
