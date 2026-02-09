@@ -5,9 +5,9 @@ name: Integration tests
 
 on:
   workflow_call:
-    inputs:
+    inputs:z
       builder-runner-label:
-        description: Label for building the charm
+        description: [TEST] Label for building the charm
         type: string
         default: ubuntu-latest
       charmcraftcache:

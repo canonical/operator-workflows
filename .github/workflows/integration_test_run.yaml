@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       channel:
-        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        description: [TEST] Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
       extra-arguments:
