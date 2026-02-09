@@ -1,0 +1,50 @@
+name: Bug Report
+description: File a bug report
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Thanks for taking the time to fill out this bug report! Please provide as much information 
+        as possible to help us understand and reproduce the issue. The more details you can 
+        provide, the faster we can work on a fix.
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: >
+        If applicable, add screenshots to help explain the problem you are facing.
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      description: How severe is the business impact of this bug?
+      options:
+        - Low (minor issue or cosmetic problem)
+        - Medium (functionality degraded, workaround exists)
+        - High (major functionality broken, no workaround)
+        - Critical (system down, data loss, affecting deployment in production)
+    validations:
+      required: true
+  - type: textarea
+    id: impact-rationale
+    attributes:
+      label: Impact Rationale
+      description: >
+        If impact is high or critical, please provide the rationale behind your assessment, impacted
+        project reference and any relevant project deadline dates which will be affected by this bug.
+  - type: textarea
+    id: failing-workflow
+    attributes:
+      label: Link to the failing workflow
+      description: >
+        Please provide a link to the failing workflow that uses operator-workflows. This will help 
+        us understand the context of the failure and investigate further.
+    validations:
+      required: true
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional context
