@@ -94,13 +94,9 @@ jobs:
         id: list-changed-files
         run: |
           REMOTE=$(git remote show)
-          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
+          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}" | tr "\n" "")
           echo "Changed files: $CHANGED_FILES"
-          {
-            echo "changed_files<<EOF"
-            echo "$CHANGED_FILES"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          echo "changed_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
   vale:
     name: Style checker
     needs: changes
@@ -440,6 +436,7 @@ jobs:
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
+          echo ${{ needs.changes.outputs.changed_files }}
           curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
       - name: Check license headers
         uses: apache/skywalking-eyes/header@main
