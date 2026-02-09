@@ -6,8 +6,13 @@ name: Run integration tests
 on:
   workflow_call:
     inputs:
+      bootstrap-options:
+        description: |
+          Additional options to pass to juju bootstrap, excluding constraints.
+          See https://github.com/charmed-kubernetes/actions-operator#usage for details.
+        type: string
       channel:
-        description: [TEST] Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
+        description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
       extra-arguments:
@@ -340,6 +345,7 @@ jobs:
           channel: ${{ inputs.channel }}
           juju-channel: ${{ inputs.juju-channel }}
           bootstrap-constraints: "cores=2 mem=4G root-disk=10G"
+          bootstrap-options: ${{ inputs.bootstrap-options }}
       - uses: actions/checkout@v6.0.2
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
