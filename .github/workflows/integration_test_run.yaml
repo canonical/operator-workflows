@@ -11,6 +11,7 @@ on:
           Additional options to pass to juju bootstrap, excluding constraints.
           See https://github.com/charmed-kubernetes/actions-operator#usage for details.
         type: string
+        default: ""
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
