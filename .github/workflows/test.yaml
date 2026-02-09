@@ -74,35 +74,9 @@ env:
   REPORT_NAME: "report"
 
 jobs:
-  changes:
-    name: List changed files
-    runs-on: >-
-      ${{
-        inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
-      }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
-    outputs:
-      changed_files: ${{ steps.list-changed-files.outputs.changed_files }}
-    steps:
-      - uses: actions/checkout@v6.0.2
-        with:
-          fetch-depth: 0
-      - name: List changed files
-        id: list-changed-files
-        run: |
-          REMOTE=$(git remote show)
-          CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}" | tr "\n" " ")
-          echo "Changed files: $CHANGED_FILES"
-          echo "changed_files=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
   vale:
     name: Style checker
-    needs: changes
-    if: inputs.vale-style-check && (contains(needs.changes.outputs.changed_files, '.md') || contains(needs.changes.outputs.changed_files, '.rst'))
+    if: ${{ inputs.vale-style-check }}
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -146,8 +120,6 @@ jobs:
           filter_mode: nofilter
   shellcheck-lint:
     name: Shell scripts lint
-    needs: changes
-    if: contains(needs.changes.outputs.changed_files, '.sh')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -218,8 +190,6 @@ jobs:
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   docker-lint:
     name: Dockerfile lint
-    needs: changes
-    if: contains(needs.changes.outputs.changed_files, 'Dockerfile')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -243,8 +213,6 @@ jobs:
           dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   metadata-lint:
     name: Lint metadata.yaml
-    needs: changes
-    if: contains(needs.changes.outputs.changed_files, 'metadata.yaml')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -273,8 +241,6 @@ jobs:
           check-jsonschema metadata.yaml --schemafile metadata.schema
   terraform-lint:
     name: Terraform lint
-    needs: changes
-    if: contains(needs.changes.outputs.changed_files, '.tf')
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
@@ -484,11 +450,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.docker-lint.result }}' = 'success' ] || [ "${{ needs.docker-lint.result }}" = "skipped" ] || (echo docker-lint failed && false)
+          [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.metadata-lint.result }}' = 'success' ] || [ "${{ needs.metadata-lint.result }}" = "skipped" ] || (echo metadata-lint failed && false)
-          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || [ "${{ needs.shellcheck-lint.result }}" = "skipped" ] || (echo shellcheck-lint failed && false)
+          [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
+          [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
           [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)
           [ "${{ needs.terraform-lint.result }}" = "success" ] || [ "${{ needs.terraform-lint.result }}" = "skipped" ] || (echo terraform-lint failed && false)
