@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  integration-juju3:
+  integration:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
