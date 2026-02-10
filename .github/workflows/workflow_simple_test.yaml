@@ -14,7 +14,6 @@ jobs:
       fail-fast: false
       matrix:
         python-version: 
-        - '3.8'
         - '3.10'
         - '3.12'
     with:
@@ -23,23 +22,7 @@ jobs:
       python-version: ${{ matrix.python-version }}
       vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
-  simple-uv:
-    uses: ./.github/workflows/test.yaml
-    secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: 
-        - '3.8'
-        - '3.10'
-        - '3.12'
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      self-hosted-runner: false
-      python-version: ${{ matrix.python-version }}
       with-uv: true
-      vale-files: '["docs/**/*.md", "README.md"]'
-      vale-style-check: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
     secrets: inherit
@@ -49,18 +32,17 @@ jobs:
       self-hosted-runner-label: "edge"
       vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
+      with-uv: true
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     timeout-minutes: 5
     needs:
       - simple
-      - simple-uv
       - simple-self-hosted
     steps:
       - run: |
           [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
-          [ '${{ needs.simple-uv.result }}' = 'success' ] || (echo simple-uv failed && false)
           [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
   test-comment:
     name: Comment on the pull request
@@ -68,5 +50,4 @@ jobs:
     if: always() && !cancelled()
     needs:
       - simple
-      - simple-uv
       - simple-self-hosted
