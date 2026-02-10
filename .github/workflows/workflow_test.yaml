@@ -35,6 +35,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
+      juju-channel: '3/stable'
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
@@ -131,6 +132,7 @@ jobs:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
+      juju-channel: '3/stable'
       charmcraftcache: true
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
