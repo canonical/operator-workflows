@@ -14,6 +14,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       trivy-severity-config: "CRITICAL,HIGH"
+      with-uv: true
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -25,6 +26,7 @@ jobs:
       channel: 1.32-strict/stable
       provider: microk8s
       test-tox-env: "integration-juju3.1"
+      with-uv: true
   integration-artifact:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -38,6 +40,7 @@ jobs:
       test-tox-env: "integration-juju3.1"
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
+      with-uv: true
   integration-self-hosted:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -46,21 +49,14 @@ jobs:
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
       self-hosted-runner-label: "edge"
-  integration-with-uv:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      self-hosted-runner: false
       with-uv: true
-      python-version: "3.12"
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      with-uv: true
   integration-rock-artifact:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -69,6 +65,7 @@ jobs:
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       trivy-image-config: "tests/workflows/integration/test-rock/trivy.yaml"
+      with-uv: true
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
@@ -141,6 +138,7 @@ jobs:
       self-hosted-runner: true
       self-hosted-runner-image: noble
       self-hosted-runner-label: large
+      with-uv: true
   integration-charmcraftcache:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -149,12 +147,14 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       trivy-severity-config: "CRITICAL,HIGH"
+      with-uv: true
   integration-alternative-rock-filename:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-alter-rock-name/"
       trivy-image-config: "tests/workflows/integration/test-alter-rock-name/trivy.yaml"
+      with-uv: true
   spread-docs:
     uses: ./.github/workflows/docs_spread.yaml
     secrets: inherit
