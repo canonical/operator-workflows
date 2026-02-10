@@ -36,6 +36,8 @@ jobs:
     secrets: inherit
     with:
       juju-channel: '3/stable'
+      channel: 1.32-strict/stable
+      provider: microk8s
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
@@ -133,6 +135,8 @@ jobs:
     secrets: inherit
     with:
       juju-channel: '3/stable'
+      channel: 1.32-strict/stable
+      provider: microk8s
       charmcraftcache: true
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
