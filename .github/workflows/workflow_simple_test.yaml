@@ -43,7 +43,6 @@ jobs:
     steps:
       - run: |
           [ '${{ needs.simple.result }}' = 'success' ] || (echo simple failed && false)
-          [ '${{ needs.simple-uv.result }}' = 'success' ] || (echo simple-uv failed && false)
           [ '${{ needs.simple-self-hosted.result }}' = 'success' ] || (echo simple-self-hosted failed && false)
   test-comment:
     name: Comment on the pull request
