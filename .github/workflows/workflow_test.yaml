@@ -7,14 +7,6 @@ on:
   pull_request:
 
 jobs:
-  integration:
-    uses: ./.github/workflows/integration_test.yaml
-    secrets: inherit
-    with:
-      working-directory: "tests/workflows/integration/test-upload-charm/"
-      trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
-      trivy-severity-config: "CRITICAL,HIGH"
-      with-uv: true
   integration-juju3:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
@@ -25,7 +17,6 @@ jobs:
       juju-channel: 3.6/stable
       channel: 1.32-strict/stable
       provider: microk8s
-      test-tox-env: "integration-juju3.1"
       with-uv: true
   integration-artifact:
     uses: ./.github/workflows/integration_test.yaml
@@ -37,7 +28,6 @@ jobs:
       juju-channel: 3.6/stable
       channel: 1.32-strict/stable
       provider: microk8s
-      test-tox-env: "integration-juju3.1"
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       with-uv: true
