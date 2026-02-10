@@ -62,7 +62,7 @@ jobs:
   publish:
     uses: ./.github/workflows/publish_charm.yaml
     secrets: inherit
-    needs: [ integration-juju3 ]
+    needs: [ integration ]
     with:
       identifier: test-upload
       channel: latest/edge
@@ -84,7 +84,7 @@ jobs:
   allure-report:
     if: always() && !cancelled()
     needs:
-      - integration-juju3
+      - integration
       - integration-artifact
       - integration-self-hosted
     uses: ./.github/workflows/allure_report.yaml
@@ -93,7 +93,7 @@ jobs:
     if: always() && !cancelled()
     timeout-minutes: 5
     needs:
-      - integration-juju3
+      - integration
       - integration-artifact
       - integration-self-hosted
       - integration-rock
@@ -103,7 +103,7 @@ jobs:
       - allure-report
     steps:
       - run: |
-          [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
+          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration-juju3 failed && false)
           [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration-artifact failed && false)
           [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
           [ '${{ needs.integration-rock.result }}' = 'success' ] || (echo integration-rock failed && false)
