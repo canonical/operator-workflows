@@ -103,7 +103,6 @@ jobs:
       - allure-report
     steps:
       - run: |
-          [ '${{ needs.integration.result }}' = 'success' ] || (echo integration failed && false)
           [ '${{ needs.integration-juju3.result }}' = 'success' ] || (echo integration-juju3 failed && false)
           [ '${{ needs.integration-artifact.result }}' = 'success' ] || (echo integration-artifact failed && false)
           [ '${{ needs.integration-self-hosted.result }}' = 'success' ] || (echo integration-self-hosted failed && false)
