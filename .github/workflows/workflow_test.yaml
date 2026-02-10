@@ -81,7 +81,6 @@ jobs:
   allure-report:
     if: always() && !cancelled()
     needs:
-      - integration
       - integration-juju3
       - integration-artifact
       - integration-self-hosted
@@ -91,7 +90,6 @@ jobs:
     if: always() && !cancelled()
     timeout-minutes: 5
     needs:
-      - integration
       - integration-juju3
       - integration-artifact
       - integration-self-hosted

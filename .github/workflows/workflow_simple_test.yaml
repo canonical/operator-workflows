@@ -40,7 +40,6 @@ jobs:
     timeout-minutes: 5
     needs:
       - simple
-      - simple-uv
       - simple-self-hosted
     steps:
       - run: |
