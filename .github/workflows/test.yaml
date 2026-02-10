@@ -457,4 +457,4 @@ jobs:
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
           [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)
-          [ "${{ needs.terraform-lint.result }}" = "success" ] || [ "${{ needs.terraform-lint.result }}" = "skipped" ] || (echo terraform-lint failed && false)
+          [ "${{ needs.terraform-lint.result }}" = "success" ] || (echo terraform-lint failed && false)
