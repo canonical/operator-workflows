@@ -92,6 +92,7 @@ with documentation checks specifically for Read the Docs projects.
 ### Automated Documentation Testing Workflow (`canonical/operator-workflows/.github/workflows/docs_spread.yaml@main`)
 Runs `canonical/operator-workflows/spread/create_spread_task_file.py` over a documentation file
 to generate the `task.yaml` needed for a Spread test, and then runs Spread over the resulting file.
+This workflow supports Markdown and reStructuredText files.
 
 This workflow requires a `spread.yaml` file to already exist in the root of your repository, along with
 three input variables:

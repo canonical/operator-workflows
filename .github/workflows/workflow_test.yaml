@@ -148,10 +148,17 @@ jobs:
       working-directory: "tests/workflows/integration/test-alter-rock-name/"
       trivy-image-config: "tests/workflows/integration/test-alter-rock-name/trivy.yaml"
       with-uv: true
-  spread-docs:
+  spread-docs-md:
     uses: ./.github/workflows/docs_spread.yaml
     secrets: inherit
     with:
       input-file: tests/workflows/docs_spread/test_tutorial.md
-      output-dir: tests/spread/test_tutorial
-      spread-job: github-ci:ubuntu-24.04-64:tests/spread/test_tutorial
+      output-dir: tests/spread/test_tutorial_md
+      spread-job: github-ci:ubuntu-24.04-64:tests/spread/test_tutorial_md
+  spread-docs-rst:
+    uses: ./.github/workflows/docs_spread.yaml
+    secrets: inherit
+    with:
+      input-file: tests/workflows/docs_spread/test_tutorial.rst
+      output-dir: tests/spread/test_tutorial_rst
+      spread-job: github-ci:ubuntu-24.04-64:tests/spread/test_tutorial_rst
