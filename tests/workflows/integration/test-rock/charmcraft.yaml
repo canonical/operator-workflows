@@ -9,3 +9,10 @@ bases:
     run-on:
     - name: ubuntu
       channel: "22.04"
+
+parts:
+  my-charm:
+    source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
