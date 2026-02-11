@@ -2,6 +2,8 @@
 
 Hello this is a tutorial for testing purposes only.
 
+<!-- SPREAD SKIP -->
+
 ## Requirements
 
 In this section, any command blocks should be ignored.
@@ -15,6 +17,8 @@ This command block should also be ignored
 ```
 echo "Hello I should also be ignored"
 ```
+
+<!-- SPREAD SKIP END -->
 
 ## Commands that should be picked up
 
