@@ -5,9 +5,11 @@ name: test-upload
 summary: A simple charm for testing charm uploads.
 description: A simple charm for testing charm uploads.
 parts:
-  charm:
-    plugin: charm
+  my-charm:
     source: .
+    plugin: uv
+    build-snaps:
+      - astral-uv
 type: charm
 config:
   options: {}

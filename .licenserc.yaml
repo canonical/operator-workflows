@@ -16,6 +16,7 @@ header:
     - '**/*.j2'
     - '**/*.json'
     - '**/*.md'
+    - '**/*.rst'
     - '**/*.txt'
     - '**/*.xml'
     - '**/.codespellignore'

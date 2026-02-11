@@ -1,0 +1,20 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+[project]
+name = "integration-test-charm-one"
+version = "0.0.0"
+description = "Integration test charm (1)."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+  "ops==3.5.1",
+  "allure-pytest>=2.8.18",
+]
+
+[tool.uv]
+package = false
