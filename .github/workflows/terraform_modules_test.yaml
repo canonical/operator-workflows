@@ -54,6 +54,7 @@ permissions:
 jobs:
   test-terraform:
     name: Test Terraform with Juju
+    fail-fast: false
     runs-on: >-
       ${{
         inputs.self-hosted-runner &&
