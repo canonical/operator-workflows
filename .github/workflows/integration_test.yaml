@@ -238,7 +238,7 @@ jobs:
       - uses: actions/checkout@v6.0.2
         with:
             fetch-depth: 0
-      - uses: canonical/operator-workflows/internal/plan@main
+      - uses: canonical/operator-workflows/internal/plan@fix-dep
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -280,7 +280,7 @@ jobs:
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: canonical/operator-workflows/internal/build@fix-dep
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -298,7 +298,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: canonical/operator-workflows/internal/plan-scan@fix-dep
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
