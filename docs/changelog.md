@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-02-12
+
+- Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
+
 ## 2026-02-11
 
 - Add "terraform-lint" step in the "test" workflow.

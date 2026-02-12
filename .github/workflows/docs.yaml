@@ -11,6 +11,11 @@ on:
         description: Where Vale will look for files to lint
         default: '["README.md","CONTRIBUTING.md","docs/"]'
         required: false
+      vale-flags:
+        type: string
+        description: Space-delimited list of flags for the Vale CLI.
+        default: ""
+        required: false
       vale-fail-on-error:
         description: Exit with 1 when at least one error was reported.
         type: boolean
@@ -43,6 +48,7 @@ jobs:
         uses: errata-ai/vale-action@v2.1.1
         with:
           files: ${{ inputs.vale-files }}
+          vale_flags: ${{ inputs.vale-flags }}
           fail_on_error: ${{ inputs.vale-fail-on-error }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -87,7 +93,7 @@ jobs:
             --exclude terraform.io
             --exclude hashicorp.com
             ${{ inputs.linkcheck-files }}
-      
+
       - name: Save lychee cache
         uses: actions/cache/save@v5.0.3
         if: always()
