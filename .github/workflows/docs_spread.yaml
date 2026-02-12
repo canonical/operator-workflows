@@ -1,0 +1,65 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: 'Create documentation testing materials and run Spread'
+
+on:
+  workflow_call:
+    inputs:
+      input-file:
+        type: string
+        required: true
+        default: docs/tutorial.md
+        description: The input file to generate Spread materials and test
+      output-dir:
+        type: string
+        required: true
+        default: tests/spread/tutorial/
+        description: The directory where the Spread materials will be created
+      spread-job:
+        type: string
+        required: true
+        default: github-ci:ubuntu-24.04-64:tests/spread
+        description: The name of the Spread job to run
+
+jobs:
+  run-spread-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        spread_job: ['${{ inputs.spread-job }}']
+    steps: 
+    - name: Checkout repo
+      uses: actions/checkout@v6.0.2
+      with:
+        fetch-depth: 0
+    - name: Checkout spread script
+      uses: actions/checkout@v6.0.2
+      with:
+        repository: canonical/operator-workflows
+        sparse-checkout: |
+          spread/create_spread_task_file.py
+        sparse-checkout-cone-mode: false
+        path: workflow-scripts
+    - name: Set up Python
+      uses: actions/setup-python@v6.2.0
+      with:
+        python-version: '3.x'
+    - name: Update task.yaml
+      run: |
+        mkdir -p ${{ inputs.output-dir }}
+        python3 workflow-scripts/spread/create_spread_task_file.py -v ${{ inputs.input-file }} ${{ inputs.output-dir }}
+    - name: Set up Go
+      uses: actions/setup-go@v6.2.0
+      with:
+        go-version: 1.26
+    - name: Install spread
+      run: |
+        go install github.com/snapcore/spread/cmd/spread@latest
+    - name: Run tests
+      run: |
+        sudo adduser --gecos "" --disabled-password ubuntu
+        echo "ubuntu:ubuntu" | sudo chpasswd
+        spread ${{ matrix.spread_job }}
+
+

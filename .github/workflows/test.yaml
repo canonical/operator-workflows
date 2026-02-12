@@ -90,7 +90,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout repo to runner
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
@@ -131,7 +131,7 @@ jobs:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -201,7 +201,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Check for Dockerfiles
         id: dockerfiles
         run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
@@ -224,7 +224,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Check file existence
         id: metadata-yaml
         run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -239,6 +239,29 @@ jobs:
           python3 -m pip install check-jsonschema $options
           curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
           check-jsonschema metadata.yaml --schemafile metadata.schema
+  terraform-lint:
+    name: Terraform lint
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
+        )) || 'ubuntu-22.04'
+      }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - name: Setup Tflint
+        uses: terraform-linters/setup-tflint@v6.2.1
+        with:
+          tflint_wrapper_enabled: true
+      - name: Run Tflint
+        run: |
+          tflint --version
+          tflint --init
+          tflint --recursive
   lint-and-unit-test:
     name: Lint and unit tests
     runs-on: >-
@@ -264,7 +287,7 @@ jobs:
           '3.10'
         }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
@@ -374,7 +397,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -396,7 +419,7 @@ jobs:
         )) || 'ubuntu-22.04'
       }}
     steps:
-      - uses: actions/checkout@v6.0.1
+      - uses: actions/checkout@v6.0.2
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0
@@ -413,6 +436,7 @@ jobs:
       - lint-and-unit-test
       - metadata-lint
       - shellcheck-lint
+      - terraform-lint
       - license-headers-check
       - vale
     runs-on: >-
@@ -433,3 +457,4 @@ jobs:
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
           [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)
+          [ "${{ needs.terraform-lint.result }}" = "success" ] || (echo terraform-lint failed && false)

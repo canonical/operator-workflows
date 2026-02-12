@@ -5,6 +5,8 @@
 
 """A charm for tesing charm upload."""
 
+import typing
+
 from ops.charm import CharmBase
 from ops.main import main
 from ops.model import ActiveStatus
@@ -13,7 +15,7 @@ from ops.model import ActiveStatus
 class TestUploadCharm(CharmBase):
     """Charm the service."""
 
-    def __init__(self, *args):
+    def __init__(self, *args: typing.Any) -> None:
         """Initialize the charm.
 
         Args:
