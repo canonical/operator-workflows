@@ -458,4 +458,5 @@ class Publish {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new Publish().run()
