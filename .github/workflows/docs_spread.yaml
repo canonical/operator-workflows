@@ -52,7 +52,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v6.2.0
       with:
-        go-version: 1.25
+        go-version: 1.26
     - name: Install spread
       run: |
         go install github.com/snapcore/spread/cmd/spread@latest
