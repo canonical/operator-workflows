@@ -8,6 +8,9 @@ inputs:
   github-token:
     description: github-token.
     required: true
+  integration-workflow-file:
+    description: Workflow file path or numeric ID used to discover integration runs (optional)
+    required: false
   plan:
     description: operator-workflows plan.
     required: true
