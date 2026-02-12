@@ -25,7 +25,7 @@ function fromFork(): boolean {
     return false
   }
   return (
-    // @ts-ignore
+    // @ts-expect-error: GitHub context payload uses narrow typing
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login
   )
 }
@@ -49,7 +49,7 @@ async function planBuildCharm(
     const charmcraft = yaml.load(
       fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
     ) as object
-    // @ts-ignore
+    // @ts-expect-error: charmcraft YAML is untyped
     let name: string
     if ('name' in charmcraft) {
       name = charmcraft['name'] as string
@@ -91,7 +91,7 @@ async function planBuildRock(
     const rockcraft = yaml.load(
       fs.readFileSync(rockcraftFile, { encoding: 'utf-8' })
     )
-    // @ts-ignore
+    // @ts-expect-error: rockcraft YAML is untyped
     const name = rockcraft['name']
     return {
       type: 'rock',
@@ -268,5 +268,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()

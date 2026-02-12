@@ -29,7 +29,7 @@
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
     "format:write": "npx prettier --write .",
     "format:check": "npx prettier --check .",
-    "lint": "npx eslint . -c ./.github/linters/.eslintrc.yml",
+    "lint": "npx eslint .",
     "package": "ls src/*.ts | sed -E 's|.*/([^/]+)\\.ts|\\1|' | xargs -I{} npx ncc build src/{}.ts -o dist/{} --source-map",
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
