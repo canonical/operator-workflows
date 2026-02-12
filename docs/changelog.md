@@ -8,8 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-02-12
 
-- Fix ESLint workflow due to ESLint 10.0.0 release.
-- Add multiple artifact detection from integration tests workflow.
+- Fix ESLint workflow issues in the workflow and add distribuation build check.
 
 ## 2026-02-11
 
