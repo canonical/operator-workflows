@@ -1,4 +1,6 @@
-// ESLint v9 flat config (CommonJS)
+// Copyright 2026 Canonical Ltd.
+// See LICENSE file for licensing details.
+
 const js = require('@eslint/js')
 const tsParser = require('@typescript-eslint/parser')
 const tsPlugin = require('@typescript-eslint/eslint-plugin')
