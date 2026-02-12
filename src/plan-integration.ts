@@ -77,7 +77,7 @@ async function downloadArtifact(
 ): Promise<string> {
   // When build jobs have just finished, the artifacts might not be fully available yet.
   // Retry downloading artifacts for up to 1 minute instead of immediately erroring out.
-  let artifactError: any
+  let artifactError: unknown
   for (let i = 0; i < 6; i++) {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'artifact-'))
     try {
@@ -114,20 +114,20 @@ export async function run(): Promise<void> {
         fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
       ) as object
       if (build.type === 'charm' || build.type === 'file') {
-        // @ts-ignore
+        // @ts-expect-error: manifest.files is untyped from JSON
         for (const file of manifest.files as string[]) {
           fs.renameSync(
             path.join(tmp, file),
             path.join(plan.working_directory, file)
           )
-          // @ts-ignore
+          // @ts-expect-error: manifest.name is untyped from JSON
           const name = manifest.name as string
           let argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
           args.push(`--${argName}=./${file}`)
         }
       } else if (build.type === 'rock' || build.type == 'docker-image') {
-        // @ts-ignore
+        // @ts-expect-error: manifest.name is untyped from JSON
         const name = manifest.name as string
         if ('files' in manifest) {
           for (const file of manifest.files as string[]) {
@@ -159,5 +159,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()
