@@ -8,6 +8,10 @@ name: Terraform modules tests
 on:
   workflow_call:
     inputs:
+      k8s-channel:
+        type: string
+        description: Kubernetes channel to use for testing, e.g. '1.32-classic/stable'. Ignored if k8s-controller is false.
+        default: '1.32-classic/stable'
       k8s-controller:
         type: boolean
         description: Whether to use a Kubernetes controller for testing.
@@ -81,7 +85,7 @@ jobs:
     - name: Prepare environment for Terraform tests with k8s controller
       if: ${{ inputs.k8s-controller }}
       run: |
-        sudo snap install k8s --classic
+        sudo snap install k8s --classic --channel=${{ inputs.k8s-channel }}
         sudo k8s bootstrap
         sudo k8s status --wait-ready --timeout 300s
         sudo k8s config | juju add-k8s k8s --client
