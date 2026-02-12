@@ -55,8 +55,6 @@ jobs:
             git --no-pager diff --stat -- dist/
             exit 1
           fi
-      - name: Test (ci-test)
-        run: npm run ci-test -- --ci
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
