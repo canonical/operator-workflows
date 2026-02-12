@@ -1,7 +1,8 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-# Attention: valid for K8s charms only
+# Relevant ADRs
+# - 0003-add-terraform-modules-tests
 
 name: Terraform modules tests
 
