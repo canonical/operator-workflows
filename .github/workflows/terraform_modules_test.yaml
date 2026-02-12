@@ -80,6 +80,8 @@ jobs:
       run: |
         sudo dpkg -P docker.io docker-ce docker-ce-cli containerd containerd.io
         sudo rm -Rf /run/containerd
+        sudo iptables -F FORWARD
+        sudo iptables -P FORWARD ACCEPT
         sudo snap install terraform --classic
         sudo snap install juju
     - name: Prepare environment for Terraform tests with k8s controller
