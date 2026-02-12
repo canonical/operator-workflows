@@ -48,6 +48,13 @@ jobs:
         run: npm ci
       - name: Build (package)
         run: npm run package
+      - name: Verify no build changes
+        run: |
+          if ! git --no-pager diff --exit-code -- dist/; then
+            echo "Build output differs under dist/. Run 'npm run package' locally and commit changes."
+            git --no-pager diff --stat -- dist/
+            exit 1
+          fi
       - name: Test (ci-test)
         run: npm run ci-test -- --ci
   check:
