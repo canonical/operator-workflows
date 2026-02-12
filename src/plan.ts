@@ -10,6 +10,7 @@ import * as github from '@actions/github'
 import { Plan, BuildPlan, CharmResource } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
+import crypto from 'crypto'
 
 function normalizePath(p: string): string {
   return path.normalize(p).replace(/\/+$/, '')
@@ -156,8 +157,8 @@ async function planBuildFileResource(
     const metadataExists = fs.existsSync(metadataFile)
     const metadata = metadataExists
       ? (yaml.load(
-          fs.readFileSync(metadataFile, { encoding: 'utf-8' })
-        ) as object)
+        fs.readFileSync(metadataFile, { encoding: 'utf-8' })
+      ) as object)
       : {}
 
     let charmName: string = ''
