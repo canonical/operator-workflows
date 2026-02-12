@@ -138,7 +138,10 @@ class Publish {
       if (build.type === 'charm' || build.type === 'file') {
         continue
       }
-      const resourceName = this.resourceMapping.hasOwnProperty(build.name)
+      const resourceName = Object.prototype.hasOwnProperty.call(
+        this.resourceMapping,
+        build.name
+      )
         ? this.resourceMapping[build.name]
         : `${build.name}-image`
       if (!resources.includes(resourceName)) {
