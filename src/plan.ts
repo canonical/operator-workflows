@@ -157,8 +157,8 @@ async function planBuildFileResource(
     const metadataExists = fs.existsSync(metadataFile)
     const metadata = metadataExists
       ? (yaml.load(
-        fs.readFileSync(metadataFile, { encoding: 'utf-8' })
-      ) as object)
+          fs.readFileSync(metadataFile, { encoding: 'utf-8' })
+        ) as object)
       : {}
 
     let charmName: string = ''
