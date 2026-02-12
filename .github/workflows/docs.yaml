@@ -14,7 +14,7 @@ on:
       vale-flags:
         type: string
         description: Space-delimited list of flags for the Vale CLI.
-        default: ""
+        default: "--glob=*.md"
         required: false
       vale-fail-on-error:
         description: Exit with 1 when at least one error was reported.
