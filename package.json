@@ -34,6 +34,7 @@
     "test": "npx jest",
     "all": "npm run format:write && npm run lint && npm run test && npm run coverage && npm run package"
   },
+  "type": "module",
   "license": "Apache-2.0",
   "dependencies": {
     "@actions/artifact": "6.1.0",
