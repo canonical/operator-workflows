@@ -8,7 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-02-12
 
-- Fix ESLint workflow issues in the workflow and add distribuation build check.
+- Fix ESLint workflow issues in the workflow and add distribution build check.
 
 ## 2026-02-11
 
