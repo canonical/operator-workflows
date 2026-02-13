@@ -1,0 +1,123 @@
+# Copyright 2025 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+# Relevant ADRs
+# - 0003-add-terraform-modules-tests
+
+name: Terraform modules tests
+
+on:
+  workflow_call:
+    inputs:
+      additional-tests-script:
+        type: string
+        description: Script to call after running the `terraform test` command to run additional tests.
+      k8s-channel:
+        type: string
+        description: Kubernetes channel to use for testing, e.g. '1.32-classic/stable'. Ignored if k8s-controller is false.
+        default: '1.32-classic/stable'
+      k8s-controller:
+        type: boolean
+        description: Whether to use a Kubernetes controller for testing.
+        default: false
+      lxd-controller:
+        type: boolean
+        description: Whether to use an LXD controller for testing.
+        default: false
+      runs-on:
+        type: string
+        description: GitHub-hosted runner label to run the jobs on, e.g. 'ubuntu-latest'. Ignored if self-hosted-runner is true.
+        default: 'ubuntu-latest'
+      self-hosted-runner:
+        type: boolean
+        description: Whether to use self-hosted runners to run the jobs.
+        default: true
+      self-hosted-runner-arch:
+        type: string
+        description: Architecture to use on self-hosted runners to run the jobs.
+        default: "x64"
+      self-hosted-runner-image:
+        type: string
+        description: Image of the requested runner. Supports only 'jammy' or 'noble'.
+        default: "noble"
+      self-hosted-runner-label:
+        type: string
+        description: Label for selecting the self-hosted runners.
+        default: "large"
+      terraform-directories:
+        type: string
+        description: List of working directories in JSON format, e.g. '["terraform", "terraform-product"]'. Must contain a "tests" subfolder.
+        default: '["terraform"]'
+      tmate-debug:
+        description: Use tmate debugging session on integration test failure.
+        type: boolean
+        default: false
+      tmate-timeout:
+        description: Timeout in minutes to keep tmate debugging session.
+        type: number
+        default: 30
+permissions:
+  contents: read
+
+jobs:
+  test-terraform:
+    name: Test Terraform with Juju
+    runs-on: >-
+      ${{
+        inputs.self-hosted-runner &&
+        fromJSON(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
+          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
+        )) || inputs.runs-on
+      }}
+    strategy:
+      fail-fast: false
+      matrix:
+        working_dir: ${{ fromJSON(inputs.terraform-directories) }}
+    steps:
+    - name: Validate controller inputs
+      if: ${{ !inputs.k8s-controller && !inputs.lxd-controller }}
+      run: |
+        echo "At least one of k8s-controller or lxd-controller must be true."
+        exit 1
+    - uses: actions/checkout@v6.0.2
+    - name: Prepare juju tf provider environment
+      run: |
+        sudo dpkg -P docker.io docker-ce docker-ce-cli containerd containerd.io
+        sudo rm -Rf /run/containerd
+        sudo iptables -F FORWARD
+        sudo iptables -P FORWARD ACCEPT
+        sudo snap install terraform --classic
+        sudo snap install juju
+    - name: Prepare environment for Terraform tests with k8s controller
+      if: ${{ inputs.k8s-controller }}
+      run: |
+        sudo snap install k8s --classic --channel=${{ inputs.k8s-channel }}
+        sudo k8s bootstrap
+        sudo k8s status --wait-ready --timeout 300s
+        sudo k8s config | juju add-k8s tfk8s --client
+        juju bootstrap tfk8s
+        juju add-model tf-testing-k8s --controller tfk8s
+    - name: Prepare environment for Terraform tests with lxd controller
+      if: ${{ inputs.lxd-controller }}
+      run: |
+        sudo snap install lxd
+        juju bootstrap localhost lxd
+        juju add-model tf-testing-lxd --controller lxd
+    - run: |
+        set -e  # Exit on error
+        juju switch k8s || echo "No k8s controller, skipping switch"
+        terraform init
+        terraform test || { echo "Terraform test failed"; exit 1; }
+      working-directory: ${{ matrix.working_dir }}/tests
+    - name: Run additional tests
+      if: ${{ inputs.additional-tests-script }}
+      run: ${{ inputs.additional-tests-script }}
+      working-directory: ${{ matrix.working_dir }}/tests
+    - name: Tmate debugging session (self-hosted)
+      if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
+      uses: canonical/action-tmate@main
+      timeout-minutes: ${{ inputs.tmate-timeout }}
+    - name: Tmate debugging session (gh-hosted)
+      if: ${{ failure() && (inputs.tmate-debug || runner.debug) && !inputs.self-hosted-runner }}
+      uses: mxschmitt/action-tmate@v3.23
+      timeout-minutes: ${{ inputs.tmate-timeout }}
