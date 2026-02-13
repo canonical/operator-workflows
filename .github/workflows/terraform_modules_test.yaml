@@ -111,6 +111,7 @@ jobs:
         if [ -e "additional-tests.sh" ]; then
           ./additional-tests.sh
         fi
+      working-directory: ${{ matrix.working_dir }}/tests
     - name: Tmate debugging session (self-hosted)
       if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
       uses: canonical/action-tmate@main
