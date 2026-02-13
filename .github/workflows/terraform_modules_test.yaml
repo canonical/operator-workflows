@@ -43,7 +43,7 @@ on:
         default: "large"
       terraform-directories:
         type: string
-        description: List of working directories in JSON format, e.g. '["terraform", "terraform-product"]'
+        description: List of working directories in JSON format, e.g. '["terraform", "terraform-product"]'. Must contain a "tests" subfolder.
         default: '["terraform"]'
       tmate-debug:
         description: Use tmate debugging session on integration test failure.
@@ -103,10 +103,14 @@ jobs:
     - run: |
         set -e  # Exit on error
         juju switch k8s || echo "No k8s controller, skipping switch"
-        cd tests
         terraform init
         terraform test || { echo "Terraform test failed"; exit 1; }
-      working-directory: ${{ matrix.working_dir }}
+      working-directory: ${{ matrix.working_dir }}/tests
+    - name: Run additional tests if present
+      run: |
+        if [ -e "additional-tests.sh" ]; then
+          ./additional-tests.sh
+        fi
     - name: Tmate debugging session (self-hosted)
       if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
       uses: canonical/action-tmate@main
