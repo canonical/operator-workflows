@@ -48,26 +48,24 @@ jobs:
         run: npm ci
       - name: Build (package)
         run: npm run package
-      - name: Verify dist up-to-date for changed entries
+      - name: Verify dist up-to-date
         run: |
           set -euo pipefail
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-          # Only check dist outputs corresponding to changed src entry files
-          changed=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- src/*.ts || true)
-          if [ -z "$changed" ]; then
-            echo "No src/*.ts entry changes; skipping dist check."
-            exit 0
+          # Fail if there are any untracked build outputs in dist/
+          untracked="$(git ls-files --others --exclude-standard -- dist/ || true)"
+          if [ -n "$untracked" ]; then
+            echo "Untracked build outputs found in dist/:"
+            echo "$untracked"
+            echo "Run 'npm run package' locally and commit changes."
+            exit 1
           fi
-          echo "$changed" | while read -r f; do
-            [ -n "$f" ] || continue
-            name="$(basename "$f" .ts)"
-            if ! git --no-pager diff --exit-code -- "dist/$name/"; then
-              echo "Build output differs for dist/$name/. Run 'npm run package' locally and commit changes."
-              git --no-pager diff --stat -- "dist/$name/"
-              exit 1
-            fi
-          done
+          # Fail if tracked dist/ files differ from the checked-in versions
+          if ! git --no-pager diff --exit-code -- dist/; then
+            echo "Build outputs in dist/ differ from committed files."
+            echo "Run 'npm run package' locally and commit changes."
+            git --no-pager diff --stat -- dist/
+            exit 1
+          fi
   check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
