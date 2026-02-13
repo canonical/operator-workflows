@@ -117,5 +117,5 @@ jobs:
       timeout-minutes: ${{ inputs.tmate-timeout }}
     - name: Tmate debugging session (gh-hosted)
       if: ${{ failure() && (inputs.tmate-debug || runner.debug) && !inputs.self-hosted-runner }}
-      uses: mxschmitt/action-tmate@v3
+      uses: mxschmitt/action-tmate@v3.23
       timeout-minutes: ${{ inputs.tmate-timeout }}
