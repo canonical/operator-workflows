@@ -9,6 +9,9 @@ name: Terraform modules tests
 on:
   workflow_call:
     inputs:
+      additional-tests-script:
+        type: string
+        description: Script to call after running the `terraform test` command to run additional tests.
       k8s-channel:
         type: string
         description: Kubernetes channel to use for testing, e.g. '1.32-classic/stable'. Ignored if k8s-controller is false.
@@ -106,11 +109,9 @@ jobs:
         terraform init
         terraform test || { echo "Terraform test failed"; exit 1; }
       working-directory: ${{ matrix.working_dir }}/tests
-    - name: Run additional tests if present
-      run: |
-        if [ -e "additional-tests.sh" ]; then
-          ./additional-tests.sh
-        fi
+    - name: Run additional tests
+      if: ${{ inputs.additional-tests-script }}
+      run: ${{ inputs.additional-tests-script }}
       working-directory: ${{ matrix.working_dir }}/tests
     - name: Tmate debugging session (self-hosted)
       if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
