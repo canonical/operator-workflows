@@ -139,10 +139,10 @@ export class GetPlan {
     try {
       core.startGroup('retrieve image info')
       const runId = await this.findWorkflowRunId()
-      const planJson = await this.getPlan(runId)
+      const plan = await this.getPlan(runId)
       core.endGroup()
-      core.setOutput('plan', planJson)
-      core.setOutput('run-id', runId)
+      core.setOutput('plan', JSON.stringify(plan))
+      core.setOutput('run-id', String(runId))
     } catch (error) {
       // Fail the workflow run if an error occurs
       if (error instanceof Error) {
@@ -153,5 +153,4 @@ export class GetPlan {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new GetPlan().run()
