@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-02-12
+
+- Fix ESLint workflow due to ESLint 10.0.0 release.
+- Add multiple artifact detection from integration tests workflow.
+
 ## 2026-02-11
 
 - Add "terraform-lint" step in the "test" workflow.

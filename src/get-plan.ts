@@ -77,7 +77,7 @@ export class GetPlan {
     }
     throw new Error(
       `Failed to find integration test workflow run on tree id (${tree}).` +
-        "Consider enabling the 'Require branches to be up to date before merging' setting to ensure that the integration tests are executed on the merged commit"
+      "Consider enabling the 'Require branches to be up to date before merging' setting to ensure that the integration tests are executed on the merged commit"
     )
   }
 
@@ -124,7 +124,7 @@ export class GetPlan {
       if (
         plan.working_directory === '.' ||
         normalizePath(this.workingDir) ===
-          normalizePath(plan.working_directory) ||
+        normalizePath(plan.working_directory) ||
         normalizePath(this.workingDir).startsWith(
           normalizePath(plan.working_directory) + '/'
         )
@@ -139,10 +139,10 @@ export class GetPlan {
     try {
       core.startGroup('retrieve image info')
       const runId = await this.findWorkflowRunId()
-      const planJson = await this.getPlan(runId)
+      const plan = await this.getPlan(runId)
       core.endGroup()
-      core.setOutput('plan', planJson)
-      core.setOutput('run-id', runId)
+      core.setOutput('plan', JSON.stringify(plan))
+      core.setOutput('run-id', String(runId))
     } catch (error) {
       // Fail the workflow run if an error occurs
       if (error instanceof Error) {

@@ -1,98 +1,74 @@
-require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	var __webpack_modules__ = ({
+import './sourcemap-register.cjs';import { createRequire as __WEBPACK_EXTERNAL_createRequire } from "module";
+/******/ // The require scope
+/******/ var __nccwpck_require__ = {};
+/******/ 
+/************************************************************************/
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__nccwpck_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__nccwpck_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat */
+/******/ 
+/******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
+/******/ 
+/************************************************************************/
+var __webpack_exports__ = {};
 
-/***/ 798:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  j: () => (/* binding */ mkdtemp),
+  F: () => (/* binding */ normalizePath)
+});
 
-
+;// CONCATENATED MODULE: external "fs"
+const external_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("fs");
+var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_namespaceObject);
+;// CONCATENATED MODULE: external "path"
+const external_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("path");
+var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_namespaceObject);
+;// CONCATENATED MODULE: external "os"
+const external_os_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("os");
+var external_os_default = /*#__PURE__*/__nccwpck_require__.n(external_os_namespaceObject);
+;// CONCATENATED MODULE: ./src/utils.ts
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.mkdtemp = mkdtemp;
-exports.normalizePath = normalizePath;
-const fs_1 = __importDefault(__nccwpck_require__(896));
-const path_1 = __importDefault(__nccwpck_require__(928));
-const os_1 = __importDefault(__nccwpck_require__(857));
+
+
+
 function mkdtemp() {
-    return fs_1.default.mkdtempSync(path_1.default.join(os_1.default.tmpdir(), 'artifact-'));
+    return external_fs_default().mkdtempSync(external_path_default().join(external_os_default().tmpdir(), 'artifact-'));
 }
 function normalizePath(p) {
-    return path_1.default.normalize(p).replace(/\/+$/, '');
+    return external_path_default().normalize(p).replace(/\/+$/, '');
 }
 
+var __webpack_exports__mkdtemp = __webpack_exports__.j;
+var __webpack_exports__normalizePath = __webpack_exports__.F;
+export { __webpack_exports__mkdtemp as mkdtemp, __webpack_exports__normalizePath as normalizePath };
 
-/***/ }),
-
-/***/ 896:
-/***/ ((module) => {
-
-module.exports = require("fs");
-
-/***/ }),
-
-/***/ 857:
-/***/ ((module) => {
-
-module.exports = require("os");
-
-/***/ }),
-
-/***/ 928:
-/***/ ((module) => {
-
-module.exports = require("path");
-
-/***/ })
-
-/******/ 	});
-/************************************************************************/
-/******/ 	// The module cache
-/******/ 	var __webpack_module_cache__ = {};
-/******/ 	
-/******/ 	// The require function
-/******/ 	function __nccwpck_require__(moduleId) {
-/******/ 		// Check if module is in cache
-/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
-/******/ 		if (cachedModule !== undefined) {
-/******/ 			return cachedModule.exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = __webpack_module_cache__[moduleId] = {
-/******/ 			// no module.id needed
-/******/ 			// no module.loaded needed
-/******/ 			exports: {}
-/******/ 		};
-/******/ 	
-/******/ 		// Execute the module function
-/******/ 		var threw = true;
-/******/ 		try {
-/******/ 			__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nccwpck_require__);
-/******/ 			threw = false;
-/******/ 		} finally {
-/******/ 			if(threw) delete __webpack_module_cache__[moduleId];
-/******/ 		}
-/******/ 	
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/ 	
-/************************************************************************/
-/******/ 	/* webpack/runtime/compat */
-/******/ 	
-/******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
-/************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(798);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
-/******/ })()
-;
 //# sourceMappingURL=index.js.map
