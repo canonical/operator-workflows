@@ -322,10 +322,10 @@ jobs:
           rm -rf $TEMP_DIR
           ls -lah
       - uses: actions/download-artifact@v7.0.0
-        if: matrix.scan.artifact != ''
+        if: ${{ matrix.scan.artifact != '' }}
         with:
           name: ${{ matrix.scan.artifact }}
-      - if: endsWith( matrix.scan.file, '.rock')
+      - if: ${{ endsWith(matrix.scan.file, '.rock') }}
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}.converted.tar
@@ -334,7 +334,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - if: matrix.scan.image != ''
+      - if: ${{ matrix.scan.image != '' }}
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
@@ -348,7 +348,7 @@ jobs:
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore
-        if: matrix.scan.image != ''
+        if: ${{ matrix.scan.image != '' }}
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.65.0
           if [ -f ".trivyignore" ]
