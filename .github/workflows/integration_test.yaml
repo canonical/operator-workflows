@@ -328,7 +328,7 @@ jobs:
       - if: endsWith( matrix.scan.file, '.rock')
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
-          mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
+          mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}.converted.tar
       - uses: docker/login-action@v3.7.0
         with:
           registry: ghcr.io
@@ -341,7 +341,7 @@ jobs:
       - name: Run Github Trivy Image Action
         uses: aquasecurity/trivy-action@0.33.1
         with:
-          input: ${{ matrix.scan.file }}
+          input: ${{ endsWith(matrix.scan.file, '.rock') && format('{0}.converted.tar', matrix.scan.file) || matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
