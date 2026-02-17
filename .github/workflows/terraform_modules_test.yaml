@@ -108,11 +108,11 @@ jobs:
         juju switch k8s || echo "No k8s controller, skipping switch"
         terraform init
         terraform test || { echo "Terraform test failed"; exit 1; }
-      working-directory: ${{ matrix.working_dir }}/tests
+      working-directory: ${{ matrix.working_dir }}
     - name: Run additional tests
       if: ${{ inputs.additional-tests-script }}
       run: ${{ inputs.additional-tests-script }}
-      working-directory: ${{ matrix.working_dir }}/tests
+      working-directory: ${{ matrix.working_dir }}
     - name: Tmate debugging session (self-hosted)
       if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
       uses: canonical/action-tmate@main
