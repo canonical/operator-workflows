@@ -10,6 +10,11 @@ on:
         description: Whether to enable the Sphinx and Python dependency build checks.
         type: boolean
         default: true
+      python-version:
+        description: 'Version of the Python interpreter to use (defaults to 3.10)'
+        required: false
+        type: string
+        default: '3.10'
   pull_request:
     paths: 
       - 'docs/**'
@@ -39,6 +44,7 @@ jobs:
     with:
       working-directory: "docs"
       fetch-depth: 0
+      python-version: "${{ inputs.python-version }}"
   check-removed-urls:
     name: Check removed URLs
     needs: check-makefile
