@@ -10,13 +10,14 @@ import * as github from '@actions/github'
 import { Plan, BuildPlan, CharmResource } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as os from 'os'
+import crypto from 'crypto'
 
 function normalizePath(p: string): string {
   return path.normalize(p).replace(/\/+$/, '')
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replaceAll(/[\t\n:\/\\"<>|*?]/g, '-')
+  return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-')
 }
 
 function fromFork(): boolean {
@@ -268,5 +269,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()
