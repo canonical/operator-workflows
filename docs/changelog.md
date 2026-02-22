@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-02-17
+
+- Add step to "docs" workflow to install docutils, so that the workflow can
+  check reStructuredText files.
+
 ## 2026-02-12
 
 - Fix ESLint workflow issues in the workflow and add distribution build check.
