@@ -53,5 +53,5 @@ jobs:
     name: Sphinx and Python dependency build checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' && inputs.enable-sphinx-python-dependency-build-checks }}
-    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@dev
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@main
 
