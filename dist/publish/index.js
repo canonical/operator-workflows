@@ -93862,16 +93862,12 @@ var Publish = class {
   artifact;
   workingDir;
   resourceMapping;
-  integrationWorkflowFile;
-  octokit;
   constructor() {
     this.token = getInput("github-token");
     this.charmhubToken = getInput("charmhub-token");
     this.workingDir = getInput("working-directory");
     this.resourceMapping = JSON.parse(getInput("resource-mapping"));
-    this.integrationWorkflowFile = getInput("integration-workflow-file");
     this.artifact = new DefaultArtifactClient();
-    this.octokit = getOctokit(this.token);
   }
   async getCharmResources() {
     let cwd = this.workingDir;
@@ -94104,20 +94100,8 @@ var Publish = class {
       const {
         name: charmName,
         dir: charmDir,
-        files: baseCharms
+        files: charms
       } = await this.getCharms(plan, runId);
-      const aggregatedCharms = await this.aggregateCharmsAcrossRuns();
-      const seen = /* @__PURE__ */ new Set();
-      const finalCharms = [];
-      for (const f of [...baseCharms, ...aggregatedCharms]) {
-        const name = import_path3.default.basename(f);
-        if (seen.has(name)) {
-          info(`skip duplicate charm: ${name}`);
-          continue;
-        }
-        seen.add(name);
-        finalCharms.push(f);
-      }
       endGroup();
       if (fileResources.size !== 0) {
         info(
@@ -94163,7 +94147,7 @@ var Publish = class {
           { env: { ...process.env, CHARMCRAFT_AUTH: this.charmhubToken } }
         );
       }
-      setOutput("charms", finalCharms.join(","));
+      setOutput("charms", charms.join(","));
       setOutput("charm-directory", charmDir);
     } catch (error2) {
       if (error2 instanceof Error) {
@@ -94172,89 +94156,6 @@ ${error2.stack}`);
         setFailed(error2.message);
       }
     }
-  }
-  async aggregateCharmsAcrossRuns() {
-    try {
-      const owner = context2.repo.owner;
-      const repo = context2.repo.repo;
-      if (!this.integrationWorkflowFile) {
-        info(
-          "Integration workflow not provided; skipping charm aggregation"
-        );
-        return [];
-      }
-      const trimmed = this.integrationWorkflowFile.trim();
-      const workflowId = /^[0-9]+$/.test(trimmed) ? Number(trimmed) : import_path3.default.basename(trimmed);
-      const runs = await this.octokit.paginate(
-        this.octokit.rest.actions.listWorkflowRuns,
-        {
-          owner,
-          repo,
-          workflow_id: workflowId,
-          per_page: 100,
-          status: "success"
-        }
-      );
-      const matchingRuns = runs.filter(
-        (r) => r.head_sha === context2.sha && r.conclusion === "success"
-      );
-      if (matchingRuns.length === 0) {
-        info("No successful integration runs found to aggregate charms");
-        return [];
-      }
-      const aggregated = [];
-      for (const run of matchingRuns) {
-        info(`Inspecting artifacts from run ${run.id}`);
-        const artifacts = await this.octokit.paginate(
-          this.octokit.rest.actions.listWorkflowRunArtifacts,
-          { owner, repo, run_id: run.id, per_page: 100 }
-        );
-        for (const art of artifacts) {
-          const tmp = mkdtemp();
-          try {
-            await this.artifact.downloadArtifact(art.id, {
-              path: tmp,
-              findBy: {
-                token: this.token,
-                repositoryOwner: owner,
-                repositoryName: repo,
-                workflowRunId: run.id
-              }
-            });
-            const charms = this.findCharmFiles(tmp);
-            for (const c of charms) {
-              aggregated.push(c);
-              info(`Found charm in run ${run.id}: ${import_path3.default.basename(c)}`);
-            }
-          } catch (e) {
-            info(
-              `Failed downloading artifact ${art.name} from run ${run.id}: ${String(e)}`
-            );
-          }
-        }
-      }
-      return aggregated;
-    } catch (e) {
-      info(`Charm aggregation failed: ${String(e)}`);
-      return [];
-    }
-  }
-  findCharmFiles(root) {
-    const results = [];
-    const stack = [root];
-    while (stack.length) {
-      const dir = stack.pop();
-      const entries = import_fs4.default.readdirSync(dir, { withFileTypes: true });
-      for (const ent of entries) {
-        const p = import_path3.default.join(dir, ent.name);
-        if (ent.isDirectory()) {
-          stack.push(p);
-        } else if (ent.isFile() && ent.name.endsWith(".charm")) {
-          results.push(p);
-        }
-      }
-    }
-    return results;
   }
 };
 new Publish().run();
