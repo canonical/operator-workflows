@@ -8,8 +8,8 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-02-23
 
-- Update the tag used by the `sphinx-python-dependency-build-checks` step
-  of `docs_rtd.yaml`.
+- Update the tag used by the steps in `docs_rtd.yaml` that call workflows in
+  sphinx-docs-starter-pack.
 
 ## 2026-02-17
 
