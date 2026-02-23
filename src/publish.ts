@@ -7,7 +7,7 @@ import * as yaml from 'js-yaml'
 
 import * as github from '@actions/github'
 import { mkdtemp, normalizePath } from './utils'
-import { Plan, BuildPlan } from './model'
+import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
@@ -142,10 +142,7 @@ class Publish {
       if (build.type === 'charm' || build.type === 'file') {
         continue
       }
-      const resourceName = Object.prototype.hasOwnProperty.call(
-        this.resourceMapping,
-        build.name
-      )
+      const resourceName = this.resourceMapping.hasOwnProperty(build.name)
         ? this.resourceMapping[build.name]
         : `${build.name}-image`
       if (!resources.includes(resourceName)) {
@@ -236,7 +233,7 @@ class Publish {
       charmDir = path.join(charmDir, 'charm')
     }
     const charms = plan.build.filter(
-      (b: BuildPlan) =>
+      b =>
         b.type === 'charm' &&
         normalizePath(b.source_directory) === normalizePath(charmDir)
     )
@@ -245,7 +242,7 @@ class Publish {
     }
     if (charms.length > 1) {
       throw new Error(
-        `more than one charm to upload: ${charms.map((c: BuildPlan) => c.name)}`
+        `more than one charm to upload: ${charms.map(c => c.name)}`
       )
     }
     const charm = charms[0]
@@ -460,4 +457,5 @@ class Publish {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new Publish().run()
