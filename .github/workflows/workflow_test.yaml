@@ -19,6 +19,9 @@ jobs:
       provider: microk8s
       with-uv: true
   integration-artifact:
+    strategy:
+      matrix:
+        runtime: [amd64, arm64]
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
     with:
@@ -31,6 +34,10 @@ jobs:
       upload-image: artifact
       microk8s-addons: "dns ingress rbac storage registry"
       with-uv: true
+      builder-runner-label: ${{ matrix.runtime }}
+      self-hosted-runner: true
+      self-hosted-runner-arch: ${{ matrix.runtime }}
+      self-hosted-runner-label: ${{ matrix.runtime }}
   integration-self-hosted:
     uses: ./.github/workflows/integration_test.yaml
     secrets: inherit
