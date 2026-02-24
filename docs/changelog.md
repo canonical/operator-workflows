@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-02-24
 
 - Update the trivy binary to v0.69.1.
+- Update the `cache-exclude-status` argument for the link check step of `docs.yaml`.
 
 ## 2026-02-23
 
