@@ -84,7 +84,7 @@ jobs:
             --max-retries 5
             --cache
             --max-cache-age 5d
-            --cache-exclude-status '..100, 404, 429, 500..'
+            --cache-exclude-status '..100, 400..'
             --exclude terraform.io
             --exclude hashicorp.com
             ${{ inputs.linkcheck-files }}
