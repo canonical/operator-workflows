@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-02-24
+
+- Update the trivy binary to v0.69.1.
+
 ## 2026-02-23
 
 - Update the tag used by the steps in `docs_rtd.yaml` that call workflows in
