@@ -5,10 +5,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-try:
-    import yaml
-except ImportError:  # pragma: no cover
-    yaml = None  # type: ignore[assignment]
+from supercharm.files import charm_name_from_yaml, copy_charm_files, copy_context_to_temp
 
 
 def _install_charmcraft() -> None:
@@ -38,27 +35,11 @@ def main() -> None:
 
         # Copy charmcraft.yaml from the current working directory if present
         charm_yaml = Path.cwd() / "charmcraft.yaml"
-        if charm_yaml.exists():
-            shutil.copy2(charm_yaml, tmp_path / "charmcraft.yaml")
-
-        # Copy all files from the build-context directory into the temp dir
-        for item in context_dir.iterdir():
-            dest = tmp_path / item.name
-            if item.is_dir():
-                shutil.copytree(item, dest)
-            else:
-                shutil.copy2(item, dest)
+        copy_context_to_temp(context_dir, tmp_path, charm_yaml)
 
         result = subprocess.run(["charmcraft"] + charmcraft_args, cwd=tmp_path)
 
-        charm_name: str | None = None
-        if charm_yaml.exists() and yaml is not None:
-            with charm_yaml.open() as f:
-                charm_name = (yaml.safe_load(f) or {}).get("name")
-
-        for charm_file in tmp_path.glob("*.charm"):
-            if charm_name is None or charm_file.name.startswith(charm_name):
-                shutil.copy2(charm_file, Path.cwd() / charm_file.name)
+        copy_charm_files(tmp_path, Path.cwd(), charm_name_from_yaml(charm_yaml))
 
     sys.exit(result.returncode)
 
