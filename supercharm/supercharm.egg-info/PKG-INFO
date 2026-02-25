@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: supercharm
+Version: 0.1.0
+Summary: Thin wrapper that ensures charmcraft is installed and forwards all arguments to it
+Requires-Python: >=3.8

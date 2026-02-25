@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supercharm"
+version = "0.1.0"
+description = "Thin wrapper that ensures charmcraft is installed and forwards all arguments to it"
+requires-python = ">=3.8"
+
+[project.scripts]
+supercharm = "supercharm.main:main"
