@@ -5,4 +5,5 @@ supercharm.egg-info/PKG-INFO
 supercharm.egg-info/SOURCES.txt
 supercharm.egg-info/dependency_links.txt
 supercharm.egg-info/entry_points.txt
+supercharm.egg-info/requires.txt
 supercharm.egg-info/top_level.txt

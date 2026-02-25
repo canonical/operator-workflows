@@ -7,6 +7,7 @@ name = "supercharm"
 version = "0.1.0"
 description = "Thin wrapper that ensures charmcraft is installed and forwards all arguments to it"
 requires-python = ">=3.8"
+dependencies = ["pyyaml"]
 
 [project.scripts]
 supercharm = "supercharm.main:main"
