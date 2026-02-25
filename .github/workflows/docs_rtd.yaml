@@ -49,15 +49,15 @@ jobs:
     name: Check removed URLs
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/sphinx-docs-starter-pack/.github/workflows/check-removed-urls.yml@dev
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/check-removed-urls.yml@main
   markdown-style-checks:
     name: Markdown style checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/sphinx-docs-starter-pack/.github/workflows/markdown-style-checks.yml@dev
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/markdown-style-checks.yml@main
   sphinx-python-dependency-build-checks:
     name: Sphinx and Python dependency build checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' && inputs.enable-sphinx-python-dependency-build-checks }}
-    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@dev
+    uses: canonical/sphinx-docs-starter-pack/.github/workflows/sphinx-python-dependency-build-checks.yml@main
 
