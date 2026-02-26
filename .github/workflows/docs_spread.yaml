@@ -50,7 +50,7 @@ jobs:
         mkdir -p ${{ inputs.output-dir }}
         python3 workflow-scripts/spread/create_spread_task_file.py -v ${{ inputs.input-file }} ${{ inputs.output-dir }}
     - name: Set up Go
-      uses: actions/setup-go@v6.2.0
+      uses: actions/setup-go@v6.3.0
       with:
         go-version: 1.26
     - name: Install spread

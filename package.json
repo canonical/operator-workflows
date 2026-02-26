@@ -36,7 +36,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@actions/artifact": "6.1.0",
+    "@actions/artifact": "6.2.0",
     "@actions/cache": "6.0.0",
     "@actions/core": "3.0.0",
     "@actions/exec": "3.0.0",
