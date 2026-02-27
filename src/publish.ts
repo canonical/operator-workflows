@@ -18,13 +18,17 @@ class Publish {
   private artifact
   private workingDir: string
   private resourceMapping: { [key: string]: string }
+  private integrationWorkflowFile: string
+  private octokit
 
   constructor() {
     this.token = core.getInput('github-token')
     this.charmhubToken = core.getInput('charmhub-token')
     this.workingDir = core.getInput('working-directory')
     this.resourceMapping = JSON.parse(core.getInput('resource-mapping'))
+    this.integrationWorkflowFile = core.getInput('integration-workflow-file')
     this.artifact = new DefaultArtifactClient()
+    this.octokit = github.getOctokit(this.token)
   }
 
   async getCharmResources(): Promise<[string[], string[]]> {
@@ -287,8 +291,22 @@ class Publish {
       const {
         name: charmName,
         dir: charmDir,
-        files: charms
+        files: baseCharms
       } = await this.getCharms(plan, runId)
+      // Aggregate charms from all successful integration workflow runs for current commit
+      const aggregatedCharms = await this.aggregateCharmsAcrossRuns()
+      // Deduplicate by filename
+      const seen = new Set<string>()
+      const finalCharms: string[] = []
+      for (const f of [...baseCharms, ...aggregatedCharms]) {
+        const name = path.basename(f)
+        if (seen.has(name)) {
+          core.info(`skip duplicate charm: ${name}`)
+          continue
+        }
+        seen.add(name)
+        finalCharms.push(f)
+      }
       core.endGroup()
       if (fileResources.size !== 0) {
         core.info(
@@ -336,7 +354,7 @@ class Publish {
           { env: { ...process.env, CHARMCRAFT_AUTH: this.charmhubToken } }
         )
       }
-      core.setOutput('charms', charms.join(','))
+      core.setOutput('charms', finalCharms.join(','))
       core.setOutput('charm-directory', charmDir)
     } catch (error) {
       // Fail the workflow run if an error occurs
@@ -345,6 +363,97 @@ class Publish {
         core.setFailed(error.message)
       }
     }
+  }
+
+  private async aggregateCharmsAcrossRuns(): Promise<string[]> {
+    try {
+      const owner = github.context.repo.owner
+      const repo = github.context.repo.repo
+      // If no workflow is provided, skip aggregation for backwards compatibility
+      if (!this.integrationWorkflowFile) {
+        core.info(
+          'Integration workflow not provided; skipping charm aggregation'
+        )
+        return []
+      }
+      // GitHub API accepts workflow_id as either numeric ID or workflow file name (basename)
+      const trimmed = this.integrationWorkflowFile.trim()
+      const workflowId: number | string = /^[0-9]+$/.test(trimmed)
+        ? Number(trimmed)
+        : path.basename(trimmed)
+      // List successful runs of the workflow
+      const runs = await this.octokit.paginate(
+        this.octokit.rest.actions.listWorkflowRuns,
+        {
+          owner,
+          repo,
+          workflow_id: workflowId,
+          per_page: 100,
+          status: 'success'
+        }
+      )
+      const matchingRuns = runs.filter(
+        r => r.head_sha === github.context.sha && r.conclusion === 'success'
+      )
+      if (matchingRuns.length === 0) {
+        core.info('No successful integration runs found to aggregate charms')
+        return []
+      }
+      const aggregated: string[] = []
+      for (const run of matchingRuns) {
+        core.info(`Inspecting artifacts from run ${run.id}`)
+        const artifacts = await this.octokit.paginate(
+          this.octokit.rest.actions.listWorkflowRunArtifacts,
+          { owner, repo, run_id: run.id, per_page: 100 }
+        )
+        for (const art of artifacts) {
+          // Download each artifact and scan for .charm files
+          const tmp = mkdtemp()
+          try {
+            await this.artifact.downloadArtifact(art.id, {
+              path: tmp,
+              findBy: {
+                token: this.token,
+                repositoryOwner: owner,
+                repositoryName: repo,
+                workflowRunId: run.id
+              }
+            })
+            const charms = this.findCharmFiles(tmp)
+            for (const c of charms) {
+              aggregated.push(c)
+              core.info(`Found charm in run ${run.id}: ${path.basename(c)}`)
+            }
+          } catch (e) {
+            core.info(
+              `Failed downloading artifact ${art.name} from run ${run.id}: ${String(e)}`
+            )
+          }
+        }
+      }
+      return aggregated
+    } catch (e) {
+      core.info(`Charm aggregation failed: ${String(e)}`)
+      return []
+    }
+  }
+
+  private findCharmFiles(root: string): string[] {
+    const results: string[] = []
+    const stack: string[] = [root]
+    while (stack.length) {
+      const dir = stack.pop() as string
+      const entries = fs.readdirSync(dir, { withFileTypes: true })
+      for (const ent of entries) {
+        const p = path.join(dir, ent.name)
+        if (ent.isDirectory()) {
+          stack.push(p)
+        } else if (ent.isFile() && ent.name.endsWith('.charm')) {
+          results.push(p)
+        }
+      }
+    }
+    return results
   }
 }
 

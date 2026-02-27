@@ -14,7 +14,8 @@ type: charm
 config:
   options: {}
 platforms:
-  ubuntu@22.04:amd64:
+  amd64:
+  arm64:
 containers:
   test:
     resource: test-image
