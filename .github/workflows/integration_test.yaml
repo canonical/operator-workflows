@@ -321,7 +321,7 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
-      - uses: actions/download-artifact@v7.0.0
+      - uses: actions/download-artifact@v8.0.0
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
