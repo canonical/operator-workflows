@@ -351,7 +351,7 @@ jobs:
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.1
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.2
           if [ -f ".trivyignore" ]
           then
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
