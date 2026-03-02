@@ -1,3 +1,8 @@
+/*
+ * Copyright 2026 Canonical Ltd.
+ * See LICENSE file for licensing details.
+ */
+
 // See: https://eslint.org/docs/latest/use/configure/configuration-files
 
 import { FlatCompat } from '@eslint/eslintrc'

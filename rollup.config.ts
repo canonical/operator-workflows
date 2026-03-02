@@ -19,7 +19,7 @@ const entryPoints = [
   'utils'
 ]
 
-const configs = entryPoints.map((entry) => ({
+const configs = entryPoints.map(entry => ({
   input: `src/${entry}.ts`,
   output: {
     file: `dist/${entry}/index.js`,
