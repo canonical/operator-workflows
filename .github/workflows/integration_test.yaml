@@ -143,7 +143,7 @@ on:
       trivy-exit-code:
         description: Exit code when specified vulnerabilities are found.
         type: string
-        default: '1'
+        default: "1"
       trivy-fs-config:
         type: string
         description: Trivy YAML configuration for fs testing that is checked in as part of the repo
@@ -207,7 +207,7 @@ on:
       zap-target-port:
         description: ZAP target port
         type: string
-        default: '80'
+        default: "80"
       zap-target-protocol:
         description: ZAP target protocol
         type: string
@@ -237,7 +237,7 @@ jobs:
             fi
       - uses: actions/checkout@v6.0.2
         with:
-            fetch-depth: 0
+          fetch-depth: 0
       - uses: canonical/operator-workflows/internal/plan@main
         id: plan
         with:
@@ -260,7 +260,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.build.type }} (${{ matrix.build.name }})
-    needs: [ plan ]
+    needs: [plan]
     if: ${{ needs.plan.outputs.has-code-changes == 'True' && toJSON(fromJSON(needs.plan.outputs.plan).build) != '[]' }}
     runs-on: ${{ inputs.builder-runner-label }}
     strategy:
@@ -294,7 +294,7 @@ jobs:
   plan-scan:
     name: Plan Image Scanning
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ build, plan ]
+    needs: [build, plan]
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
@@ -306,7 +306,7 @@ jobs:
   scan:
     name: Scan Image (${{ matrix.scan.file }})
     runs-on: ${{ inputs.builder-runner-label }}
-    needs: [ build, plan-scan ]
+    needs: [build, plan-scan]
     if: ${{ needs.plan-scan.outputs.scans != '[]' }}
     strategy:
       matrix:
@@ -390,11 +390,13 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ matrix.scan.image }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: canonical/action-tmate@main
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
-    needs: [ plan ]
+    needs: [plan]
     if: always() && needs.plan.result == 'success' && needs.plan.outputs.has-code-changes == 'True'
     secrets: inherit
     with:
