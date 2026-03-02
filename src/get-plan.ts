@@ -153,5 +153,4 @@ export class GetPlan {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new GetPlan().run()

@@ -125,6 +125,5 @@ class GetPlan {
     }
 }
 exports.GetPlan = GetPlan;
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new GetPlan().run();
 //# sourceMappingURL=index.js.map

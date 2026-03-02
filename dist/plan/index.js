@@ -15,16 +15,15 @@ function normalizePath(p) {
     return path.normalize(p).replace(/\/+$/, '');
 }
 function sanitizeArtifactName(name) {
-    return name.replaceAll(/[\t\n:\/\\"<>|*?]/g, '-');
+    return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-');
 }
 function fromFork() {
     const context = github.context;
     if (context.eventName !== 'pull_request') {
         return false;
     }
-    return (
-    // @ts-ignore
-    context.repo.owner !== context.payload.pull_request.head.repo.owner.login);
+    return (context.repo.owner !==
+        context.payload?.pull_request?.head?.repo?.owner?.login);
 }
 async function planBuildCharm(workingDir, id) {
     const allCharmcraftFiles = await (await glob.create(path.join(workingDir, '**', 'charmcraft.yaml'))).glob();
@@ -32,7 +31,6 @@ async function planBuildCharm(workingDir, id) {
     return charmcraftFiles.map((charmcraftFile) => {
         const file = path.join(workingDir, path.relative(workingDir, charmcraftFile));
         const charmcraft = yaml.load(fs.readFileSync(charmcraftFile, { encoding: 'utf-8' }));
-        // @ts-ignore
         let name;
         if ('name' in charmcraft) {
             name = charmcraft['name'];
@@ -61,7 +59,6 @@ async function planBuildRock(workingDir, id, outputType) {
     return rockcraftFiles.map((rockcraftFile) => {
         const file = path.join(workingDir, path.relative(workingDir, rockcraftFile));
         const rockcraft = yaml.load(fs.readFileSync(rockcraftFile, { encoding: 'utf-8' }));
-        // @ts-ignore
         const name = rockcraft['name'];
         return {
             type: 'rock',
@@ -120,7 +117,7 @@ async function planBuildFileResource(workingDir, id) {
         }
         return Object.entries(resources).reduce((acc, [resourceName, resource]) => {
             if (resource.type === 'file' && resource.filename) {
-                let parent = path.dirname(file);
+                const parent = path.dirname(file);
                 if (resource.description?.trim().startsWith('(local)')) {
                     return acc;
                 }
@@ -194,6 +191,5 @@ async function run() {
             core.setFailed(error.message);
     }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
 //# sourceMappingURL=index.js.map

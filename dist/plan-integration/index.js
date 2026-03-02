@@ -67,7 +67,7 @@ async function waitBuild(githubToken, jobId) {
 async function downloadArtifact(artifact, id) {
     // When build jobs have just finished, the artifacts might not be fully available yet.
     // Retry downloading artifacts for up to 1 minute instead of immediately erroring out.
-    let artifactError;
+    let artifactError = undefined;
     for (let i = 0; i < 6; i++) {
         const tmp = fs_1.default.mkdtempSync(path_1.default.join(os_1.default.tmpdir(), 'artifact-'));
         try {
@@ -89,22 +89,22 @@ async function run() {
         const plan = JSON.parse(core.getInput('plan'));
         await waitBuild(core.getInput('github-token'), Number(core.getInput('check-run-id')));
         const artifact = new artifact_1.DefaultArtifactClient();
-        let args = [];
+        const args = [];
         for (const build of plan.build) {
             const tmp = await downloadArtifact(artifact, (await artifact.getArtifact(build.output)).artifact.id);
             const manifest = JSON.parse(fs_1.default.readFileSync(path_1.default.join(tmp, 'manifest.json'), { encoding: 'utf-8' }));
             if (build.type === 'charm' || build.type === 'file') {
-                // @ts-ignore
+                // @ts-expect-ignore
                 for (const file of manifest.files) {
                     fs_1.default.renameSync(path_1.default.join(tmp, file), path_1.default.join(plan.working_directory, file));
-                    // @ts-ignore
+                    // @ts-expect-ignore
                     const name = manifest.name;
-                    let argName = build.type === 'charm' ? 'charm-file' : `${name}-resource`;
+                    const argName = build.type === 'charm' ? 'charm-file' : `${name}-resource`;
                     args.push(`--${argName}=./${file}`);
                 }
             }
             else if (build.type === 'rock' || build.type == 'docker-image') {
-                // @ts-ignore
+                // @ts-expect-ignore
                 const name = manifest.name;
                 if ('files' in manifest) {
                     for (const file of manifest.files) {
@@ -137,6 +137,5 @@ async function run() {
             core.setFailed(error.message);
     }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
 //# sourceMappingURL=index.js.map

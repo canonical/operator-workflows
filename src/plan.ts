@@ -16,7 +16,7 @@ function normalizePath(p: string): string {
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replaceAll(/[\t\n:\/\\"<>|*?]/g, '-')
+  return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-')
 }
 
 function fromFork(): boolean {
@@ -25,8 +25,8 @@ function fromFork(): boolean {
     return false
   }
   return (
-    // @ts-ignore
-    context.repo.owner !== context.payload.pull_request.head.repo.owner.login
+    context.repo.owner !==
+    context.payload?.pull_request?.head?.repo?.owner?.login
   )
 }
 
@@ -49,7 +49,6 @@ async function planBuildCharm(
     const charmcraft = yaml.load(
       fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
     ) as object
-    // @ts-ignore
     let name: string
     if ('name' in charmcraft) {
       name = charmcraft['name'] as string
@@ -90,9 +89,8 @@ async function planBuildRock(
     const file = path.join(workingDir, path.relative(workingDir, rockcraftFile))
     const rockcraft = yaml.load(
       fs.readFileSync(rockcraftFile, { encoding: 'utf-8' })
-    )
-    // @ts-ignore
-    const name = rockcraft['name']
+    ) as { [key: string]: unknown }
+    const name = rockcraft['name'] as string
     return {
       type: 'rock',
       name,
@@ -180,7 +178,7 @@ async function planBuildFileResource(
     return Object.entries(resources).reduce(
       (acc, [resourceName, resource]: [string, CharmResource]) => {
         if (resource.type === 'file' && resource.filename) {
-          let parent = path.dirname(file)
+          const parent = path.dirname(file)
           if (resource.description?.trim().startsWith('(local)')) {
             return acc
           }
@@ -268,5 +266,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()

@@ -240,6 +240,5 @@ async function run() {
             core.setFailed(error.message);
     }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run();
 //# sourceMappingURL=index.js.map

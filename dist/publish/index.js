@@ -47,8 +47,8 @@ class Publish {
         if (resources === undefined) {
             return [[], []];
         }
-        let images = Object.keys(resources).filter(k => resources[k].type === 'oci-image' && !resources[k]['upstream-source']);
-        let files = Object.keys(resources).filter(k => resources[k].type === 'file');
+        const images = Object.keys(resources).filter(k => resources[k].type === 'oci-image' && !resources[k]['upstream-source']);
+        const files = Object.keys(resources).filter(k => resources[k].type === 'file');
         return [images, files];
     }
     async getFiles(plan, runId) {
@@ -108,7 +108,7 @@ class Publish {
             if (build.type === 'charm' || build.type === 'file') {
                 continue;
             }
-            const resourceName = this.resourceMapping.hasOwnProperty(build.name)
+            const resourceName = Object.prototype.hasOwnProperty.call(this.resourceMapping, build.name)
                 ? this.resourceMapping[build.name]
                 : `${build.name}-image`;
             if (!resources.includes(resourceName)) {
@@ -274,6 +274,5 @@ class Publish {
         }
     }
 }
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new Publish().run();
 //# sourceMappingURL=index.js.map
