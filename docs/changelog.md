@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-03-02
+
+- Replace `ncc` build tooling to `rollup` as suggested by GitHub typscript action.
+
 ## 2026-02-26
 
 - Fix bug in `cache-exclude-status` argument for the link check step of `docs.yaml`.
