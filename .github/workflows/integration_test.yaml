@@ -390,9 +390,6 @@ jobs:
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ matrix.scan.image }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
   integration-test:
     name: Integration tests
     uses: ./.github/workflows/integration_test_run.yaml
