@@ -38,7 +38,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6.0.2
-
+      - name: Install docutils
+        run: sudo apt-get install -y docutils
       - name: Run Vale Linter
         uses: errata-ai/vale-action@v2.1.1
         with:
@@ -71,7 +72,7 @@ jobs:
 
       - name: Link Checker
         id: lychee
-        uses: lycheeverse/lychee-action@v2.7.0
+        uses: lycheeverse/lychee-action@v2.8.0
         with:
           fail: ${{ inputs.linkcheck-fail-on-error }}
           args: >-
@@ -83,7 +84,7 @@ jobs:
             --max-retries 5
             --cache
             --max-cache-age 5d
-            --cache-exclude-status '..100, 404, 429, 500..'
+            --cache-exclude-status '400..'
             --exclude terraform.io
             --exclude hashicorp.com
             ${{ inputs.linkcheck-files }}
