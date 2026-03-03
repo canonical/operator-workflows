@@ -104,7 +104,7 @@ export async function run(): Promise<void> {
       Number(core.getInput('check-run-id'))
     )
     const artifact = new DefaultArtifactClient()
-    let args: string[] = []
+    const args: string[] = []
     for (const build of plan.build) {
       const tmp = await downloadArtifact(
         artifact,
@@ -122,7 +122,7 @@ export async function run(): Promise<void> {
           )
           // @ts-ignore
           const name = manifest.name as string
-          let argName: string =
+          const argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
           args.push(`--${argName}=./${file}`)
         }
@@ -159,5 +159,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()

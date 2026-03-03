@@ -180,7 +180,7 @@ async function planBuildFileResource(
     return Object.entries(resources).reduce(
       (acc, [resourceName, resource]: [string, CharmResource]) => {
         if (resource.type === 'file' && resource.filename) {
-          let parent = path.dirname(file)
+          const parent = path.dirname(file)
           if (resource.description?.trim().startsWith('(local)')) {
             return acc
           }
@@ -268,5 +268,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()

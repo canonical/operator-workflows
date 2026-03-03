@@ -69,10 +69,12 @@ class Publish {
     if (resources === undefined) {
       return [[], []]
     }
-    let images = Object.keys(resources).filter(
+    const images = Object.keys(resources).filter(
       k => resources[k].type === 'oci-image' && !resources[k]['upstream-source']
     )
-    let files = Object.keys(resources).filter(k => resources[k].type === 'file')
+    const files = Object.keys(resources).filter(
+      k => resources[k].type === 'file'
+    )
     return [images, files]
   }
 
@@ -348,5 +350,4 @@ class Publish {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 new Publish().run()
