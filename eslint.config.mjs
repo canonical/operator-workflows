@@ -19,7 +19,13 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ['**/coverage', '**/dist', '**/linter', '**/node_modules']
+    ignores: [
+      '**/coverage',
+      '**/dist',
+      '**/lib',
+      '**/linter',
+      '**/node_modules'
+    ]
   },
   ...compat.extends(
     'eslint:recommended',
@@ -53,8 +59,7 @@ export default [
             '__fixtures__/*.ts',
             '__tests__/*.ts',
             'eslint.config.mjs',
-            'jest.config.js',
-            'rollup.config.ts'
+            'jest.config.js'
           ]
         },
         tsconfigRootDir: import.meta.dirname
