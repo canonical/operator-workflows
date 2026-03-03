@@ -8,6 +8,7 @@ import * as yaml from 'js-yaml'
 import * as github from '@actions/github'
 import { mkdtemp, normalizePath } from './utils'
 import { Plan } from './model'
+import { parseManifest } from './manifest'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
@@ -110,12 +111,19 @@ class Publish {
             workflowRunId: runId
           }
         })
-        const manifest = JSON.parse(
-          fs.readFileSync(path.join(tmp, 'manifest.json'), {
-            encoding: 'utf-8'
-          })
+        const manifest = parseManifest(
+          JSON.parse(
+            fs.readFileSync(path.join(tmp, 'manifest.json'), {
+              encoding: 'utf-8'
+            })
+          )
         )
-        const files = manifest.files as string[]
+        if (!manifest.files) {
+          throw new Error(
+            `file resource ${build.name} missing files in manifest`
+          )
+        }
+        const files = manifest.files
         if (files.length !== 1) {
           throw new Error(
             `file resource ${build.name} contain multiple candidates: ${files}`
@@ -140,7 +148,10 @@ class Publish {
       if (build.type === 'charm' || build.type === 'file') {
         continue
       }
-      const resourceName = this.resourceMapping.hasOwnProperty(build.name)
+      const resourceName = Object.prototype.hasOwnProperty.call(
+        this.resourceMapping,
+        build.name
+      )
         ? this.resourceMapping[build.name]
         : `${build.name}-image`
       if (!resources.includes(resourceName)) {
@@ -165,8 +176,12 @@ class Publish {
           workflowRunId: runId
         }
       })
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
+      const manifest = parseManifest(
+        JSON.parse(
+          fs.readFileSync(path.join(tmp, 'manifest.json'), {
+            encoding: 'utf-8'
+          })
+        )
       )
       if (build.output_type === 'registry') {
         if (!dockerLogin) {
@@ -183,7 +198,12 @@ class Publish {
           )
           dockerLogin = true
         }
-        const images = manifest.images as string[]
+        if (!manifest.images) {
+          throw new Error(
+            `image resource ${build.name} missing images in manifest`
+          )
+        }
+        const images = manifest.images
         if (images.length !== 1) {
           throw new Error(
             `image resource ${build.name} contain multiple candidates: ${images}`
@@ -194,7 +214,12 @@ class Publish {
         upload.set(resourceName, image)
       }
       if (build.output_type === 'file') {
-        const files = manifest.files as string[]
+        if (!manifest.files) {
+          throw new Error(
+            `image resource ${build.name} missing files in manifest`
+          )
+        }
+        const files = manifest.files
         if (files.length !== 1) {
           throw new Error(
             `image resource ${build.name} contain multiple candidates: ${files}`
@@ -267,13 +292,20 @@ class Publish {
         workflowRunId: runId
       }
     })
-    const manifest = JSON.parse(
-      fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
+    const manifest = parseManifest(
+      JSON.parse(
+        fs.readFileSync(path.join(tmp, 'manifest.json'), {
+          encoding: 'utf-8'
+        })
+      )
     )
+    if (!manifest.files) {
+      throw new Error(`charm ${charm.name} missing files in manifest`)
+    }
     return {
-      name: manifest.name as string,
+      name: manifest.name,
       dir: charm.source_directory,
-      files: (manifest.files as string[]).map(f => path.join(tmp, f))
+      files: manifest.files.map(f => path.join(tmp, f))
     }
   }
 

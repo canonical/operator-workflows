@@ -16,7 +16,7 @@ function normalizePath(p: string): string {
 }
 
 function sanitizeArtifactName(name: string): string {
-  return name.replaceAll(/[\t\n:\/\\"<>|*?]/g, '-')
+  return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-')
 }
 
 function fromFork(): boolean {
@@ -25,7 +25,7 @@ function fromFork(): boolean {
     return false
   }
   return (
-    // @ts-ignore
+    // @ts-expect-error GitHub payload typing does not model all pull_request fields.
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login
   )
 }
@@ -49,7 +49,6 @@ async function planBuildCharm(
     const charmcraft = yaml.load(
       fs.readFileSync(charmcraftFile, { encoding: 'utf-8' })
     ) as object
-    // @ts-ignore
     let name: string
     if ('name' in charmcraft) {
       name = charmcraft['name'] as string
@@ -90,9 +89,11 @@ async function planBuildRock(
     const file = path.join(workingDir, path.relative(workingDir, rockcraftFile))
     const rockcraft = yaml.load(
       fs.readFileSync(rockcraftFile, { encoding: 'utf-8' })
-    )
-    // @ts-ignore
+    ) as Record<string, unknown>
     const name = rockcraft['name']
+    if (typeof name !== 'string') {
+      throw new Error(`unknown rock name (${workingDir})`)
+    }
     return {
       type: 'rock',
       name,
