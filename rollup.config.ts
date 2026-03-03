@@ -11,12 +11,10 @@ import json from '@rollup/plugin-json'
 const entryPoints = [
   'build',
   'get-plan',
-  'model',
   'plan-integration',
   'plan-scan',
   'plan',
-  'publish',
-  'utils'
+  'publish'
 ]
 
 const configs = entryPoints.map(entry => ({
