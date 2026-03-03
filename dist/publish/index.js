@@ -120441,3 +120441,4 @@ class Publish {
     }
 }
 new Publish().run();
+//# sourceMappingURL=index.js.map
