@@ -8,7 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-03-03
 
-- Mitigate issues with missing trivy resources.
+- Bump trivy-image action.
 
 ## 2026-02-26
 
