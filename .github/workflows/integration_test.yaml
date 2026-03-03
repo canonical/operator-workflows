@@ -339,15 +339,12 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        # 2026-03-03: replace once trivy-action 0.34.2 is released (aquasecurity/trivy-action#517)
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
           exit-code: ${{ inputs.trivy-exit-code }}
           severity: ${{ inputs.trivy-severity-config }}
-          # 2026-03-03: remove once trivy-action 0.34.2 is released (aquasecurity/trivy-action#517)
-          version: "v0.69.2"
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Check trivyignore

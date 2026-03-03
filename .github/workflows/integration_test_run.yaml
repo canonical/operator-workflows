@@ -481,14 +481,11 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        # 2026-03-03: replace once trivy-action 0.34.2 is released (aquasecurity/trivy-action#517)
-        uses: aquasecurity/trivy-action@e368e328979b113139d6f9068e03accaed98a518 # 0.34.1
+        uses: aquasecurity/trivy-action@0.34.2
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
           trivy-config: ${{ inputs.trivy-fs-config }}
-          # 2026-03-03: remove once trivy-action 0.34.2 is released (aquasecurity/trivy-action#517)
-          version: "v0.69.2"
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
