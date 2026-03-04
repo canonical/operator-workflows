@@ -291,9 +291,18 @@ jobs:
         run: |
           sudo snap install k8s --channel=${{ inputs.channel }} --classic
 
+          # Add authentication for ghcr.io for containerd
+          GHCR_IO_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/conf.d
+          sudo mkdir -p ${GHCR_IO_CONFIG}
+          sudo chown $USER ${GHCR_IO_CONFIG}
+          cat << EOF > ${GHCR_IO_CONFIG}/ghcr-auth.toml
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."ghcr.io".auth]
+          username = "${{ github.actor }}"
+          password = "${{ secrets.GITHUB_TOKEN }}"
+          EOF
+
           if [ -n "$DOCKERHUB_MIRROR" ]; then
           MIRROR_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/hosts.d/docker.io
-
           sudo mkdir -p ${MIRROR_CONFIG}
           sudo chown $USER ${MIRROR_CONFIG}
           cat << EOF > ${MIRROR_CONFIG}/hosts.toml
