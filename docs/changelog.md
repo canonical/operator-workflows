@@ -8,6 +8,9 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-03-03
 
+- Replace `ncc` tooling with `Rollup`.
+- Add linting checks to CI pipeline.
+- Fix any linting issues found.
 - Bump trivy-image action.
 
 ## 2026-02-26
