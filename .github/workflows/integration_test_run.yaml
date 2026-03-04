@@ -381,7 +381,7 @@ jobs:
           sudo apt update
           sudo apt install skopeo -y
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@chore/typescript-build-pipeline
+        uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}

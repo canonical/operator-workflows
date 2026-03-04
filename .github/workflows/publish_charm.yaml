@@ -87,7 +87,7 @@ jobs:
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Get plan
-        uses: canonical/operator-workflows/internal/get-plan@chore/typescript-build-pipeline
+        uses: canonical/operator-workflows/internal/get-plan@main
         id: get-plan
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -122,7 +122,7 @@ jobs:
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
       - run: sudo snap install rockcraft --classic
-      - uses: canonical/operator-workflows/internal/publish@chore/typescript-build-pipeline
+      - uses: canonical/operator-workflows/internal/publish@main
         id: publish
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
