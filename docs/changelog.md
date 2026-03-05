@@ -9,7 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-03-04
 
 - Cache rock build results for register-typed rocks.
-- Add authentication to ghrc.io for Canonical Kubernetes.
+- Add authentication to ghcr.io for Canonical Kubernetes.
 
 ## 2026-03-03
 
