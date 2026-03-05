@@ -293,7 +293,6 @@ jobs:
 
           if [ -n "$DOCKERHUB_MIRROR" ]; then
           MIRROR_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/hosts.d/docker.io
-
           sudo mkdir -p ${MIRROR_CONFIG}
           sudo chown $USER ${MIRROR_CONFIG}
           cat << EOF > ${MIRROR_CONFIG}/hosts.toml
@@ -304,6 +303,16 @@ jobs:
 
           cat << EOF | sudo k8s bootstrap --file -
           containerd-base-dir: /opt/containerd
+          extra-node-containerd-config:
+            plugins:
+              "io.containerd.grpc.v1.cri":
+                registry:
+                  config_path: "/opt/containerd/k8s-containerd/etc/containerd/hosts.d"
+                  configs:
+                    "ghcr.io":
+                      auth:
+                        username: "${{ github.actor }}"
+                        password: "${{ secrets.GITHUB_TOKEN }}"
           EOF
 
           # Note: the previous --file arguments override the default bootstrap options
