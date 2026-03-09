@@ -262,7 +262,7 @@ jobs:
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: canonical/operator-workflows/internal/build@charmcraft-wrapper
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
