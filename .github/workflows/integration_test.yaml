@@ -258,7 +258,7 @@ jobs:
           lxc profile set default security.nesting true
       - name: Build charms
         run: |
-          pip install -e supercraft
+          pipx install supercraft  --spec ./supercraft
           supercraft pack --build-context 
       - uses: actions/checkout@v6.0.2
       - name: Pre-build script
