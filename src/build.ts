@@ -212,8 +212,6 @@ async function buildInstallRockcraft(
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
-  rockcraftRepository: string
-  rockcraftRef: string
   user: string
   token: string
 }
@@ -300,8 +298,6 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 async function buildRock({
   plan,
   rockcraftChannel,
-  rockcraftRepository,
-  rockcraftRef,
   user,
   token
 }: BuildRockParams): Promise<void> {
@@ -332,15 +328,14 @@ async function buildRock({
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
   core.startGroup('rockcraft pack')
-  await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
-    cwd: plan.source_directory,
+  await exec.exec('rockcraft', ['pack', '--verbosity', 'trace', '--project-dir', plan.source_directory], {
     env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
   core.endGroup()
   const rocks = await (
-    await glob.create(path.join(plan.source_directory, '*.rock'))
+    await glob.create(path.join('.', '*.rock'))
   ).glob()
-  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  const manifestFile = path.join('.', 'manifest.json')
   const artifact = new DefaultArtifactClient()
   if (plan.output_type === 'file') {
     fs.writeFileSync(
@@ -357,7 +352,7 @@ async function buildRock({
     await artifact.uploadArtifact(
       plan.output,
       [...rocks, manifestFile],
-      plan.source_directory
+      '.'
     )
   } else {
     const tree = await gitTreeId(plan.source_directory)
@@ -423,8 +418,6 @@ export async function run(): Promise<void> {
         await buildRock({
           plan,
           rockcraftChannel: core.getInput('rockcraft-channel'),
-          rockcraftRef: core.getInput('rockcraft-ref'),
-          rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })
