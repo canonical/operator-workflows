@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-03-09
+
+- Add optional `github-token` input to the `generate_terraform_docs` workflow to allow callers to pass a PAT, enabling CI workflows to trigger on the resulting pull request.
+
 ## 2026-03-04
 
 - Cache rock build results for register-typed rocks.
