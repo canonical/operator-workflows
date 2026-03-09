@@ -256,11 +256,11 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
+      - uses: actions/checkout@v6.0.2
       - name: Build charms
         run: |
           pipx install ./supercraft/ supercraft
           supercraft pack --build-context 
-      - uses: actions/checkout@v6.0.2
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
