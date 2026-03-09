@@ -258,8 +258,8 @@ jobs:
           lxc profile set default security.nesting true
       - name: Build charms
         run: |
-          pipx install -e supercharm
-          supercharm pack --build-context 
+          pipx install -e supercraft
+          supercraft pack --build-context 
       - uses: actions/checkout@v6.0.2
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}

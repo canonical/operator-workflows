@@ -1,0 +1,13 @@
+README.md
+pyproject.toml
+supercraft/__init__.py
+supercraft/files.py
+supercraft/main.py
+supercraft.egg-info/PKG-INFO
+supercraft.egg-info/SOURCES.txt
+supercraft.egg-info/dependency_links.txt
+supercraft.egg-info/entry_points.txt
+supercraft.egg-info/requires.txt
+supercraft.egg-info/top_level.txt
+tests/test_files.py
+tests/test_main.py

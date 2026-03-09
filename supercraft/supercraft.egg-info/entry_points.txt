@@ -1,0 +1,2 @@
+[console_scripts]
+supercraft = supercraft.main:main

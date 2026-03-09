@@ -2,7 +2,7 @@ import pytest
 import yaml
 from pathlib import Path
 
-from supercharm.files import copy_context_to_temp, charm_name_from_yaml, copy_charm_files, move_generated_lib
+from supercraft.files import copy_context_to_temp, charm_name_from_yaml, copy_charm_files, move_generated_lib
 
 
 # ---------------------------------------------------------------------------
