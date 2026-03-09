@@ -5,6 +5,7 @@ import * as core from '@actions/core'
 import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
+import { parseManifest } from './manifest'
 
 interface Scan {
   artifact: string
@@ -28,23 +29,21 @@ export async function run(): Promise<void> {
       await artifact.downloadArtifact(
         (await artifact.getArtifact(build.output)).artifact.id
       )
-      const manifest = JSON.parse(
-        fs.readFileSync('manifest.json', { encoding: 'utf-8' })
-      ) as object
-      if ('files' in manifest) {
-        const files = manifest.files as string[]
+      const manifest = parseManifest(
+        JSON.parse(fs.readFileSync('manifest.json', { encoding: 'utf-8' }))
+      )
+      if (manifest.files) {
         scans = scans.concat(
-          files.map(f => ({
+          manifest.files.map(f => ({
             artifact: build.output,
             file: f,
             image: ''
           }))
         )
       }
-      if ('images' in manifest) {
-        const images = manifest.images as string[]
+      if (manifest.images) {
         scans = scans.concat(
-          images.map(i => ({
+          manifest.images.map(i => ({
             artifact: '',
             file: `${i.replaceAll(/[/:]/g, '-')}.tar`,
             image: i
@@ -59,5 +58,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()
