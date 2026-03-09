@@ -9,6 +9,8 @@ Each revision is versioned by the date of the revision.
 ## 2026-03-09
 
 - Build charms using the charmcraft wrapper.
+- Drop support for building rockcraft from sources.
+- Drop support for charmcraftcache
 
 ## 2026-03-04
 
