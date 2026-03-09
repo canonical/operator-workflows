@@ -90,6 +90,7 @@ function toCommandValue(input) {
     }
     return JSON.stringify(input);
 }
+exports.getBackendIdsFromToken = getBackendIdsFromToken;
 /**
  *
  * @param annotationProperties
