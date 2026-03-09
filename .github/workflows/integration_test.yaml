@@ -321,7 +321,7 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
-      - uses: actions/download-artifact@v7.0.0
+      - uses: actions/download-artifact@v8.0.0
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
@@ -329,7 +329,7 @@ jobs:
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v3.7.0
+      - uses: docker/login-action@v4.0.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -339,7 +339,7 @@ jobs:
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
       - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.34.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           input: ${{ matrix.scan.file }}
           trivy-config: ${{ inputs.trivy-image-config }}
@@ -350,7 +350,7 @@ jobs:
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.1
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.2
           if [ -f ".trivyignore" ]
           then
             ignored_cves=$(trivy image "$ROCK_IMAGE" \

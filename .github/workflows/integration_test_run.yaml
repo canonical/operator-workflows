@@ -232,7 +232,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.3.0
+        uses: astral-sh/setup-uv@v7.3.1
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -281,7 +281,7 @@ jobs:
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-default/
@@ -293,7 +293,6 @@ jobs:
 
           if [ -n "$DOCKERHUB_MIRROR" ]; then
           MIRROR_CONFIG=/opt/containerd/k8s-containerd/etc/containerd/hosts.d/docker.io
-
           sudo mkdir -p ${MIRROR_CONFIG}
           sudo chown $USER ${MIRROR_CONFIG}
           cat << EOF > ${MIRROR_CONFIG}/hosts.toml
@@ -304,6 +303,16 @@ jobs:
 
           cat << EOF | sudo k8s bootstrap --file -
           containerd-base-dir: /opt/containerd
+          extra-node-containerd-config:
+            plugins:
+              "io.containerd.grpc.v1.cri":
+                registry:
+                  config_path: "/opt/containerd/k8s-containerd/etc/containerd/hosts.d"
+                  configs:
+                    "ghcr.io":
+                      auth:
+                        username: "${{ github.actor }}"
+                        password: "${{ secrets.GITHUB_TOKEN }}"
           EOF
 
           # Note: the previous --file arguments override the default bootstrap options
@@ -446,7 +455,7 @@ jobs:
       - name: Upload Allure results
         timeout-minutes: 3
         if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/
@@ -481,7 +490,7 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action
         if: ${{ inputs.trivy-fs-enabled }}
-        uses: aquasecurity/trivy-action@0.34.1
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"
           scan-ref: ${{ inputs.trivy-fs-ref }}
