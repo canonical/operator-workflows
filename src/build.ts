@@ -305,9 +305,7 @@ async function buildRock({
   if (await restoreRock(plan, cacheKey)) {
     return
   }
-  if (rockcraftRepository && rockcraftRef) {
-    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
-  } else if (rockcraftChannel) {
+  if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
