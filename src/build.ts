@@ -220,8 +220,6 @@ async function buildInstallRockcraft(
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
-  rockcraftRepository: string
-  rockcraftRef: string
   user: string
   token: string
 }
@@ -308,8 +306,6 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 async function buildRock({
   plan,
   rockcraftChannel,
-  rockcraftRepository,
-  rockcraftRef,
   user,
   token
 }: BuildRockParams): Promise<void> {
@@ -317,9 +313,7 @@ async function buildRock({
   if (await restoreRock(plan, cacheKey)) {
     return
   }
-  if (rockcraftRepository && rockcraftRef) {
-    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
-  } else if (rockcraftChannel) {
+  if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -432,8 +426,6 @@ export async function run(): Promise<void> {
         await buildRock({
           plan,
           rockcraftChannel: core.getInput('rockcraft-channel'),
-          rockcraftRef: core.getInput('rockcraft-ref'),
-          rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })

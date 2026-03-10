@@ -8,6 +8,10 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-03-09
 
+- Drop support for building rockcraft from its repository.
+
+## 2026-03-09
+
 - Publish charm workflow supports uploading multiple charm artifacts.
 
 ## 2026-03-04
