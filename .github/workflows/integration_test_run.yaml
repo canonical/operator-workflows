@@ -390,7 +390,7 @@ jobs:
           sudo apt update
           sudo apt install skopeo -y
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@feat/charm-publish-detect-multi-job
+        uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
