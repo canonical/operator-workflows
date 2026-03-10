@@ -423,6 +423,8 @@ export async function run(): Promise<void> {
         await buildRock({
           plan,
           rockcraftChannel: core.getInput('rockcraft-channel'),
+          rockcraftRef: core.getInput('rockcraft-ref'),
+          rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })

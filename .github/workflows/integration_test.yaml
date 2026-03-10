@@ -68,6 +68,14 @@ on:
         description: Rockcraft channel to use for the integration test
         type: string
         default: latest/stable
+      rockcraft-ref:
+        description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
+        type: string
+        default: ""
+      rockcraft-repository:
+        description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
+        type: string
+        default: ""
       rockcraft-enable-security-nesting:
         description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
         type: boolean
@@ -256,11 +264,10 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
-      - uses: actions/checkout@v6.0.2
       - name: Install builder
         run: |
           pipx install git+https://github.com/canonical/operator-workflows.git@charmcraft-wrapper#subdirectory=superbuild
-          ls -la
+      - uses: actions/checkout@v6.0.2
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
