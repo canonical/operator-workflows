@@ -173,50 +173,6 @@ async function buildDockerImage({
   }
 }
 
-async function buildInstallRockcraft(
-  repository: string,
-  ref: string
-): Promise<void> {
-  const workingDir = '/opt/operator-workflows/rockcraft'
-  await exec.exec('sudo', ['mkdir', workingDir, '-p'])
-  await exec.exec('sudo', ['chown', os.userInfo().username, workingDir])
-  await exec.exec('git', [
-    'clone',
-    `https://github.com/${repository}.git`,
-    '--branch',
-    ref,
-    workingDir
-  ])
-  const rockcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
-  ).stdout.trim()
-  const cacheKey = `rockcraft-${rockcraftSha}`
-  const rockcraftGlob = path.join(workingDir, 'rockcraft*.snap')
-  const restored = await cache.restoreCache([rockcraftGlob], cacheKey)
-  if (!restored) {
-    await installSnapcraft()
-    core.startGroup('snapcraft pack (rockcraft)')
-    await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
-      cwd: workingDir
-    })
-    core.endGroup()
-  }
-  const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
-  if (rockcraftSnaps.length == 0) {
-    throw new Error("can't find rockcraft snap")
-  }
-  await exec.exec('sudo', [
-    'snap',
-    'install',
-    rockcraftSnaps[0],
-    '--classic',
-    '--dangerous'
-  ])
-  if (!restored) {
-    await cache.saveCache([rockcraftGlob], cacheKey)
-  }
-}
-
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
