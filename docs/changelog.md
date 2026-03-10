@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-03-10
+
+- Drop leftover registry input.
+
 ## 2026-03-09
 
 - Publish charm workflow supports uploading multiple charm artifacts.
