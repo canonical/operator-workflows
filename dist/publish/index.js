@@ -120351,39 +120351,45 @@ class Publish {
         if (charms.length === 0) {
             throw new Error('no charm to upload');
         }
-        if (charms.length > 1) {
-            throw new Error(`more than one charm to upload: ${charms.map(c => c.name)}`);
-        }
-        const charm = charms[0];
-        const tmp = mkdtemp();
-        info(`download charm artifact from integration workflow (run id: ${runId})`);
-        const artifact = (await this.artifact.getArtifact(charm.output, {
-            findBy: {
-                token: this.token,
-                repositoryOwner: context$2.repo.owner,
-                repositoryName: context$2.repo.repo,
-                workflowRunId: runId
+        let charmName;
+        let charmSourceDir;
+        const allFiles = [];
+        for (const charm of charms) {
+            const tmp = mkdtemp();
+            info(`download charm artifact "${charm.output}" from integration workflow (run id: ${runId})`);
+            const artifact = (await this.artifact.getArtifact(charm.output, {
+                findBy: {
+                    token: this.token,
+                    repositoryOwner: context$2.repo.owner,
+                    repositoryName: context$2.repo.repo,
+                    workflowRunId: runId
+                }
+            })).artifact;
+            await this.artifact.downloadArtifact(artifact.id, {
+                path: tmp,
+                findBy: {
+                    token: this.token,
+                    repositoryOwner: context$2.repo.owner,
+                    repositoryName: context$2.repo.repo,
+                    workflowRunId: runId
+                }
+            });
+            const manifest = parseManifest(JSON.parse(fs.readFileSync(path$1.join(tmp, 'manifest.json'), {
+                encoding: 'utf-8'
+            })));
+            if (!manifest.files) {
+                throw new Error(`charm ${charm.name} missing files in manifest`);
             }
-        })).artifact;
-        await this.artifact.downloadArtifact(artifact.id, {
-            path: tmp,
-            findBy: {
-                token: this.token,
-                repositoryOwner: context$2.repo.owner,
-                repositoryName: context$2.repo.repo,
-                workflowRunId: runId
+            if (!charmName) {
+                charmName = manifest.name;
+                charmSourceDir = charm.source_directory;
             }
-        });
-        const manifest = parseManifest(JSON.parse(fs.readFileSync(path$1.join(tmp, 'manifest.json'), {
-            encoding: 'utf-8'
-        })));
-        if (!manifest.files) {
-            throw new Error(`charm ${charm.name} missing files in manifest`);
+            allFiles.push(...manifest.files.map(f => path$1.join(tmp, f)));
         }
         return {
-            name: manifest.name,
-            dir: charm.source_directory,
-            files: manifest.files.map(f => path$1.join(tmp, f))
+            name: charmName,
+            dir: charmSourceDir,
+            files: allFiles
         };
     }
     async run() {

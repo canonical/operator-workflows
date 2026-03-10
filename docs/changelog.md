@@ -11,6 +11,7 @@ Each revision is versioned by the date of the revision.
 - Build charms using the charmcraft wrapper.
 - Drop support for building rockcraft from sources.
 - Drop support for charmcraftcache
+- Publish charm workflow supports uploading multiple charm artifacts.
 
 ## 2026-03-04
 

@@ -107,6 +107,7 @@ export class GetPlan {
         }
         return 0
       })
+    let mergedPlan: Plan | undefined
     for (const artifact of artifacts) {
       const tmp = mkdtemp()
       await this.artifact.downloadArtifact(artifact.id, {
@@ -121,18 +122,33 @@ export class GetPlan {
       const plan = JSON.parse(
         fs.readFileSync(path.join(tmp, 'plan.json'), { encoding: 'utf-8' })
       ) as Plan
-      if (
+      const matches =
         plan.working_directory === '.' ||
         normalizePath(this.workingDir) ===
           normalizePath(plan.working_directory) ||
         normalizePath(this.workingDir).startsWith(
           normalizePath(plan.working_directory) + '/'
         )
-      ) {
-        return plan
+      if (!matches) {
+        continue
+      }
+      if (!mergedPlan) {
+        mergedPlan = plan
+        continue
+      }
+      // Merge charm build entries from additional matching plans
+      // (e.g. different architecture invocations of the same integration test)
+      const existingOutputs = new Set(mergedPlan.build.map(b => b.output))
+      for (const build of plan.build) {
+        if (build.type === 'charm' && !existingOutputs.has(build.output)) {
+          mergedPlan.build.push(build)
+        }
       }
     }
-    throw new Error(`can't find plan artifact for workflow run ${runId}`)
+    if (!mergedPlan) {
+      throw new Error(`can't find plan artifact for workflow run ${runId}`)
+    }
+    return mergedPlan
   }
 
   async run() {
