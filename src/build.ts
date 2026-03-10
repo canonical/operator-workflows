@@ -11,17 +11,6 @@ import { BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
-
-async function installSnapcraft(): Promise<void> {
-  const snapcraftInfo = (
-    await exec.getExecOutput('snap', ['info', 'snapcraft'])
-  ).stdout
-  if (snapcraftInfo.includes('installed')) {
-    return
-  }
-  await exec.exec('sudo', ['snap', 'install', 'snapcraft', '--classic'])
-}
 
 interface BuildCharmParams {
   plan: BuildPlan
