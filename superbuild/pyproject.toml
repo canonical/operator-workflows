@@ -3,7 +3,7 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "supercraft"
+name = "superbuild"
 version = "0.1.0"
 description = "Thin wrapper that ensures charmcraft is installed and forwards all arguments to it"
 requires-python = ">=3.8"
@@ -13,4 +13,4 @@ dependencies = ["pyyaml"]
 testpaths = ["tests"]
 
 [project.scripts]
-supercraft = "supercraft.main:main"
+superbuild = "superbuild.main:main"

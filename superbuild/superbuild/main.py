@@ -6,7 +6,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-from supercraft.files import charm_name_from_yaml, copy_charm_files, copy_context_to_temp, move_generated_lib
+from superbuild.files import charm_name_from_yaml, copy_charm_files, copy_context_to_temp, move_generated_lib
 
 logging.basicConfig(format="%(name)s: %(message)s")
 

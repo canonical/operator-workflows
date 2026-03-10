@@ -39,9 +39,9 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  core.startGroup('supercraft pack')
+  core.startGroup('superbuild pack')
   await exec.exec(
-    'supercraft',
+    'superbuild',
     [
       'pack',
       '--verbose',

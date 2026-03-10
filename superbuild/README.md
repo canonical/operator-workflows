@@ -1,6 +1,6 @@
-# supercraft
+# superbuild
 
-`supercraft` is a thin Python wrapper around [charmcraft](https://juju.is/docs/sdk/charmcraft).
+`superbuild` is a thin Python wrapper around [charmcraft](https://juju.is/docs/sdk/charmcraft).
 It ensures `charmcraft` is installed on the machine and transparently forwards all arguments to it,
 with one extra convenience: a `--build-context` option that lets you supply an external directory
 of source files to include in the build without modifying your project tree.
@@ -22,29 +22,29 @@ of source files to include in the build without modifying your project tree.
 ## Installation
 
 ```bash
-pip install ./supercraft
+pip install ./superbuild
 ```
 
 Or, for development:
 
 ```bash
-pip install -e ./supercraft
+pip install -e ./superbuild
 ```
 
 ## Usage
 
 ```
-supercraft [--build-context <dir>] <charmcraft command and args>
+superbuild [--build-context <dir>] <charmcraft command and args>
 ```
 
 ### Without `--build-context`
 
-`supercraft` behaves exactly like calling `charmcraft` directly:
+`superbuild` behaves exactly like calling `charmcraft` directly:
 
 ```bash
-supercraft pack
-supercraft version
-supercraft upload my-charm_ubuntu-22.04-amd64.charm
+superbuild pack
+superbuild version
+superbuild upload my-charm_ubuntu-22.04-amd64.charm
 ```
 
 ### With `--build-context`
@@ -54,7 +54,7 @@ working directory into a temporary build directory. This is useful when your sou
 separately from your charm metadata.
 
 ```bash
-supercraft --build-context ./src pack
+superbuild --build-context ./src pack
 ```
 
 What happens internally:

@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from supercraft.main import _install_charmcraft, _parse_build_context, _peek_verbose, main
+from superbuild.main import _install_charmcraft, _parse_build_context, _peek_verbose, main
 
 
 # ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ class TestPeekVerbose:
 
 class TestInstallCharmcraft:
     def test_runs_snap_install(self):
-        with patch("supercraft.main.subprocess.run") as mock_run:
+        with patch("superbuild.main.subprocess.run") as mock_run:
             _install_charmcraft()
             mock_run.assert_called_once_with(
                 ["sudo", "snap", "install", "charmcraft", "--classic"],
@@ -53,17 +53,17 @@ class TestInstallCharmcraft:
 
 class TestParseBuildContext:
     def test_returns_given_build_context_directory(self, tmp_path):
-        ctx, _proj, args = _parse_build_context(["--build-context", str(tmp_path), "pack"])
+        ctx, _proj, _output, args = _parse_build_context(["--build-context", str(tmp_path), "pack"])
         assert ctx == tmp_path
         assert args == ["pack"]
 
     def test_defaults_context_to_cwd_when_not_provided(self):
-        ctx, _proj, args = _parse_build_context(["pack", "--destructive-mode"])
+        ctx, _proj, _output, args = _parse_build_context(["pack", "--destructive-mode"])
         assert ctx == Path.cwd()
         assert args == ["pack", "--destructive-mode"]
 
     def test_remaining_args_exclude_build_context(self, tmp_path):
-        _ctx, _proj, args = _parse_build_context(
+        _ctx, _proj, _output, args = _parse_build_context(
             ["--build-context", str(tmp_path), "upload", "--release", "edge"]
         )
         assert "--build-context" not in args
@@ -71,17 +71,17 @@ class TestParseBuildContext:
         assert args == ["upload", "--release", "edge"]
 
     def test_empty_argv_returns_cwd_and_no_args(self):
-        ctx, _proj, args = _parse_build_context([])
+        ctx, _proj, _output, args = _parse_build_context([])
         assert ctx == Path.cwd()
         assert args == []
 
     def test_project_dir_is_consumed(self):
-        _ctx, _proj, args = _parse_build_context(["--project-dir", "my-charm", "pack"])
+        _ctx, _proj, _output, args = _parse_build_context(["--project-dir", "my-charm", "pack"])
         assert "--project-dir" not in args
         assert "my-charm" not in args
 
     def test_project_dir_short_flag_is_consumed(self):
-        _ctx, _proj, args = _parse_build_context(["-p", "my-charm", "pack"])
+        _ctx, _proj, _output, args = _parse_build_context(["-p", "my-charm", "pack"])
         assert "-p" not in args
 
 
@@ -90,10 +90,9 @@ class TestParseBuildContext:
 # ---------------------------------------------------------------------------
 
 def _make_parse_build_context_mock():
-    """Return a side_effect that extends _parse_build_context's 3-tuple to 4."""
+    """Return a side_effect that delegates to the real _parse_build_context."""
     def _patched(argv):
-        ctx, proj, remaining = _parse_build_context(argv)
-        return ctx, proj, Path("."), remaining
+        return _parse_build_context(argv)
     return _patched
 
 
@@ -104,15 +103,15 @@ class TestMain:
         result_mock.returncode = mock_run_returncode
 
         with (
-            patch("supercraft.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("supercraft.main._parse_build_context",
+            patch("superbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
+            patch("superbuild.main._parse_build_context",
                   side_effect=_make_parse_build_context_mock()),
-            patch("supercraft.main.subprocess.run", return_value=result_mock) as mock_run,
-            patch("supercraft.main.copy_context_to_temp") as mock_copy_ctx,
-            patch("supercraft.main.copy_charm_files") as mock_copy_charm,
-            patch("supercraft.main.charm_name_from_yaml", return_value="my-charm"),
-            patch("supercraft.main.move_generated_lib"),
-            patch.object(sys, "argv", ["supercraft"] + argv),
+            patch("superbuild.main.subprocess.run", return_value=result_mock) as mock_run,
+            patch("superbuild.main.copy_context_to_temp") as mock_copy_ctx,
+            patch("superbuild.main.copy_charm_files") as mock_copy_charm,
+            patch("superbuild.main.charm_name_from_yaml", return_value="my-charm"),
+            patch("superbuild.main.move_generated_lib"),
+            patch.object(sys, "argv", ["superbuild"] + argv),
             pytest.raises(SystemExit) as exc_info,
         ):
             main()
@@ -160,16 +159,16 @@ class TestMain:
         result_mock.returncode = 0
 
         with (
-            patch("supercraft.main.shutil.which", return_value=None),
-            patch("supercraft.main._parse_build_context",
+            patch("superbuild.main.shutil.which", return_value=None),
+            patch("superbuild.main._parse_build_context",
                   side_effect=_make_parse_build_context_mock()),
-            patch("supercraft.main.subprocess.run", return_value=result_mock),
-            patch("supercraft.main.copy_context_to_temp"),
-            patch("supercraft.main.copy_charm_files"),
-            patch("supercraft.main.charm_name_from_yaml", return_value=None),
-            patch("supercraft.main.move_generated_lib"),
-            patch("supercraft.main._install_charmcraft") as mock_install,
-            patch.object(sys, "argv", ["supercraft", "pack"]),
+            patch("superbuild.main.subprocess.run", return_value=result_mock),
+            patch("superbuild.main.copy_context_to_temp"),
+            patch("superbuild.main.copy_charm_files"),
+            patch("superbuild.main.charm_name_from_yaml", return_value=None),
+            patch("superbuild.main.move_generated_lib"),
+            patch("superbuild.main._install_charmcraft") as mock_install,
+            patch.object(sys, "argv", ["superbuild", "pack"]),
             pytest.raises(SystemExit),
         ):
             main()
@@ -181,16 +180,16 @@ class TestMain:
         result_mock.returncode = 0
 
         with (
-            patch("supercraft.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("supercraft.main._parse_build_context",
+            patch("superbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
+            patch("superbuild.main._parse_build_context",
                   side_effect=_make_parse_build_context_mock()),
-            patch("supercraft.main.subprocess.run", return_value=result_mock),
-            patch("supercraft.main.copy_context_to_temp"),
-            patch("supercraft.main.copy_charm_files"),
-            patch("supercraft.main.charm_name_from_yaml", return_value=None),
-            patch("supercraft.main.move_generated_lib"),
-            patch("supercraft.main._install_charmcraft") as mock_install,
-            patch.object(sys, "argv", ["supercraft", "pack"]),
+            patch("superbuild.main.subprocess.run", return_value=result_mock),
+            patch("superbuild.main.copy_context_to_temp"),
+            patch("superbuild.main.copy_charm_files"),
+            patch("superbuild.main.charm_name_from_yaml", return_value=None),
+            patch("superbuild.main.move_generated_lib"),
+            patch("superbuild.main._install_charmcraft") as mock_install,
+            patch.object(sys, "argv", ["superbuild", "pack"]),
             pytest.raises(SystemExit),
         ):
             main()
@@ -214,16 +213,16 @@ class TestMain:
         (charm_dir / "charmcraft.yaml").write_text("name: my-charm\n")
 
         with (
-            patch("supercraft.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("supercraft.main._parse_build_context",
+            patch("superbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
+            patch("superbuild.main._parse_build_context",
                   return_value=(tmp_path, Path("my-charm"), Path("."), ["pack"])),
-            patch("supercraft.main.subprocess.run", return_value=MagicMock(returncode=0)),
-            patch("supercraft.main.copy_context_to_temp") as mock_copy_ctx,
-            patch("supercraft.main.copy_charm_files"),
-            patch("supercraft.main.charm_name_from_yaml", return_value="my-charm"),
-            patch("supercraft.main.move_generated_lib"),
-            patch("supercraft.main.Path.cwd", return_value=tmp_path),
-            patch.object(sys, "argv", ["supercraft", "--project-dir", "my-charm", "pack"]),
+            patch("superbuild.main.subprocess.run", return_value=MagicMock(returncode=0)),
+            patch("superbuild.main.copy_context_to_temp") as mock_copy_ctx,
+            patch("superbuild.main.copy_charm_files"),
+            patch("superbuild.main.charm_name_from_yaml", return_value="my-charm"),
+            patch("superbuild.main.move_generated_lib"),
+            patch("superbuild.main.Path.cwd", return_value=tmp_path),
+            patch.object(sys, "argv", ["superbuild", "--project-dir", "my-charm", "pack"]),
             pytest.raises(SystemExit),
         ):
             main()

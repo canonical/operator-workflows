@@ -258,7 +258,7 @@ jobs:
           lxc profile set default security.nesting true
       - name: Install builder
         run: |
-          pipx install git+https://github.com/canonical/operator-workflows.git@charmcraft-wrapper#subdirectory=supercraft
+          pipx install git+https://github.com/canonical/operator-workflows.git@charmcraft-wrapper#subdirectory=superbuild
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
