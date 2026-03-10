@@ -266,8 +266,7 @@ jobs:
           lxc profile set default security.nesting true
       - name: Install builder
         run: |
-          ls -la
-          uv install charmcraft-wrapper
+          pipx install git+https://github.com/canonical/operator-workflows.git@charmcraft-wrapper#subdirectory=superbuild
       - uses: actions/checkout@v6.0.2
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
