@@ -270,6 +270,8 @@ jobs:
           build-plan: ${{ toJSON(matrix.build) }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
+          rockcraft-ref: ${{ inputs.rockcraft-ref }}
+          rockcraft-repository: ${{ inputs.rockcraft-repository }}
 
   plan-scan:
     name: Plan Image Scanning

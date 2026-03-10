@@ -212,6 +212,8 @@ async function buildInstallRockcraft(
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
+  rockcraftRepository: string
+  rockcraftRef: string
   user: string
   token: string
 }
@@ -298,6 +300,8 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 async function buildRock({
   plan,
   rockcraftChannel,
+  rockcraftRepository,
+  rockcraftRef,
   user,
   token
 }: BuildRockParams): Promise<void> {
@@ -305,7 +309,9 @@ async function buildRock({
   if (await restoreRock(plan, cacheKey)) {
     return
   }
-  if (rockcraftChannel) {
+  if (rockcraftRepository && rockcraftRef) {
+    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
+  } else if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -326,16 +332,15 @@ async function buildRock({
     fs.renameSync(plan.source_file, rockcraftYamlFile)
   }
   core.startGroup('rockcraft pack')
-  await exec.exec(
-    'rockcraft',
-    ['pack', '--verbosity', 'trace', '--project-dir', plan.source_directory],
-    {
-      env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
-    }
-  )
+  await exec.exec('rockcraft', ['pack', '--verbosity', 'trace'], {
+    cwd: plan.source_directory,
+    env: { ...process.env, ROCKCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+  })
   core.endGroup()
-  const rocks = await (await glob.create(path.join('.', '*.rock'))).glob()
-  const manifestFile = path.join('.', 'manifest.json')
+  const rocks = await (
+    await glob.create(path.join(plan.source_directory, '*.rock'))
+  ).glob()
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
   const artifact = new DefaultArtifactClient()
   if (plan.output_type === 'file') {
     fs.writeFileSync(
@@ -349,7 +354,11 @@ async function buildRock({
         2
       )
     )
-    await artifact.uploadArtifact(plan.output, [...rocks, manifestFile], '.')
+    await artifact.uploadArtifact(
+      plan.output,
+      [...rocks, manifestFile],
+      plan.source_directory
+    )
   } else {
     const tree = await gitTreeId(plan.source_directory)
     const images = await Promise.all(
