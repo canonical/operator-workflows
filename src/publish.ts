@@ -263,18 +263,26 @@ class Publish {
     if (charms.length === 0) {
       throw new Error('no charm to upload')
     }
-    if (charms.length > 1) {
-      throw new Error(
-        `more than one charm to upload: ${charms.map(c => c.name)}`
+    let charmName: string | undefined
+    let charmSourceDir: string | undefined
+    const allFiles: string[] = []
+    for (const charm of charms) {
+      const tmp = mkdtemp()
+      core.info(
+        `download charm artifact "${charm.output}" from integration workflow (run id: ${runId})`
       )
-    }
-    const charm = charms[0]
-    const tmp = mkdtemp()
-    core.info(
-      `download charm artifact from integration workflow (run id: ${runId})`
-    )
-    const artifact = (
-      await this.artifact.getArtifact(charm.output, {
+      const artifact = (
+        await this.artifact.getArtifact(charm.output, {
+          findBy: {
+            token: this.token,
+            repositoryOwner: github.context.repo.owner,
+            repositoryName: github.context.repo.repo,
+            workflowRunId: runId
+          }
+        })
+      ).artifact
+      await this.artifact.downloadArtifact(artifact.id, {
+        path: tmp,
         findBy: {
           token: this.token,
           repositoryOwner: github.context.repo.owner,
@@ -282,30 +290,26 @@ class Publish {
           workflowRunId: runId
         }
       })
-    ).artifact
-    await this.artifact.downloadArtifact(artifact.id, {
-      path: tmp,
-      findBy: {
-        token: this.token,
-        repositoryOwner: github.context.repo.owner,
-        repositoryName: github.context.repo.repo,
-        workflowRunId: runId
-      }
-    })
-    const manifest = parseManifest(
-      JSON.parse(
-        fs.readFileSync(path.join(tmp, 'manifest.json'), {
-          encoding: 'utf-8'
-        })
+      const manifest = parseManifest(
+        JSON.parse(
+          fs.readFileSync(path.join(tmp, 'manifest.json'), {
+            encoding: 'utf-8'
+          })
+        )
       )
-    )
-    if (!manifest.files) {
-      throw new Error(`charm ${charm.name} missing files in manifest`)
+      if (!manifest.files) {
+        throw new Error(`charm ${charm.name} missing files in manifest`)
+      }
+      if (!charmName) {
+        charmName = manifest.name
+        charmSourceDir = charm.source_directory
+      }
+      allFiles.push(...manifest.files.map(f => path.join(tmp, f)))
     }
     return {
-      name: manifest.name,
-      dir: charm.source_directory,
-      files: manifest.files.map(f => path.join(tmp, f))
+      name: charmName!,
+      dir: charmSourceDir!,
+      files: allFiles
     }
   }
 
