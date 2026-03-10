@@ -256,9 +256,11 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
+      - uses: actions/checkout@v6.0.2
       - name: Install builder
         run: |
           pipx install git+https://github.com/canonical/operator-workflows.git@charmcraft-wrapper#subdirectory=superbuild
+          ls -la
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
