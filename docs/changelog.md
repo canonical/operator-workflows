@@ -13,6 +13,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-03-10
 
 - Drop support for charmcraftcache
+- Drop leftover registry input.
 
 ## 2026-03-09
 
