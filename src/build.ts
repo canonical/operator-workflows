@@ -11,17 +11,6 @@ import { BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
-
-async function installSnapcraft(): Promise<void> {
-  const snapcraftInfo = (
-    await exec.getExecOutput('snap', ['info', 'snapcraft'])
-  ).stdout
-  if (snapcraftInfo.includes('installed')) {
-    return
-  }
-  await exec.exec('sudo', ['snap', 'install', 'snapcraft', '--classic'])
-}
 
 interface BuildCharmParams {
   plan: BuildPlan
@@ -165,55 +154,9 @@ async function buildDockerImage({
   }
 }
 
-async function buildInstallRockcraft(
-  repository: string,
-  ref: string
-): Promise<void> {
-  const workingDir = '/opt/operator-workflows/rockcraft'
-  await exec.exec('sudo', ['mkdir', workingDir, '-p'])
-  await exec.exec('sudo', ['chown', os.userInfo().username, workingDir])
-  await exec.exec('git', [
-    'clone',
-    `https://github.com/${repository}.git`,
-    '--branch',
-    ref,
-    workingDir
-  ])
-  const rockcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
-  ).stdout.trim()
-  const cacheKey = `rockcraft-${rockcraftSha}`
-  const rockcraftGlob = path.join(workingDir, 'rockcraft*.snap')
-  const restored = await cache.restoreCache([rockcraftGlob], cacheKey)
-  if (!restored) {
-    await installSnapcraft()
-    core.startGroup('snapcraft pack (rockcraft)')
-    await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
-      cwd: workingDir
-    })
-    core.endGroup()
-  }
-  const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
-  if (rockcraftSnaps.length == 0) {
-    throw new Error("can't find rockcraft snap")
-  }
-  await exec.exec('sudo', [
-    'snap',
-    'install',
-    rockcraftSnaps[0],
-    '--classic',
-    '--dangerous'
-  ])
-  if (!restored) {
-    await cache.saveCache([rockcraftGlob], cacheKey)
-  }
-}
-
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
-  rockcraftRepository: string
-  rockcraftRef: string
   user: string
   token: string
 }
@@ -300,8 +243,6 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 async function buildRock({
   plan,
   rockcraftChannel,
-  rockcraftRepository,
-  rockcraftRef,
   user,
   token
 }: BuildRockParams): Promise<void> {
@@ -309,9 +250,7 @@ async function buildRock({
   if (await restoreRock(plan, cacheKey)) {
     return
   }
-  if (rockcraftRepository && rockcraftRef) {
-    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
-  } else if (rockcraftChannel) {
+  if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -423,8 +362,6 @@ export async function run(): Promise<void> {
         await buildRock({
           plan,
           rockcraftChannel: core.getInput('rockcraft-channel'),
-          rockcraftRef: core.getInput('rockcraft-ref'),
-          rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })

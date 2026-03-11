@@ -6,10 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-03-10
+## 2026-03-11
 
 - Build charms using the charmcraft wrapper.
+
+## 2026-03-10
+
 - Drop support for charmcraftcache
+
+## 2026-03-09
+
+- Drop support for building rockcraft from its repository.
 
 ## 2026-03-09
 
