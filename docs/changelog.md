@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-03-17
+
+- Fix publish charm uploading duplicate revisions when the same charm is built across multiple integration test runs.
+
 ## 2026-03-10
 
 - Drop leftover registry input.
