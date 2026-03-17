@@ -4,7 +4,7 @@
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { Plan } from './model.js'
+import { Plan } from './model'
 
 export function mkdtemp(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'artifact-'))
