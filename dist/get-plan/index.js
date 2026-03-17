@@ -33753,6 +33753,20 @@ function mkdtemp() {
 function normalizePath$1(p) {
     return path$1.normalize(p).replace(/\/+$/, '');
 }
+/**
+ * Merge charm build entries from an additional plan into the target plan,
+ * deduplicating by charm name so that identical charms built across multiple
+ * integration test runs are only included once.
+ */
+function mergeCharmBuilds(target, source) {
+    const existingCharms = new Set(target.build.filter(b => b.type === 'charm').map(b => b.name));
+    for (const build of source.build) {
+        if (build.type === 'charm' && !existingCharms.has(build.name)) {
+            target.build.push(build);
+            existingCharms.add(build.name);
+        }
+    }
+}
 
 // Used for controlling the highWaterMark value of the zip that is being streamed
 // The same value is used as the chunk size that is use during upload to blob storage
@@ -38388,7 +38402,7 @@ The following characters are not allowed in files that are uploaded due to limit
     }
 }
 
-var version$1 = "6.2.0";
+var version$1 = "6.2.1";
 var require$$0$1 = {
 	version: version$1};
 
@@ -38467,7 +38481,7 @@ NetworkError.isNetworkErrorCode = (code) => {
 };
 class UsageError extends Error {
     constructor() {
-        const message = `Artifact storage quota has been hit. Unable to upload any new artifacts. Usage is recalculated every 6-12 hours.\nMore info on storage limits: https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#calculating-minute-and-storage-spending`;
+        const message = `Artifact storage quota has been hit. Unable to upload any new artifacts.\nMore info on storage limits: https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#calculating-minute-and-storage-spending`;
         super(message);
         this.name = 'UsageError';
     }
@@ -114229,13 +114243,17 @@ function streamExtractExternal(url_1, directory_1) {
             mimeType === 'application/zip-compressed' ||
             urlEndsWithZip;
         // Extract filename from Content-Disposition header
+        // Prefer filename* (RFC 5987) which supports UTF-8 encoded filenames,
+        // fall back to filename which may contain ASCII-only replacements
         const contentDisposition = response.message.headers['content-disposition'] || '';
         let fileName = 'artifact';
-        const filenameMatch = contentDisposition.match(/filename\*?=['"]?(?:UTF-\d['"]*)?([^;\r\n"']*)['"]?/i);
-        if (filenameMatch && filenameMatch[1]) {
+        const filenameStar = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;\r\n]*)/i);
+        const filenamePlain = contentDisposition.match(/(?<!\*)filename\s*=\s*['"]?([^;\r\n"']*)['"]?/i);
+        const rawName = (filenameStar === null || filenameStar === void 0 ? void 0 : filenameStar[1]) || (filenamePlain === null || filenamePlain === void 0 ? void 0 : filenamePlain[1]);
+        if (rawName) {
             // Sanitize fileName to prevent path traversal attacks
             // Use path.basename to extract only the filename component
-            fileName = path__namespace.basename(decodeURIComponent(filenameMatch[1].trim()));
+            fileName = path__namespace.basename(decodeURIComponent(rawName.trim()));
         }
         debug(`Content-Type: ${contentType}, mimeType: ${mimeType}, urlEndsWithZip: ${urlEndsWithZip}, isZip: ${isZip}, skipDecompress: ${skipDecompress}`);
         debug(`Content-Disposition: ${contentDisposition}, fileName: ${fileName}`);
@@ -116564,14 +116582,7 @@ class GetPlan {
                 mergedPlan = plan;
                 continue;
             }
-            // Merge charm build entries from additional matching plans
-            // (e.g. different architecture invocations of the same integration test)
-            const existingOutputs = new Set(mergedPlan.build.map(b => b.output));
-            for (const build of plan.build) {
-                if (build.type === 'charm' && !existingOutputs.has(build.output)) {
-                    mergedPlan.build.push(build);
-                }
-            }
+            mergeCharmBuilds(mergedPlan, plan);
         }
         if (!mergedPlan) {
             throw new Error(`can't find plan artifact for workflow run ${runId}`);

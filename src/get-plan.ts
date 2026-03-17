@@ -4,7 +4,7 @@
 import * as core from '@actions/core'
 
 import * as github from '@actions/github'
-import { mkdtemp, normalizePath } from './utils'
+import { mkdtemp, normalizePath, mergeCharmBuilds } from './utils'
 import { Plan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
@@ -136,14 +136,7 @@ export class GetPlan {
         mergedPlan = plan
         continue
       }
-      // Merge charm build entries from additional matching plans
-      // (e.g. different architecture invocations of the same integration test)
-      const existingOutputs = new Set(mergedPlan.build.map(b => b.output))
-      for (const build of plan.build) {
-        if (build.type === 'charm' && !existingOutputs.has(build.output)) {
-          mergedPlan.build.push(build)
-        }
-      }
+      mergeCharmBuilds(mergedPlan, plan)
     }
     if (!mergedPlan) {
       throw new Error(`can't find plan artifact for workflow run ${runId}`)
