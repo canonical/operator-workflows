@@ -33753,20 +33753,6 @@ function mkdtemp() {
 function normalizePath$1(p) {
     return path$1.normalize(p).replace(/\/+$/, '');
 }
-/**
- * Merge charm build entries from an additional plan into the target plan,
- * deduplicating by charm name so that identical charms built across multiple
- * integration test runs are only included once.
- */
-function mergeCharmBuilds(target, source) {
-    const existingCharms = new Set(target.build.filter(b => b.type === 'charm').map(b => b.name));
-    for (const build of source.build) {
-        if (build.type === 'charm' && !existingCharms.has(build.name)) {
-            target.build.push(build);
-            existingCharms.add(build.name);
-        }
-    }
-}
 
 // Used for controlling the highWaterMark value of the zip that is being streamed
 // The same value is used as the chunk size that is use during upload to blob storage
@@ -116582,7 +116568,14 @@ class GetPlan {
                 mergedPlan = plan;
                 continue;
             }
-            mergeCharmBuilds(mergedPlan, plan);
+            // Merge charm build entries from additional matching plans
+            // (e.g. different architecture invocations of the same integration test)
+            const existingOutputs = new Set(mergedPlan.build.map(b => b.output));
+            for (const build of plan.build) {
+                if (build.type === 'charm' && !existingOutputs.has(build.output)) {
+                    mergedPlan.build.push(build);
+                }
+            }
         }
         if (!mergedPlan) {
             throw new Error(`can't find plan artifact for workflow run ${runId}`);

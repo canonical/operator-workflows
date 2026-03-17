@@ -120356,7 +120356,7 @@ class Publish {
         }
         let charmName;
         let charmSourceDir;
-        const allFiles = [];
+        const allFiles = new Map();
         for (const charm of charms) {
             const tmp = mkdtemp();
             info(`download charm artifact "${charm.output}" from integration workflow (run id: ${runId})`);
@@ -120387,12 +120387,17 @@ class Publish {
                 charmName = manifest.name;
                 charmSourceDir = charm.source_directory;
             }
-            allFiles.push(...manifest.files.map(f => path$1.join(tmp, f)));
+            for (const f of manifest.files) {
+                const fullPath = path$1.join(tmp, f);
+                if (!allFiles.has(path$1.basename(f))) {
+                    allFiles.set(path$1.basename(f), fullPath);
+                }
+            }
         }
         return {
             name: charmName,
             dir: charmSourceDir,
-            files: allFiles
+            files: [...allFiles.values()]
         };
     }
     async run() {

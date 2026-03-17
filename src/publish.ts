@@ -265,7 +265,7 @@ class Publish {
     }
     let charmName: string | undefined
     let charmSourceDir: string | undefined
-    const allFiles: string[] = []
+    const allFiles: Map<string, string> = new Map()
     for (const charm of charms) {
       const tmp = mkdtemp()
       core.info(
@@ -304,12 +304,17 @@ class Publish {
         charmName = manifest.name
         charmSourceDir = charm.source_directory
       }
-      allFiles.push(...manifest.files.map(f => path.join(tmp, f)))
+      for (const f of manifest.files) {
+        const fullPath = path.join(tmp, f)
+        if (!allFiles.has(path.basename(f))) {
+          allFiles.set(path.basename(f), fullPath)
+        }
+      }
     }
     return {
       name: charmName!,
       dir: charmSourceDir!,
-      files: allFiles
+      files: [...allFiles.values()]
     }
   }
 
