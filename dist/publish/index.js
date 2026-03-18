@@ -120385,10 +120385,24 @@ class Publish {
             }
             allFiles.push(...manifest.files.map(f => path$1.join(tmp, f)));
         }
+        const fileHashes = new Map();
+        const uniqueFiles = [];
+        for (const file of allFiles) {
+            const hash = crypto$1
+                .createHash('sha256')
+                .update(fs.readFileSync(file))
+                .digest('hex');
+            const basename = path$1.basename(file);
+            const key = `${basename}-${hash}`;
+            if (!fileHashes.has(key)) {
+                fileHashes.set(key, file);
+                uniqueFiles.push(file);
+            }
+        }
         return {
             name: charmName,
             dir: charmSourceDir,
-            files: allFiles
+            files: uniqueFiles
         };
     }
     async run() {
