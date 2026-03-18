@@ -12,6 +12,7 @@ import { parseManifest } from './manifest'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
+import crypto from 'crypto'
 
 class Publish {
   private token: string
@@ -306,10 +307,24 @@ class Publish {
       }
       allFiles.push(...manifest.files.map(f => path.join(tmp, f)))
     }
+    const fileHashes = new Map<string, string>()
+    const uniqueFiles: string[] = []
+    for (const file of allFiles) {
+      const hash = crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(file))
+        .digest('hex')
+      const basename = path.basename(file)
+      const key = `${basename}-${hash}`
+      if (!fileHashes.has(key)) {
+        fileHashes.set(key, file)
+        uniqueFiles.push(file)
+      }
+    }
     return {
       name: charmName!,
       dir: charmSourceDir!,
-      files: allFiles
+      files: uniqueFiles
     }
   }
 
