@@ -10,6 +10,7 @@ import os from 'os'
 import * as exec from '@actions/exec'
 
 import * as github from '@actions/github'
+import { parseManifest } from './manifest'
 
 function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -77,7 +78,7 @@ async function downloadArtifact(
 ): Promise<string> {
   // When build jobs have just finished, the artifacts might not be fully available yet.
   // Retry downloading artifacts for up to 1 minute instead of immediately erroring out.
-  let artifactError: any
+  let artifactError: unknown
   for (let i = 0; i < 6; i++) {
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'artifact-'))
     try {
@@ -93,7 +94,10 @@ async function downloadArtifact(
       await sleep(5000)
     }
   }
-  throw artifactError
+  if (artifactError instanceof Error) {
+    throw artifactError
+  }
+  throw new Error('failed to download artifact')
 }
 
 export async function run(): Promise<void> {
@@ -104,33 +108,39 @@ export async function run(): Promise<void> {
       Number(core.getInput('check-run-id'))
     )
     const artifact = new DefaultArtifactClient()
-    let args: string[] = []
+    const args: string[] = []
     for (const build of plan.build) {
       const tmp = await downloadArtifact(
         artifact,
         (await artifact.getArtifact(build.output)).artifact.id
       )
-      const manifest = JSON.parse(
-        fs.readFileSync(path.join(tmp, 'manifest.json'), { encoding: 'utf-8' })
-      ) as object
+      const manifest = parseManifest(
+        JSON.parse(
+          fs.readFileSync(path.join(tmp, 'manifest.json'), {
+            encoding: 'utf-8'
+          })
+        )
+      )
       if (build.type === 'charm' || build.type === 'file') {
-        // @ts-ignore
-        for (const file of manifest.files as string[]) {
+        if (!manifest.files) {
+          throw new Error(
+            `missing files in artifact manifest for ${build.name}`
+          )
+        }
+        const { name, files } = manifest
+        for (const file of files) {
           fs.renameSync(
             path.join(tmp, file),
             path.join(plan.working_directory, file)
           )
-          // @ts-ignore
-          const name = manifest.name as string
-          let argName: string =
+          const argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
           args.push(`--${argName}=./${file}`)
         }
       } else if (build.type === 'rock' || build.type == 'docker-image') {
-        // @ts-ignore
-        const name = manifest.name as string
-        if ('files' in manifest) {
-          for (const file of manifest.files as string[]) {
+        const { name } = manifest
+        if (manifest.files) {
+          for (const file of manifest.files) {
             const image = `localhost:32000/${name}:${file.replace(`${name}_`, '')}`
             const archiveType = file.endsWith('.rock')
               ? 'oci-archive'
@@ -145,8 +155,8 @@ export async function run(): Promise<void> {
             args.push(`--${name}-image=${image}`)
           }
         }
-        if ('images' in manifest) {
-          for (const image of manifest.images as string[]) {
+        if (manifest.images) {
+          for (const image of manifest.images) {
             args.push(`--${name}-image=${image}`)
           }
         }
@@ -159,5 +169,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()

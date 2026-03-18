@@ -6,9 +6,52 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-02-12
+## 2026-03-18
 
 - Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
+
+## 2026-03-10
+
+- Drop leftover registry input.
+
+## 2026-03-09
+
+- Drop support for building rockcraft from its repository.
+
+## 2026-03-09
+
+- Publish charm workflow supports uploading multiple charm artifacts.
+
+## 2026-03-04
+
+- Cache rock build results for register-typed rocks.
+- Add authentication to ghcr.io for Canonical Kubernetes.
+
+## 2026-03-03
+
+- Replace `ncc` tooling with `Rollup`.
+- Add linting checks to CI pipeline.
+- Fix any linting issues found.
+- Bump trivy-image action.
+
+## 2026-02-26
+
+- Fix bug in `cache-exclude-status` argument for the link check step of `docs.yaml`.
+
+## 2026-02-24
+
+- Update the trivy binary to v0.69.1.
+- Update the `cache-exclude-status` argument for the link check step of `docs.yaml`.
+
+## 2026-02-23
+
+- Update the tag used by the steps in `docs_rtd.yaml` that call workflows in
+  sphinx-docs-starter-pack.
+
+## 2026-02-17
+
+- Add step to "docs" workflow to install docutils, so that the workflow can
+  check reStructuredText files.
 
 ## 2026-02-11
 

@@ -254,7 +254,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Setup Tflint
-        uses: terraform-linters/setup-tflint@v6.2.1
+        uses: terraform-linters/setup-tflint@v6.2.2
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
@@ -379,7 +379,7 @@ jobs:
         run: |
           echo "REPORT_NAME=report-${CONCURRENCY_GROUP//\//_}" >> $GITHUB_ENV
       - name: Upload coverage report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: ${{ env.REPORT_NAME }}

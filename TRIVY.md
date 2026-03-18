@@ -22,6 +22,8 @@ Default configuration: will fail with exit code 1 for high and critical vulnerab
 
 Custom configurations can be set in a ``trivy.yaml`` file stored in the repository for both types of testing. The location should be set in ``trivy-fs-config`` and/or ``trivy-image-config``parameters.
 
+In order to reduce the manual work of upgrading the ``.trivyignore`` file, include the CVEs of binaries that you have no control over by using the ``skip-files`` option of the ``trivy.yaml`` file.
+
 ## Examples
 
 ### Default
@@ -55,6 +57,9 @@ Example of trivy.yaml content:
 format: json
 exit-code: 1
 severity: CRITICAL
+scan:
+  skip-files:
+    - usr/bin/pebble # this will ignore any CVEs caused by the pebble binary
 ```
 
 See the [Config file](https://aquasecurity.github.io/trivy/v0.36/docs/references/customization/config-file/) for the options list.

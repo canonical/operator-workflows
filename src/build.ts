@@ -11,17 +11,6 @@ import { BuildPlan } from './model'
 import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
-
-async function installSnapcraft(): Promise<void> {
-  const snapcraftInfo = (
-    await exec.getExecOutput('snap', ['info', 'snapcraft'])
-  ).stdout
-  if (snapcraftInfo.includes('installed')) {
-    return
-  }
-  await exec.exec('sudo', ['snap', 'install', 'snapcraft', '--classic'])
-}
 
 interface BuildCharmParams {
   plan: BuildPlan
@@ -173,70 +162,103 @@ async function buildDockerImage({
   }
 }
 
-async function buildInstallRockcraft(
-  repository: string,
-  ref: string
-): Promise<void> {
-  const workingDir = '/opt/operator-workflows/rockcraft'
-  await exec.exec('sudo', ['mkdir', workingDir, '-p'])
-  await exec.exec('sudo', ['chown', os.userInfo().username, workingDir])
-  await exec.exec('git', [
-    'clone',
-    `https://github.com/${repository}.git`,
-    '--branch',
-    ref,
-    workingDir
-  ])
-  const rockcraftSha = (
-    await exec.getExecOutput('git', ['rev-parse', 'HEAD'], { cwd: workingDir })
-  ).stdout.trim()
-  const cacheKey = `rockcraft-${rockcraftSha}`
-  const rockcraftGlob = path.join(workingDir, 'rockcraft*.snap')
-  const restored = await cache.restoreCache([rockcraftGlob], cacheKey)
-  if (!restored) {
-    await installSnapcraft()
-    core.startGroup('snapcraft pack (rockcraft)')
-    await exec.exec('snapcraft', ['--use-lxd', '--verbosity', 'trace'], {
-      cwd: workingDir
-    })
-    core.endGroup()
-  }
-  const rockcraftSnaps = await (await glob.create(rockcraftGlob)).glob()
-  if (rockcraftSnaps.length == 0) {
-    throw new Error("can't find rockcraft snap")
-  }
-  await exec.exec('sudo', [
-    'snap',
-    'install',
-    rockcraftSnaps[0],
-    '--classic',
-    '--dangerous'
-  ])
-  if (!restored) {
-    await cache.saveCache([rockcraftGlob], cacheKey)
-  }
-}
-
 interface BuildRockParams {
   plan: BuildPlan
   rockcraftChannel: string
-  rockcraftRepository: string
-  rockcraftRef: string
   user: string
   token: string
+}
+
+// Returns the ISO 8601 week number for the given date.
+function weekNumber(date: Date): number {
+  date = new Date(date.valueOf())
+  const dayNumber = (date.getDay() + 6) % 7
+  date.setDate(date.getDate() - dayNumber + 3)
+  const firstThursday = date.valueOf()
+  date.setMonth(0, 1)
+  if (date.getDay() !== 4) {
+    date.setMonth(0, 1 + ((4 - date.getDay() + 7) % 7))
+  }
+  return 1 + Math.ceil((firstThursday - date.valueOf()) / 604800000)
+}
+
+async function generateRockCacheKey(plan: BuildPlan): Promise<string> {
+  const base = 'https://example.com/'
+  const url = new URL(
+    path.join('operator-workflows/build/rock/', plan.source_file),
+    base
+  )
+  const sp = url.searchParams
+  const date = new Date()
+  const params: { [key: string]: string } = {
+    arch: process.arch,
+    version: '1',
+    hash: await glob.hashFiles(path.join(plan.source_directory, '**')),
+    'used-by': `${date.getFullYear()}-W${String(weekNumber(date)).padStart(2, '0')}`
+  }
+  Object.keys(params)
+    .sort()
+    .forEach(k => sp.set(k, params[k]))
+  return url.toString().replace(base, '')
+}
+
+async function isPaasCharmRock(plan: BuildPlan): Promise<boolean> {
+  const patterns = [
+    `${plan.source_directory}/**/charmcraft.yaml`,
+    `${plan.source_directory}/**/charmcraft.yml`
+  ]
+  const charmcraftGlob = await glob.create(patterns.join('\n'))
+  const charmcraftFiles = await charmcraftGlob.glob()
+  return charmcraftFiles.length > 0
+}
+
+async function restoreRock(
+  plan: BuildPlan,
+  cacheKey: string
+): Promise<boolean> {
+  // We don't cache rocks inside 12-factor projects
+  // as they change more frequently compared to normal charms.
+  // And we only cache registry-typed rocks as they are more common
+  // and their cache are smaller.
+  if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
+    return false
+  }
+  core.info(`looking for rock cache ${cacheKey}`)
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  const restored = await cache.restoreCache([manifestFile], cacheKey)
+  if (restored) {
+    core.info(`restored rock cache from ${cacheKey}`)
+    const artifact = new DefaultArtifactClient()
+    await artifact.uploadArtifact(
+      plan.output,
+      [manifestFile],
+      plan.source_directory
+    )
+    return true
+  }
+  return false
+}
+
+async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
+  if ((await isPaasCharmRock(plan)) || plan.output_type !== 'registry') {
+    return
+  }
+  const manifestFile = path.join(plan.source_directory, 'manifest.json')
+  core.info(`caching rock into ${cacheKey}`)
+  await cache.saveCache([manifestFile], cacheKey)
 }
 
 async function buildRock({
   plan,
   rockcraftChannel,
-  rockcraftRepository,
-  rockcraftRef,
   user,
   token
 }: BuildRockParams): Promise<void> {
-  if (rockcraftRepository && rockcraftRef) {
-    await buildInstallRockcraft(rockcraftRepository, rockcraftRef)
-  } else if (rockcraftChannel) {
+  const cacheKey = await generateRockCacheKey(plan)
+  if (await restoreRock(plan, cacheKey)) {
+    return
+  }
+  if (rockcraftChannel) {
     await exec.exec('sudo', [
       'snap',
       'install',
@@ -319,6 +341,7 @@ async function buildRock({
         2
       )
     )
+    await cacheRock(plan, cacheKey)
     await artifact.uploadArtifact(
       plan.output,
       [manifestFile],
@@ -348,8 +371,6 @@ export async function run(): Promise<void> {
         await buildRock({
           plan,
           rockcraftChannel: core.getInput('rockcraft-channel'),
-          rockcraftRef: core.getInput('rockcraft-ref'),
-          rockcraftRepository: core.getInput('rockcraft-repository'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })
@@ -364,5 +385,4 @@ export async function run(): Promise<void> {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-floating-promises
 run()
