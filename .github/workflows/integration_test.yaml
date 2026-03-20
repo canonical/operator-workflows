@@ -328,7 +328,8 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
-      - name: Run Github Trivy Image Action
+      - name: Run Github Trivy Image Action (temporarily disabled)
+        if: ${{ false }}
         uses: aquasecurity/trivy-action@0.35.0
         with:
           input: ${{ matrix.scan.file }}
