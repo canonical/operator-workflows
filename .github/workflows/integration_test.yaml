@@ -328,15 +328,10 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
-      - name: Run Github Trivy Image Action
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          input: ${{ matrix.scan.file }}
-          trivy-config: ${{ inputs.trivy-image-config }}
-          exit-code: ${{ inputs.trivy-exit-code }}
-          severity: ${{ inputs.trivy-severity-config }}
-        env:
-          TRIVY_DISABLE_VEX_NOTICE: true
+      - name: Run Github Trivy Image Action (temporarily disabled)
+        if: ${{ false }}
+        run: |
+          echo "Temporarily disabled aquasecurity/trivy-action due to upstream security incident."
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
