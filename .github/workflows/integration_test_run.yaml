@@ -486,8 +486,13 @@ jobs:
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action (temporarily disabled)
         if: ${{ false }}
-        run: |
-          echo "Temporarily disabled aquasecurity/trivy-action due to upstream security incident."
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: "fs"
+          scan-ref: ${{ inputs.trivy-fs-ref }}
+          trivy-config: ${{ inputs.trivy-fs-config }}
+        env:
+          TRIVY_DISABLE_VEX_NOTICE: true
       - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
         if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
         run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
