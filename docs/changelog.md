@@ -62,6 +62,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-03-09
 
+- Add optional `github-token` secret to the `generate_terraform_docs` workflow to allow callers to pass a PAT, enabling CI workflows to trigger on the resulting pull request.
 - Drop support for building rockcraft from its repository.
 - Publish charm workflow supports uploading multiple charm artifacts.
 
