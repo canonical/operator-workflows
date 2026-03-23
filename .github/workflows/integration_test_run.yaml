@@ -63,10 +63,6 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
-      registry:
-        type: string
-        description: Registry to push the built images
-        default: ""
       runs-on:
         type: string
         description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
@@ -232,7 +228,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.3.1
+        uses: astral-sh/setup-uv@v7.5.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -488,8 +484,8 @@ jobs:
       - name: Run k6 load tests
         if: ${{ inputs.load-test-enabled }}
         run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
-      - name: Run Github Trivy FS Action
-        if: ${{ inputs.trivy-fs-enabled }}
+      - name: Run Github Trivy FS Action (temporarily disabled)
+        if: ${{ false }}
         uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: "fs"

@@ -6,9 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-03-09
+## 2026-03-22
 
 - Add optional `github-token` secret to the `generate_terraform_docs` workflow to allow callers to pass a PAT, enabling CI workflows to trigger on the resulting pull request.
+
+## 2026-03-10
+
+- Drop leftover registry input.
+
+## 2026-03-09
+
+- Drop support for building rockcraft from its repository.
+
+## 2026-03-09
+
+- Publish charm workflow supports uploading multiple charm artifacts.
 
 ## 2026-03-04
 

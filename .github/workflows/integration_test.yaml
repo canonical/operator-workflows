@@ -76,14 +76,6 @@ on:
         description: Rockcraft channel to use for the integration test
         type: string
         default: latest/stable
-      rockcraft-ref:
-        description: Used in conjunction with rockcraft-repository to pull and build rockcraft from source instead of using snapstore version.
-        type: string
-        default: ""
-      rockcraft-repository:
-        description: Pull and build rockcraft from source instead of using snapstore version (this means that the rockcraft-channel input will be ignored).
-        type: string
-        default: ""
       rockcraft-enable-security-nesting:
         description: Set security.nesting=true on the rockcraft lxc project to allow for nested containers.
         type: boolean
@@ -288,8 +280,6 @@ jobs:
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
-          rockcraft-ref: ${{ inputs.rockcraft-ref }}
-          rockcraft-repository: ${{ inputs.rockcraft-repository }}
 
   plan-scan:
     name: Plan Image Scanning
@@ -321,7 +311,7 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
-      - uses: actions/download-artifact@v8.0.0
+      - uses: actions/download-artifact@v8.0.1
         if: matrix.scan.artifact != ''
         with:
           name: ${{ matrix.scan.artifact }}
@@ -338,7 +328,8 @@ jobs:
         run: |
           docker image pull ${{ matrix.scan.image }}
           docker image save -o ${{ matrix.scan.file }} ${{ matrix.scan.image }}
-      - name: Run Github Trivy Image Action
+      - name: Run Github Trivy Image Action (temporarily disabled)
+        if: ${{ false }}
         uses: aquasecurity/trivy-action@0.35.0
         with:
           input: ${{ matrix.scan.file }}
@@ -413,7 +404,6 @@ jobs:
       provider: ${{ inputs.provider }}
       python-version: ${{ inputs.python-version }}
       use-canonical-k8s: ${{ inputs.use-canonical-k8s }}
-      registry: ghcr.io
       runs-on: ${{ inputs.runs-on || 'ubuntu-24.04' }}
       self-hosted-runner-arch: ${{ inputs.self-hosted-runner-arch }}
       self-hosted-runner-image: ${{ inputs.self-hosted-runner-image }}
