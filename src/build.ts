@@ -14,7 +14,6 @@ import path from 'path'
 
 interface BuildCharmParams {
   plan: BuildPlan
-  charmcraftChannel: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
@@ -29,32 +28,25 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftChannel) {
-    await exec.exec('sudo', [
-      'snap',
-      'install',
-      'charmcraft',
-      '--channel',
-      params.charmcraftChannel,
-      '--classic'
-    ])
-  } else {
-    await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
-  }
-  core.startGroup('charmcraft pack')
-  const charmcraftBin = core.getBooleanInput('charmcraftcache')
-    ? 'ccc'
-    : 'charmcraft'
-  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
-    cwd: params.plan.source_directory,
-    env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
-  })
+  core.startGroup('superbuild pack')
+  await exec.exec(
+    'superbuild',
+    [
+      'pack',
+      '--verbose',
+      '--build-context',
+      '.',
+      '--project-dir',
+      params.plan.source_directory
+    ],
+    {
+      env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    }
+  )
   core.endGroup()
-  const charmFiles = await (
-    await glob.create(path.join(params.plan.source_directory, '*.charm'))
-  ).glob()
+  const charmFiles = await (await glob.create(path.join('.', '*.charm'))).glob()
   const artifact = new DefaultArtifactClient()
-  const manifestFile = path.join(params.plan.source_directory, 'manifest.json')
+  const manifestFile = path.join('.', 'manifest.json')
   fs.writeFileSync(
     manifestFile,
     JSON.stringify(
@@ -66,7 +58,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   await artifact.uploadArtifact(
     params.plan.output,
     [...charmFiles, manifestFile],
-    params.plan.source_directory
+    '.'
   )
 }
 
@@ -356,8 +348,7 @@ export async function run(): Promise<void> {
     switch (plan.type) {
       case 'charm':
         await buildCharm({
-          plan,
-          charmcraftChannel: core.getInput('charmcraft-channel')
+          plan
         })
         break
       case 'docker-image':

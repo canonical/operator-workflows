@@ -1,0 +1,19 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "superbuild"
+version = "0.1.0"
+description = "Thin wrapper that ensures charmcraft is installed and forwards all arguments to it"
+requires-python = ">=3.8"
+dependencies = ["pyyaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+superbuild = "superbuild.main:main"

@@ -15,14 +15,6 @@ on:
         description: Label for building the charm
         type: string
         default: ubuntu-latest
-      charmcraftcache:
-        description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
-        type: boolean
-        default: false
-      charmcraft-channel:
-        description: Charmcraft channel to use for the integration test
-        type: string
-        default: latest/stable
       channel:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -264,20 +256,17 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
-      - name: Install charmcraftcache
-        if: ${{ inputs.charmcraftcache }}
+      - name: Install builder
         run: |
-          pipx install charmcraftcache
+          pipx install git+https://github.com/canonical/superbuild@0.1.0
       - uses: actions/checkout@v6.0.2
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: canonical/operator-workflows/internal/build@charmcraft-wrapper
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
-          charmcraftcache: ${{ inputs.charmcraftcache }}
-          charmcraft-channel: ${{ inputs.charmcraft-channel }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           rockcraft-channel: ${{ inputs.rockcraft-channel }}
 
