@@ -150,8 +150,15 @@ export class GetPlan {
         if (build.type === 'charm' && !existingOutputs.has(build.output)) {
           const buildKey = `${build.name}:${build.source_directory}:${build.build_target || ''}`
           if (!existingBuildKeys.has(buildKey)) {
+            core.info(
+              `Adding charm build: ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output})`
+            )
             mergedPlan.build.push(build)
             existingBuildKeys.add(buildKey)
+          } else {
+            core.info(
+              `Skipping duplicate charm build: ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output}) - already have this configuration`
+            )
           }
         }
       }
