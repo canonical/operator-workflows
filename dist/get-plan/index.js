@@ -116564,25 +116564,13 @@ class GetPlan {
                 mergedPlan = plan;
                 continue;
             }
-            // Merge charm build entries from additional matching plans
+            // Merge build entries from additional matching plans
             // (e.g. different architecture invocations of the same integration test)
             const existingOutputs = new Set(mergedPlan.build.map(b => b.output));
-            // Deduplicate by build configuration to avoid downloading identical artifacts
-            // Build key includes build_target to preserve different architectures
-            const existingBuildKeys = new Set(mergedPlan.build
-                .filter(b => b.type === 'charm')
-                .map(b => `${b.name}:${b.source_directory}:${b.build_target || ''}`));
             for (const build of plan.build) {
-                if (build.type === 'charm' && !existingOutputs.has(build.output)) {
-                    const buildKey = `${build.name}:${build.source_directory}:${build.build_target || ''}`;
-                    if (!existingBuildKeys.has(buildKey)) {
-                        info(`Adding charm build: ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output})`);
-                        mergedPlan.build.push(build);
-                        existingBuildKeys.add(buildKey);
-                    }
-                    else {
-                        info(`Skipping duplicate charm build: ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output}) - already have this configuration`);
-                    }
+                if (!existingOutputs.has(build.output)) {
+                    info(`Adding build: ${build.type} ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output})`);
+                    mergedPlan.build.push(build);
                 }
             }
         }
