@@ -8,5 +8,5 @@ on:
 
 jobs:
   bot_pr_approval:
-    uses: canonical/operator-workflows/.github/workflows/bot_pr_approval.yaml@fix/deduplicate-artefacts
+    uses: canonical/operator-workflows/.github/workflows/bot_pr_approval.yaml@main
     secrets: inherit

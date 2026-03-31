@@ -87,7 +87,7 @@ jobs:
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Get plan
-        uses: canonical/operator-workflows/internal/get-plan@fix/deduplicate-artefacts
+        uses: canonical/operator-workflows/internal/get-plan@s
         id: get-plan
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
