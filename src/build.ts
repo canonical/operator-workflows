@@ -14,7 +14,6 @@ import path from 'path'
 
 interface BuildCharmParams {
   plan: BuildPlan
-  charmcraftChannel: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
