@@ -42,10 +42,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
     await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
   }
   core.startGroup('charmcraft pack')
-  const charmcraftBin = core.getBooleanInput('charmcraftcache')
-    ? 'ccc'
-    : 'charmcraft'
-  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
+  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
