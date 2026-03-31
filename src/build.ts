@@ -29,18 +29,6 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftChannel) {
-    await exec.exec('sudo', [
-      'snap',
-      'install',
-      'charmcraft',
-      '--channel',
-      params.charmcraftChannel,
-      '--classic'
-    ])
-  } else {
-    await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
-  }
   core.startGroup('charmcraft pack')
   await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
@@ -161,7 +149,6 @@ async function buildDockerImage({
 
 interface BuildRockParams {
   plan: BuildPlan
-  rockcraftChannel: string
   user: string
   token: string
 }
@@ -247,25 +234,12 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 
 async function buildRock({
   plan,
-  rockcraftChannel,
   user,
   token
 }: BuildRockParams): Promise<void> {
   const cacheKey = await generateRockCacheKey(plan)
   if (await restoreRock(plan, cacheKey)) {
     return
-  }
-  if (rockcraftChannel) {
-    await exec.exec('sudo', [
-      'snap',
-      'install',
-      'rockcraft',
-      '--channel',
-      rockcraftChannel,
-      '--classic'
-    ])
-  } else {
-    await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
   if (path.basename(plan.source_file) != 'rockcraft.yaml') {
     const rockcraftYamlFile = path.join(
@@ -353,8 +327,7 @@ export async function run(): Promise<void> {
     switch (plan.type) {
       case 'charm':
         await buildCharm({
-          plan,
-          charmcraftChannel: core.getInput('charmcraft-channel')
+          plan
         })
         break
       case 'docker-image':
@@ -367,7 +340,6 @@ export async function run(): Promise<void> {
       case 'rock':
         await buildRock({
           plan,
-          rockcraftChannel: core.getInput('rockcraft-channel'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })
