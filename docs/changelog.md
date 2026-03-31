@@ -42,6 +42,7 @@ Each revision is versioned by the date of the revision.
 
 - Drop charmcraftcache.
 - Move the rockcraft and charmcraft installation outside of the build action.
+- Replace `errata-ai/vale-action` with `vale-cli/vale-action` to reflect new repository location.
 
 ## 2026-03-10
 
