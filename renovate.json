@@ -4,5 +4,11 @@
   "extends": [
     "config:base",
     "group:all"
-  ]
+  ],
+  "schedule": [
+    "* * * * 0,6"
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true
+  }
 }
