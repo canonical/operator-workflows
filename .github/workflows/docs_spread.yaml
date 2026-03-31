@@ -55,11 +55,11 @@ jobs:
         go-version: 1.26
     - name: Install spread
       run: |
-        go install github.com/snapcore/spread/cmd/spread@latest
+        go install github.com/canonical/spread/cmd/spread@latest
     - name: Run tests
       run: |
         sudo adduser --gecos "" --disabled-password ubuntu
         echo "ubuntu:ubuntu" | sudo chpasswd
-        spread ${{ matrix.spread_job }}
+        spread ${{ matrix.spread_job }} -vv
 
 
