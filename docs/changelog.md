@@ -10,6 +10,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-03-31
 
 - Drop charmcraftcache.
+- Move the rockcraft and charmcraft installation outside of the build action.
 
 ## 2026-03-10
 

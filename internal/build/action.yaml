@@ -5,15 +5,9 @@ inputs:
   build-plan:
     description: Build plan.
     required: true
-  charmcraft-channel:
-    description: Charmcraft channel to use for the integration test
-    default: latest/stable
   github-token:
     description: github token.
     required: true
-  rockcraft-channel:
-    description: Rockcraft channel to use for the integration test
-    default: latest/stable
 runs:
   using: node20
   main: ../../dist/build/index.js

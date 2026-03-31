@@ -264,13 +264,19 @@ jobs:
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
+      - name: Install charmcraft
+        if: ${{ matrix.build.type == 'charm' }}
+        run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
+        shell: bash
+      - name: Install rockcraft
+        if: ${{ matrix.build.type == 'rock' }}
+        run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
+        shell: bash
       - uses: canonical/operator-workflows/internal/build@main
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
-          charmcraft-channel: ${{ inputs.charmcraft-channel }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          rockcraft-channel: ${{ inputs.rockcraft-channel }}
 
   plan-scan:
     name: Plan Image Scanning
