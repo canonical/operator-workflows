@@ -268,9 +268,17 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Get workflow version
+        id: workflow-version
+        if: ${{ matrix.build.type == 'charm' }}
+        uses: canonical/get-workflow-version-action@v1.0.1
+        with:
+          repository-name: canonical/operator-workflows
+          file-name: integration_test.yaml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install charmbuild
         if: ${{ matrix.build.type == 'charm' }}
-        run: pip install ${{ github.workspace }}/charmbuild
+        run: pip install git+https://github.com/canonical/operator-workflows@${{ steps.workflow-version.outputs.sha }}#subdirectory=charmbuild
         shell: bash
       - name: Install rockcraft
         if: ${{ matrix.build.type == 'rock' }}
