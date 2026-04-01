@@ -28,8 +28,8 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  core.startGroup('charmcraft pack')
-  await exec.exec('charmcraft', ['pack', '--verbosity', 'trace'], {
+  core.startGroup('charmbuild pack')
+  await exec.exec('charmbuild', ['pack', '--verbosity', 'trace'], {
     cwd: params.plan.source_directory,
     env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
   })
