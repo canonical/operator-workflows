@@ -5,6 +5,9 @@ inputs:
   build-plan:
     description: Build plan.
     required: true
+  build-context:
+    description: The directory to use as the build context for charmbuild.
+    default: "."
   github-token:
     description: github token.
     required: true

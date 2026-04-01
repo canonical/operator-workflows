@@ -15,6 +15,10 @@ on:
         description: Label for building the charm
         type: string
         default: ubuntu-latest
+      build-context:
+        description: The directory to use as the build context for charmbuild
+        type: string
+        default: "."
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -288,6 +292,7 @@ jobs:
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
+          build-context: ${{ inputs.build-context }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   plan-scan:

@@ -14,6 +14,7 @@ import path from 'path'
 
 interface BuildCharmParams {
   plan: BuildPlan
+  buildContext: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
@@ -29,10 +30,14 @@ async function gitTreeId(p: string): Promise<string> {
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
   core.startGroup('charmbuild pack')
-  await exec.exec('charmbuild', ['pack', '--verbosity', 'trace'], {
-    cwd: params.plan.source_directory,
-    env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
-  })
+  await exec.exec(
+    'charmbuild',
+    ['pack', '--verbosity', 'trace', '--build-context', path.resolve(params.buildContext)],
+    {
+      cwd: params.plan.source_directory,
+      env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    }
+  )
   core.endGroup()
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
@@ -326,7 +331,8 @@ export async function run(): Promise<void> {
     switch (plan.type) {
       case 'charm':
         await buildCharm({
-          plan
+          plan,
+          buildContext: core.getInput('build-context') || '.'
         })
         break
       case 'docker-image':
