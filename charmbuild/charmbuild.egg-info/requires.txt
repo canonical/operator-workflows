@@ -1,5 +1,0 @@
-pyyaml
-
-[dev]
-pytest
-ruff
