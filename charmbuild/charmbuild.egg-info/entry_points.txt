@@ -1,0 +1,2 @@
+[console_scripts]
+charmbuild = charmbuild.main:main
