@@ -12,11 +12,17 @@ description = "Thin wrapper that ensures charmcraft is installed and invokes it"
 requires-python = ">=3.8"
 dependencies = ["pyyaml"]
 
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
 [tool.setuptools.package-dir]
 charmbuild = "src"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
 
 [project.scripts]
 charmbuild = "charmbuild.main:main"

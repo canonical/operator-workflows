@@ -3,7 +3,6 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import pytest
 import yaml
 from pathlib import Path
 
@@ -16,10 +15,10 @@ from charmbuild.files import (
 )
 
 
-
 # ---------------------------------------------------------------------------
 # compute_patched_yaml
 # ---------------------------------------------------------------------------
+
 
 class TestComputePatchedYaml:
     def _write_yaml(self, path: Path, uv_working_dir=".", extra_parts=None):
@@ -99,6 +98,7 @@ class TestComputePatchedYaml:
 # ---------------------------------------------------------------------------
 # copy_context_to_temp
 # ---------------------------------------------------------------------------
+
 
 class TestCopyContextToTemp:
     def test_copies_files_from_context_dir(self, tmp_path):
@@ -287,6 +287,7 @@ class TestCopyContextToTemp:
 # move_generated_lib
 # ---------------------------------------------------------------------------
 
+
 class TestMoveGeneratedLib:
     def test_moves_lib_to_uv_working_dir(self, tmp_path):
         charm_dir = tmp_path / "my-charm"
@@ -318,12 +319,15 @@ class TestMoveGeneratedLib:
         move_generated_lib(tmp_path, Path("sub/charm"))
 
         assert not (tmp_path / "lib").exists()
-        assert (charm_dir / "lib" / "charms" / "my_charm" / "v0" / "api.py").read_text() == "# api"
+        assert (
+            charm_dir / "lib" / "charms" / "my_charm" / "v0" / "api.py"
+        ).read_text() == "# api"
 
 
 # ---------------------------------------------------------------------------
 # charm_name_from_yaml
 # ---------------------------------------------------------------------------
+
 
 class TestCharmNameFromYaml:
     def test_returns_name_from_valid_yaml(self, tmp_path):
@@ -351,6 +355,7 @@ class TestCharmNameFromYaml:
 # ---------------------------------------------------------------------------
 # copy_charm_files
 # ---------------------------------------------------------------------------
+
 
 class TestCopyCharmFiles:
     def test_copies_matching_charm_files(self, tmp_path):

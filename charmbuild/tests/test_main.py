@@ -3,7 +3,6 @@
 # Copyright 2025 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-import logging
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -16,6 +15,7 @@ from charmbuild.main import _parse_build_context, _peek_verbose, main
 # ---------------------------------------------------------------------------
 # _peek_verbose
 # ---------------------------------------------------------------------------
+
 
 class TestPeekVerbose:
     def test_returns_true_for_long_flag(self):
@@ -42,6 +42,7 @@ class TestPeekVerbose:
 # charmcraft presence check
 # ---------------------------------------------------------------------------
 
+
 class TestCharmcraftCheck:
     def test_exits_when_charmcraft_not_found(self):
         with (
@@ -59,8 +60,10 @@ class TestCharmcraftCheck:
 
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  side_effect=_make_parse_build_context_mock()),
+            patch(
+                "charmbuild.main._parse_build_context",
+                side_effect=_make_parse_build_context_mock(),
+            ),
             patch("charmbuild.main.subprocess.run", return_value=result_mock),
             patch("charmbuild.main.copy_context_to_temp"),
             patch("charmbuild.main.copy_charm_files"),
@@ -76,9 +79,12 @@ class TestCharmcraftCheck:
 # _parse_build_context
 # ---------------------------------------------------------------------------
 
+
 class TestParseBuildContext:
     def test_returns_given_build_context_directory(self, tmp_path):
-        ctx, _proj, _output, args = _parse_build_context(["--build-context", str(tmp_path), "pack"])
+        ctx, _proj, _output, args = _parse_build_context(
+            ["--build-context", str(tmp_path), "pack"]
+        )
         assert ctx == tmp_path
         assert args == ["pack"]
 
@@ -101,7 +107,9 @@ class TestParseBuildContext:
         assert args == []
 
     def test_project_dir_is_consumed(self):
-        _ctx, _proj, _output, args = _parse_build_context(["--project-dir", "my-charm", "pack"])
+        _ctx, _proj, _output, args = _parse_build_context(
+            ["--project-dir", "my-charm", "pack"]
+        )
         assert "--project-dir" not in args
         assert "my-charm" not in args
 
@@ -114,10 +122,13 @@ class TestParseBuildContext:
 # main
 # ---------------------------------------------------------------------------
 
+
 def _make_parse_build_context_mock():
     """Return a side_effect that delegates to the real _parse_build_context."""
+
     def _patched(argv):
         return _parse_build_context(argv)
+
     return _patched
 
 
@@ -133,10 +144,16 @@ class TestMain:
 
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  side_effect=_make_parse_build_context_mock()),
-            patch("charmbuild.main.compute_patched_yaml", return_value="name: my-charm\n"),
-            patch("charmbuild.main.subprocess.run", return_value=result_mock) as mock_run,
+            patch(
+                "charmbuild.main._parse_build_context",
+                side_effect=_make_parse_build_context_mock(),
+            ),
+            patch(
+                "charmbuild.main.compute_patched_yaml", return_value="name: my-charm\n"
+            ),
+            patch(
+                "charmbuild.main.subprocess.run", return_value=result_mock
+            ) as mock_run,
             patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
             patch("charmbuild.main.copy_charm_files") as mock_copy_charm,
             patch("charmbuild.main.charm_name_from_yaml", return_value="my-charm"),
@@ -190,8 +207,10 @@ class TestMain:
 
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  side_effect=_make_parse_build_context_mock()),
+            patch(
+                "charmbuild.main._parse_build_context",
+                side_effect=_make_parse_build_context_mock(),
+            ),
             patch("charmbuild.main.subprocess.run", return_value=result_mock),
             patch("charmbuild.main.copy_context_to_temp"),
             patch("charmbuild.main.copy_charm_files"),
@@ -205,6 +224,7 @@ class TestMain:
     def test_env_passed_to_charmcraft(self):
         _, mock_run, _, _ = self._run_main(["pack"])
         import os
+
         for call in mock_run.call_args_list:
             assert call[1].get("env") is os.environ
 
@@ -214,8 +234,10 @@ class TestMain:
         result_mock.returncode = 0
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  side_effect=_make_parse_build_context_mock()),
+            patch(
+                "charmbuild.main._parse_build_context",
+                side_effect=_make_parse_build_context_mock(),
+            ),
             patch("charmbuild.main.compute_patched_yaml", return_value=patched_content),
             patch("charmbuild.main.subprocess.run", return_value=result_mock),
             patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
@@ -234,10 +256,14 @@ class TestMain:
         result_mock.returncode = 0
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  side_effect=_make_parse_build_context_mock()),
+            patch(
+                "charmbuild.main._parse_build_context",
+                side_effect=_make_parse_build_context_mock(),
+            ),
             patch("charmbuild.main.compute_patched_yaml", return_value=None),
-            patch("charmbuild.main.subprocess.run", return_value=result_mock) as mock_run,
+            patch(
+                "charmbuild.main.subprocess.run", return_value=result_mock
+            ) as mock_run,
             patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
             patch("charmbuild.main.copy_charm_files") as mock_copy_charm,
             patch("charmbuild.main.charm_name_from_yaml", return_value=None),
@@ -271,16 +297,24 @@ class TestMain:
 
         with (
             patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
-            patch("charmbuild.main._parse_build_context",
-                  return_value=(tmp_path, Path("my-charm"), Path("."), ["pack"])),
-            patch("charmbuild.main.compute_patched_yaml", return_value="name: my-charm\n"),
-            patch("charmbuild.main.subprocess.run", return_value=MagicMock(returncode=0)),
+            patch(
+                "charmbuild.main._parse_build_context",
+                return_value=(tmp_path, Path("my-charm"), Path("."), ["pack"]),
+            ),
+            patch(
+                "charmbuild.main.compute_patched_yaml", return_value="name: my-charm\n"
+            ),
+            patch(
+                "charmbuild.main.subprocess.run", return_value=MagicMock(returncode=0)
+            ),
             patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
             patch("charmbuild.main.copy_charm_files"),
             patch("charmbuild.main.charm_name_from_yaml", return_value="my-charm"),
             patch("charmbuild.main.move_generated_lib"),
             patch("charmbuild.main.Path.cwd", return_value=tmp_path),
-            patch.object(sys, "argv", ["charmbuild", "--project-dir", "my-charm", "pack"]),
+            patch.object(
+                sys, "argv", ["charmbuild", "--project-dir", "my-charm", "pack"]
+            ),
             pytest.raises(SystemExit),
         ):
             main()

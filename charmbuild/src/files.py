@@ -32,7 +32,9 @@ def compute_patched_yaml(charm_yaml: Path, rel_path: Path) -> "Optional[str]":
         data = yaml.safe_load(f) or {}
 
     parts = data.get("parts", {})
-    uv_parts = [p for p in parts.values() if isinstance(p, dict) and p.get("plugin") == "uv"]
+    uv_parts = [
+        p for p in parts.values() if isinstance(p, dict) and p.get("plugin") == "uv"
+    ]
     if len(uv_parts) != 1:
         return None
     uv_part = uv_parts[0]
@@ -68,7 +70,9 @@ def copy_context_to_temp(
     """
     logger.debug(
         "Copying context to temp directory: abs_context_dir=%s, tmp_path=%s, charm_yaml=%s",
-        abs_context_dir, tmp_path, charm_yaml,
+        abs_context_dir,
+        tmp_path,
+        charm_yaml,
     )
     logger.debug("Resolved absolute context directory: %s", abs_context_dir)
 
@@ -111,7 +115,9 @@ def charm_name_from_yaml(charm_yaml: Path) -> Optional[str]:
         return (yaml.safe_load(f) or {}).get("name")
 
 
-def copy_charm_files(tmp_path: Path, dest_dir: Path, charm_name: Optional[str]) -> list[Path]:
+def copy_charm_files(
+    tmp_path: Path, dest_dir: Path, charm_name: Optional[str]
+) -> list[Path]:
     """Copy .charm files from tmp_path to dest_dir, filtered by charm_name prefix.
 
     Returns the list of files that were copied.
