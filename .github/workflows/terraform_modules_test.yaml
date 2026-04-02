@@ -105,7 +105,7 @@ jobs:
         juju add-model tf-testing-lxd --controller lxd
     - run: |
         set -e  # Exit on error
-        juju switch k8s || echo "No k8s controller, skipping switch"
+        juju switch tfk8s || echo "No k8s controller, skipping switch"
         terraform init
         terraform test || { echo "Terraform test failed"; exit 1; }
       working-directory: ${{ matrix.working_dir }}
