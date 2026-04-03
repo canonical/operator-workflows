@@ -158,36 +158,4 @@ jobs:
           base-channel: ${{ needs.get-charm-base.outputs.channel }}
           base-architecture: ${{ needs.get-charm-base.outputs.architecture }}
           tag-prefix: ${{ inputs.tag-prefix }}
-  publish-docs:
-    if: endsWith(github.event.inputs.destination-channel, '/stable')
-    name: Publish docs
-    runs-on: ubuntu-24.04
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - name: Search for docs folder
-        id: docs-exist
-        run: echo "docs_exist=$([[ -d docs ]] && echo 'True' || echo 'False')" >> $GITHUB_OUTPUT
-      - name: Publish documentation
-        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && env.discourse_api_username != '' && env.discourse_api_key != '' }}
-        uses: canonical/discourse-gatekeeper@stable
-        id: publishDocumentation
-        env: 
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
-        with:
-          discourse_host: discourse.charmhub.io
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
-          dry_run: ${{ inputs.doc-automation-disabled }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          charm_dir:  ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-          base_branch: ${{ github.event.repository.default_branch }}
-      - name: Show index page
-        if: ${{ steps.docs-exist.outputs.docs_exist == 'True' && env.discourse_api_username != '' && env.discourse_api_key != '' }}
-        run: echo '${{ steps.publishDocumentation.outputs.index_url }}'
-        env: 
-          discourse_api_username: ${{ secrets.DISCOURSE_API_USERNAME }}
-          discourse_api_key: ${{ secrets.DISCOURSE_API_KEY }}
+
