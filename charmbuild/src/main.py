@@ -38,7 +38,12 @@ def _peek_verbose(argv: list[str]) -> bool:
 
 
 def _parse_build_context(argv: list[str]) -> tuple[Path, Path, Path, list[str]]:
-    """Extract --build-context from argv, return (context_dir, remaining_args)."""
+    """Extract charmbuild-specific flags from argv.
+
+    Returns a 4-tuple of (context_dir, project_dir, output, remaining_args), where
+    remaining_args contains the args that were not consumed and should be forwarded
+    to charmcraft.
+    """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--build-context", default=None)
     parser.add_argument("--project-dir", "-p", default=None)
@@ -65,7 +70,8 @@ def main() -> None:
         sys.exit(1)
 
     context_dir, project_dir, output, charmcraft_args = _parse_build_context(argv)
-    logger.warning("Output argument is ignored. Set to %s.", output)
+    if "--output" in argv or "-o" in argv:
+        logger.warning("--output/-o is not supported by charmbuild and will be ignored.")
 
     charm_yaml = Path.cwd() / project_dir / "charmcraft.yaml"
     logger.debug("Charm YAML path: %s", charm_yaml)
