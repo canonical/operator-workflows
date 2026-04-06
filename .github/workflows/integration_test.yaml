@@ -257,7 +257,7 @@ jobs:
         if: ${{ matrix.build.type == 'rock' }}
         run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
         shell: bash
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: canonical/operator-workflows/internal/build@charmbuild
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
