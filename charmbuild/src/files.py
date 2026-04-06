@@ -6,13 +6,9 @@
 
 import logging
 import shutil
+import yaml
 from pathlib import Path
 from typing import Optional
-
-try:
-    import yaml
-except ImportError:  # pragma: no cover
-    yaml = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
