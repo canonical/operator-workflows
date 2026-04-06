@@ -9,6 +9,8 @@ Each revision is versioned by the date of the revision.
 ## 2026-04-01
 
 - Drop zap support.
+- Removal of discourse-gatekeeper
+
 
 ## 2026-03-31
 
