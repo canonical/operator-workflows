@@ -117,6 +117,22 @@ class TestParseBuildContext:
         _ctx, _proj, _output, args = _parse_build_context(["-p", "my-charm", "pack"])
         assert "-p" not in args
 
+    def test_output_flag_is_consumed(self):
+        _ctx, _proj, output, args = _parse_build_context(["--output", "/out", "pack"])
+        assert "--output" not in args
+        assert "/out" not in args
+        assert output == Path("/out")
+
+    def test_output_short_flag_is_consumed(self):
+        _ctx, _proj, output, args = _parse_build_context(["-o", "/out", "pack"])
+        assert "-o" not in args
+        assert "/out" not in args
+        assert output == Path("/out")
+
+    def test_output_defaults_to_cwd_when_not_provided(self):
+        _ctx, _proj, output, _args = _parse_build_context(["pack"])
+        assert output == Path.cwd()
+
 
 # ---------------------------------------------------------------------------
 # main
@@ -321,3 +337,53 @@ class TestMain:
 
         charm_yaml_used = mock_copy_ctx.call_args[0][2]
         assert charm_yaml_used == tmp_path / "my-charm" / "charmcraft.yaml"
+
+    def test_non_pack_subcommand_runs_charmcraft_directly(self):
+        result_mock = MagicMock()
+        result_mock.returncode = 0
+        with (
+            patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
+            patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
+            patch(
+                "charmbuild.main.subprocess.run", return_value=result_mock
+            ) as mock_run,
+            patch.object(sys, "argv", ["charmbuild", "upload", "--release", "edge"]),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_copy_ctx.assert_not_called()
+        cmd = mock_run.call_args[0][0]
+        assert cmd[0] == "charmcraft"
+        assert "upload" in cmd
+        assert "--release" in cmd
+        assert "edge" in cmd
+        assert "cwd" not in mock_run.call_args[1]
+
+    def test_empty_argv_runs_charmcraft_directly(self):
+        result_mock = MagicMock()
+        result_mock.returncode = 0
+        with (
+            patch("charmbuild.main.shutil.which", return_value="/usr/bin/charmcraft"),
+            patch("charmbuild.main.copy_context_to_temp") as mock_copy_ctx,
+            patch("charmbuild.main.subprocess.run", return_value=result_mock),
+            patch.object(sys, "argv", ["charmbuild"]),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            main()
+
+        assert exc_info.value.code == 0
+        mock_copy_ctx.assert_not_called()
+
+    def test_output_flag_not_forwarded_to_charmcraft(self):
+        _, mock_run, _, _ = self._run_main(["pack", "--output", "/some/path"])
+        cmd = mock_run.call_args[0][0]
+        assert "--output" not in cmd
+        assert "/some/path" not in cmd
+
+    def test_output_short_flag_not_forwarded_to_charmcraft(self):
+        _, mock_run, _, _ = self._run_main(["pack", "-o", "/some/path"])
+        cmd = mock_run.call_args[0][0]
+        assert "-o" not in cmd
+        assert "/some/path" not in cmd
