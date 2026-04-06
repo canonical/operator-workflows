@@ -176,37 +176,6 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-      zap-auth-header:
-        description: If this is defined then its value will be added as a header to all of the ZAP requests
-        type: string
-      zap-auth-header-value:
-        description: If this is defined then its value will be used as the header name to all of the ZAP requests
-        type: string
-      zap-before-command:
-        description: Command to run before ZAP testing
-        type: string
-      zap-cmd-options:
-        description: Options to be used by ZAP
-        type: string
-        default: "-T 60"
-      zap-enabled:
-        type: boolean
-        description: Whether ZAP testing is enabled
-        default: false
-      zap-target:
-        description: If this is not set, the unit IP address will be used as ZAP target
-        type: string
-      zap-target-port:
-        description: ZAP target port
-        type: string
-        default: '80'
-      zap-target-protocol:
-        description: ZAP target protocol
-        type: string
-        default: "http"
-      zap-rules-file-name:
-        description: Rules file to ignore any alerts from the ZAP scan
-        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -333,7 +302,7 @@ jobs:
         run: |
           skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v4.0.0
+      - uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -434,15 +403,6 @@ jobs:
       trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
-      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
-      zap-auth-header: ${{ inputs.zap-auth-header }}
-      zap-before-command: ${{ inputs.zap-before-command }}
-      zap-cmd-options: ${{ inputs.zap-cmd-options }}
-      zap-enabled: ${{ inputs.zap-enabled }}
-      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
-      zap-target-port: ${{ inputs.zap-target-port }}
-      zap-target-protocol: ${{ inputs.zap-target-protocol }}
-      zap-target: ${{ inputs.zap-target }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ${{ inputs.builder-runner-label }}
