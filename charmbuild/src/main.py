@@ -72,7 +72,9 @@ def main() -> None:
     context_dir, project_dir, output, charmcraft_args = _parse_build_context(argv)
     subcommand = charmcraft_args[0] if charmcraft_args else ""
     if subcommand != "pack" or context_dir is None or context_dir == ".":
-        result = subprocess.run(["charmcraft"] + charmcraft_args, env=os.environ, check=False)
+        result = subprocess.run(
+            ["charmcraft"] + charmcraft_args, env=os.environ, check=False
+        )
         sys.exit(result.returncode)
 
     charm_yaml = Path.cwd() / project_dir / "charmcraft.yaml"
