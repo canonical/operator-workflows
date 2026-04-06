@@ -91,18 +91,17 @@ def copy_context_to_temp(
             shutil.copy2(charm_yaml, dest_yaml)
 
 
-def move_generated_lib(tmp_path: Path, uv_working_dir: Path) -> None:
-    """Move a lib directory generated at the tmp_path root into the UV_WORKING_DIR subdirectory.
+def move_generated_lib(tmp_path: Path, dest_dir: Path) -> None:
+    """Move a lib directory generated at the tmp_path root into the dest_dir subdirectory.
 
     When charmcraft generates a lib directory (e.g. via fetch-libs) it places it relative
     to the charmcraft.yaml, which is at tmp_path root.  The charm sources live under
     tmp_path / uv_working_dir, so the lib must be moved there to be usable.
     """
     generated_lib = tmp_path / "lib"
-    if generated_lib.exists():
-        dest = tmp_path / uv_working_dir / "lib"
-        logger.debug("Moving generated lib: %s -> %s", generated_lib, dest)
-        shutil.move(str(generated_lib), dest)
+    for file in generated_lib.glob("*.py"):
+        logger.debug("Moving generated lib: %s -> %s", file, dest_dir)
+        shutil.copy2(file, dest_dir / file.name)
     else:
         logger.debug("No generated lib found at %s, skipping move", generated_lib)
 

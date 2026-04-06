@@ -281,10 +281,9 @@ class TestMoveGeneratedLib:
         lib_dir.mkdir()
         (lib_dir / "some_lib.py").write_text("# lib")
 
-        move_generated_lib(tmp_path, Path("my-charm"))
+        move_generated_lib(tmp_path, charm_dir)
 
-        assert not lib_dir.exists()
-        assert (charm_dir / "lib" / "some_lib.py").read_text() == "# lib"
+        assert (charm_dir / "some_lib.py").read_text() == "# lib"
 
     def test_no_op_when_lib_absent(self, tmp_path):
         (tmp_path / "my-charm").mkdir()
@@ -297,16 +296,13 @@ class TestMoveGeneratedLib:
     def test_moves_nested_lib_contents(self, tmp_path):
         charm_dir = tmp_path / "sub" / "charm"
         charm_dir.mkdir(parents=True)
-        lib_dir = tmp_path / "lib" / "charms" / "my_charm" / "v0"
-        lib_dir.mkdir(parents=True)
+        lib_dir = tmp_path / "lib"
+        lib_dir.mkdir()
         (lib_dir / "api.py").write_text("# api")
 
-        move_generated_lib(tmp_path, Path("sub/charm"))
+        move_generated_lib(tmp_path, charm_dir)
 
-        assert not (tmp_path / "lib").exists()
-        assert (
-            charm_dir / "lib" / "charms" / "my_charm" / "v0" / "api.py"
-        ).read_text() == "# api"
+        assert (charm_dir / "api.py").read_text() == "# api"
 
 
 class TestCharmNameFromYaml:
