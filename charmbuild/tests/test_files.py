@@ -15,11 +15,6 @@ from charmbuild.files import (
 )
 
 
-# ---------------------------------------------------------------------------
-# compute_patched_yaml
-# ---------------------------------------------------------------------------
-
-
 class TestComputePatchedYaml:
     def _write_yaml(self, path: Path, uv_working_dir=".", extra_parts=None):
         data = (
@@ -93,11 +88,6 @@ class TestComputePatchedYaml:
         charm_yaml = tmp_path / "charmcraft.yaml"
         charm_yaml.write_text("parts:\n  charm:\n    plugin: uv\n")
         assert compute_patched_yaml(charm_yaml, Path("sub")) is None
-
-
-# ---------------------------------------------------------------------------
-# copy_context_to_temp
-# ---------------------------------------------------------------------------
 
 
 class TestCopyContextToTemp:
@@ -283,11 +273,6 @@ class TestCopyContextToTemp:
         assert not (dest / "charmcraft.yaml").exists()
 
 
-# ---------------------------------------------------------------------------
-# move_generated_lib
-# ---------------------------------------------------------------------------
-
-
 class TestMoveGeneratedLib:
     def test_moves_lib_to_uv_working_dir(self, tmp_path):
         charm_dir = tmp_path / "my-charm"
@@ -324,11 +309,6 @@ class TestMoveGeneratedLib:
         ).read_text() == "# api"
 
 
-# ---------------------------------------------------------------------------
-# charm_name_from_yaml
-# ---------------------------------------------------------------------------
-
-
 class TestCharmNameFromYaml:
     def test_returns_name_from_valid_yaml(self, tmp_path):
         charm_yaml = tmp_path / "charmcraft.yaml"
@@ -350,11 +330,6 @@ class TestCharmNameFromYaml:
         charm_yaml.write_text("")
 
         assert charm_name_from_yaml(charm_yaml) is None
-
-
-# ---------------------------------------------------------------------------
-# copy_charm_files
-# ---------------------------------------------------------------------------
 
 
 class TestCopyCharmFiles:
