@@ -32,7 +32,7 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   core.startGroup('charmbuild pack')
   await exec.exec(
     'charmbuild',
-    ['pack', '--verbosity', 'trace', '--build-context', path.resolve(params.buildContext)],
+    ['pack', '--verbosity', 'trace', '--build-context', params.buildContext],
     {
       cwd: params.plan.source_directory,
       env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
