@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-04-08
 
 - Drop load testing support.
+- Use skopeo binary shipped with rockcraft.
 
 ## 2026-04-01
 

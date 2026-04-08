@@ -104,7 +104,7 @@ Tox argument: `--charm-file=./<charm-build-output-file>.charm`
 ### Rock
 
 The rocks are pushed to the local MicroK8s image registry (localhost:32000)
-using `skopeo copy --insecure-policy --dest-tls-verify=false ...` command if the
+using `rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...` command if the
 rock is downloaded as a tarball artifact. By default, the GitHub registry is
 used.
 

@@ -145,7 +145,7 @@ export async function run(): Promise<void> {
             const archiveType = file.endsWith('.rock')
               ? 'oci-archive'
               : 'docker-archive'
-            await exec.exec('skopeo', [
+            await exec.exec('/snap/rockcraft/current/bin/skopeo', [
               'copy',
               '--insecure-policy',
               '--dest-tls-verify=false',
