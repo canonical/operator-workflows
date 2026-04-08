@@ -50,14 +50,6 @@ on:
           Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
           running within the same workflow. It is recommended to set this identifier to the job name.
         default: ""
-      load-test-enabled:
-        type: boolean
-        description: Whether load testing is enabled
-        default: false
-      load-test-run-args:
-        type: string
-        description: Command line arguments for the load test execution
-        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -377,8 +369,6 @@ jobs:
       extra-arguments: ${{ inputs.extra-arguments }}
       extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
-      load-test-enabled: ${{ inputs.load-test-enabled }}
-      load-test-run-args: ${{ inputs.load-test-run-args }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
