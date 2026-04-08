@@ -28,14 +28,6 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
-      load-test-enabled:
-        type: boolean
-        description: Whether load testing is enabled
-        default: false
-      load-test-run-args:
-        type: string
-        description: Command line arguments for the load test execution
-        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -447,12 +439,6 @@ jobs:
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
           done
-      - name: Install k6s
-        if: ${{ inputs.load-test-enabled }}
-        run: sudo snap install k6
-      - name: Run k6 load tests
-        if: ${{ inputs.load-test-enabled }}
-        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action (temporarily disabled)
         if: ${{ false }}
         uses: aquasecurity/trivy-action@0.35.0
