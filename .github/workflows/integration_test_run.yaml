@@ -28,14 +28,6 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
-      load-test-enabled:
-        type: boolean
-        description: Whether load testing is enabled
-        default: false
-      load-test-run-args:
-        type: string
-        description: Command line arguments for the load test execution
-        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -131,37 +123,6 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-      zap-auth-header:
-        description: If this is defined then its value will be added as a header to all of the ZAP requests
-        type: string
-      zap-auth-header-value:
-        description: If this is defined then its value will be used as the header name to all of the ZAP requests
-        type: string
-      zap-before-command:
-        description: Command to run before ZAP testing
-        type: string
-      zap-cmd-options:
-        description: Options to be used by ZAP
-        type: string
-        default: "-T 60"
-      zap-enabled:
-        type: boolean
-        description: Whether ZAP testing is enabled
-        default: false
-      zap-target:
-        description: If this is not set, the unit IP address will be used as ZAP target
-        type: string
-      zap-target-port:
-        description: ZAP target port
-        type: string
-        default: "80"
-      zap-target-protocol:
-        description: ZAP target protocol
-        type: string
-        default: "http"
-      zap-rules-file-name:
-        description: Rules file to ignore any alerts from the ZAP scan
-        type: string
 
 jobs:
   integration-test:
@@ -228,7 +189,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7.5.0
+        uses: astral-sh/setup-uv@v8.0.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -381,10 +342,6 @@ jobs:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
-
-      - run: |
-          sudo apt update
-          sudo apt install skopeo -y
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
@@ -478,12 +435,6 @@ jobs:
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
           done
-      - name: Install k6s
-        if: ${{ inputs.load-test-enabled }}
-        run: sudo snap install k6
-      - name: Run k6 load tests
-        if: ${{ inputs.load-test-enabled }}
-        run: k6 run load_tests/load-test.js ${{ inputs.load-test-run-args }}
       - name: Run Github Trivy FS Action (temporarily disabled)
         if: ${{ false }}
         uses: aquasecurity/trivy-action@0.35.0
@@ -493,27 +444,3 @@ jobs:
           trivy-config: ${{ inputs.trivy-fs-config }}
         env:
           TRIVY_DISABLE_VEX_NOTICE: true
-      - name: Set Zap target env for Github Zap Action to Juju Unit IP Address
-        if: ${{ inputs.zap-enabled && inputs.zap-target == '' }}
-        run: echo "ZAP_TARGET=$(juju show-unit ${{ env.CHARM_NAME }}/0 --format=json | jq -r '.["${{ env.CHARM_NAME }}/0"]["address"]')" >> $GITHUB_ENV
-      - name: Set Zap target env for Github Zap Action to zap-target value
-        if: ${{ inputs.zap-enabled && inputs.zap-target != '' }}
-        run: echo "ZAP_TARGET=${{ inputs.zap-target }}" >> $GITHUB_ENV
-      - name: Run command before Github Zap Action
-        if: ${{ inputs.zap-enabled && inputs.zap-before-command != '' }}
-        run: ${{ inputs.zap-before-command }}
-        env:
-          ZAP_TARGET: ${{ env.ZAP_TARGET }}
-      - name: Run Github Zap Action
-        if: ${{ inputs.zap-enabled }}
-        uses: zaproxy/action-baseline@v0.15.0
-        env:
-          ZAP_AUTH_HEADER: ${{ inputs.zap-auth-header }}
-          ZAP_AUTH_HEADER_VALUE: ${{ inputs.zap-auth-header-value  }}
-        with:
-          issue_title: "OWASP ZAP report"
-          fail_action: false
-          target: ${{ inputs.zap-target-protocol }}://${{ env.ZAP_TARGET }}:${{ inputs.zap-target-port }}/
-          cmd_options: ${{ inputs.zap-cmd-options }}
-          rules_file_name: ${{ inputs.zap-rules-file-name }}
-          artifact_name: zap-scan-${{ env.UNIQUE_ARTIFACT_SUFFIX }}

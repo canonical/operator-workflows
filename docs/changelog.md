@@ -6,8 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-04-08
+
+- Drop load testing support.
+- Use skopeo binary shipped with rockcraft.
+
 ## 2026-04-01
 
+- Drop zap support.
 - Removal of discourse-gatekeeper
 
 
