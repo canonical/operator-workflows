@@ -291,7 +291,7 @@ async function buildRock({
           .replace(/\.rock$/, '')
         const image = `ghcr.io/${github.context.repo.owner}/${plan.name}:${tree}-${base}`
         await exec.exec(
-          '/snap/rockcraft/current/bin/skopeo',
+          'rockcraft.skopeo',
           [
             '--insecure-policy',
             'copy',
