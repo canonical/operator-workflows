@@ -128,17 +128,6 @@ on:
         description: Exit code when specified vulnerabilities are found.
         type: string
         default: '1'
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
-      trivy-fs-enabled:
-        type: boolean
-        description: Whether Trivy testing of type fs is enabled
-        default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
@@ -388,9 +377,6 @@ jobs:
       test-tox-env: ${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
       tmate-timeout: ${{ inputs.tmate-timeout }}
-      trivy-fs-config: ${{ inputs.trivy-fs-config }}
-      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
-      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
   required_status_checks:
