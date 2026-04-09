@@ -355,7 +355,6 @@ jobs:
       bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
-      extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
