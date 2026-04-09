@@ -128,6 +128,10 @@ on:
         description: Exit code when specified vulnerabilities are found.
         type: string
         default: '1'
+      trivy-fs-enabled:
+        type: boolean
+        description: Whether Trivy testing of type fs is enabled. KEPT FOR COMPATIBILITY.
+        default: false
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
