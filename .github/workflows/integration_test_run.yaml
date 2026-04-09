@@ -103,17 +103,6 @@ on:
         description: Timeout in minutes to keep tmate debugging session.
         type: number
         default: 30
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
-      trivy-fs-enabled:
-        type: boolean
-        description: Whether Trivy testing of type fs is enabled
-        default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
       use-canonical-k8s:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
@@ -440,12 +429,3 @@ jobs:
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
           done
-      - name: Run Github Trivy FS Action (temporarily disabled)
-        if: ${{ false }}
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          scan-type: "fs"
-          scan-ref: ${{ inputs.trivy-fs-ref }}
-          trivy-config: ${{ inputs.trivy-fs-config }}
-        env:
-          TRIVY_DISABLE_VEX_NOTICE: true
