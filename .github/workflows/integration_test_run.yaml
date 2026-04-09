@@ -55,6 +55,10 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      rockcraft-channel:
+        description: Rockcraft channel to use for the integration test
+        type: string
+        default: latest/stable
       runs-on:
         type: string
         description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
@@ -331,6 +335,7 @@ jobs:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+      - run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
