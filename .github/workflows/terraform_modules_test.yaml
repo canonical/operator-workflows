@@ -88,21 +88,27 @@ jobs:
         sudo iptables -P FORWARD ACCEPT
         sudo snap install terraform --classic
         sudo snap install juju
-    - name: Prepare environment for Terraform tests with k8s controller
-      if: ${{ inputs.k8s-controller }}
-      run: |
-        sudo snap install k8s --classic --channel=${{ inputs.k8s-channel }}
-        sudo k8s bootstrap
-        sudo k8s status --wait-ready --timeout 300s
-        sudo k8s config | juju add-k8s tfk8s --client
-        juju bootstrap tfk8s
-        juju add-model tf-testing-k8s --controller tfk8s
     - name: Prepare environment for Terraform tests with lxd controller
       if: ${{ inputs.lxd-controller }}
       run: |
         sudo snap install lxd
         juju bootstrap localhost lxd
         juju add-model tf-testing-lxd --controller lxd
+    - name: Prepare environment for Terraform tests with k8s controller
+      if: ${{ inputs.k8s-controller }}
+      env:
+        LXD_ENABLED: ${{ inputs.lxd-controller }}
+      run: |
+        sudo snap install k8s --classic --channel=${{ inputs.k8s-channel }}
+        sudo k8s bootstrap
+        sudo k8s status --wait-ready --timeout 300s
+        if [ "$LXD_ENABLED" == "true" ]; then
+          sudo k8s config | juju add-k8s tfk8s --client
+          juju add-cloud --controller localhost-localhost tfk8s
+        else
+          juju bootstrap tfk8s
+        fi
+        juju add-model tf-testing-k8s tfk8s
     - run: |
         set -e  # Exit on error
         juju switch tfk8s || echo "No k8s controller, skipping switch"
