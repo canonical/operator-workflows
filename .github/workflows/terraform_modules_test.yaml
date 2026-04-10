@@ -104,7 +104,7 @@ jobs:
         sudo k8s status --wait-ready --timeout 300s
         if [ "$LXD_ENABLED" == "true" ]; then
           sudo k8s config | juju add-k8s tfk8s --client
-          juju add-cloud --controller localhost-localhost tfk8s
+          juju add-cloud --controller lxd tfk8s
         else
           juju bootstrap tfk8s
         fi
