@@ -108,10 +108,11 @@ jobs:
         sudo k8s config | juju add-k8s tfk8s --client
         if [ "$LXD_ENABLED" == "true" ]; then
           juju add-cloud --controller lxd tfk8s
+          juju add-model tf-testing-k8s tfk8s
         else
           juju bootstrap tfk8s
+          juju add-model tf-testing-k8s
         fi
-        juju add-model tf-testing-k8s
     - name: Run additional setup
       if: ${{ inputs.additional-setup-script }}
       run: ${{ inputs.additional-setup-script }}
