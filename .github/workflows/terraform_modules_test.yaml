@@ -12,6 +12,9 @@ on:
       additional-tests-script:
         type: string
         description: Script to call after running the `terraform test` command to run additional tests.
+      additional-setup-script:
+        type: string
+        description: Script to call before running the `terraform test` command to run additional tests.
       k8s-channel:
         type: string
         description: Kubernetes channel to use for testing, e.g. '1.32-classic/stable'. Ignored if k8s-controller is false.
@@ -109,6 +112,10 @@ jobs:
           juju bootstrap tfk8s
         fi
         juju add-model tf-testing-k8s
+    - name: Run additional setup
+      if: ${{ inputs.additional-setup-script }}
+      run: ${{ inputs.additional-setup-script }}
+      working-directory: ${{ matrix.working_dir }}
     - run: |
         set -e  # Exit on error
         juju switch tfk8s || echo "No k8s controller, skipping switch"
