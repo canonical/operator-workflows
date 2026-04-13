@@ -220,6 +220,10 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Install pipx
+        if: ${{ matrix.build.type == 'charm' }}
+        run: pip install pipx
+        shell: bash
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
