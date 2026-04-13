@@ -42,7 +42,7 @@ on:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
         default: "noble"
-      run-on-base:
+      runs-on-base:
         type: string
         description: |
           The type of machine to run the job on when not using self-hosted runners.
@@ -88,7 +88,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || inputs.run-on-base
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -131,7 +131,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -201,7 +201,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -224,7 +224,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -252,7 +252,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -275,7 +275,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -397,7 +397,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     defaults:
       run:
@@ -450,7 +450,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     if: always() && !cancelled()
     timeout-minutes: 5
