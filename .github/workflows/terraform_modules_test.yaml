@@ -9,12 +9,12 @@ name: Terraform modules tests
 on:
   workflow_call:
     inputs:
-      additional-tests-script:
-        type: string
-        description: Script to call after running the `terraform test` command to run additional tests.
       additional-setup-script:
         type: string
         description: Script to call before running the `terraform test` command to run additional tests.
+      additional-tests-script:
+        type: string
+        description: Script to call after running the `terraform test` command to run additional tests.
       k8s-channel:
         type: string
         description: Kubernetes channel to use for testing, e.g. '1.32-classic/stable'. Ignored if k8s-controller is false.
