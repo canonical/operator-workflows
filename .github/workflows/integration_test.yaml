@@ -220,6 +220,10 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Install python3-venv
+        if: ${{ matrix.build.type == 'charm' }}
+        run: sudo apt-get install -y python3-venv
+        shell: bash
       - name: Install pipx
         if: ${{ matrix.build.type == 'charm' }}
         run: pip install pipx
