@@ -42,6 +42,12 @@ on:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
         default: "noble"
+      run-on-base:
+        type: string
+        description: |
+          The type of machine to run the job on when not using self-hosted runners.
+          This is directly mapped to the `runs-on` field.
+        default: "ubuntu-22.04"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -82,7 +88,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.run-on-base
       }}
     defaults:
       run:
