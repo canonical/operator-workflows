@@ -15,6 +15,10 @@ on:
         description: Label for building the charm
         type: string
         default: ubuntu-latest
+      build-context:
+        description: The directory to use as the build context for charmbuild
+        type: string
+        default: "."
       charmcraft-channel:
         description: Charmcraft channel to use for the integration test
         type: string
@@ -30,12 +34,6 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
-      extra-test-matrix:
-        description: |
-          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
-          Each mapping will be injected into the matrix section of the integration-test.
-        type: string
-        default: "{}"
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -45,14 +43,6 @@ on:
         description: >-
           Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
           running within the same workflow. It is recommended to set this identifier to the job name.
-        default: ""
-      load-test-enabled:
-        type: boolean
-        description: Whether load testing is enabled
-        default: false
-      load-test-run-args:
-        type: string
-        description: Command line arguments for the load test execution
         default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
@@ -132,17 +122,10 @@ on:
         description: Exit code when specified vulnerabilities are found.
         type: string
         default: '1'
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
       trivy-fs-enabled:
         type: boolean
-        description: Whether Trivy testing of type fs is enabled
+        description: Whether Trivy testing of type fs is enabled. KEPT FOR COMPATIBILITY.
         default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
@@ -172,37 +155,6 @@ on:
         type: string
         description: The working directory for jobs
         default: "./"
-      zap-auth-header:
-        description: If this is defined then its value will be added as a header to all of the ZAP requests
-        type: string
-      zap-auth-header-value:
-        description: If this is defined then its value will be used as the header name to all of the ZAP requests
-        type: string
-      zap-before-command:
-        description: Command to run before ZAP testing
-        type: string
-      zap-cmd-options:
-        description: Options to be used by ZAP
-        type: string
-        default: "-T 60"
-      zap-enabled:
-        type: boolean
-        description: Whether ZAP testing is enabled
-        default: false
-      zap-target:
-        description: If this is not set, the unit IP address will be used as ZAP target
-        type: string
-      zap-target-port:
-        description: ZAP target port
-        type: string
-        default: '80'
-      zap-target-protocol:
-        description: ZAP target protocol
-        type: string
-        default: "http"
-      zap-rules-file-name:
-        description: Rules file to ignore any alerts from the ZAP scan
-        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -268,6 +220,18 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Get workflow version
+        id: workflow-version
+        if: ${{ matrix.build.type == 'charm' }}
+        uses: canonical/get-workflow-version-action@v1.0.1
+        with:
+          repository-name: canonical/operator-workflows
+          file-name: integration_test.yaml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install charmbuild
+        if: ${{ matrix.build.type == 'charm' }}
+        run: pip install git+https://github.com/canonical/operator-workflows@${{ steps.workflow-version.outputs.sha }}#subdirectory=charmbuild
+        shell: bash
       - name: Install rockcraft
         if: ${{ matrix.build.type == 'rock' }}
         run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
@@ -276,6 +240,7 @@ jobs:
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
+          build-context: ${{ inputs.build-context }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   plan-scan:
@@ -314,9 +279,10 @@ jobs:
           name: ${{ matrix.scan.artifact }}
       - if: endsWith( matrix.scan.file, '.rock')
         run: |
-          skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
+          sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
+          rockcraft.skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v4.0.0
+      - uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -389,10 +355,7 @@ jobs:
       bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
-      extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
-      load-test-enabled: ${{ inputs.load-test-enabled }}
-      load-test-run-args: ${{ inputs.load-test-run-args }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
       owner: ${{ github.repository_owner }}
@@ -412,20 +375,8 @@ jobs:
       test-tox-env: ${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
       tmate-timeout: ${{ inputs.tmate-timeout }}
-      trivy-fs-config: ${{ inputs.trivy-fs-config }}
-      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
-      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
-      zap-auth-header-value: ${{ inputs.zap-auth-header-value }}
-      zap-auth-header: ${{ inputs.zap-auth-header }}
-      zap-before-command: ${{ inputs.zap-before-command }}
-      zap-cmd-options: ${{ inputs.zap-cmd-options }}
-      zap-enabled: ${{ inputs.zap-enabled }}
-      zap-rules-file-name: ${{ inputs.zap-rules-file-name }}
-      zap-target-port: ${{ inputs.zap-target-port }}
-      zap-target-protocol: ${{ inputs.zap-target-protocol }}
-      zap-target: ${{ inputs.zap-target }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ${{ inputs.builder-runner-label }}

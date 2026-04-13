@@ -119047,7 +119047,7 @@ async function run() {
                         const archiveType = file.endsWith('.rock')
                             ? 'oci-archive'
                             : 'docker-archive';
-                        await exec('skopeo', [
+                        await exec('rockcraft.skopeo', [
                             'copy',
                             '--insecure-policy',
                             '--dest-tls-verify=false',
