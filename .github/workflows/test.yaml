@@ -422,7 +422,7 @@ jobs:
         inputs.self-hosted-runner &&
         fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
           inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || 'ubuntu-22.04'
+        )) || inputs.runs-on-base
       }}
     steps:
       - uses: actions/checkout@v6.0.2
