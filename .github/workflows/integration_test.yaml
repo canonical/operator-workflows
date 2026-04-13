@@ -223,7 +223,7 @@ jobs:
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
-        uses: canonical/get-workflow-version-action@v1.0.1
+        uses: yanksyoon/get-workflow-version-action@feat/self-hosted-runner-compatible
         with:
           repository-name: canonical/operator-workflows
           file-name: integration_test.yaml
