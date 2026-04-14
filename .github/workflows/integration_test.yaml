@@ -220,6 +220,20 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Install get-workflow-version-action dependencies (self-hosted runners)
+        if: ${{ matrix.build.type == 'charm' }}
+        shell: bash
+        run: |
+          if ! dpkg -s python3-venv &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y python3-venv
+          fi
+          if ! command -v pipx &> /dev/null; then
+            python3 -m pip install --upgrade pip
+            python3 -m pip install --user pipx
+            python3 -m pipx ensurepath
+            echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          fi
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
