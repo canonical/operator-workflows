@@ -14,7 +14,7 @@ import path from 'path'
 
 interface BuildCharmParams {
   plan: BuildPlan
-  charmcraftChannel: string
+  buildContext: string
 }
 
 async function gitTreeId(p: string): Promise<string> {
@@ -29,26 +29,15 @@ async function gitTreeId(p: string): Promise<string> {
 }
 
 async function buildCharm(params: BuildCharmParams): Promise<void> {
-  if (params.charmcraftChannel) {
-    await exec.exec('sudo', [
-      'snap',
-      'install',
-      'charmcraft',
-      '--channel',
-      params.charmcraftChannel,
-      '--classic'
-    ])
-  } else {
-    await exec.exec('sudo', ['snap', 'install', 'charmcraft', '--classic'])
-  }
-  core.startGroup('charmcraft pack')
-  const charmcraftBin = core.getBooleanInput('charmcraftcache')
-    ? 'ccc'
-    : 'charmcraft'
-  await exec.exec(charmcraftBin, ['pack', '--verbosity', 'trace'], {
-    cwd: params.plan.source_directory,
-    env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
-  })
+  core.startGroup('charmbuild pack')
+  await exec.exec(
+    'charmbuild',
+    ['pack', '--verbosity', 'trace', '--build-context', params.buildContext],
+    {
+      cwd: params.plan.source_directory,
+      env: { ...process.env, CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: 'true' }
+    }
+  )
   core.endGroup()
   const charmFiles = await (
     await glob.create(path.join(params.plan.source_directory, '*.charm'))
@@ -164,7 +153,6 @@ async function buildDockerImage({
 
 interface BuildRockParams {
   plan: BuildPlan
-  rockcraftChannel: string
   user: string
   token: string
 }
@@ -250,25 +238,12 @@ async function cacheRock(plan: BuildPlan, cacheKey: string): Promise<void> {
 
 async function buildRock({
   plan,
-  rockcraftChannel,
   user,
   token
 }: BuildRockParams): Promise<void> {
   const cacheKey = await generateRockCacheKey(plan)
   if (await restoreRock(plan, cacheKey)) {
     return
-  }
-  if (rockcraftChannel) {
-    await exec.exec('sudo', [
-      'snap',
-      'install',
-      'rockcraft',
-      '--channel',
-      rockcraftChannel,
-      '--classic'
-    ])
-  } else {
-    await exec.exec('sudo', ['snap', 'install', 'rockcraft', '--classic'])
   }
   if (path.basename(plan.source_file) != 'rockcraft.yaml') {
     const rockcraftYamlFile = path.join(
@@ -316,7 +291,7 @@ async function buildRock({
           .replace(/\.rock$/, '')
         const image = `ghcr.io/${github.context.repo.owner}/${plan.name}:${tree}-${base}`
         await exec.exec(
-          '/snap/rockcraft/current/bin/skopeo',
+          'rockcraft.skopeo',
           [
             '--insecure-policy',
             'copy',
@@ -357,7 +332,7 @@ export async function run(): Promise<void> {
       case 'charm':
         await buildCharm({
           plan,
-          charmcraftChannel: core.getInput('charmcraft-channel')
+          buildContext: core.getInput('build-context') || '.'
         })
         break
       case 'docker-image':
@@ -370,7 +345,6 @@ export async function run(): Promise<void> {
       case 'rock':
         await buildRock({
           plan,
-          rockcraftChannel: core.getInput('rockcraft-channel'),
           user: github.context.actor,
           token: core.getInput('github-token')
         })

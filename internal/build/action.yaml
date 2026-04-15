@@ -5,18 +5,12 @@ inputs:
   build-plan:
     description: Build plan.
     required: true
-  charmcraftcache:
-    description: Use charmcraftcache (https://github.com/canonical/charmcraftcache)
-    default: "false"
-  charmcraft-channel:
-    description: Charmcraft channel to use for the integration test
-    default: latest/stable
+  build-context:
+    description: The directory to use as the build context for charmbuild.
+    default: "."
   github-token:
     description: github token.
     required: true
-  rockcraft-channel:
-    description: Rockcraft channel to use for the integration test
-    default: latest/stable
 runs:
   using: node20
   main: ../../dist/build/index.js

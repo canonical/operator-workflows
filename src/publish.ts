@@ -230,7 +230,7 @@ class Publish {
         const archiveType = file.endsWith('.rock')
           ? 'oci-archive'
           : 'docker-archive'
-        await exec.exec('/snap/rockcraft/current/bin/skopeo', [
+        await exec.exec('rockcraft.skopeo', [
           'copy',
           '--insecure-policy',
           `${archiveType}:${path.join(tmp, file)}`,
@@ -306,10 +306,23 @@ class Publish {
       }
       allFiles.push(...manifest.files.map(f => path.join(tmp, f)))
     }
+    // Deduplicate by charm name and base/platform (e.g., jenkins-agent_ubuntu@22.04-amd64.charm)
+    // Each unique charm+base combination should be preserved
+    const uniqueCharms = new Map<string, string>()
+    for (const file of allFiles) {
+      const basename = path.basename(file)
+      // Use basename as key to deduplicate identical charm files
+      // Charm filename format: {name}_{base}@{version}-{arch}.charm
+      // e.g., jenkins-agent_ubuntu@22.04-amd64.charm
+      if (!uniqueCharms.has(basename)) {
+        uniqueCharms.set(basename, file)
+      }
+    }
+    const uniqueFiles = Array.from(uniqueCharms.values())
     return {
       name: charmName!,
       dir: charmSourceDir!,
-      files: allFiles
+      files: uniqueFiles
     }
   }
 

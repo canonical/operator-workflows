@@ -136,11 +136,14 @@ export class GetPlan {
         mergedPlan = plan
         continue
       }
-      // Merge charm build entries from additional matching plans
+      // Merge build entries from additional matching plans
       // (e.g. different architecture invocations of the same integration test)
       const existingOutputs = new Set(mergedPlan.build.map(b => b.output))
       for (const build of plan.build) {
-        if (build.type === 'charm' && !existingOutputs.has(build.output)) {
+        if (!existingOutputs.has(build.output)) {
+          core.info(
+            `Adding build: ${build.type} ${build.name} (source: ${build.source_directory}, target: ${build.build_target || 'default'}, artifact: ${build.output})`
+          )
           mergedPlan.build.push(build)
         }
       }

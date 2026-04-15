@@ -6,9 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-03-18
+## 2026-04-15
 
 - Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
+
+## 2026-04-14
+- Support get-workflow-version-action for self-hosted runners.
+
+## 2026-04-09
+
+- Drop extra-test-matrix.
+
+## 2026-04-08
+
+- Drop load testing support.
+- Drop unused trivy FS.
+- Use skopeo binary shipped with rockcraft.
+
+## 2026-04-01
+
+- Drop zap support.
+- Removal of discourse-gatekeeper
+
+
+## 2026-03-31
+
+- Drop charmcraftcache.
+- Move the rockcraft and charmcraft installation outside of the build action.
 
 ## 2026-03-10
 
