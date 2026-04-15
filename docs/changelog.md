@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-04-15
 
 - Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
+- Don't publish a new release on CharmHub if only terraform files have been modified.
 
 ## 2026-04-14
 - Support get-workflow-version-action for self-hosted runners.
