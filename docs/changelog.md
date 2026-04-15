@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-04-15
+
+- Removed "jira.yml" workflow. Users should use https://github.com/canonical/gh-jira-sync-bot instead.
+
 ## 2026-04-14
 - Support get-workflow-version-action for self-hosted runners.
 
