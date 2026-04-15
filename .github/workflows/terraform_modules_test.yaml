@@ -83,9 +83,9 @@ jobs:
     steps:
     - name: Validate controller inputs
       if: >-
-        (inputs.k8s-controller && !inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud) ||
-        (!inputs.k8s-controller && inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud) ||
-        (!inputs.k8s-controller && !inputs.lxd-controller && inputs.lxd-controller-with-k8s-cloud)
+        (inputs.k8s-controller && (inputs.lxd-controller || inputs.lxd-controller-with-k8s-cloud)) ||
+        (inputs.lxd-controller && inputs.lxd-controller-with-k8s-cloud) ||
+        (!inputs.k8s-controller && !inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud)
       run: |
         echo "One and only one of k8s-controller, lxd-controller or lxd-controller-with-k8s-cloud must be selected."
         exit 1
