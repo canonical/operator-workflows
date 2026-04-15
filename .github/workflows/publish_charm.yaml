@@ -106,7 +106,7 @@ jobs:
             exit 0
           fi
           CHANGED_FILES=$(git diff --name-only "${{ github.event.before }}" "${{ github.event.after }}")
-          CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | wc -l)
+          CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -v "\.md$" | grep -v "^terraform" | wc -l)
           echo "has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')" >> $GITHUB_OUTPUT
 
   publish-charm:
