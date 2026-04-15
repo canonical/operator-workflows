@@ -114,7 +114,7 @@ jobs:
         juju bootstrap localhost lxd
         juju add-model tf-testing-lxd --controller lxd
     - name: Prepare environment for Terraform tests with lxd controller with a k8s cloud
-      if: ${{ inputs.k8s-controller-with-k8s-cloud }}
+      if: ${{ inputs.lxd-controller-with-k8s-cloud }}
       run: |
         sudo snap install lxd
         juju bootstrap localhost lxd
