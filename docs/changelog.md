@@ -30,6 +30,10 @@ Each revision is versioned by the date of the revision.
 - Removal of discourse-gatekeeper
 
 
+## 2026-04-13
+
+- Use a single controller in terraform tests when k8s and lxd are requested
+
 ## 2026-03-31
 
 - Drop charmcraftcache.
