@@ -18,12 +18,6 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
-      extra-test-matrix:
-        description: |
-          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
-          Each mapping will be injected into the matrix section of the integration-test.
-        type: string
-        default: "{}"
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -55,6 +49,10 @@ on:
         description: Microk8s provider add-ons override. A minimum set of addons (the defaults) must be enabled.
         type: string
         default: "dns ingress rbac storage"
+      rockcraft-channel:
+        description: Rockcraft channel to use for the integration test
+        type: string
+        default: latest/stable
       runs-on:
         type: string
         description: Image of the runner to run the test job. This gets ignored if self-hosted-runner is set to true.
@@ -99,17 +97,6 @@ on:
         description: Timeout in minutes to keep tmate debugging session.
         type: number
         default: 30
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
-      trivy-fs-enabled:
-        type: boolean
-        description: Whether Trivy testing of type fs is enabled
-        default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
       use-canonical-k8s:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
@@ -132,7 +119,6 @@ jobs:
       matrix:
         series: ${{ fromJSON(inputs.series) }}
         modules: ${{ fromJSON(inputs.modules) }}
-        ${{ insert }}: ${{ fromJSON(inputs.extra-test-matrix) }}
       fail-fast: false
     runs-on: >-
       ${{
@@ -342,6 +328,7 @@ jobs:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
+      - run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
       - name: Plan Integration
         uses: canonical/operator-workflows/internal/plan-integration@main
         id: plan-integration
@@ -435,12 +422,3 @@ jobs:
             echo ==== debug-log in model: $model
             juju debug-log --replay --no-tail -m $model
           done
-      - name: Run Github Trivy FS Action (temporarily disabled)
-        if: ${{ false }}
-        uses: aquasecurity/trivy-action@0.35.0
-        with:
-          scan-type: "fs"
-          scan-ref: ${{ inputs.trivy-fs-ref }}
-          trivy-config: ${{ inputs.trivy-fs-config }}
-        env:
-          TRIVY_DISABLE_VEX_NOTICE: true

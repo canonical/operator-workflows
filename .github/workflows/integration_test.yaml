@@ -34,12 +34,6 @@ on:
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
-      extra-test-matrix:
-        description: |
-          Aditional mapping to lists of matrices to be applied on top of series and modules matrix in JSON format, i.e. '{"extras":["foo","bar"]}'.
-          Each mapping will be injected into the matrix section of the integration-test.
-        type: string
-        default: "{}"
       juju-channel:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
@@ -128,17 +122,10 @@ on:
         description: Exit code when specified vulnerabilities are found.
         type: string
         default: '1'
-      trivy-fs-config:
-        type: string
-        description: Trivy YAML configuration for fs testing that is checked in as part of the repo
       trivy-fs-enabled:
         type: boolean
-        description: Whether Trivy testing of type fs is enabled
+        description: Whether Trivy testing of type fs is enabled. KEPT FOR COMPATIBILITY.
         default: false
-      trivy-fs-ref:
-        type: string
-        description: Target directory to do the Trivy testing
-        default: "."
       trivy-image-config:
         type: string
         description: Trivy YAML configuration for image testing that is checked in as part of the repo
@@ -233,6 +220,20 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Install get-workflow-version-action dependencies (self-hosted runners)
+        if: ${{ matrix.build.type == 'charm' }}
+        shell: bash
+        run: |
+          if ! dpkg -s python3-venv &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y python3-venv
+          fi
+          if ! command -v pipx &> /dev/null; then
+            python3 -m pip install --upgrade pip
+            python3 -m pip install --user pipx
+            python3 -m pipx ensurepath
+            echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+          fi
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
@@ -368,7 +369,6 @@ jobs:
       bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
       extra-arguments: ${{ inputs.extra-arguments }}
-      extra-test-matrix: ${{ inputs.extra-test-matrix }}
       juju-channel: ${{ inputs.juju-channel }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
       modules: ${{ inputs.modules }}
@@ -389,9 +389,6 @@ jobs:
       test-tox-env: ${{ inputs.test-tox-env }}
       tmate-debug: ${{ inputs.tmate-debug }}
       tmate-timeout: ${{ inputs.tmate-timeout }}
-      trivy-fs-config: ${{ inputs.trivy-fs-config }}
-      trivy-fs-enabled: ${{ inputs.trivy-fs-enabled }}
-      trivy-fs-ref: ${{ inputs.trivy-fs-ref }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
   required_status_checks:
