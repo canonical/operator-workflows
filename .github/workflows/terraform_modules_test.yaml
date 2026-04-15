@@ -82,9 +82,12 @@ jobs:
         working_dir: ${{ fromJSON(inputs.terraform-directories) }}
     steps:
     - name: Validate controller inputs
-      if: ${{ !inputs.k8s-controller && !inputs.lxd-controller }}
+      if: >-
+        (inputs.k8s-controller && !inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud) ||
+        (!inputs.k8s-controller && inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud) ||
+        (!inputs.k8s-controller && !inputs.lxd-controller && inputs.lxd-controller-with-k8s-cloud)
       run: |
-        echo "At least one of k8s-controller or lxd-controller must be true."
+        echo "One and only one of k8s-controller, lxd-controller or lxd-controller-with-k8s-cloud must be selected."
         exit 1
     - uses: actions/checkout@v6.0.2
     - name: Prepare juju tf provider environment
