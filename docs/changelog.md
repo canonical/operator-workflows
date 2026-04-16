@@ -8,7 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-04-16
 
-- Remove secret args passing to allure.
+- Remove allure logging to remove accidental sensitive value logging.
 
 ## 2026-04-15
 
