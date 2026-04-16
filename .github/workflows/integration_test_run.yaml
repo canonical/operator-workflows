@@ -217,8 +217,14 @@ jobs:
             && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
             || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
       - name: Enforce Secret Deprecation and Security
-        if: secrets.INTEGRATION_TEST_ARGS
+        env:
+          DEPRECATED_TEST_ARGS: ${{ secrets.INTEGRATION_TEST_ARGS }}
         run: |
+          # If the secret is not set, bash -z will be true (empty string)
+          if [ -z "$DEPRECATED_TEST_ARGS" ]; then
+            echo "Validation passed: Deprecated INTEGRATION_TEST_ARGS not in use."
+            exit 0
+          fi
           if [ "$ENABLE_ALLURE" == "true" ]; then
             echo "::error title=Security Risk::INTEGRATION_TEST_ARGS may be leaked in Allure reports! Rotate secrets immediately."
           fi
