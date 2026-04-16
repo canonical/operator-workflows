@@ -237,7 +237,7 @@ jobs:
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
-        uses: canonical/get-workflow-version-action@v1.0.1
+        uses: canonical/get-workflow-version-action@v1.0.3
         with:
           repository-name: canonical/operator-workflows
           file-name: integration_test.yaml
