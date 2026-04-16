@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-04-16
 
 - Remove allure logging to remove accidental sensitive value logging.
+- Remove use of secrets.INTEGRATION_TEST_ARGS and fail integration tests if it is used.
 
 ## 2026-04-15
 
