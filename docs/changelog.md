@@ -10,10 +10,6 @@ Each revision is versioned by the date of the revision.
 
 - Remove secret args passing to allure.
 
-## 2026-04-16
-
-- Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
-
 ## 2026-04-15
 
 - Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
