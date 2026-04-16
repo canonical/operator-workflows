@@ -22,13 +22,7 @@ More information about OWASP ZAP testing can be found [here](OWASPZAP.md).
 
 More information about Trivy testing can be found [here](TRIVY.MD).
 
-The following secrets are available for this workflow:
-
-| Name | Description |
-|--------------------|-------------------|
-| INTEGRATION_TEST_ARGS | Additional arguments to pass to the integration test execution that contain secrets |
-
-Furthermore, in order to export sensitive data as environment variables into the integration test run,
+In order to export sensitive data as environment variables into the integration test run,
 a mapping of variables to secrets can be defined by setting the [GitHub Action Variable](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables)
 `INTEGRATION_TEST_SECRET_ENV_NAME` with the name of the environment variable you want to export and `INTEGRATION_TEST_SECRET_ENV_VALUE` with the value you want the environment variable to have.
  There are six slots available. In addition to the one mentioned above, you can use
