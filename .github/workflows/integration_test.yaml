@@ -229,8 +229,12 @@ jobs:
             sudo apt-get install -y python3-venv
           fi
           if ! command -v pipx &> /dev/null; then
-            python3 -m pip install --upgrade pip
-            python3 -m pip install --user pipx
+            PIP_BREAK_FLAG='' # Guard against older versions of pip that don't have --break-system-packages
+            if python3 -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
+              PIP_BREAK_FLAG='--break-system-packages'
+            fi
+            python3 -m pip install --upgrade ${PIP_BREAK_FLAG} pip
+            python3 -m pip install --user ${PIP_BREAK_FLAG} pipx
             python3 -m pipx ensurepath
             echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
           fi
