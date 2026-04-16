@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-04-16
+
+- Fix missing `--break-system-packages` flag for installing `pipx` on newer OSes.
+
 ## 2026-04-15
 
 - Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
