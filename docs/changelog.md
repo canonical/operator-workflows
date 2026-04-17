@@ -10,6 +10,7 @@ Each revision is versioned by the date of the revision.
 
 - Remove allure logging to remove accidental sensitive value logging.
 - Remove use of secrets.INTEGRATION_TEST_ARGS and fail integration tests if it is used.
+- Removed "jira.yml" workflow. Users should use https://github.com/canonical/gh-jira-sync-bot instead.
 
 ## 2026-04-15
 
