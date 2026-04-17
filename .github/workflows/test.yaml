@@ -119,7 +119,7 @@ jobs:
           echo "Files identified for Vale check: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"
       - name: Run Vale tests
-        uses: errata-ai/vale-action@v2.1.1
+        uses: vale-cli/vale-action@v2.1.1
         with:
           files: ${{ steps.resolve_vale_files.outputs.files }}
           fail_on_error: ${{ inputs.vale-style-check }}
