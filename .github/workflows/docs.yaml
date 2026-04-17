@@ -46,7 +46,7 @@ jobs:
       - name: Install docutils
         run: sudo apt-get install -y docutils
       - name: Run Vale Linter
-        uses: errata-ai/vale-action@v2.1.1
+        uses: vale-cli/vale-action@v2.1.1
         with:
           files: ${{ inputs.vale-files }}
           vale_flags: ${{ inputs.vale-flags }}
