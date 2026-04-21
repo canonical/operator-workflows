@@ -45,6 +45,10 @@ on:
         description: Charmcraft channel to use for promoting the charm.
         type: string
         default: latest/stable
+    secrets:
+      CHARMHUB_TOKEN:
+        required: true
+        description: "Token used to authenticate with Charmhub"
 
 jobs:
   get-charm-base:
