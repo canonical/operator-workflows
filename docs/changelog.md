@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-04-16
+
+- Remove allure logging to remove accidental sensitive value logging.
+- Remove use of secrets.INTEGRATION_TEST_ARGS and fail integration tests if it is used.
+- Removed "jira.yml" workflow. Users should use https://github.com/canonical/gh-jira-sync-bot instead.
+
+## 2026-04-15
+
+- Support "vale-flags" input parameter for the `docs` workflow to allow passing additional flags to the Vale CLI.
+- Don't publish a new release on CharmHub if only terraform files have been modified.
+
+## 2026-04-14
+- Support get-workflow-version-action for self-hosted runners.
+
 ## 2026-04-09
 
 - Drop extra-test-matrix.
@@ -22,10 +36,15 @@ Each revision is versioned by the date of the revision.
 - Removal of discourse-gatekeeper
 
 
+## 2026-04-13
+
+- Use a single controller in terraform tests when k8s and lxd are requested
+
 ## 2026-03-31
 
 - Drop charmcraftcache.
 - Move the rockcraft and charmcraft installation outside of the build action.
+- Replace `errata-ai/vale-action` with `vale-cli/vale-action` to reflect new repository location.
 
 ## 2026-03-10
 

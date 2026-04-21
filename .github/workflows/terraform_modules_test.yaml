@@ -9,6 +9,9 @@ name: Terraform modules tests
 on:
   workflow_call:
     inputs:
+      additional-setup-script:
+        type: string
+        description: Script to call before running the `terraform test` command to run additional tests.
       additional-tests-script:
         type: string
         description: Script to call after running the `terraform test` command to run additional tests.
@@ -23,6 +26,10 @@ on:
       lxd-controller:
         type: boolean
         description: Whether to use an LXD controller for testing.
+        default: false
+      lxd-controller-with-k8s-cloud:
+        type: boolean
+        description: Whether to use an LXD controller with a K8S cloud for testing.
         default: false
       runs-on:
         type: string
@@ -75,9 +82,12 @@ jobs:
         working_dir: ${{ fromJSON(inputs.terraform-directories) }}
     steps:
     - name: Validate controller inputs
-      if: ${{ !inputs.k8s-controller && !inputs.lxd-controller }}
+      if: >-
+        (inputs.k8s-controller && (inputs.lxd-controller || inputs.lxd-controller-with-k8s-cloud)) ||
+        (inputs.lxd-controller && inputs.lxd-controller-with-k8s-cloud) ||
+        (!inputs.k8s-controller && !inputs.lxd-controller && !inputs.lxd-controller-with-k8s-cloud)
       run: |
-        echo "At least one of k8s-controller or lxd-controller must be true."
+        echo "One and only one of k8s-controller, lxd-controller or lxd-controller-with-k8s-cloud must be selected."
         exit 1
     - uses: actions/checkout@v6.0.2
     - name: Prepare juju tf provider environment
@@ -103,6 +113,22 @@ jobs:
         sudo snap install lxd
         juju bootstrap localhost lxd
         juju add-model tf-testing-lxd --controller lxd
+    - name: Prepare environment for Terraform tests with lxd controller with a k8s cloud
+      if: ${{ inputs.lxd-controller-with-k8s-cloud }}
+      run: |
+        sudo snap install lxd
+        juju bootstrap localhost lxd
+        juju add-model tf-testing-lxd --controller lxd
+        sudo snap install k8s --classic --channel=${{ inputs.k8s-channel }}
+        sudo k8s bootstrap
+        sudo k8s status --wait-ready --timeout 300s
+        sudo k8s config | juju add-k8s tfk8s --client
+        juju add-cloud --controller lxd tfk8s
+        juju add-model tf-testing-k8s tfk8s
+    - name: Run additional setup
+      if: ${{ inputs.additional-setup-script }}
+      run: ${{ inputs.additional-setup-script }}
+      working-directory: ${{ matrix.working_dir }}
     - run: |
         set -e  # Exit on error
         juju switch tfk8s || echo "No k8s controller, skipping switch"
