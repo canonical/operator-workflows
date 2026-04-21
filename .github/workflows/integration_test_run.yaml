@@ -216,11 +216,26 @@ jobs:
           tox -e ${{ inputs.test-tox-env }} --notest --list-dependencies 2>&1 | grep -q allure \
             && echo 'ENABLE_ALLURE=true' >> $GITHUB_ENV \
             || echo 'ENABLE_ALLURE=false' >> $GITHUB_ENV
+      - name: Enforce Secret Deprecation and Security
+        env:
+          DEPRECATED_TEST_ARGS: ${{ secrets.INTEGRATION_TEST_ARGS }}
+        run: |
+          # If the secret is not set, bash -z will be true (empty string)
+          if [ -z "$DEPRECATED_TEST_ARGS" ]; then
+            echo "Validation passed: Deprecated INTEGRATION_TEST_ARGS not in use."
+            exit 0
+          fi
+          if [ "$ENABLE_ALLURE" == "true" ]; then
+            echo "::error title=Security Risk::INTEGRATION_TEST_ARGS may be leaked in Allure reports! Rotate secrets immediately."
+          fi
+          echo "::error::INTEGRATION_TEST_ARGS is no longer supported."
+          echo "Please use INTEGRATION_TEST_SECRET_ENV_NAME_{1..5} and INTEGRATION_TEST_SECRET_ENV_VALUE_{1..5} instead."
+          exit 1
       - name: Collect tests for Allure
         if: env.ENABLE_ALLURE == 'true'
         working-directory: ${{ inputs.working-directory }}
         run: |
-          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default --allure-no-capture ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+          tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} --allure-collection-dir=allure-default --allure-no-capture ${{ inputs.extra-arguments }}
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
@@ -367,9 +382,9 @@ jobs:
             juju add-model testing
           fi
           if [ "$ENABLE_ALLURE" == "true" ]; then
-            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results --allure-no-capture ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results --allure-no-capture ${{ inputs.extra-arguments }}
           else
-            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }} 
+            tox -e ${{ inputs.test-tox-env }} -- --model testing --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
           fi
       - name: Run lxd integration tests
         working-directory: ${{ inputs.working-directory }}
@@ -388,9 +403,9 @@ jobs:
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_10 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_10 }}" || :
           [ -n "${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}" ] && export ${{ vars.INTEGRATION_TEST_SECRET_ENV_NAME_11 }}="${{ secrets.INTEGRATION_TEST_SECRET_ENV_VALUE_11 }}" || :
           if [ "$ENABLE_ALLURE" == "true" ]; then
-            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results --allure-no-capture ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} --alluredir=allure-results --allure-no-capture ${{ inputs.extra-arguments }}
           else
-            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }} ${{ secrets.INTEGRATION_TEST_ARGS }}
+            tox -e ${{ inputs.test-tox-env }} -- --keep-models ${{ env.SERIES }} ${{ env.MODULE }} ${{ env.ARGS }} ${{ inputs.extra-arguments }}
           fi
       - name: Upload Allure results
         timeout-minutes: 3
