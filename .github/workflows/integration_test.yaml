@@ -220,6 +220,15 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         shell: bash
+      - name: Detect pip --break-system-packages support
+        if: ${{ matrix.build.type == 'charm' }}
+        shell: bash
+        run: |
+          PIP_BREAK_FLAG='' # Guard against older versions of pip that don't have --break-system-packages
+          if python3 -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
+            PIP_BREAK_FLAG='--break-system-packages'
+          fi
+          echo "PIP_BREAK_FLAG=${PIP_BREAK_FLAG}" >> "${GITHUB_ENV}"
       - name: Install get-workflow-version-action dependencies (self-hosted runners)
         if: ${{ matrix.build.type == 'charm' }}
         shell: bash
@@ -232,18 +241,12 @@ jobs:
             if apt-cache show pipx &> /dev/null; then
               sudo apt-get install -y pipx
             else
-              PIP_BREAK_FLAG='' # Guard against older versions of pip that don't have --break-system-packages
-              if python3 -m pip install --help 2>/dev/null | grep -q -- '--break-system-packages'; then
-                PIP_BREAK_FLAG='--break-system-packages'
-              fi
               python3 -m pip install --upgrade ${PIP_BREAK_FLAG} pip
               python3 -m pip install --user ${PIP_BREAK_FLAG} pipx
               python3 -m pipx ensurepath
               echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
             fi
           fi
-          # upgrade setuptools & wheel package to avoid UNKNOWN charmbuild installation
-          python3 -m pip install --upgrade ${PIP_BREAK_FLAG} setuptools wheel
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
@@ -254,7 +257,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install charmbuild
         if: ${{ matrix.build.type == 'charm' }}
-        run: pip install git+https://github.com/canonical/operator-workflows@${{ steps.workflow-version.outputs.sha }}#subdirectory=charmbuild
+        run: |
+          # upgrade setuptools & wheel package to avoid UNKNOWN charmbuild installation
+          python3 -m pip install --upgrade ${PIP_BREAK_FLAG} setuptools wheel
+          python3 -m pip install ${PIP_BREAK_FLAG} git+https://github.com/canonical/operator-workflows@${{ steps.workflow-version.outputs.sha }}#subdirectory=charmbuild
         shell: bash
       - name: Install rockcraft
         if: ${{ matrix.build.type == 'rock' }}
