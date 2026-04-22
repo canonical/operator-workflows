@@ -259,7 +259,7 @@ jobs:
         if: ${{ matrix.build.type == 'charm' }}
         run: |
           # upgrade setuptools & wheel package to avoid UNKNOWN charmbuild installation
-          python3 -m pip install --upgrade ${PIP_BREAK_FLAG} setuptools wheel
+          python3 -m pip install --upgrade ${PIP_BREAK_FLAG} pip setuptools wheel
           python3 -m pip install ${PIP_BREAK_FLAG} git+https://github.com/canonical/operator-workflows@${{ steps.workflow-version.outputs.sha }}#subdirectory=charmbuild
         shell: bash
       - name: Install rockcraft
