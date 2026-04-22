@@ -242,6 +242,8 @@ jobs:
               echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
             fi
           fi
+          # upgrade setuptools & wheel package to avoid UNKNOWN charmbuild installation
+          pip install --upgrade pip setuptools wheel
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
