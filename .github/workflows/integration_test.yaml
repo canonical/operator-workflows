@@ -243,7 +243,7 @@ jobs:
             fi
           fi
           # upgrade setuptools & wheel package to avoid UNKNOWN charmbuild installation
-          pip install --upgrade ${PIP_BREAK_FLAG} setuptools wheel
+          python3 -m pip install --upgrade ${PIP_BREAK_FLAG} setuptools wheel
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
