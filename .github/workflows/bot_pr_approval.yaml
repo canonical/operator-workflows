@@ -18,7 +18,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: contains(fromJSON('["dependabot[bot]", "renovate[bot]", "github-actions[bot]", "is-devops-bot"]'), github.event.pull_request.user.login)
-        uses: actions/github-script@v8.0.0
+        uses: actions/github-script@v9
         with:
           script: |
             github.rest.pulls.createReview({

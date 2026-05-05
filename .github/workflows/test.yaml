@@ -312,7 +312,7 @@ jobs:
       # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
         with:
           python-version: ${{ env.python-version }}
 
@@ -329,7 +329,7 @@ jobs:
           tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v8.0.0
+        uses: actions/github-script@v9
         with:
           script: |
             const no_color = (text) => {
