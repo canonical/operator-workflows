@@ -116,6 +116,9 @@ jobs:
     if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6.0.2
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
