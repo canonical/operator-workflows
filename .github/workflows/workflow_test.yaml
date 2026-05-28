@@ -87,6 +87,8 @@ jobs:
       - integration
       - integration-artifact
       - integration-self-hosted
+    permissions:
+      contents: write
     uses: ./.github/workflows/allure_report.yaml
   check:
     runs-on: ubuntu-latest
