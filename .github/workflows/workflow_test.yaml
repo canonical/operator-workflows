@@ -9,6 +9,9 @@ on:
 jobs:
   integration:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       identifier: test-upload
@@ -20,6 +23,9 @@ jobs:
       with-uv: true
   integration-artifact:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       identifier: test-upload-artifact
@@ -33,6 +39,9 @@ jobs:
       with-uv: true
   integration-self-hosted:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       juju-channel: '3/stable'
@@ -45,6 +54,9 @@ jobs:
       with-uv: true
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
@@ -52,6 +64,9 @@ jobs:
       with-uv: true
   integration-rock-artifact:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
@@ -61,6 +76,10 @@ jobs:
       with-uv: true
   publish:
     uses: ./.github/workflows/publish_charm.yaml
+    permissions:
+      contents: write
+      packages: write
+      actions: read
     secrets: inherit
     needs: [ integration ]
     with:
@@ -72,6 +91,10 @@ jobs:
       workflow-run-id: ${{ github.run_id }}
   publish-artifact:
     uses: ./.github/workflows/publish_charm.yaml
+    permissions:
+      contents: write
+      packages: write
+      actions: read
     secrets: inherit
     needs: [ publish, integration-artifact ]
     with:
@@ -87,6 +110,8 @@ jobs:
       - integration
       - integration-artifact
       - integration-self-hosted
+    permissions:
+      contents: write
     uses: ./.github/workflows/allure_report.yaml
   check:
     runs-on: ubuntu-latest
@@ -113,6 +138,9 @@ jobs:
           [ '${{ needs.allure-report.result }}' != 'failure' ] || (echo allure-report failed && false)
   integration-canonical-k8s:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-rock/"
@@ -131,6 +159,9 @@ jobs:
       with-uv: true
   integration-alternative-rock-filename:
     uses: ./.github/workflows/integration_test.yaml
+    permissions:
+      contents: read
+      packages: write
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-alter-rock-name/"

@@ -110,3 +110,38 @@ three input variables:
 Runs `terraform test` in the `tests` subfolder of the specified directories.
 
 You can find an example on how to call it in the [`platform-engineering-charm-template`](https://github.com/canonical/platform-engineering-charm-template/blob/main/.github/workflows/test_terraform_module.yaml).
+
+## Required GitHub Token Permissions
+
+GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only. When your organisation uses read-only defaults, calling jobs must explicitly grant any permissions beyond `contents: read`. The table below lists the **minimum required permissions** for each reusable workflow so you can be explicit in your own calling workflows.
+
+| Workflow | Required permissions | Reason |
+|---|---|---|
+| `allure_report.yaml` | `contents: write` | Pushes the Allure report to the `gh-pages` branch |
+| `auto_update_charm_libs.yaml` | `contents: write`<br>`pull-requests: write`<br>`id-token: write` | Creates PRs to update charm libraries; uses OIDC for Charmhub authentication |
+| `bot_pr_approval.yaml` | `pull-requests: write` | Approves bot-authored PRs via the GitHub API |
+| `comment_contributing.yaml` | `pull-requests: write` | Posts a contributing-guide comment on newly opened PRs |
+| `comment.yaml` | `pull-requests: write`<br>`actions: read` | Creates and deletes PR comments; downloads artifacts from a specific workflow run by ID |
+| `docs_rtd.yaml` | `contents: read` | Checks out the repository for Read the Docs build checks |
+| `docs_spread.yaml` | `contents: read` | Checks out the repository for Spread-based documentation testing |
+| `docs.yaml` | `contents: read` | Checks out the repository for Vale and Lychee linting |
+| `generate_terraform_docs.yaml` | `contents: write`<br>`pull-requests: write` | Commits generated Terraform docs and opens a PR with the changes |
+| `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; pushes built OCI images to `ghcr.io` when `upload-image: registry` is used or when running on non-forked PRs; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
+| `promote_charm.yaml` | `contents: write` | Creates a git tag via `charming-actions/release-charm` |
+| `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; pushes OCI images to `ghcr.io`; downloads build artifacts from a prior integration test run |
+| `terraform_modules_test.yaml` | `contents: read` | Checks out the repository to run `terraform test` |
+| `test.yaml` | `contents: read`<br>`pull-requests: write` | Checks out the repository; `charming-actions/check-libraries` posts a comment on PRs when charm libraries are out of date |
+
+### Example calling workflow
+
+```yaml
+jobs:
+  integration-tests:
+    uses: canonical/operator-workflows/.github/workflows/integration_test.yaml@main
+    permissions:
+      contents: read
+      packages: write
+    secrets: inherit
+```
+
+> **Note:** `packages: write` is only needed by `integration_test.yaml` and `publish_charm.yaml` when OCI images are pushed to `ghcr.io`. If your charm has no OCI images, `contents: read` is sufficient for `integration_test.yaml`.

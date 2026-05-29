@@ -9,6 +9,9 @@ on:
 jobs:
   simple:
     uses: ./.github/workflows/test.yaml
+    permissions:
+      contents: read
+      pull-requests: write
     secrets: inherit
     strategy:
       fail-fast: false
@@ -25,6 +28,9 @@ jobs:
       with-uv: true
   simple-self-hosted:
     uses: ./.github/workflows/test.yaml
+    permissions:
+      contents: read
+      pull-requests: write
     secrets: inherit
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
@@ -73,6 +79,9 @@ jobs:
   test-comment:
     name: Comment on the pull request
     uses: ./.github/workflows/comment.yaml
+    permissions:
+      pull-requests: write
+      actions: read
     if: always() && !cancelled()
     needs:
       - simple
