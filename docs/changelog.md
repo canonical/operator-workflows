@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-05-04
 
 - Update `docs_rtd` workflow references from `sphinx-docs-starter-pack` to `sphinx-stack`.
+- Add optional `github-token` secret to the `generate_terraform_docs` workflow to allow callers to pass a PAT, enabling CI workflows to trigger on the resulting pull request.
 
 ## 2026-04-22
 

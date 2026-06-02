@@ -13,6 +13,10 @@ on:
         type: boolean
         description: Whether to enable auto-merge for the created pull request.
         default: true
+    secrets:
+      github-token:
+        description: Token used to create the pull request. Use a PAT to allow CI to trigger on the resulting PR.
+        required: false
 
 jobs:
   docs:
@@ -35,7 +39,7 @@ jobs:
       uses: canonical/create-pull-request@main
       if: ${{ github.event_name != 'pull_request' }}
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+        github-token: ${{ secrets.github-token || secrets.GITHUB_TOKEN }}
         commit-message: "chore(docs): Update Terraform documentation"
         branch-name: terraform-docs
         title: "chore(docs): Update Terraform documentation"
