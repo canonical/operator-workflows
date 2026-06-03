@@ -139,6 +139,15 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
+      - name: Add version file to charm
+        run: |
+          sudo apt-get update && sudo apt-get install -y zip
+          echo "${{ github.sha }}" > version
+          IFS=',' read -ra CHARM_FILES <<< "${{ steps.publish.outputs.charms }}"
+          for charm_file in "${CHARM_FILES[@]}"; do
+            zip -u "$charm_file" version
+          done
+          rm version
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.7.0
         with:
