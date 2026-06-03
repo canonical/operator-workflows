@@ -146,7 +146,9 @@ jobs:
           IFS=',' read -ra CHARM_FILES <<< "${{ steps.publish.outputs.charms }}"
           for charm_file in "${CHARM_FILES[@]}"; do
             charm_file=$(echo "$charm_file" | xargs)
-            zip -u "$charm_file" version
+            if ! zipinfo -1 "$charm_file" | grep -qx "version"; then
+              zip -u "$charm_file" version
+            fi
           done
           rm version
       - name: Upload charm to charmhub
