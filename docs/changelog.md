@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-06-03
+
+- Inject a `version` file containing the commit SHA into charm files before publishing to Charmhub.
+
 ## 2026-05-04
 
 - Update `docs_rtd` workflow references from `sphinx-docs-starter-pack` to `sphinx-stack`.

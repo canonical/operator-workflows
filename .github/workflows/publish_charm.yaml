@@ -113,7 +113,7 @@ jobs:
     name: Publish charm to ${{ inputs.channel || needs.select-channel.outputs.destination-channel }}
     runs-on: ubuntu-latest
     needs: [ plan, select-channel ]
-    if: ${{ needs.plan.outputs.has-code-changes == 'True' }}
+    if: ${{ github.repository == 'canonical/operator-workflows' || needs.plan.outputs.has-code-changes == 'True' }}
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
@@ -139,6 +139,18 @@ jobs:
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
           ls -lah
+      - name: Add version file to charm
+        run: |
+          sudo apt-get update && sudo apt-get install -y zip
+          echo "${GITHUB_SHA::8}" > version
+          IFS=',' read -ra CHARM_FILES <<< "${{ steps.publish.outputs.charms }}"
+          for charm_file in "${CHARM_FILES[@]}"; do
+            charm_file=$(echo "$charm_file" | xargs)
+            if ! zipinfo -1 "$charm_file" | grep -qx "version"; then
+              zip -u "$charm_file" version
+            fi
+          done
+          rm version
       - name: Upload charm to charmhub
         uses: canonical/charming-actions/upload-charm@2.7.0
         with:
