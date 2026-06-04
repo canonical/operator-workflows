@@ -366,7 +366,7 @@ def extract_commands_from_markdown(file_path):
         match_end = match.end()
 
         # Skip blocks that start with { (like {note}, {tip}, or {terminal})
-        if lang_identifier.strip().startswith("{"):
+        if lang_identifier.strip().startswith("{") and not lang_identifier.strip().startswith("{code-cell}"):
             continue
 
         # Skip blocks that are nested within 4+ backtick blocks or in excluded sections
