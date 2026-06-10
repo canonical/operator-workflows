@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-06-10
+
+- Fix failing step in `docs.yaml` by including `apt-get update` in the docutils step. 
+
 ## 2026-06-04
 
 - Make Jupyter Notebook code cell work with docs spread tests.
