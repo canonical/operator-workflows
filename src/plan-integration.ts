@@ -129,10 +129,11 @@ export async function run(): Promise<void> {
         }
         const { name, files } = manifest
         for (const file of files) {
-          fs.renameSync(
+          fs.copyFileSync(
             path.join(tmp, file),
             path.join(plan.working_directory, file)
           )
+          fs.unlinkSync(path.join(tmp, file))
           const argName: string =
             build.type === 'charm' ? 'charm-file' : `${name}-resource`
           args.push(`--${argName}=./${file}`)
