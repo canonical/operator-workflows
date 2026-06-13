@@ -61,7 +61,7 @@ jobs:
       channel: ${{ steps.set-base-outputs.outputs.channel }}
       architecture: ${{ steps.set-base-outputs.outputs.architecture }}
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
       - name: Install charmcraft
         run: |
           set -e
@@ -149,7 +149,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ get-charm-base ]
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
       - name: Release charm to channel
         uses: canonical/charming-actions/release-charm@2.7.0
         with:
