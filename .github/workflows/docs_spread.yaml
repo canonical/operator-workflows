@@ -30,11 +30,11 @@ jobs:
         spread_job: ['${{ inputs.spread-job }}']
     steps: 
     - name: Checkout repo
-      uses: actions/checkout@v6.0.2
+      uses: actions/checkout@v6.0.3
       with:
         fetch-depth: 0
     - name: Checkout spread script
-      uses: actions/checkout@v6.0.2
+      uses: actions/checkout@v6.0.3
       with:
         repository: canonical/operator-workflows
         sparse-checkout: |
