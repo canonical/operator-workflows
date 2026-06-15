@@ -47,6 +47,11 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y docutils
+      - name: Install Vale
+        run: |
+          wget -qO- https://github.com/errata-ai/vale/releases/latest/download/vale_Linux_64-bit.tar.gz | tar -xz -C /usr/local/bin vale
+      - name: Sync Vale packages
+        run: vale sync
       - name: Run Vale Linter
         uses: vale-cli/vale-action@v2.1.1
         with:
