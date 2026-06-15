@@ -49,7 +49,10 @@ jobs:
           sudo apt-get install -y docutils
       - name: Install Vale
         run: |
-          wget -qO- https://github.com/errata-ai/vale/releases/latest/download/vale_Linux_64-bit.tar.gz | tar -xz -C /usr/local/bin vale
+          gh release download --repo errata-ai/vale --pattern 'vale_*_Linux_64-bit.tar.gz' --output vale.tar.gz
+          tar -xz -C /usr/local/bin -f vale.tar.gz vale
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Sync Vale packages
         run: vale sync
       - name: Run Vale Linter
@@ -58,6 +61,7 @@ jobs:
           files: ${{ inputs.vale-files }}
           vale_flags: ${{ inputs.vale-flags }}
           fail_on_error: ${{ inputs.vale-fail-on-error }}
+          version: none
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
