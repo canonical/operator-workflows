@@ -56,7 +56,7 @@ jobs:
       - name: Sync Vale packages
         run: vale sync
       - name: Run Vale Linter
-        uses: vale-cli/vale-action@v2.1.1
+        uses: vale-cli/vale-action@2.1.2
         with:
           files: ${{ inputs.vale-files }}
           vale_flags: ${{ inputs.vale-flags }}
