@@ -47,12 +47,17 @@ jobs:
         run: |
           sudo apt-get update -y
           sudo apt-get install -y docutils
+      - name: Install Vale
+        run: sudo snap install vale
+      - name: Sync Vale packages
+        run: vale sync
       - name: Run Vale Linter
         uses: vale-cli/vale-action@2.1.2
         with:
           files: ${{ inputs.vale-files }}
           vale_flags: ${{ inputs.vale-flags }}
           fail_on_error: ${{ inputs.vale-fail-on-error }}
+          version: none
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
