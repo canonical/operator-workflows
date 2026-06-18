@@ -280,41 +280,59 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
-    env:
-      python-version: >-
-        ${{
-          inputs.python-version ||
-          inputs.self-hosted-runner &&
-          (
-            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
-            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
-            inputs.self-hosted-runner-image == 'focal' && '3.8'
-          ) ||
-          '3.10'
-        }}
     steps:
       - uses: actions/checkout@v6.0.3
+      - name: Resolve Python version source
+        id: python-version
+        run: |
+          set -euo pipefail
+
+          if command -v python3 >/dev/null; then
+            version="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          else
+            # No Python on the system: let setup-python/uv install the latest 3.x.
+            version='3'
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          file=''
+          if [[ -z '${{ inputs.python-version }}' ]]; then
+            if [[ -f .python-version ]]; then
+              file="$(realpath .python-version)"
+            elif grep -q 'requires-python' pyproject.toml 2>/dev/null; then
+              file="$(realpath pyproject.toml)"
+            fi
+          fi
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
 
-      # Test with tox and regular python
-      - name: Setup Python
-        if: ${{ ! inputs.with-uv }}
+      - name: Setup Python (from project file)
+        if: ${{ ! inputs.with-uv && steps.python-version.outputs.file != '' }}
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: ${{ env.python-version }}
+          python-version-file: ${{ steps.python-version.outputs.file }}
+
+      - name: Setup Python
+        if: ${{ ! inputs.with-uv && steps.python-version.outputs.file == '' }}
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ inputs.python-version || steps.python-version.outputs.version }}
 
       - name: Install tox
         if: ${{ ! inputs.with-uv }}
         run: pip install tox
           
-      # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
         uses: astral-sh/setup-uv@v8.2.0
         with:
-          python-version: ${{ env.python-version }}
+          python-version: >-
+            ${{ steps.python-version.outputs.file == ''
+              && (inputs.python-version || steps.python-version.outputs.version)
+              || '' }}
 
       - name: Install tox with UV
         if: ${{ inputs.with-uv }}
