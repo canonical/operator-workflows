@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-06-19
+
+- Resolve the Python version for the `test.yaml` job from the project's project file.
+
 ## 2026-06-15
 
 - Fix downstream failures of `docs.yaml` by including two new steps to install Vale and sync all the required packages.
