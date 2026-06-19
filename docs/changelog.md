@@ -8,6 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-06-19
 
+- For `test.yaml` update default of `self-hosted-runner` to `false` and `self-hosted-runner-label` to `medium`.
 - Resolve the Python version for the `test.yaml` job from the project's project file.
 
 ## 2026-06-15
