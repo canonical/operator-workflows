@@ -29,7 +29,7 @@ on:
       self-hosted-runner:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
-        default: true
+        default: false
       self-hosted-runner-arch:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
@@ -47,7 +47,7 @@ on:
         description: |
           The type of machine to run the job on when not using self-hosted runners.
           This is directly mapped to the `runs-on` field.
-        default: "ubuntu-22.04"
+        default: "ubuntu-24.04"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
