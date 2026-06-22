@@ -29,7 +29,7 @@ on:
       self-hosted-runner:
         type: boolean
         description: Whether to use self-hosted runners to run the jobs.
-        default: true
+        default: false
       self-hosted-runner-arch:
         type: string
         description: Architecture to use on self-hosted runners to run the jobs.
@@ -37,7 +37,7 @@ on:
       self-hosted-runner-label:
         type: string
         description: Label for selecting the self-hosted runners.
-        default: "large"
+        default: "medium"
       self-hosted-runner-image:
         type: string
         description: Image of the requested runner. Supports only 'jammy' or 'noble'.
@@ -47,7 +47,7 @@ on:
         description: |
           The type of machine to run the job on when not using self-hosted runners.
           This is directly mapped to the `runs-on` field.
-        default: "ubuntu-22.04"
+        default: "ubuntu-24.04"
       pre-run-script:
         description: Path to the bash script to be run before the integration tests
         type: string
@@ -280,41 +280,59 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.working-directory }}
-    env:
-      python-version: >-
-        ${{
-          inputs.python-version ||
-          inputs.self-hosted-runner &&
-          (
-            inputs.self-hosted-runner-image == 'noble' && '3.12' ||
-            inputs.self-hosted-runner-image == 'jammy' && '3.10' ||
-            inputs.self-hosted-runner-image == 'focal' && '3.8'
-          ) ||
-          '3.10'
-        }}
     steps:
       - uses: actions/checkout@v6.0.3
+      - name: Resolve Python version source
+        id: python-version
+        run: |
+          set -euo pipefail
+
+          if command -v python3 >/dev/null; then
+            version="$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+          else
+            # No Python on the system: let setup-python/uv install the latest 3.x.
+            version='3'
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          file=''
+          if [[ -z '${{ inputs.python-version }}' ]]; then
+            if [[ -f .python-version ]]; then
+              file="$(realpath .python-version)"
+            elif grep -q 'requires-python' pyproject.toml 2>/dev/null; then
+              file="$(realpath pyproject.toml)"
+            fi
+          fi
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
       - name: Pre-run script
         if: ${{ inputs.pre-run-script != '' }}
         run: bash -xe ${{ inputs.pre-run-script }}
 
-      # Test with tox and regular python
-      - name: Setup Python
-        if: ${{ ! inputs.with-uv }}
+      - name: Setup Python (from project file)
+        if: ${{ ! inputs.with-uv && steps.python-version.outputs.file != '' }}
         uses: actions/setup-python@v6.2.0
         with:
-          python-version: ${{ env.python-version }}
+          python-version-file: ${{ steps.python-version.outputs.file }}
+
+      - name: Setup Python
+        if: ${{ ! inputs.with-uv && steps.python-version.outputs.file == '' }}
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: ${{ inputs.python-version || steps.python-version.outputs.version }}
 
       - name: Install tox
         if: ${{ ! inputs.with-uv }}
         run: pip install tox
           
-      # Test with tox-uv and python setup by UV
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
         uses: astral-sh/setup-uv@v8.2.0
         with:
-          python-version: ${{ env.python-version }}
+          python-version: >-
+            ${{ steps.python-version.outputs.file == ''
+              && (inputs.python-version || steps.python-version.outputs.version)
+              || '' }}
 
       - name: Install tox with UV
         if: ${{ inputs.with-uv }}
