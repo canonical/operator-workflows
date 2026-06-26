@@ -133,6 +133,13 @@ on:
         type: string
         description: Trivy severity configuration for image testing
         default: "CRITICAL,HIGH"
+      upload-charm:
+        type: boolean
+        description: >-
+          Whether to upload the built charm(s) as GitHub Actions artifacts, making them available
+          for download from the workflow run. Each charm is uploaded as a separate artifact named
+          'charm-<identifier>-<charm-name>', or 'charm-<charm-name>' when no identifier is set.
+        default: false
       upload-image:
         type: string
         description: >-
@@ -272,6 +279,13 @@ jobs:
           build-plan: ${{ toJSON(matrix.build) }}
           build-context: ${{ inputs.build-context }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload charm artifact
+        if: ${{ inputs.upload-charm && matrix.build.type == 'charm' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.identifier != '' && format('charm-{0}-{1}', inputs.identifier, matrix.build.name) || format('charm-{0}', matrix.build.name) }}
+          path: ${{ matrix.build.source_directory }}/*.charm
+          if-no-files-found: error
 
   plan-scan:
     name: Plan Image Scanning
