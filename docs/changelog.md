@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-07-07
+
+- Remove `docker-lint` job in  `test.yaml`.
+
 ## 2026-06-19
 
 - For `test.yaml` update default of `self-hosted-runner` to `false` and `self-hosted-runner-label` to `medium`.
