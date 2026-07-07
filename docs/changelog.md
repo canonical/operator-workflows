@@ -6,9 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-07-pu
+## 2026-07-07
 
-- For `test.yaml` remove `metadata-lint`.
+- Remove `docker-lint` job in  `test.yaml`.
+- Remove `metadata-lint` job in  `test.yaml`.
 
 ## 2026-06-19
 

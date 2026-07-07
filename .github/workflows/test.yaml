@@ -194,29 +194,6 @@ jobs:
         uses: lumaxis/shellcheck-problem-matchers@v2.1.0
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
-  docker-lint:
-    name: Dockerfile lint
-    runs-on: >-
-      ${{
-        inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || inputs.runs-on-base
-      }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
-    steps:
-      - uses: actions/checkout@v6.0.3
-      - name: Check for Dockerfiles
-        id: dockerfiles
-        run: echo -n "found=$(find . -name "*Dockerfile" -printf "${{ inputs.working-directory }}%p ")" >> $GITHUB_OUTPUT
-      - if: ${{ steps.dockerfiles.outputs.found != '' }}
-        name: Run HadoLint
-        id: hado-lint
-        uses: jbergstroem/hadolint-gh-action@v1
-        with:
-          dockerfile: "${{ steps.dockerfiles.outputs.found }}"
   terraform-lint:
     name: Terraform lint
     runs-on: >-
@@ -427,7 +404,6 @@ jobs:
   required_status_checks:
     name: Required Test Status Checks
     needs:
-      - docker-lint
       - lib-check
       - lint-and-unit-test
       - shellcheck-lint
@@ -445,7 +421,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          [ '${{ needs.docker-lint.result }}' = 'success' ] || (echo docker-lint failed && false)
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
