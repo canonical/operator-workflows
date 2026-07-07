@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-07-07
 
 - Remove `docker-lint` job in  `test.yaml`.
+- Remove `metadata-lint` job in  `test.yaml`.
 
 ## 2026-06-19
 

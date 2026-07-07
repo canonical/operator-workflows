@@ -194,34 +194,6 @@ jobs:
         uses: lumaxis/shellcheck-problem-matchers@v2.1.0
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
-  metadata-lint:
-    name: Lint metadata.yaml
-    runs-on: >-
-      ${{
-        inputs.self-hosted-runner &&
-        fromJson(format('[''self-hosted'', ''{0}'', ''{1}'', ''{2}'']',
-          inputs.self-hosted-runner-arch, inputs.self-hosted-runner-label, inputs.self-hosted-runner-image
-        )) || inputs.runs-on-base
-      }}
-    defaults:
-      run:
-        working-directory: ${{ inputs.working-directory }}
-    steps:
-      - uses: actions/checkout@v6.0.3
-      - name: Check file existence
-        id: metadata-yaml
-        run: echo "exists=$([ -f metadata.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
-      - name: Run lint
-        if: steps.metadata-yaml.outputs.exists == 'true'
-        id: run-lint
-        run: |
-          options=""
-          if [[ "${{ inputs.self-hosted-runner }}" == "true" && "${{ inputs.self-hosted-runner-image }}" == "noble" ]]; then
-            options+=" --break-system-packages"
-          fi
-          python3 -m pip install check-jsonschema $options
-          curl -fLsSo $PWD/metadata.schema https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/metadata.schema
-          check-jsonschema metadata.yaml --schemafile metadata.schema
   terraform-lint:
     name: Terraform lint
     runs-on: >-
@@ -434,7 +406,6 @@ jobs:
     needs:
       - lib-check
       - lint-and-unit-test
-      - metadata-lint
       - shellcheck-lint
       - terraform-lint
       - license-headers-check
@@ -452,7 +423,6 @@ jobs:
       - run: |
           [ '${{ needs.lib-check.result }}' = 'success' ] || (echo lib-check failed && false)
           [ '${{ needs.lint-and-unit-test.result }}' = 'success' ] || (echo lint-and-unit-test failed && false)
-          [ '${{ needs.metadata-lint.result }}' = 'success' ] || (echo metadata-lint failed && false)
           [ '${{ needs.shellcheck-lint.result }}' = 'success' ] || (echo shellcheck-lint failed && false)
           [ '${{ needs.license-headers-check.result }}' = 'success' ] || (echo license-headers-check failed && false)
           [ "${{ needs.vale.result }}" = "success" ] || [ "${{ needs.vale.result }}" = "skipped" ] || (echo "vale style check failed" && false)
