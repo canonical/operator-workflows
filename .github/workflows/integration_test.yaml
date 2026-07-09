@@ -38,7 +38,7 @@ on:
         description: Actions operator juju channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: 2.9/stable
-      lxd-channel:
+      build-lxd-channel:
         description: Snap channel to install LXD from in the build job via canonical/setup-lxd.
         type: string
         default: "latest/candidate"
@@ -213,7 +213,7 @@ jobs:
     steps:
       - uses: canonical/setup-lxd@v1
         with:
-          channel: ${{ inputs.lxd-channel }}
+          channel: ${{ inputs.build-lxd-channel }}
       - name: Set LXC security nesting
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
