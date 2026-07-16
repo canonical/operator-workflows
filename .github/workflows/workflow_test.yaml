@@ -50,7 +50,7 @@ jobs:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       trivy-image-config: "tests/workflows/integration/test-upload-charm/trivy.yaml"
       self-hosted-runner: true
-      self-hosted-runner-label: "edge"
+      self-hosted-runner-label: "medium"
       with-uv: true
   integration-rock:
     uses: ./.github/workflows/integration_test.yaml

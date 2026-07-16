@@ -35,7 +35,7 @@ jobs:
     with:
       working-directory: "tests/workflows/integration/test-upload-charm/"
       self-hosted-runner: true
-      self-hosted-runner-label: "edge"
+      self-hosted-runner-label: "medium"
       vale-files: '["docs/**/*.md", "README.md"]'
       vale-style-check: true
       with-uv: true
