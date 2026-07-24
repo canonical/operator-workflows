@@ -179,7 +179,7 @@ jobs:
                 echo "::error Both runs-on and self-hosted-runner cannot be set at the same time."
                 exit 1
             fi
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
         with:
             fetch-depth: 0
       - uses: canonical/operator-workflows/internal/plan@main
@@ -218,7 +218,7 @@ jobs:
         if: ${{ inputs.rockcraft-enable-security-nesting }}
         run: |
           lxc profile set default security.nesting true
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Pre-build script
         if: ${{ inputs.pre-build-script != '' }}
         run: bash -xe ${{ inputs.pre-build-script }}
@@ -256,7 +256,7 @@ jobs:
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
-        uses: canonical/get-workflow-version-action@v1.0.3
+        uses: canonical/get-workflow-version-action@v1.0.4
         with:
           repository-name: canonical/operator-workflows
           file-name: integration_test.yaml
@@ -300,7 +300,7 @@ jobs:
       matrix:
         scan: ${{ fromJSON(needs.plan-scan.outputs.scans) }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -318,7 +318,7 @@ jobs:
           sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
           rockcraft.skopeo copy oci-archive:${{ matrix.scan.file }} docker-archive:${{ matrix.scan.file }}.tar
           mv ${{ matrix.scan.file }}.tar ${{ matrix.scan.file }}
-      - uses: docker/login-action@v4.2.0
+      - uses: docker/login-action@v4.5.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
