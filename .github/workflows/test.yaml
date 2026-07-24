@@ -96,7 +96,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout repo to runner
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.1
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
@@ -137,7 +137,7 @@ jobs:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -207,9 +207,9 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Setup Tflint
-        uses: terraform-linters/setup-tflint@v6.2.2
+        uses: terraform-linters/setup-tflint@v6.3.0
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
@@ -230,7 +230,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Resolve Python version source
         id: python-version
         run: |
@@ -260,13 +260,13 @@ jobs:
 
       - name: Setup Python (from project file)
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file != '' }}
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version-file: ${{ steps.python-version.outputs.file }}
 
       - name: Setup Python
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file == '' }}
-        uses: actions/setup-python@v6.2.0
+        uses: actions/setup-python@v7.0.0
         with:
           python-version: ${{ inputs.python-version || steps.python-version.outputs.version }}
 
@@ -276,7 +276,7 @@ jobs:
           
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v8.2.0
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           python-version: >-
             ${{ steps.python-version.outputs.file == ''
@@ -370,7 +370,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
@@ -392,7 +392,7 @@ jobs:
         )) || inputs.runs-on-base
       }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.1
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0
