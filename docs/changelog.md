@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-08-11
+
+- In `test.yaml`, the `lib-check` job now moves a prefixed `*charmcraft.yaml` or `*charmcraft.yml` file to `charmcraft.yaml` when neither `charmcraft.yaml` nor `charmcraft.yml` exists.
+
 ## 2026-07-07
 
 - Remove `docker-lint` job in  `test.yaml`.
