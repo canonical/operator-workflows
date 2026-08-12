@@ -89,7 +89,7 @@ jobs:
       run: |
         echo "One and only one of k8s-controller, lxd-controller or lxd-controller-with-k8s-cloud must be selected."
         exit 1
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.1
     - name: Prepare juju tf provider environment
       run: |
         sudo dpkg -P docker.io docker-ce docker-ce-cli containerd containerd.io
