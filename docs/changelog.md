@@ -9,6 +9,7 @@ Each revision is versioned by the date of the revision.
 ## 2026-08-11
 
 - In `test.yaml`, the `lib-check` job now moves a prefixed `*charmcraft.yaml` or `*charmcraft.yml` file to `charmcraft.yaml` when neither `charmcraft.yaml` nor `charmcraft.yml` exists.
+- In `auto_update_charm_libs.yaml`, the `update-lib` job now creates a temporary `charmcraft.yaml` from a prefixed `*charmcraft.yaml` or `*charmcraft.yml` file when neither `charmcraft.yaml` nor `charmcraft.yml` exists, and removes it before the pull request is created.
 
 ## 2026-07-07
 
