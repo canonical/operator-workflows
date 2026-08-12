@@ -27,6 +27,23 @@ jobs:
         uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
+      - name: Resolve charmcraft.yaml
+        id: resolve-charmcraft
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          if [ -f charmcraft.yaml ] || [ -f charmcraft.yml ]; then
+            exit 0
+          fi
+          candidates=()
+          for f in *charmcraft.yaml *charmcraft.yml; do
+            [ -f "$f" ] && candidates+=("$f")
+          done
+          if [ ${#candidates[@]} -eq 0 ]; then
+            exit 0
+          fi
+          echo "Linking charmcraft.yaml to ${candidates[0]}"
+          ln -s "${candidates[0]}" charmcraft.yaml
+          echo "linked=true" >> "$GITHUB_OUTPUT"
       - name: Check libs
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -34,6 +51,10 @@ jobs:
           charmcraft fetch-lib
         env:
           CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
+      - name: Remove charmcraft.yaml symlink
+        if: always() && steps.resolve-charmcraft.outputs.linked == 'true'
+        working-directory: ${{ inputs.working-directory }}
+        run: rm -f charmcraft.yaml
       - name: Create pull request
         uses: canonical/create-pull-request@main
         with:

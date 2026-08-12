@@ -393,6 +393,22 @@ jobs:
       }}
     steps:
       - uses: actions/checkout@v6.0.3
+      - name: Resolve charmcraft.yaml
+        if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
+        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        run: |
+          if [ -f charmcraft.yaml ] || [ -f charmcraft.yml ]; then
+            exit 0
+          fi
+          candidates=()
+          for f in *charmcraft.yaml *charmcraft.yml; do
+            [ -f "$f" ] && candidates+=("$f")
+          done
+          if [ ${#candidates[@]} -eq 0 ]; then
+            exit 0
+          fi
+          echo "Linking charmcraft.yaml to ${candidates[0]}"
+          ln -s "${candidates[0]}" charmcraft.yaml
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0
