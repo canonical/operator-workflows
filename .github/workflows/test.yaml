@@ -407,8 +407,8 @@ jobs:
           if [ ${#candidates[@]} -eq 0 ]; then
             exit 0
           fi
-          echo "Moving ${candidates[0]} to charmcraft.yaml"
-          mv "${candidates[0]}" charmcraft.yaml
+          echo "Linking charmcraft.yaml to ${candidates[0]}"
+          ln -s "${candidates[0]}" charmcraft.yaml
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         uses: canonical/charming-actions/check-libraries@2.7.0

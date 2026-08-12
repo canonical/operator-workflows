@@ -41,9 +41,9 @@ jobs:
           if [ ${#candidates[@]} -eq 0 ]; then
             exit 0
           fi
-          echo "Copying ${candidates[0]} to charmcraft.yaml"
-          cp "${candidates[0]}" charmcraft.yaml
-          echo "moved=true" >> "$GITHUB_OUTPUT"
+          echo "Linking charmcraft.yaml to ${candidates[0]}"
+          ln -s "${candidates[0]}" charmcraft.yaml
+          echo "linked=true" >> "$GITHUB_OUTPUT"
       - name: Check libs
         working-directory: ${{ inputs.working-directory }}
         run: |
@@ -51,8 +51,8 @@ jobs:
           charmcraft fetch-lib
         env:
           CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
-      - name: Remove temporary charmcraft.yaml
-        if: always() && steps.resolve-charmcraft.outputs.moved == 'true'
+      - name: Remove charmcraft.yaml symlink
+        if: always() && steps.resolve-charmcraft.outputs.linked == 'true'
         working-directory: ${{ inputs.working-directory }}
         run: rm -f charmcraft.yaml
       - name: Create pull request
