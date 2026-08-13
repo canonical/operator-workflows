@@ -8,7 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-08-13
 
-- Add workflow file `terraform_modules_tag_version.yaml` to create git tags using the format `<prefix>-X.Y.Z` for the terraform modules.
+- Add workflow file `terraform_modules_release.yaml` to create git tags using the format `<prefix>-X.Y.Z` for the terraform modules.
 
 ## 2026-08-11
 
