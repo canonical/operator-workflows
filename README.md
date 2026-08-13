@@ -111,12 +111,37 @@ Runs `terraform test` in the `tests` subfolder of the specified directories.
 
 You can find an example on how to call it in the [`platform-engineering-charm-template`](https://github.com/canonical/platform-engineering-charm-template/blob/main/.github/workflows/test_terraform_module.yaml).
 
+### Terraform Modules Release (`canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main`)
+
+Automatically computes and pushes a semver tag of the form `<prefix><major>.<minor>.0` whenever Terraform module changes are merged. The major version is read from a file in the caller's repository; the minor is auto-incremented from the highest existing tag for that major and resets to `0` when the major is bumped.
+
+Inputs:
+
+* `tag-prefix` *(default: `tf-`)*: Prefix used for the version tag, including any separator (e.g. `tf-` produces `tf-1.0.0`).
+* `major-version-file` *(default: `terraform/MAJOR_VERSION`)*: Path to the file containing the major version number.
+
+Example calling workflow:
+
+```yaml
+on:
+  push:
+    branches: [main]
+    paths: ['terraform/**']
+
+jobs:
+  tag:
+    uses: canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main
+    with:  # Optional input overrides
+      tag-prefix: tf-                            
+      major-version-file: terraform/MAJOR_VERSION
+```
+
 ## Required GitHub Token Permissions
 
 GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only. When your organisation uses read-only defaults, calling jobs must explicitly grant any permissions beyond `contents: read`. The table below lists the **minimum required permissions** for each reusable workflow so you can be explicit in your own calling workflows.
 
 | Workflow | Required permissions | Reason |
-|---|---|---|
+| --- | --- | --- |
 | `allure_report.yaml` | `contents: write` | Pushes the Allure report to the `gh-pages` branch |
 | `auto_update_charm_libs.yaml` | `contents: write`<br>`pull-requests: write`<br>`id-token: write` | Creates PRs to update charm libraries; uses OIDC for Charmhub authentication |
 | `bot_pr_approval.yaml` | `pull-requests: write` | Approves bot-authored PRs via the GitHub API |
@@ -129,6 +154,7 @@ GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only
 | `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; pushes built OCI images to `ghcr.io` when `upload-image: registry` is used or when running on non-forked PRs; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
 | `promote_charm.yaml` | `contents: write` | Creates a git tag via `charming-actions/release-charm` |
 | `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; pushes OCI images to `ghcr.io`; downloads build artifacts from a prior integration test run |
+| `terraform_modules_release.yaml` | `contents: write` | Creates and pushes a semver tag for Terraform module releases |
 | `terraform_modules_test.yaml` | `contents: read` | Checks out the repository to run `terraform test` |
 | `test.yaml` | `contents: read`<br>`pull-requests: write` | Checks out the repository; `charming-actions/check-libraries` posts a comment on PRs when charm libraries are out of date |
 
