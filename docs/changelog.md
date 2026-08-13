@@ -8,8 +8,7 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-08-13
 
-- Add workflow file `terraform_modules_release.yaml` to create git tags using the format `<prefix>-X.Y.Z` for the terraform modules.
-
+- Add workflow file `terraform_modules_release.yaml` to create tags in the format `<prefix>-<major>.<minor>.0` for Terraform modules (major read from `terraform/MAJOR_VERSION`, minor auto-incremented).
 ## 2026-08-11
 
 - In `test.yaml`, the `lib-check` job now symlinks `charmcraft.yaml` to a prefixed `*charmcraft.yaml` or `*charmcraft.yml` file when neither `charmcraft.yaml` nor `charmcraft.yml` exists.

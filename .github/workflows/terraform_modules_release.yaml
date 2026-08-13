@@ -70,5 +70,5 @@ jobs:
           fi
 
           echo "Creating ${tag}"
-          git tag "${tag}"
-          git push origin "${tag}"
+          git tag -- "${tag}"
+          git push origin -- "${tag}"
