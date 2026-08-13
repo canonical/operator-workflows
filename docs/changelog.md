@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-08-13
+
+- Add workflow file `terraform_modules_tag_version.yaml` to create git tags using the format `<prefix>-X.Y.Z` for the terraform modules.
+
 ## 2026-08-11
 
 - In `test.yaml`, the `lib-check` job now symlinks `charmcraft.yaml` to a prefixed `*charmcraft.yaml` or `*charmcraft.yml` file when neither `charmcraft.yaml` nor `charmcraft.yml` exists.
