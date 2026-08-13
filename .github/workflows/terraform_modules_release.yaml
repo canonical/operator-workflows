@@ -1,0 +1,74 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Terraform Modules Release
+
+on:
+  workflow_call:
+    inputs:
+      tag-prefix:
+        type: string
+        description: "Tag prefix including separator; resulting format is <prefix><major>.<minor>.0"
+        default: tf-
+      major-version-file:
+        type: string
+        description: Path to the file containing the major version number.
+        default: terraform/MAJOR_VERSION
+
+permissions:
+  contents: read
+
+# Serialize tag creation so concurrent pushes don't compute the same minor.
+concurrency:
+  group: tag-terraform-module
+  cancel-in-progress: false
+
+env:
+  TAG_PREFIX: ${{ inputs.tag-prefix || 'tf-' }}
+  MAJOR_VERSION_FILE: ${{ inputs.major-version-file || 'terraform/MAJOR_VERSION' }}
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Compute and push the next Terraform module tag
+        run: |
+          set -euo pipefail
+
+          # MAJOR_VERSION holds only the major version. Minor is auto-bumped
+          # on every change under terraform/; patch is always 0.
+          major="$(grep -oE '^[0-9]+' "${MAJOR_VERSION_FILE}" | head -1)"
+          if [ -z "${major}" ]; then
+            echo "Could not read a major version from ${MAJOR_VERSION_FILE}" >&2
+            exit 1
+          fi
+
+          # Highest existing minor for this major, if any.
+          latest_minor="$(
+            git tag --list "${TAG_PREFIX}${major}.*" \
+              | sed -nE "s/^${TAG_PREFIX}${major}\.([0-9]+)\.[0-9]+$/\1/p" \
+              | sort -n \
+              | tail -1
+          )"
+
+          if [ -z "${latest_minor}" ]; then
+            new_minor=0
+          else
+            new_minor=$((latest_minor + 1))
+          fi
+
+          tag="${TAG_PREFIX}${major}.${new_minor}.0"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "::warning:: ${tag} unexpectedly already exists; refusing to overwrite." >&2
+            exit 1
+          fi
+
+          echo "Creating ${tag}"
+          git tag -- "${tag}"
+          git push origin -- "${tag}"
