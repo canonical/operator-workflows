@@ -65,7 +65,7 @@ jobs:
 
           tag="${TAG_PREFIX}-${major}.${new_minor}.0"
           if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
-            echo "${tag} unexpectedly already exists; refusing to overwrite." >&2
+            echo "::warning:: ${tag} unexpectedly already exists; refusing to overwrite." >&2
             exit 1
           fi
 
