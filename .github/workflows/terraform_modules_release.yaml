@@ -8,8 +8,8 @@ on:
     inputs:
       tag-prefix:
         type: string
-        description: Prefix used for the version tag.
-        default: tf
+        description: "Tag prefix including separator; resulting format is <prefix><major>.<minor>.0"
+        default: tf-
       major-version-file:
         type: string
         description: Path to the file containing the major version number.
@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  TAG_PREFIX: ${{ inputs.tag-prefix || 'tf' }}
+  TAG_PREFIX: ${{ inputs.tag-prefix || 'tf-' }}
   MAJOR_VERSION_FILE: ${{ inputs.major-version-file || 'terraform/MAJOR_VERSION' }}
 
 jobs:
@@ -51,8 +51,8 @@ jobs:
 
           # Highest existing minor for this major, if any.
           latest_minor="$(
-            git tag --list "${TAG_PREFIX}-${major}.*" \
-              | sed -nE "s/^${TAG_PREFIX}-${major}\.([0-9]+)\.[0-9]+$/\1/p" \
+            git tag --list "${TAG_PREFIX}${major}.*" \
+              | sed -nE "s/^${TAG_PREFIX}${major}\.([0-9]+)\.[0-9]+$/\1/p" \
               | sort -n \
               | tail -1
           )"
@@ -63,7 +63,7 @@ jobs:
             new_minor=$((latest_minor + 1))
           fi
 
-          tag="${TAG_PREFIX}-${major}.${new_minor}.0"
+          tag="${TAG_PREFIX}${major}.${new_minor}.0"
           if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
             echo "::warning:: ${tag} unexpectedly already exists; refusing to overwrite." >&2
             exit 1
