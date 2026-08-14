@@ -40,13 +40,15 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -f "${MAJOR_VERSION_FILE}" ]; then
-            echo "ERROR: MAJOR_VERSION file not found at '${MAJOR_VERSION_FILE}'"
+            echo "::error::MAJOR_VERSION file not found at '${MAJOR_VERSION_FILE}'"
             exit 1
           fi
-          if ! grep -qE '^[0-9]+' "${MAJOR_VERSION_FILE}"; then
-            echo "ERROR: '${MAJOR_VERSION_FILE}' does not contain a valid major version integer"
+          major="$(grep -oE '^[0-9]+' "${MAJOR_VERSION_FILE}" | head -1)"
+          if [ -z "${major}" ]; then
+            echo "::error::'${MAJOR_VERSION_FILE}' does not contain a valid major version integer"
             exit 1
           fi
+          echo "Found major version: ${major}"
 
   tag:
     if: ${{ !inputs.check-only }}
@@ -66,7 +68,7 @@ jobs:
           # on every change under terraform/; patch is always 0.
           major="$(grep -oE '^[0-9]+' "${MAJOR_VERSION_FILE}" | head -1)"
           if [ -z "${major}" ]; then
-            echo "Could not read a major version from ${MAJOR_VERSION_FILE}" >&2
+            echo "::error::Could not read a major version from ${MAJOR_VERSION_FILE}"
             exit 1
           fi
 
