@@ -14,9 +14,10 @@ on:
         type: string
         description: Path to the file containing the major version number.
         default: terraform/MAJOR_VERSION
-
-permissions:
-  contents: read
+      check-only:
+        type: boolean
+        description: "Pass the variable `github.event_name == 'pull_request'`"
+        required: true
 
 # Serialize tag creation so concurrent pushes don't compute the same minor.
 concurrency:
@@ -28,7 +29,27 @@ env:
   MAJOR_VERSION_FILE: ${{ inputs.major-version-file || 'terraform/MAJOR_VERSION' }}
 
 jobs:
+  check:
+    if: ${{ inputs.check-only }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Check MAJOR_VERSION file exists
+        run: |
+          set -euo pipefail
+          if [ ! -f "${MAJOR_VERSION_FILE}" ]; then
+            echo "ERROR: MAJOR_VERSION file not found at '${MAJOR_VERSION_FILE}'"
+            exit 1
+          fi
+          if ! grep -qE '^[0-9]+' "${MAJOR_VERSION_FILE}"; then
+            echo "ERROR: '${MAJOR_VERSION_FILE}' does not contain a valid major version integer"
+            exit 1
+          fi
+
   tag:
+    if: ${{ !inputs.check-only }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
