@@ -124,6 +124,8 @@ Inputs:
 Example calling workflow:
 
 ```yaml
+name: Terraform modules release
+
 on:
   workflow_dispatch:
   pull_request:
@@ -133,7 +135,7 @@ on:
     paths: ['terraform/**']  # adjust to match your terraform-directories
 
 jobs:
-  terraform:
+  terraform-version:
     uses: canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main
     with:  
         check-only: ${{ github.event_name == 'pull_request' }}  # Required and should be passed exactly like this

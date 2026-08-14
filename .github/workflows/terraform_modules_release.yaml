@@ -50,7 +50,7 @@ jobs:
           fi
           echo "Found major version: ${major}"
 
-  tag:
+  release:
     if: ${{ !inputs.check-only }}
     runs-on: ubuntu-latest
     permissions:
