@@ -117,6 +117,7 @@ Automatically computes and pushes a semver tag of the form `<prefix><major>.<min
 
 Inputs:
 
+* `check-only` *(required)*: Boolean switch. Pass `github.event_name == 'pull_request'` so the workflow runs compliance on PRs and creates tags on push to main.
 * `tag-prefix` *(default: `tf-`)*: Prefix used for the version tag, including any separator (e.g. `tf-` produces `tf-1.0.0`).
 * `major-version-file` *(default: `terraform/MAJOR_VERSION`)*: Path to the file containing the major version number.
 
@@ -124,16 +125,20 @@ Example calling workflow:
 
 ```yaml
 on:
+  workflow_dispatch:
+  pull_request:
+    paths: ['terraform/**']  # adjust to match your terraform-directories
   push:
     branches: [main]
-    paths: ['terraform/**']
+    paths: ['terraform/**']  # adjust to match your terraform-directories
 
 jobs:
-  tag:
+  terraform:
     uses: canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main
-    with:  # Optional input overrides
-      tag-prefix: tf-                            
-      major-version-file: terraform/MAJOR_VERSION
+    with:  
+        check-only: ${{ github.event_name == 'pull_request' }}  # Required and should be passed exactly like this
+        tag-prefix: tf-                               # Optional input override                      
+        major-version-file: terraform/MAJOR_VERSION   # Optional input override
 ```
 
 ## Required GitHub Token Permissions
@@ -154,7 +159,7 @@ GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only
 | `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; pushes built OCI images to `ghcr.io` when `upload-image: registry` is used or when running on non-forked PRs; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
 | `promote_charm.yaml` | `contents: write` | Creates a git tag via `charming-actions/release-charm` |
 | `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; pushes OCI images to `ghcr.io`; downloads build artifacts from a prior integration test run |
-| `terraform_modules_release.yaml` | `contents: write` | Creates and pushes a semver tag for Terraform module releases |
+| `terraform_modules_release.yaml` | `contents: write` *(push to main only)* | Creates and pushes a semver tag; on PRs runs compliance checks with `contents: read` |
 | `terraform_modules_test.yaml` | `contents: read` | Checks out the repository to run `terraform test` |
 | `test.yaml` | `contents: read`<br>`pull-requests: write` | Checks out the repository; `charming-actions/check-libraries` posts a comment on PRs when charm libraries are out of date |
 
