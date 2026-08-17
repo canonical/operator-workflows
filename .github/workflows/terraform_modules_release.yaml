@@ -14,10 +14,6 @@ on:
         type: string
         description: Path to the file containing the major version number.
         default: terraform/MAJOR_VERSION
-      check-only:
-        type: boolean
-        description: "Pass the variable `github.event_name == 'pull_request'`"
-        required: true
 
 # Serialize tag creation so concurrent pushes don't compute the same minor.
 concurrency:
@@ -30,7 +26,7 @@ env:
 
 jobs:
   check:
-    if: ${{ inputs.check-only }}
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -51,7 +47,7 @@ jobs:
           echo "Found major version: ${major}"
 
   release:
-    if: ${{ !inputs.check-only }}
+    if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
