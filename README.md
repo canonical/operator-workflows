@@ -137,8 +137,8 @@ jobs:
   terraform-version:
     uses: canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main
     with:  # Optional input overrides
-        tag-prefix: tf-
-        major-version-file: terraform/MAJOR_VERSION
+      tag-prefix: tf-
+      major-version-file: terraform/MAJOR_VERSION
 ```
 
 ## Required GitHub Token Permissions
