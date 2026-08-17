@@ -117,7 +117,6 @@ Automatically computes and pushes a semver tag of the form `<prefix><major>.<min
 
 Inputs:
 
-* `check-only` *(required)*: Boolean switch. Pass `github.event_name == 'pull_request'` so the workflow runs compliance on PRs and creates tags on push to main.
 * `tag-prefix` *(default: `tf-`)*: Prefix used for the version tag, including any separator (e.g. `tf-` produces `tf-1.0.0`).
 * `major-version-file` *(default: `terraform/MAJOR_VERSION`)*: Path to the file containing the major version number.
 
@@ -137,10 +136,9 @@ on:
 jobs:
   terraform-version:
     uses: canonical/operator-workflows/.github/workflows/terraform_modules_release.yaml@main
-    with:  
-        check-only: ${{ github.event_name == 'pull_request' }}  # Required and should be passed exactly like this
-        tag-prefix: tf-                               # Optional input override                      
-        major-version-file: terraform/MAJOR_VERSION   # Optional input override
+    with:  # Optional input overrides
+        tag-prefix: tf-
+        major-version-file: terraform/MAJOR_VERSION
 ```
 
 ## Required GitHub Token Permissions
