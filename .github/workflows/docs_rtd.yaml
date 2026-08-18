@@ -40,7 +40,7 @@ jobs:
     name: Automatic doc checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@main
+    uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@aaeaf091e8f55145184ad897cb9834f224bd31de  # main
     with:
       working-directory: "docs"
       fetch-depth: 0
@@ -49,15 +49,15 @@ jobs:
     name: Check removed URLs
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/sphinx-stack/.github/workflows/check-removed-urls.yml@main
+    uses: canonical/sphinx-stack/.github/workflows/check-removed-urls.yml@8526180763d92bda3c7f2cf0f198e180d3fe10c7  # main
   markdown-style-checks:
     name: Markdown style checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/sphinx-stack/.github/workflows/markdown-style-checks.yml@main
+    uses: canonical/sphinx-stack/.github/workflows/markdown-style-checks.yml@8526180763d92bda3c7f2cf0f198e180d3fe10c7  # main
   sphinx-python-dependency-build-checks:
     name: Sphinx and Python dependency build checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' && inputs.enable-sphinx-python-dependency-build-checks }}
-    uses: canonical/sphinx-stack/.github/workflows/sphinx-python-dependency-build-checks.yml@main
+    uses: canonical/sphinx-stack/.github/workflows/sphinx-python-dependency-build-checks.yml@8526180763d92bda3c7f2cf0f198e180d3fe10c7  # main
 
