@@ -148,7 +148,7 @@ GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only
 | Workflow | Required permissions | Reason |
 | --- | --- | --- |
 | `allure_report.yaml` | `contents: write` | Pushes the Allure report to the `gh-pages` branch |
-| `auto_update_charm_libs.yaml` | `contents: write`<br>`pull-requests: write`<br>`id-token: write` | Creates PRs to update charm libraries; uses OIDC for Charmhub authentication |
+| `auto_update_charm_libs.yaml` | `contents: write`<br>`pull-requests: write` | Creates PRs to update charm libraries; authenticates to Charmhub with the `CHARMHUB_TOKEN` secret |
 | `bot_pr_approval.yaml` | `pull-requests: write` | Approves bot-authored PRs via the GitHub API |
 | `comment_contributing.yaml` | `pull-requests: write` | Posts a contributing-guide comment on newly opened PRs |
 | `comment.yaml` | `pull-requests: write`<br>`actions: read` | Creates and deletes PR comments; downloads artifacts from a specific workflow run by ID |
