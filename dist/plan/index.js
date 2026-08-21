@@ -123966,11 +123966,12 @@ function sanitizeArtifactName(name) {
 }
 function fromFork() {
     const context = context$2;
-    if (context.eventName !== 'pull_request') {
+    if (context.eventName !== 'pull_request' &&
+        context.eventName !== 'pull_request_review') {
         return false;
     }
     return (
-    // @ts-expect-error GitHub payload typing does not model all pull_request fields.
+    // @ts-expect-error GitHub payload typing does not model all pull_request/pull_request_review fields.
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login);
 }
 async function planBuildCharm(workingDir, id) {

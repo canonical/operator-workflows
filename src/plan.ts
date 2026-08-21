@@ -21,17 +21,14 @@ function sanitizeArtifactName(name: string): string {
 
 function fromFork(): boolean {
   const context = github.context
-  if (context.eventName !== 'pull_request' && context.eventName !== 'pull_request_review') {
+  if (
+    context.eventName !== 'pull_request' &&
+    context.eventName !== 'pull_request_review'
+  ) {
     return false
   }
-  if (context.eventName === 'pull_request_review') {
-    return (
-      // @ts-expect-error GitHub payload typing does not model all pull_request_review fields.
-      context.repo.owner !== context.payload.pull_request.head.repo.owner.login
-    )
-  }
   return (
-    // @ts-expect-error GitHub payload typing does not model all pull_request fields.
+    // @ts-expect-error GitHub payload typing does not model all pull_request/pull_request_review fields.
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login
   )
 }
