@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-08-21
+
+- In `promote-charm.yaml`, pass the `charmcraft-channel` input to the
+`canonical/charming-actions/release-charm` action as expected, so that
+the Charmcraft version specified in the input is used across the workflow.
+
 ## 2026-08-13
 
 - Add workflow file `terraform_modules_release.yaml` to create tags in the format `<prefix>-<major>.<minor>.0` for Terraform modules (major read from `terraform/MAJOR_VERSION`, minor auto-incremented).
