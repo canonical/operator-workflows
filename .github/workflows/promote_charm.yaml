@@ -162,4 +162,5 @@ jobs:
           base-channel: ${{ needs.get-charm-base.outputs.channel }}
           base-architecture: ${{ needs.get-charm-base.outputs.architecture }}
           tag-prefix: ${{ inputs.tag-prefix }}
+          charmcraft-channel: ${{ inputs.charmcraft-channel }}
 
