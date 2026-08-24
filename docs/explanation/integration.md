@@ -105,16 +105,18 @@ Tox argument: `--charm-file=./<charm-build-output-file>.charm`
 
 The rocks are pushed to the local MicroK8s image registry (localhost:32000)
 using `rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...` command if the
-rock is downloaded as a tarball artifact. By default, the GitHub registry is
-used.
+rock is downloaded as a tarball artifact. Artifact mode is used by default for pull-request test runs with the default
+MicroK8s provider. Other events and providers use registry mode unless
+`upload-image: artifact` is explicitly selected. Artifact archives are retained for
+30 days by default; override this with `artifact-retention-days`.
 
 Tox argument: `--<rock-name>-image=<local-registry-image-name>`
 
 ### Docker
 
 The Docker images are referred to from the image registry that is output from
-the build step. The integration test workflow usually uses the GitHub Container
-Registry (ghcr), unless specified otherwise in the workflow.
+the build step. Artifact-mode builds are loaded into the local test registry;
+`upload-image: registry` uses the GitHub Container Registry (ghcr).
 
 Tox argument: `--<image-name>-image=<image-resource-uri>`
 

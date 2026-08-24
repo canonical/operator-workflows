@@ -130782,6 +130782,12 @@ If the error persists, please check whether Actions and API requests are operati
 
 // Copyright 2025 Canonical Ltd.
 // See LICENSE file for licensing details.
+function artifactUploadOptions() {
+    const retentionDays = Number(getInput('artifact-retention-days'));
+    return Number.isInteger(retentionDays) && retentionDays > 0
+        ? { retentionDays }
+        : {};
+}
 async function gitTreeId(p) {
     const gitPath = path$2.resolve(p) == path$2.resolve(process.cwd()) ? '' : p;
     const tree = (await getExecOutput('git', ['rev-parse', `HEAD:${gitPath}`])).stdout.trim();
@@ -130801,7 +130807,7 @@ async function buildCharm(params) {
     const artifact = new DefaultArtifactClient();
     const manifestFile = path$2.join(params.plan.source_directory, 'manifest.json');
     fs.writeFileSync(manifestFile, JSON.stringify({ name: params.plan.name, files: charmFiles.map(f => path$2.basename(f)) }, null, 2));
-    await artifact.uploadArtifact(params.plan.output, [...charmFiles, manifestFile], params.plan.source_directory);
+    await artifact.uploadArtifact(params.plan.output, [...charmFiles, manifestFile], params.plan.source_directory, artifactUploadOptions());
 }
 async function buildFileResource(plan) {
     startGroup(`Build resource ${plan.name}`);
@@ -130816,7 +130822,7 @@ async function buildFileResource(plan) {
     const artifact = new DefaultArtifactClient();
     const manifestFile = path$2.join(plan.source_directory, 'manifest.json');
     fs.writeFileSync(manifestFile, JSON.stringify({ name: plan.name, files: resourceFiles.map(f => path$2.basename(f)) }, null, 2));
-    await artifact.uploadArtifact(plan.output, [...resourceFiles, manifestFile], plan.source_directory);
+    await artifact.uploadArtifact(plan.output, [...resourceFiles, manifestFile], plan.source_directory, artifactUploadOptions());
 }
 async function buildDockerImage({ plan, user, token }) {
     const tag = await gitTreeId(plan.source_directory);
@@ -130837,7 +130843,7 @@ async function buildDockerImage({ plan, user, token }) {
         await exec('docker', ['save', '-o', file, imageName], {
             cwd: plan.source_directory
         });
-        await artifact.uploadArtifact(plan.output, [manifest, path$2.join(plan.source_directory, file)], plan.source_directory);
+        await artifact.uploadArtifact(plan.output, [manifest, path$2.join(plan.source_directory, file)], plan.source_directory, artifactUploadOptions());
     }
     if (plan.output_type == 'registry') {
         await exec(`docker`, ['login', '-u', user, '--password-stdin', 'ghcr.io'], { input: Buffer.from(`${token}\n`, 'utf-8') });
@@ -130845,7 +130851,7 @@ async function buildDockerImage({ plan, user, token }) {
         await exec(`docker`, ['image', 'tag', imageName, registryImageName]);
         await exec('docker', ['push', registryImageName]);
         fs.writeFileSync(manifest, JSON.stringify({ name: plan.name, images: [registryImageName] }, null, 2));
-        await artifact.uploadArtifact(plan.output, [manifest], plan.source_directory);
+        await artifact.uploadArtifact(plan.output, [manifest], plan.source_directory, artifactUploadOptions());
     }
 }
 // Returns the ISO 8601 week number for the given date.
@@ -130899,7 +130905,7 @@ async function restoreRock(plan, cacheKey) {
     if (restored) {
         info(`restored rock cache from ${cacheKey}`);
         const artifact = new DefaultArtifactClient();
-        await artifact.uploadArtifact(plan.output, [manifestFile], plan.source_directory);
+        await artifact.uploadArtifact(plan.output, [manifestFile], plan.source_directory, artifactUploadOptions());
         return true;
     }
     return false;
@@ -130936,7 +130942,7 @@ async function buildRock({ plan, user, token }) {
             name: plan.name,
             files: rocks.map(f => path$2.basename(f))
         }, null, 2));
-        await artifact.uploadArtifact(plan.output, [...rocks, manifestFile], plan.source_directory);
+        await artifact.uploadArtifact(plan.output, [...rocks, manifestFile], plan.source_directory, artifactUploadOptions());
     }
     else {
         const tree = await gitTreeId(plan.source_directory);
@@ -130961,7 +130967,7 @@ async function buildRock({ plan, user, token }) {
             images: images
         }, null, 2));
         await cacheRock(plan, cacheKey);
-        await artifact.uploadArtifact(plan.output, [manifestFile], plan.source_directory);
+        await artifact.uploadArtifact(plan.output, [manifestFile], plan.source_directory, artifactUploadOptions());
     }
 }
 async function run() {

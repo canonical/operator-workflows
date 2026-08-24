@@ -12,9 +12,17 @@ inputs:
   upload-image:
     description: upload-image
     default: ''
+  provider:
+    description: Integration provider used to select the safe default image mode.
+    default: microk8s
+  artifact-retention-days:
+    description: Number of days to retain build artifacts.
+    default: '30'
 outputs:
   plan:
     description: The generated plan for the entire workflow.
+  image-output-type:
+    description: The selected image output mode (file or registry).
 runs:
   using: node20
   main: ../../dist/plan/index.js

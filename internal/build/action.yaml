@@ -8,6 +8,9 @@ inputs:
   build-context:
     description: The directory to use as the build context for charmbuild.
     default: "."
+  artifact-retention-days:
+    description: Number of days to retain build artifacts.
+    default: '30'
   github-token:
     description: github token.
     required: true

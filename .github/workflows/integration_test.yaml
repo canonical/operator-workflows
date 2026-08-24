@@ -140,12 +140,17 @@ on:
       upload-image:
         type: string
         description: >-
-          Can be either 'artifact' or 'registry', which determines the method by which images used 
-          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
-          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
-          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
-          originating from forked repositories, and 'registry' for all other cases.
+          Can be either 'artifact' or 'registry'. 'artifact' uploads built images as
+          GitHub Actions artifacts and uses a local registry during tests. 'registry'
+          pushes images to GHCR. If unspecified, artifact mode is used for test
+          pull-request events with the default MicroK8s provider; other events and providers
+          retain registry mode unless overridden.
+          Use 'registry' when a remote image is explicitly required.
         default: ""
+      artifact-retention-days:
+        type: number
+        description: Number of days to retain build artifacts.
+        default: 30
       use-canonical-k8s:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
@@ -170,6 +175,7 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
+      image-output-type: ${{ steps.plan.outputs.image-output-type }}
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Validate input
@@ -187,6 +193,8 @@ jobs:
         with:
           identifier: ${{ inputs.identifier }}
           upload-image: ${{ inputs.upload-image }}
+          provider: ${{ inputs.provider }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Find changes
@@ -277,6 +285,7 @@ jobs:
         with:
           build-plan: ${{ toJSON(matrix.build) }}
           build-context: ${{ inputs.build-context }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   plan-scan:
@@ -413,6 +422,7 @@ jobs:
       tmate-timeout: ${{ inputs.tmate-timeout }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
+      image-output-type: ${{ needs.plan.outputs.image-output-type || (inputs.upload-image == 'registry' && 'registry' || inputs.upload-image == 'artifact' && 'file' || (github.event_name == 'pull_request' && (inputs.provider == 'microk8s' || github.event.pull_request.head.repo.full_name != github.repository)) && 'file' || 'registry') }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ${{ inputs.builder-runner-label }}
