@@ -58,9 +58,9 @@ jobs:
       CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
     outputs:
       charm-name: ${{ steps.set-outputs.outputs.charm-name }}
-      name: ${{ steps.set-outputs.outputs.name }}
-      channel: ${{ steps.set-outputs.outputs.channel }}
-      architecture: ${{ steps.set-outputs.outputs.architecture }}
+      base-name: ${{ steps.set-outputs.outputs.base-name }}
+      base-channel: ${{ steps.set-outputs.outputs.base-channel }}
+      base-architecture: ${{ steps.set-outputs.outputs.base-architecture }}
       revision: ${{ steps.set-outputs.outputs.revision }}
       resource-flags: ${{ steps.set-outputs.outputs.resource-flags }}
     steps:
@@ -105,6 +105,10 @@ jobs:
           fi
           if [[ -z "$DESTINATION_CHANNEL" ]]; then
             echo "::error::Input 'destination-channel' is required and was not supplied"
+            exit 1
+          fi
+          if [[ "$ORIGIN_CHANNEL" == "$DESTINATION_CHANNEL" ]]; then
+            echo "::error::Input 'origin-channel' and 'destination-channel' must be different (got '$ORIGIN_CHANNEL')"
             exit 1
           fi
 
@@ -173,9 +177,9 @@ jobs:
         id: set-outputs
         run: |
           echo "charm-name=$CHARM_NAME" >> $GITHUB_OUTPUT
-          echo "name=$BASE_NAME" >> $GITHUB_OUTPUT
-          echo "channel=$BASE_CHANNEL" >> $GITHUB_OUTPUT
-          echo "architecture=$BASE_ARCHITECTURE" >> $GITHUB_OUTPUT
+          echo "base-name=$BASE_NAME" >> $GITHUB_OUTPUT
+          echo "base-channel=$BASE_CHANNEL" >> $GITHUB_OUTPUT
+          echo "base-architecture=$BASE_ARCHITECTURE" >> $GITHUB_OUTPUT
           echo "revision=$REVISION" >> $GITHUB_OUTPUT
           echo "resource-flags=$RESOURCE_FLAGS" >> $GITHUB_OUTPUT
   promote-charm:
