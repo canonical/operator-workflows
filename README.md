@@ -157,7 +157,7 @@ GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only
 | `docs.yaml` | `contents: read` | Checks out the repository for Vale and Lychee linting |
 | `generate_terraform_docs.yaml` | `contents: write`<br>`pull-requests: write` | Commits generated Terraform docs and opens a PR with the changes |
 | `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; pushes built OCI images to `ghcr.io` when `upload-image: registry` is used or when running on non-forked PRs; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
-| `promote_charm.yaml` | `contents: write` | Creates a git tag via `charming-actions/release-charm` |
+| `promote_charm.yaml` | `contents: read` | Checks out the repository to read `charmcraft.yaml`; releases the charm revision via `charmcraft release` (no git tag or release is created) |
 | `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; pushes OCI images to `ghcr.io`; downloads build artifacts from a prior integration test run |
 | `terraform_modules_release.yaml` | `contents: write` *(push to main only)* | Creates and pushes a semver tag; on PRs runs compliance checks with `contents: read` |
 | `terraform_modules_test.yaml` | `contents: read` | Checks out the repository to run `terraform test` |

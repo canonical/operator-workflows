@@ -36,7 +36,7 @@ on:
         type: string
         required: false
         description: |
-          Tag prefix, useful when promoting multiple charms from the same repo.
+          Deprecated and unused. Kept for backwards compatibility with existing callers.
       working-directory:
         type: string
         description: The working directory for jobs
@@ -57,15 +57,20 @@ jobs:
     env:
       CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
     outputs:
-      name: ${{ steps.set-base-outputs.outputs.name }}
-      channel: ${{ steps.set-base-outputs.outputs.channel }}
-      architecture: ${{ steps.set-base-outputs.outputs.architecture }}
+      charm-name: ${{ steps.set-outputs.outputs.charm-name }}
+      base-name: ${{ steps.set-outputs.outputs.base-name }}
+      base-channel: ${{ steps.set-outputs.outputs.base-channel }}
+      base-architecture: ${{ steps.set-outputs.outputs.base-architecture }}
+      revision: ${{ steps.set-outputs.outputs.revision }}
+      resource-flags: ${{ steps.set-outputs.outputs.resource-flags }}
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Install charmcraft
+        env:
+          CHARMCRAFT_CHANNEL: ${{ inputs.charmcraft-channel }}
         run: |
           set -e
-          sudo snap install charmcraft --classic --channel ${{ inputs.charmcraft-channel }}
+          sudo snap install charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
       - name: Get charm name
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |
@@ -83,84 +88,123 @@ jobs:
           fi
           echo "CHARM_NAME=$CHARM_NAME" >> $GITHUB_ENV
 
-      - name: Get default charm base
+      - name: Resolve base and revision to promote
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-        run: |
-          status_json=$(charmcraft status "$CHARM_NAME" --format json)
-
-          first_mapping=$(echo "$status_json" | jq -r '.[0].mappings[0].base')
-
-          BASE_NAME=$(echo "$first_mapping" | jq -r '.name')
-          BASE_CHANNEL=$(echo "$first_mapping" | jq -r '.channel')
-          BASE_ARCHITECTURE=$(echo "$first_mapping" | jq -r '.architecture')
-
-          echo "BASE_NAME=$BASE_NAME" >> $GITHUB_ENV
-          echo "BASE_CHANNEL=$BASE_CHANNEL" >> $GITHUB_ENV
-          echo "BASE_ARCHITECTURE=$BASE_ARCHITECTURE" >> $GITHUB_ENV
-
-      - name: Validate inputs
-        working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
+        env:
+          ORIGIN_CHANNEL: ${{ inputs.origin-channel }}
+          DESTINATION_CHANNEL: ${{ inputs.destination-channel }}
+          IN_BASE_NAME: ${{ inputs.base-name }}
+          IN_BASE_CHANNEL: ${{ inputs.base-channel }}
+          IN_BASE_ARCH: ${{ inputs.base-architecture }}
         run: |
           set -e
 
-          # if input is configured, check if it is present in the charm status
-          target_base_arch=${{ inputs.base-architecture }}
-          target_base_channel=${{ inputs.base-channel }}
-          target_base_name=${{ inputs.base-name }}
-
-          [[ -z "$target_base_name" ]] && target_base_name="$BASE_NAME"
-          [[ -z "$target_base_channel" ]] && target_base_channel="$BASE_CHANNEL"
-          [[ -z "$target_base_arch" ]] && target_base_arch="$BASE_ARCHITECTURE"
-
-          if [[ -n "${{ inputs.base-name }}" || -n "${{ inputs.base-channel }}" || -n "${{ inputs.base-architecture }}" ]]; then
-            status_json=$(charmcraft status "$CHARM_NAME" --format json)
-            track=$(echo "${{ inputs.origin-channel }}" | cut -d '/' -f1)
-
-            mappings=$(echo "$status_json" | jq -c --arg track "$track" '.[] | select(.track == $track) | .mappings[]')
-
-            while IFS= read -r mapping; do
-              base=$(echo "$mapping" | jq -r '.base')
-              name=$(echo "$base" | jq -r '.name')
-              channel=$(echo "$base" | jq -r '.channel')
-              arch=$(echo "$base" | jq -r '.architecture')
-
-              if [[ "$name" == "$target_base_name" && "$channel" == "$target_base_channel" && "$arch" == "$target_base_arch" ]]; then
-                echo "Matched base: $name $channel $arch"
-                echo "BASE_NAME=$name" >> $GITHUB_ENV
-                echo "BASE_CHANNEL=$channel" >> $GITHUB_ENV
-                echo "BASE_ARCHITECTURE=$arch" >> $GITHUB_ENV
-                exit 0
-              fi
-            done <<< "$mappings"
-
-            echo "::error::No matching base found in charm status for: $target_base_name $target_base_channel $target_base_arch"
+          if [[ -z "$ORIGIN_CHANNEL" ]]; then
+            echo "::error::Input 'origin-channel' is required and was not supplied"
             exit 1
-          else
-            echo "No inputs provided for base name, channel, or architecture. Skipping validation."
           fi
+          if [[ -z "$DESTINATION_CHANNEL" ]]; then
+            echo "::error::Input 'destination-channel' is required and was not supplied"
+            exit 1
+          fi
+          if [[ "$ORIGIN_CHANNEL" == "$DESTINATION_CHANNEL" ]]; then
+            echo "::error::Input 'origin-channel' and 'destination-channel' must be different (got '$ORIGIN_CHANNEL')"
+            exit 1
+          fi
+
+          origin_channel="$ORIGIN_CHANNEL"
+          track="${origin_channel%%/*}"
+          base_name="$IN_BASE_NAME"
+          base_channel="$IN_BASE_CHANNEL"
+          base_arch="$IN_BASE_ARCH"
+
+          status_json=$(charmcraft status "$CHARM_NAME" --format json)
+
+          mappings=$(echo "$status_json" | jq -c --arg track "$track" '[.[] | select(.track == $track) | .mappings[]?]')
+          if [[ "$(echo "$mappings" | jq 'length')" -eq 0 ]]; then
+            echo "::error::No track named '$track' found in charm status for $CHARM_NAME"
+            exit 1
+          fi
+
+          # Default base: the first base in this track with an open release on the origin channel.
+          # Only needed to fill in base-* fields the caller left unset (full default or partial
+          # override); skipped entirely when the caller already gave all three, so a fully-specified
+          # but not-yet-open base doesn't get misreported as "no base found" instead of "not open".
+          if [[ -z "$base_name" || -z "$base_channel" || -z "$base_arch" ]]; then
+            default_base=$(echo "$mappings" | jq -c --arg ch "$origin_channel" \
+              'map(select(.base != null and any(.releases[]?; .channel == $ch and .status == "open"))) | .[0].base // empty')
+            if [[ -z "$default_base" ]]; then
+              echo "::error::No base with an open release on '$origin_channel' found for track '$track'"
+              exit 1
+            fi
+            [[ -z "$base_name" ]] && base_name=$(echo "$default_base" | jq -r '.name')
+            [[ -z "$base_channel" ]] && base_channel=$(echo "$default_base" | jq -r '.channel')
+            [[ -z "$base_arch" ]] && base_arch=$(echo "$default_base" | jq -r '.architecture')
+          fi
+
+          # Select the matching base and its release on the origin channel in a single query.
+          release=$(echo "$mappings" | jq -c \
+            --arg n "$base_name" --arg c "$base_channel" --arg a "$base_arch" --arg ch "$origin_channel" \
+            'map(select(.base.name == $n and .base.channel == $c and .base.architecture == $a)) as $m
+             | if ($m | length) == 0 then "NO_BASE"
+               else ([$m[0].releases[]? | select(.channel == $ch)] | .[0]) // "NO_RELEASE" end')
+
+          if [[ "$release" == '"NO_BASE"' ]]; then
+            echo "::error::No matching base found in charm status for: $base_name $base_channel $base_arch"
+            exit 1
+          fi
+          if [[ "$release" == '"NO_RELEASE"' ]]; then
+            echo "::error::No release found for channel '$origin_channel' with base $base_name/$base_channel/$base_arch"
+            exit 1
+          fi
+
+          status=$(echo "$release" | jq -r '.status')
+          if [[ "$status" != "open" ]]; then
+            echo "::error::Channel '$origin_channel' is not open for base $base_name/$base_channel/$base_arch (status: $status)"
+            exit 1
+          fi
+          echo "Matched base: $base_name $base_channel $base_arch"
+
+          REVISION=$(echo "$release" | jq -r '.revision')
+          RESOURCE_FLAGS=$(echo "$release" | jq -r '[.resources[]? | "--resource=\(.name):\(.revision)"] | join(" ")')
+
+          echo "BASE_NAME=$base_name" >> $GITHUB_ENV
+          echo "BASE_CHANNEL=$base_channel" >> $GITHUB_ENV
+          echo "BASE_ARCHITECTURE=$base_arch" >> $GITHUB_ENV
+          echo "REVISION=$REVISION" >> $GITHUB_ENV
+          echo "RESOURCE_FLAGS=$RESOURCE_FLAGS" >> $GITHUB_ENV
       - name: Set outputs
-        id: set-base-outputs
+        id: set-outputs
         run: |
-          echo "name=$BASE_NAME" >> $GITHUB_OUTPUT
-          echo "channel=$BASE_CHANNEL" >> $GITHUB_OUTPUT
-          echo "architecture=$BASE_ARCHITECTURE" >> $GITHUB_OUTPUT
+          echo "charm-name=$CHARM_NAME" >> $GITHUB_OUTPUT
+          echo "base-name=$BASE_NAME" >> $GITHUB_OUTPUT
+          echo "base-channel=$BASE_CHANNEL" >> $GITHUB_OUTPUT
+          echo "base-architecture=$BASE_ARCHITECTURE" >> $GITHUB_OUTPUT
+          echo "revision=$REVISION" >> $GITHUB_OUTPUT
+          echo "resource-flags=$RESOURCE_FLAGS" >> $GITHUB_OUTPUT
   promote-charm:
     name: Promote charm
     runs-on: ubuntu-latest
     needs: [ get-charm-base ]
+    env:
+      CHARMCRAFT_AUTH: ${{ secrets.CHARMHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - name: Install charmcraft
+        env:
+          CHARMCRAFT_CHANNEL: ${{ inputs.charmcraft-channel }}
+        run: |
+          set -e
+          sudo snap install charmcraft --classic --channel "$CHARMCRAFT_CHANNEL"
       - name: Release charm to channel
-        uses: canonical/charming-actions/release-charm@2.7.0
-        with:
-          credentials: ${{ secrets.CHARMHUB_TOKEN }}
-          charm-path: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          origin-channel: ${{ inputs.origin-channel }}
-          destination-channel: ${{ inputs.destination-channel }}
-          base-name: ${{ needs.get-charm-base.outputs.name }}
-          base-channel: ${{ needs.get-charm-base.outputs.channel }}
-          base-architecture: ${{ needs.get-charm-base.outputs.architecture }}
-          tag-prefix: ${{ inputs.tag-prefix }}
-          charmcraft-channel: ${{ inputs.charmcraft-channel }}
+        env:
+          CHARM_NAME: ${{ needs.get-charm-base.outputs.charm-name }}
+          REVISION: ${{ needs.get-charm-base.outputs.revision }}
+          DESTINATION_CHANNEL: ${{ inputs.destination-channel }}
+          RESOURCE_FLAGS: ${{ needs.get-charm-base.outputs.resource-flags }}
+        run: |
+          set -e
+          charmcraft release "$CHARM_NAME" \
+            --revision "$REVISION" \
+            --channel "$DESTINATION_CHANNEL" \
+            $RESOURCE_FLAGS
 
