@@ -6,10 +6,6 @@ name: Terraform CC008 compliance check
 on:
   workflow_call:
     inputs:
-      operator-workflows-ref:
-        description: Git ref used to load the checker from canonical/operator-workflows.
-        required: true
-        type: string
       python-version:
         description: Python version used to run the checker.
         required: false
@@ -34,7 +30,7 @@ jobs:
         uses: actions/checkout@v7.0.1
         with:
           repository: canonical/operator-workflows
-          ref: ${{ inputs.operator-workflows-ref }}
+          ref: feat/terraform-compliance
           path: .operator-workflows
       - name: Set up Python
         uses: actions/setup-python@v7.0.0
