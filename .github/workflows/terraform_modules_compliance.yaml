@@ -38,67 +38,43 @@ jobs:
           --requirement .operator-workflows/terraform-compliance/requirements.txt
       - name: Check required files
         id: required-files
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check required-files
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
       - name: Check terraform.tf configuration
         id: terraform-configuration
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check terraform-configuration
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
       - name: Check variables.tf ordering
         id: variable-ordering
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check variable-ordering
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
       - name: Check outputs.tf ordering
         id: output-ordering
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check output-ordering
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
       - name: Check module interface
         id: module-interface
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check module-interface
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
       - name: Check module sources are pinned
         id: module-sources
-        continue-on-error: true
+        if: always()
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check module-sources
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
-      - name: Fail if any check reported violations
-        if: >-
-          steps.required-files.outcome == 'failure' ||
-          steps.terraform-configuration.outcome == 'failure' ||
-          steps.variable-ordering.outcome == 'failure' ||
-          steps.output-ordering.outcome == 'failure' ||
-          steps.module-interface.outcome == 'failure' ||
-          steps.module-sources.outcome == 'failure'
-        env:
-          REQUIRED_FILES_OUTCOME: ${{ steps.required-files.outcome }}
-          TERRAFORM_CONFIGURATION_OUTCOME: ${{ steps.terraform-configuration.outcome }}
-          VARIABLE_ORDERING_OUTCOME: ${{ steps.variable-ordering.outcome }}
-          OUTPUT_ORDERING_OUTCOME: ${{ steps.output-ordering.outcome }}
-          MODULE_INTERFACE_OUTCOME: ${{ steps.module-interface.outcome }}
-          MODULE_SOURCES_OUTCOME: ${{ steps.module-sources.outcome }}
-        run: |
-          echo "The following CC008 compliance checks failed; see the steps above for details:"
-          if [ "$REQUIRED_FILES_OUTCOME" = "failure" ]; then echo "  - Required files"; fi
-          if [ "$TERRAFORM_CONFIGURATION_OUTCOME" = "failure" ]; then echo "  - Terraform.tf configuration"; fi
-          if [ "$VARIABLE_ORDERING_OUTCOME" = "failure" ]; then echo "  - Variables.tf ordering"; fi
-          if [ "$OUTPUT_ORDERING_OUTCOME" = "failure" ]; then echo "  - Outputs.tf ordering"; fi
-          if [ "$MODULE_INTERFACE_OUTCOME" = "failure" ]; then echo "  - Module interface"; fi
-          if [ "$MODULE_SOURCES_OUTCOME" = "failure" ]; then echo "  - Module sources pinning"; fi
-          exit 1
