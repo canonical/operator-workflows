@@ -1,7 +1,7 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-name: Terraform CC008 compliance check
+name: Terraform modules compliance
 
 on:
   workflow_call:
