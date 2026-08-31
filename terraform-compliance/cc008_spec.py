@@ -30,6 +30,13 @@ class ModuleType(str, Enum):
     PRODUCT = "product"
 
 
+# Terraform's own collection/structural type keywords, all bucketed into the
+# single TypeFamily.COLLECTION member (defined at module level, not inside
+# the Enum body, since a leading-underscore class attribute there would
+# still be turned into a spurious enum member by Enum's metaclass).
+_COLLECTION_TYPE_KEYWORDS = frozenset({"map", "list", "set", "object", "tuple"})
+
+
 class TypeFamily(str, Enum):
     """Broad Terraform type families, used to lightly validate variable types.
 
@@ -44,6 +51,18 @@ class TypeFamily(str, Enum):
     NUMBER = "number"
     BOOL = "bool"
     COLLECTION = "collection"  # map(...), list(...), set(...), object({...})
+
+    @classmethod
+    def _missing_(cls, value: object) -> "TypeFamily | None":
+        """Resolve Terraform's collection/structural keywords to COLLECTION.
+
+        Lets ``TypeFamily("map")``, ``TypeFamily("object")``, etc. resolve
+        directly to ``TypeFamily.COLLECTION`` without a separate lookup table
+        in the checker.
+        """
+        if value in _COLLECTION_TYPE_KEYWORDS:
+            return cls.COLLECTION
+        return None
 
 
 class _NoDefaultCheck:

@@ -28,24 +28,21 @@ from cc008_spec import (
 # expression, e.g. "string", "${map(string)}", "${object({...})}", "number".
 _TYPE_KEYWORD_PATTERN = re.compile(r"([a-z]+)\s*\(?")
 
-_TYPE_FAMILIES = {
-    "string": TypeFamily.STRING,
-    "number": TypeFamily.NUMBER,
-    "bool": TypeFamily.BOOL,
-    "map": TypeFamily.COLLECTION,
-    "list": TypeFamily.COLLECTION,
-    "set": TypeFamily.COLLECTION,
-    "object": TypeFamily.COLLECTION,
-    "tuple": TypeFamily.COLLECTION,
-}
-
 
 def _type_family(type_expr: str) -> TypeFamily | None:
-    """Return the broad TypeFamily of a variable's `type` expression, if known."""
+    """Return the broad TypeFamily of a variable's `type` expression, if known.
+
+    ``TypeFamily``'s own ``_missing_`` hook resolves Terraform's collection
+    keywords (``map``, ``object``, etc.) to ``TypeFamily.COLLECTION``, so
+    no separate lookup table is needed here.
+    """
     match = _TYPE_KEYWORD_PATTERN.match(_unquote(type_expr).removeprefix("${").strip())
     if not match:
         return None
-    return _TYPE_FAMILIES.get(match.group(1))
+    try:
+        return TypeFamily(match.group(1))
+    except ValueError:
+        return None
 
 
 @dataclass(frozen=True)
