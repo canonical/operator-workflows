@@ -1,0 +1,50 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+name: Terraform CC008 compliance check
+
+on:
+  workflow_call:
+    inputs:
+      operator-workflows-ref:
+        description: Git ref used to load the checker from canonical/operator-workflows.
+        required: true
+        type: string
+      python-version:
+        description: Python version used to run the checker.
+        required: false
+        default: "3.12"
+        type: string
+      terraform-directories:
+        description: JSON array of Terraform module directories to check.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  cc008-compliance:
+    name: CC008 compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller repository
+        uses: actions/checkout@v7.0.1
+      - name: Checkout compliance checker
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: canonical/operator-workflows
+          ref: ${{ inputs.operator-workflows-ref }}
+          path: .operator-workflows
+      - name: Set up Python
+        uses: actions/setup-python@v7.0.0
+        with:
+          python-version: ${{ inputs.python-version }}
+      - name: Install checker dependencies
+        run: >-
+          python -m pip install
+          --requirement .operator-workflows/scripts/terraform-compliance/requirements.txt
+      - name: Run CC008 compliance check
+        run: >-
+          python .operator-workflows/scripts/terraform-compliance/cc008_check.py
+          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
