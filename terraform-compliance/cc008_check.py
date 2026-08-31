@@ -13,6 +13,7 @@ import argparse
 import re
 import sys
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 
 import hcl2
@@ -34,6 +35,14 @@ MANDATORY_COMPONENT_VARIABLES = ("model_uuid",)
 MANDATORY_COMPONENT_OUTPUTS = ("components",)
 MANDATORY_PRODUCT_VARIABLES = ("logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
+
+
+class ModuleType(str, Enum):
+    """The CC008 module categories this checker distinguishes."""
+
+    CHARM = "charm"
+    COMPONENT = "component"
+    PRODUCT = "product"
 
 
 _FLOATING_REF_NAMES = frozenset(
@@ -65,7 +74,7 @@ CHECK_SLUGS = (
 class ModuleReport:
     """Detailed CC008 report for one Terraform module."""
 
-    module_type: str
+    module_type: ModuleType
     checks: tuple[CheckResult, ...]
     variables: tuple[str, ...]
     outputs: tuple[str, ...]
@@ -210,8 +219,8 @@ def _defines_tying_resources(parsed_files: list[dict]) -> bool:
     )
 
 
-def classify_module_type(parsed_files: list[dict]) -> str:
-    """Classify a module as "charm", "component", or "product".
+def classify_module_type(parsed_files: list[dict]) -> ModuleType:
+    """Classify a module as CHARM, COMPONENT, or PRODUCT.
 
     A module with no ``module`` blocks is a charm module. A module that
     composes other modules is a product module if it also defines at least
@@ -220,18 +229,18 @@ def classify_module_type(parsed_files: list[dict]) -> str:
     module (bundles charm modules without any such tying resources).
     """
     if not is_composed_module(parsed_files):
-        return "charm"
+        return ModuleType.CHARM
     if _defines_tying_resources(parsed_files):
-        return "product"
-    return "component"
+        return ModuleType.PRODUCT
+    return ModuleType.COMPONENT
 
 
 def check_interface(
-    variables: list[str], outputs: list[str], module_type: str
+    variables: list[str], outputs: list[str], module_type: ModuleType
 ) -> list[str]:
     """Return violations for mandatory variables and outputs."""
     violations: list[str] = []
-    if module_type == "product":
+    if module_type == ModuleType.PRODUCT:
         for variable in MANDATORY_PRODUCT_VARIABLES:
             if variable not in variables:
                 violations.append(
@@ -241,7 +250,7 @@ def check_interface(
             if output not in outputs:
                 violations.append(f"product module missing mandatory output: {output}")
         return violations
-    if module_type == "component":
+    if module_type == ModuleType.COMPONENT:
         for variable in MANDATORY_COMPONENT_VARIABLES:
             if variable not in variables:
                 violations.append(
