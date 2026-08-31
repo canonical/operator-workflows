@@ -262,7 +262,7 @@ def test_classify_module_type_product_when_tying_resource_present() -> None:
 
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = cc008_check.check_interface(variables=[], outputs=[], module_type="charm")
+    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="charm")
     for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision", "units"):
         assert f"charm module missing mandatory variable: {variable}" in violations
     for output in ("application", "provides", "requires"):
@@ -270,38 +270,95 @@ def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
 
 
 def test_compliant_charm_interface_passes() -> None:
-    variables = ["app_name", "channel", "config", "constraints", "model_uuid", "revision", "units"]
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
     outputs = ["application", "provides", "requires"]
     assert cc008_check.check_interface(variables, outputs, module_type="charm") == []
 
 
 def test_component_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = cc008_check.check_interface(variables=[], outputs=[], module_type="component")
+    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="component")
     assert "component module missing mandatory variable: model_uuid" in violations
     assert "component module missing mandatory output: components" in violations
 
 
 def test_compliant_component_interface_passes() -> None:
-    violations = cc008_check.check_interface(["model_uuid"], ["components"], module_type="component")
+    variables = cc008_check.variable_bodies(
+        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+    )
+    violations = cc008_check.check_interface(variables, ["components"], module_type="component")
     assert violations == []
 
 
 def test_product_interface_requires_models_and_metadata() -> None:
-    violations = cc008_check.check_interface(variables=[], outputs=[], module_type="product")
+    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="product")
     assert "product module missing mandatory output: models" in violations
     assert "product module missing mandatory output: metadata" in violations
 
 
 def test_product_interface_requires_mandatory_variables() -> None:
-    violations = cc008_check.check_interface(variables=[], outputs=[], module_type="product")
+    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="product")
     for variable in ("logging-config", "proxy", "risk"):
         assert f"product module missing mandatory variable: {variable}" in violations
     assert "product module missing mandatory variable: juju_controller" not in violations
 
 
 def test_compliant_product_interface_passes() -> None:
-    variables = ["logging-config", "proxy", "risk"]
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "logging-config" {\n  type = string\n}\n'
+                'variable "proxy" {\n  type = object({ http = optional(string) })\n}\n'
+                'variable "risk" {\n  type = string\n}\n'
+            )
+        ]
+    )
     assert cc008_check.check_interface(variables, ["models", "metadata"], module_type="product") == []
+
+
+def test_model_uuid_with_default_is_reported_as_not_required() -> None:
+    variables = cc008_check.variable_bodies(
+        [hcl2.loads('variable "model_uuid" {\n  type = string\n  default = null\n}\n')]
+    )
+    violations = cc008_check.check_interface(variables, ["components"], module_type="component")
+    assert len(violations) == 1
+    assert 'variable "model_uuid": must not declare a default' in violations[0]
+
+
+def test_units_wrong_default_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
+                    'variable "units" {\n  type    = number\n  default = 2\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    assert len(violations) == 1
+    assert 'variable "units": default must be 1' in violations[0]
+
+
+def test_units_wrong_type_family_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
+                    'variable "units" {\n  type    = string\n  default = "1"\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    assert any('variable "units": expected a number-like type, found string' in v for v in violations)
+
+
+def test_config_map_type_family_passes_as_collection() -> None:
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    assert not any('variable "config"' in v for v in violations)
 
 
 def test_local_module_source_is_allowed() -> None:

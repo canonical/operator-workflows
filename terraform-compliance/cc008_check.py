@@ -29,11 +29,66 @@ class ModuleType(str, Enum):
     PRODUCT = "product"
 
 
+class TypeFamily(str, Enum):
+    """Broad Terraform type families, used to lightly validate variable types.
+
+    Deliberately coarse (a bucket, not an exact type match) to avoid the kind
+    of false positives already seen with shape-based validation elsewhere in
+    this checker: CC008 does not mandate one specific collection/object shape
+    for most of these variables, so this only catches obvious mismatches such
+    as a numeric variable declared as a string.
+    """
+
+    STRING = "string"
+    NUMBER = "number"
+    BOOL = "bool"
+    COLLECTION = "collection"  # map(...), list(...), set(...), object({...})
+
+
+# Matches the outermost type keyword python-hcl2 leaves in a variable's `type`
+# expression, e.g. "string", "${map(string)}", "${object({...})}", "number".
+_TYPE_KEYWORD_PATTERN = re.compile(r"([a-z]+)\s*\(?")
+
+_TYPE_FAMILIES = {
+    "string": TypeFamily.STRING,
+    "number": TypeFamily.NUMBER,
+    "bool": TypeFamily.BOOL,
+    "map": TypeFamily.COLLECTION,
+    "list": TypeFamily.COLLECTION,
+    "set": TypeFamily.COLLECTION,
+    "object": TypeFamily.COLLECTION,
+    "tuple": TypeFamily.COLLECTION,
+}
+
+
+def _type_family(type_expr: str) -> TypeFamily | None:
+    """Return the broad TypeFamily of a variable's `type` expression, if known."""
+    match = _TYPE_KEYWORD_PATTERN.match(_unquote(type_expr).removeprefix("${").strip())
+    if not match:
+        return None
+    return _TYPE_FAMILIES.get(match.group(1))
+
+
+# Sentinel meaning "don't check the default value" (as opposed to `None`,
+# which is itself a legitimate Terraform default that some rules do check).
+_NO_DEFAULT_CHECK = object()
+
+
+@dataclass(frozen=True)
+class VariableRule:
+    """Constraints CC008 places on one mandatory variable."""
+
+    name: str
+    type_family: TypeFamily | None = None
+    required: bool = False  # must have no `default` (nullable is not enough)
+    default: object = _NO_DEFAULT_CHECK
+
+
 @dataclass(frozen=True)
 class MandatoryInterface:
     """The mandatory variables and outputs a CC008 module type must declare."""
 
-    variables: tuple[str, ...]
+    variables: tuple[VariableRule, ...]
     outputs: tuple[str, ...]
 
 
@@ -42,22 +97,26 @@ class MandatoryInterface:
 MANDATORY_INTERFACES: dict[ModuleType, MandatoryInterface] = {
     ModuleType.CHARM: MandatoryInterface(
         variables=(
-            "app_name",
-            "channel",
-            "config",
-            "constraints",
-            "model_uuid",
-            "revision",
-            "units",
+            VariableRule("app_name", TypeFamily.STRING),
+            VariableRule("channel", TypeFamily.STRING),
+            VariableRule("config", TypeFamily.COLLECTION, default={}),
+            VariableRule("constraints", TypeFamily.STRING),
+            VariableRule("model_uuid", TypeFamily.STRING, required=True),
+            VariableRule("revision", TypeFamily.NUMBER),
+            VariableRule("units", TypeFamily.NUMBER, default=1),
         ),
         outputs=("application", "provides", "requires"),
     ),
     ModuleType.COMPONENT: MandatoryInterface(
-        variables=("model_uuid",),
+        variables=(VariableRule("model_uuid", TypeFamily.STRING, required=True),),
         outputs=("components",),
     ),
     ModuleType.PRODUCT: MandatoryInterface(
-        variables=("logging-config", "proxy", "risk"),
+        variables=(
+            VariableRule("logging-config", TypeFamily.STRING),
+            VariableRule("proxy", TypeFamily.COLLECTION),
+            VariableRule("risk", TypeFamily.STRING),
+        ),
         outputs=("metadata", "models"),
     ),
 }
@@ -111,13 +170,32 @@ def _unquote(value: str) -> str:
     return value
 
 
+def _block_label(block: dict) -> str:
+    """Return the single label of a one-labeled block (e.g. variable/output/module)."""
+    return next(key for key in block if key != "__is_block__")
+
+
+def _block_body(block: dict) -> dict:
+    """Return the body dict of a one-labeled block, keyed by its label."""
+    return block[_block_label(block)]
+
+
 def block_names(parsed: dict, block_type: str) -> list[str]:
     """Return the ordered labels of blocks of a given type in a parsed file."""
-    names: list[str] = []
-    for block in parsed.get(block_type, []):
-        label = next(key for key in block if key != "__is_block__")
-        names.append(_unquote(label))
-    return names
+    return [_unquote(_block_label(block)) for block in parsed.get(block_type, [])]
+
+
+def variable_bodies(parsed_files: list[dict]) -> dict[str, dict]:
+    """Return a mapping of variable name to its parsed body dict.
+
+    Later declarations of the same name (across files) win, matching the
+    order files are discovered in.
+    """
+    return {
+        _unquote(_block_label(block)): _block_body(block)
+        for parsed in parsed_files
+        for block in parsed.get("variable", [])
+    }
 
 
 def check_required_files(module_dir: Path) -> list[str]:
@@ -211,7 +289,7 @@ def _resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str
     single key at this level is the resource/data type.
     """
     return [
-        _unquote(next(iter(block)))
+        _unquote(_block_label(block))
         for parsed in parsed_files
         for block in parsed.get(block_type, [])
     ]
@@ -242,17 +320,48 @@ def classify_module_type(parsed_files: list[dict]) -> ModuleType:
     return ModuleType.COMPONENT
 
 
+def _check_variable_rule(rule: VariableRule, body: dict, module_type: ModuleType) -> list[str]:
+    """Return violations for one mandatory variable's type/required/default rules."""
+    violations: list[str] = []
+    prefix = f'{module_type} module variable "{rule.name}"'
+
+    declared_type = body.get("type")
+    if rule.type_family is not None and declared_type is not None:
+        family = _type_family(declared_type)
+        if family is not None and family != rule.type_family:
+            violations.append(
+                f"{prefix}: expected a {rule.type_family.value}-like type, "
+                f"found {_unquote(declared_type)}"
+            )
+
+    has_default = "default" in body
+    if rule.required and has_default:
+        violations.append(f"{prefix}: must not declare a default (this variable is required)")
+    elif rule.default is not _NO_DEFAULT_CHECK and has_default and body["default"] != rule.default:
+        violations.append(
+            f"{prefix}: default must be {rule.default!r}, found {body['default']!r}"
+        )
+    return violations
+
+
 def check_interface(
-    variables: list[str], outputs: list[str], module_type: ModuleType
+    variables: dict[str, dict], outputs: list[str], module_type: ModuleType
 ) -> list[str]:
-    """Return violations for mandatory variables and outputs."""
+    """Return violations for mandatory variables and outputs.
+
+    ``variables`` maps variable name to its parsed body dict (see
+    ``variable_bodies``), so presence, type family, and default/required
+    rules can all be checked from the same mapping.
+    """
     interface = MANDATORY_INTERFACES[module_type]
     violations: list[str] = []
-    for variable in interface.variables:
-        if variable not in variables:
+    for rule in interface.variables:
+        if rule.name not in variables:
             violations.append(
-                f"{module_type} module missing mandatory variable: {variable}"
+                f"{module_type} module missing mandatory variable: {rule.name}"
             )
+            continue
+        violations.extend(_check_variable_rule(rule, variables[rule.name], module_type))
     for output in interface.outputs:
         if output not in outputs:
             violations.append(
@@ -266,15 +375,14 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
     violations: list[str] = []
     for parsed in parsed_files:
         for block in parsed.get("module", []):
-            key = next(name for name in block if name != "__is_block__")
-            body = block[key]
+            body = _block_body(block)
             raw_source = body.get("source")
             if not raw_source:
                 continue
             source = _unquote(raw_source)
             if source.startswith(("./", "../")):
                 continue
-            name = _unquote(key)
+            name = _unquote(_block_label(block))
             ref_match = re.search(r'[?&]ref=([^&"]+)', source)
             if ref_match is None:
                 if not body.get("version"):
@@ -301,8 +409,7 @@ def _module_sources(parsed_files: list[dict]) -> list[str]:
     sources: list[str] = []
     for parsed in parsed_files:
         for block in parsed.get("module", []):
-            key = next(name for name in block if name != "__is_block__")
-            source = block[key].get("source")
+            source = _block_body(block).get("source")
             if source:
                 sources.append(_unquote(source))
     return sources
@@ -312,9 +419,8 @@ def inspect_module(module_dir: Path) -> ModuleReport:
     """Return a detailed CC008 report for a Terraform module directory."""
     parsed = {path.name: _load(path) for path in module_dir.glob("*.tf")}
     parsed_files = list(parsed.values())
-    variables = [
-        name for file in parsed_files for name in block_names(file, "variable")
-    ]
+    variable_bodies_by_name = variable_bodies(parsed_files)
+    variables = list(variable_bodies_by_name)
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
     module_type = classify_module_type(parsed_files)
 
@@ -351,7 +457,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         CheckResult(
             "module-interface",
             "Module interface",
-            tuple(check_interface(variables, outputs, module_type)),
+            tuple(check_interface(variable_bodies_by_name, outputs, module_type)),
         ),
         CheckResult(
             "module-sources",
