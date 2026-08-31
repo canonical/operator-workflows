@@ -10,8 +10,10 @@ adds an ``__is_block__`` sentinel to block bodies; both are handled here.
 """
 
 import argparse
+import os
 import re
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import hcl2
@@ -32,6 +34,31 @@ MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
 _REF_PATTERN = re.compile(r"^(v?\d+\.\d+\.\d+|tf-\d+\.\d+\.\d+|[0-9a-f]{7,40})$")
+
+
+@dataclass(frozen=True)
+class CheckResult:
+    """Result of one category of CC008 checks."""
+
+    name: str
+    violations: tuple[str, ...]
+    skip_reason: str | None = None
+
+
+@dataclass(frozen=True)
+class ModuleReport:
+    """Detailed CC008 report for one Terraform module."""
+
+    module_type: str
+    checks: tuple[CheckResult, ...]
+    variables: tuple[str, ...]
+    outputs: tuple[str, ...]
+    sources: tuple[str, ...]
+
+    @property
+    def violations(self) -> list[str]:
+        """Return all violations across check categories."""
+        return [violation for check in self.checks for violation in check.violations]
 
 
 def _unquote(value: str) -> str:
@@ -156,43 +183,113 @@ def _load(path: Path) -> dict:
         return hcl2.load(handle)
 
 
-def check_module(module_dir: Path) -> list[str]:
-    """Return all CC008 violations for a single Terraform module directory."""
-    violations = check_required_files(module_dir)
+def _module_sources(parsed_files: list[dict]) -> list[str]:
+    """Return source values discovered in module blocks."""
+    sources: list[str] = []
+    for parsed in parsed_files:
+        for block in parsed.get("module", []):
+            key = next(name for name in block if name != "__is_block__")
+            source = block[key].get("source")
+            if source:
+                sources.append(_unquote(source))
+    return sources
+
+
+def inspect_module(module_dir: Path) -> ModuleReport:
+    """Return a detailed CC008 report for a Terraform module directory."""
     parsed = {path.name: _load(path) for path in module_dir.glob("*.tf")}
     parsed_files = list(parsed.values())
-
-    if "terraform.tf" in parsed:
-        violations += check_terraform_block(parsed["terraform.tf"])
-    if "variables.tf" in parsed:
-        violations += check_alphabetical(parsed["variables.tf"], "variable", "variables.tf")
-    if "outputs.tf" in parsed:
-        violations += check_alphabetical(parsed["outputs.tf"], "output", "outputs.tf")
-
     variables = [name for file in parsed_files for name in block_names(file, "variable")]
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    violations += check_interface(variables, outputs, is_product_module(parsed_files))
-    violations += check_pinned_module_sources(parsed_files)
-    return violations
+    product = is_product_module(parsed_files)
+
+    checks = (
+        CheckResult("Required files", tuple(check_required_files(module_dir))),
+        CheckResult(
+            "Terraform configuration",
+            tuple(check_terraform_block(parsed["terraform.tf"]))
+            if "terraform.tf" in parsed
+            else (),
+            None if "terraform.tf" in parsed else "terraform.tf is missing",
+        ),
+        CheckResult(
+            "Variable ordering",
+            tuple(check_alphabetical(parsed["variables.tf"], "variable", "variables.tf"))
+            if "variables.tf" in parsed
+            else (),
+            None if "variables.tf" in parsed else "variables.tf is missing",
+        ),
+        CheckResult(
+            "Output ordering",
+            tuple(check_alphabetical(parsed["outputs.tf"], "output", "outputs.tf"))
+            if "outputs.tf" in parsed
+            else (),
+            None if "outputs.tf" in parsed else "outputs.tf is missing",
+        ),
+        CheckResult("Module interface", tuple(check_interface(variables, outputs, product))),
+        CheckResult("Module sources", tuple(check_pinned_module_sources(parsed_files))),
+    )
+    return ModuleReport(
+        module_type="product" if product else "charm",
+        checks=checks,
+        variables=tuple(variables),
+        outputs=tuple(outputs),
+        sources=tuple(_module_sources(parsed_files)),
+    )
+
+
+def check_module(module_dir: Path) -> list[str]:
+    """Return all CC008 violations for a single Terraform module directory."""
+    return inspect_module(module_dir).violations
+
+
+def _emit_github_error(module: str, violation: str) -> None:
+    """Emit a GitHub Actions error annotation for a violation."""
+    message = f"{module}: {violation}".replace("%", "%25").replace("\r", "%0D")
+    print(f"::error title=CC008 compliance::{message.replace(chr(10), '%0A')}")
 
 
 def main(argv: list[str] | None = None) -> int:
     """Run the CC008 compliance check over the given module directories."""
     parser = argparse.ArgumentParser(description="Check Terraform modules for CC008 compliance.")
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Show variables, outputs, and module sources discovered during parsing.",
+    )
     parser.add_argument("directories", nargs="+", help="Terraform module directories to check.")
     args = parser.parse_args(argv)
 
-    failed = False
+    print(f"Checking {len(args.directories)} Terraform module(s) for CC008 compliance")
+    failed_count = 0
     for directory in args.directories:
-        violations = check_module(Path(directory))
-        if violations:
-            failed = True
-            print(f"FAIL {directory}")
-            for violation in violations:
+        report = inspect_module(Path(directory))
+        print(f"\nChecking {directory} ({report.module_type} module)")
+        if args.verbose:
+            print(f"  Variables: {', '.join(report.variables) or 'none'}")
+            print(f"  Outputs: {', '.join(report.outputs) or 'none'}")
+            print(f"  Module sources: {', '.join(report.sources) or 'none'}")
+        for check in report.checks:
+            if check.skip_reason:
+                print(f"  SKIP {check.name} ({check.skip_reason})")
+                continue
+            print(f"  {'FAIL' if check.violations else 'PASS'} {check.name}")
+            for violation in check.violations:
                 print(f"  - {violation}")
+                if os.environ.get("GITHUB_ACTIONS") == "true":
+                    _emit_github_error(directory, violation)
+        if report.violations:
+            failed_count += 1
+            print(f"FAIL {directory}")
         else:
             print(f"PASS {directory}")
-    return 1 if failed else 0
+
+    passed_count = len(args.directories) - failed_count
+    print(
+        f"\nSummary: {len(args.directories)} checked, "
+        f"{passed_count} passed, {failed_count} failed"
+    )
+    return 1 if failed_count else 0
 
 
 if __name__ == "__main__":
