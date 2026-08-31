@@ -86,6 +86,19 @@ jobs:
           steps.output-ordering.outcome == 'failure' ||
           steps.module-interface.outcome == 'failure' ||
           steps.module-sources.outcome == 'failure'
+        env:
+          REQUIRED_FILES_OUTCOME: ${{ steps.required-files.outcome }}
+          TERRAFORM_CONFIGURATION_OUTCOME: ${{ steps.terraform-configuration.outcome }}
+          VARIABLE_ORDERING_OUTCOME: ${{ steps.variable-ordering.outcome }}
+          OUTPUT_ORDERING_OUTCOME: ${{ steps.output-ordering.outcome }}
+          MODULE_INTERFACE_OUTCOME: ${{ steps.module-interface.outcome }}
+          MODULE_SOURCES_OUTCOME: ${{ steps.module-sources.outcome }}
         run: |
-          echo "One or more CC008 compliance checks failed; see the steps above for details."
+          echo "The following CC008 compliance checks failed; see the steps above for details:"
+          if [ "$REQUIRED_FILES_OUTCOME" = "failure" ]; then echo "  - Required files"; fi
+          if [ "$TERRAFORM_CONFIGURATION_OUTCOME" = "failure" ]; then echo "  - Terraform.tf configuration"; fi
+          if [ "$VARIABLE_ORDERING_OUTCOME" = "failure" ]; then echo "  - Variables.tf ordering"; fi
+          if [ "$OUTPUT_ORDERING_OUTCOME" = "failure" ]; then echo "  - Outputs.tf ordering"; fi
+          if [ "$MODULE_INTERFACE_OUTCOME" = "failure" ]; then echo "  - Module interface"; fi
+          if [ "$MODULE_SOURCES_OUTCOME" = "failure" ]; then echo "  - Module sources pinning"; fi
           exit 1
