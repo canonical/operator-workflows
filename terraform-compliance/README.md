@@ -36,13 +36,12 @@ violations are also emitted as error annotations.
 Pass `--check <slug>` to run only one check category (see `--list-checks` for
 the available slugs: `required-files`, `terraform-configuration`,
 `variable-ordering`, `output-ordering`, `module-interface`, `module-sources`).
-The reusable workflow runs each category as its own step, so a failure in one
-check is immediately visible without hiding the results of the others.
-
-The reusable workflow also runs one job per entry in `terraform-directories`
-(a GitHub Actions matrix), so each module's compliance status and check steps
-appear independently in the workflow run instead of being combined into a
-single job that checks every module.
+The reusable workflow runs each category as its own step against every
+configured module directory in one job, so a failure in one check category is
+immediately visible in the Actions UI without hiding the results of the
+others, and without paying the cost of a separate runner per module (checkout,
+Python setup, and dependency install) for what is otherwise a sub-second
+parse-and-check per module.
 
 ## Checks performed
 
