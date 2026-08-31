@@ -30,7 +30,7 @@ MANDATORY_CHARM_VARIABLES = (
 )
 
 MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
-MANDATORY_PRODUCT_VARIABLES = ("juju_controller", "logging-config", "proxy", "risk")
+MANDATORY_PRODUCT_VARIABLES = ("logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
 
