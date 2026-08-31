@@ -32,8 +32,11 @@ class ModuleType(str, Enum):
 
 # Terraform's own collection/structural type keywords, all bucketed into the
 # single TypeFamily.COLLECTION member (defined at module level, not inside
-# the Enum body, since a leading-underscore class attribute there would
-# still be turned into a spurious enum member by Enum's metaclass).
+# the Enum body: embedding it there requires `enum.nonmember`, which needs
+# Python >= 3.11, and there is no repo-wide Python version pin to guarantee
+# that locally - `uv run` without an explicit `-p` has been observed to fall
+# back to a 3.10 interpreter in this environment, which would break the
+# exact commands documented in README.md).
 _COLLECTION_TYPE_KEYWORDS = frozenset({"map", "list", "set", "object", "tuple"})
 
 
