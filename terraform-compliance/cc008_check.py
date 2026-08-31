@@ -34,14 +34,10 @@ MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
 MANDATORY_PRODUCT_VARIABLES = ("juju_controller", "logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
-# Terraform/git give a ref no required shape: a pinned tag can be named
-# anything (tf-1.2.3, v1.2.3, prometheus-k8s-1.1.2, or a repository's own
-# convention that predates CC008). There is no regex that can reliably tell a
-# pinned tag from a floating branch by shape alone, so this checker does not
-# try to validate ref naming. It only flags the small set of conventional
-# default/floating branch names CC008 explicitly calls out as violations
-# ("Floating references (e.g. branches) are not allowed").
-_FLOATING_REF_NAMES = frozenset({"main", "master", "trunk", "develop", "development", "head"})
+
+_FLOATING_REF_NAMES = frozenset(
+    {"main", "master", "trunk", "develop", "development", "head"}
+)
 
 
 @dataclass(frozen=True)
@@ -54,9 +50,6 @@ class CheckResult:
     skip_reason: str | None = None
 
 
-# Stable identifiers for each check category, in the order they run. Used by
-# --check to run a single category (e.g. as one CI workflow step per check)
-# and by --list-checks to enumerate them.
 CHECK_SLUGS = (
     "required-files",
     "terraform-configuration",
@@ -113,7 +106,9 @@ def check_required_files(module_dir: Path) -> list[str]:
 
 
 # Matches one constraint clause, e.g. ">= 1.0", "> 1.0.0", "~> 1.12", "1.0.0".
-_CONSTRAINT_PATTERN = re.compile(r"^(~>|>=|>|=|!=|<=|<)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$")
+_CONSTRAINT_PATTERN = re.compile(
+    r"^(~>|>=|>|=|!=|<=|<)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$"
+)
 
 
 def _allows_juju_v1_or_above(constraint: str) -> bool:
@@ -180,13 +175,17 @@ def is_product_module(parsed_files: list[dict]) -> bool:
     return any(parsed.get("module") for parsed in parsed_files)
 
 
-def check_interface(variables: list[str], outputs: list[str], product: bool) -> list[str]:
+def check_interface(
+    variables: list[str], outputs: list[str], product: bool
+) -> list[str]:
     """Return violations for mandatory variables and outputs."""
     violations: list[str] = []
     if product:
         for variable in MANDATORY_PRODUCT_VARIABLES:
             if variable not in variables:
-                violations.append(f"product module missing mandatory variable: {variable}")
+                violations.append(
+                    f"product module missing mandatory variable: {variable}"
+                )
         for output in MANDATORY_PRODUCT_OUTPUTS:
             if output not in outputs:
                 violations.append(f"product module missing mandatory output: {output}")
@@ -251,7 +250,9 @@ def inspect_module(module_dir: Path) -> ModuleReport:
     """Return a detailed CC008 report for a Terraform module directory."""
     parsed = {path.name: _load(path) for path in module_dir.glob("*.tf")}
     parsed_files = list(parsed.values())
-    variables = [name for file in parsed_files for name in block_names(file, "variable")]
+    variables = [
+        name for file in parsed_files for name in block_names(file, "variable")
+    ]
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
     product = is_product_module(parsed_files)
 
@@ -270,7 +271,9 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         CheckResult(
             "variable-ordering",
             "Variable ordering",
-            tuple(check_alphabetical(parsed["variables.tf"], "variable", "variables.tf"))
+            tuple(
+                check_alphabetical(parsed["variables.tf"], "variable", "variables.tf")
+            )
             if "variables.tf" in parsed
             else (),
             None if "variables.tf" in parsed else "variables.tf is missing",
@@ -289,7 +292,9 @@ def inspect_module(module_dir: Path) -> ModuleReport:
             tuple(check_interface(variables, outputs, product)),
         ),
         CheckResult(
-            "module-sources", "Module sources", tuple(check_pinned_module_sources(parsed_files))
+            "module-sources",
+            "Module sources",
+            tuple(check_pinned_module_sources(parsed_files)),
         ),
     )
     return ModuleReport(
@@ -314,7 +319,9 @@ def _emit_github_error(module: str, violation: str) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     """Run the CC008 compliance check over the given module directories."""
-    parser = argparse.ArgumentParser(description="Check Terraform modules for CC008 compliance.")
+    parser = argparse.ArgumentParser(
+        description="Check Terraform modules for CC008 compliance."
+    )
     parser.add_argument(
         "--verbose",
         action="store_true",
@@ -330,7 +337,9 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Print the available --check slugs and exit.",
     )
-    parser.add_argument("directories", nargs="*", help="Terraform module directories to check.")
+    parser.add_argument(
+        "directories", nargs="*", help="Terraform module directories to check."
+    )
     args = parser.parse_args(argv)
 
     if args.list_checks:
@@ -348,7 +357,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     label = f"check '{args.check}'" if args.check else "all checks"
-    print(f"Checking {len(directories)} Terraform module(s) for CC008 compliance ({label})")
+    print(
+        f"Checking {len(directories)} Terraform module(s) for CC008 compliance ({label})"
+    )
     failed_count = 0
     for directory in directories:
         report = inspect_module(Path(directory))
@@ -357,7 +368,9 @@ def main(argv: list[str] | None = None) -> int:
             if args.check
             else report.checks
         )
-        module_violations = [violation for check in checks for violation in check.violations]
+        module_violations = [
+            violation for check in checks for violation in check.violations
+        ]
         print(f"\nChecking {directory} ({report.module_type} module)")
         if args.verbose:
             print(f"  Variables: {', '.join(report.variables) or 'none'}")
