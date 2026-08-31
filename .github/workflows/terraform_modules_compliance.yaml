@@ -16,8 +16,12 @@ permissions:
 
 jobs:
   cc008-compliance:
-    name: CC008 compliance
+    name: CC008 compliance (${{ matrix.terraform-directory }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform-directory: ${{ fromJSON(inputs.terraform-directories) }}
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v7.0.1
@@ -42,42 +46,42 @@ jobs:
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check required-files
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Check terraform.tf configuration
         id: terraform-configuration
         continue-on-error: true
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check terraform-configuration
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Check variables.tf ordering
         id: variable-ordering
         continue-on-error: true
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check variable-ordering
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Check outputs.tf ordering
         id: output-ordering
         continue-on-error: true
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check output-ordering
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Check module interface
         id: module-interface
         continue-on-error: true
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check module-interface
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Check module sources are pinned
         id: module-sources
         continue-on-error: true
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose --check module-sources
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          "${{ matrix.terraform-directory }}"
       - name: Fail if any check reported violations
         if: >-
           steps.required-files.outcome == 'failure' ||

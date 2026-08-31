@@ -39,6 +39,11 @@ the available slugs: `required-files`, `terraform-configuration`,
 The reusable workflow runs each category as its own step, so a failure in one
 check is immediately visible without hiding the results of the others.
 
+The reusable workflow also runs one job per entry in `terraform-directories`
+(a GitHub Actions matrix), so each module's compliance status and check steps
+appear independently in the workflow run instead of being combined into a
+single job that checks every module.
+
 ## Checks performed
 
 - Required files: `terraform.tf`, `variables.tf`, `outputs.tf`, `main.tf`, and
