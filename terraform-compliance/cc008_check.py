@@ -13,37 +13,16 @@ import argparse
 import re
 import sys
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 
 import hcl2
-
-REQUIRED_FILES = ("terraform.tf", "variables.tf", "outputs.tf", "main.tf", "README.md")
-
-
-class ModuleType(str, Enum):
-    """The CC008 module categories this checker distinguishes."""
-
-    CHARM = "charm"
-    COMPONENT = "component"
-    PRODUCT = "product"
-
-
-class TypeFamily(str, Enum):
-    """Broad Terraform type families, used to lightly validate variable types.
-
-    Deliberately coarse (a bucket, not an exact type match) to avoid the kind
-    of false positives already seen with shape-based validation elsewhere in
-    this checker: CC008 does not mandate one specific collection/object shape
-    for most of these variables, so this only catches obvious mismatches such
-    as a numeric variable declared as a string.
-    """
-
-    STRING = "string"
-    NUMBER = "number"
-    BOOL = "bool"
-    COLLECTION = "collection"  # map(...), list(...), set(...), object({...})
-
+from cc008_spec import (
+    CC008_SPEC,
+    NO_DEFAULT_CHECK,
+    ModuleType,
+    TypeFamily,
+    VariableRule,
+)
 
 # Matches the outermost type keyword python-hcl2 leaves in a variable's `type`
 # expression, e.g. "string", "${map(string)}", "${object({...})}", "number".
@@ -67,64 +46,6 @@ def _type_family(type_expr: str) -> TypeFamily | None:
     if not match:
         return None
     return _TYPE_FAMILIES.get(match.group(1))
-
-
-# Sentinel meaning "don't check the default value" (as opposed to `None`,
-# which is itself a legitimate Terraform default that some rules do check).
-_NO_DEFAULT_CHECK = object()
-
-
-@dataclass(frozen=True)
-class VariableRule:
-    """Constraints CC008 places on one mandatory variable."""
-
-    name: str
-    type_family: TypeFamily | None = None
-    required: bool = False  # must have no `default` (nullable is not enough)
-    default: object = _NO_DEFAULT_CHECK
-
-
-@dataclass(frozen=True)
-class MandatoryInterface:
-    """The mandatory variables and outputs a CC008 module type must declare."""
-
-    variables: tuple[VariableRule, ...]
-    outputs: tuple[str, ...]
-
-
-# Single source of truth for CC008's mandatory interface per module type. Add
-# a new ModuleType member and an entry here to support another module kind.
-MANDATORY_INTERFACES: dict[ModuleType, MandatoryInterface] = {
-    ModuleType.CHARM: MandatoryInterface(
-        variables=(
-            VariableRule("app_name", TypeFamily.STRING),
-            VariableRule("channel", TypeFamily.STRING),
-            VariableRule("config", TypeFamily.COLLECTION, default={}),
-            VariableRule("constraints", TypeFamily.STRING),
-            VariableRule("model_uuid", TypeFamily.STRING, required=True),
-            VariableRule("revision", TypeFamily.NUMBER),
-            VariableRule("units", TypeFamily.NUMBER, default=1),
-        ),
-        outputs=("application", "provides", "requires"),
-    ),
-    ModuleType.COMPONENT: MandatoryInterface(
-        variables=(VariableRule("model_uuid", TypeFamily.STRING, required=True),),
-        outputs=("components",),
-    ),
-    ModuleType.PRODUCT: MandatoryInterface(
-        variables=(
-            VariableRule("logging-config", TypeFamily.STRING),
-            VariableRule("proxy", TypeFamily.COLLECTION),
-            VariableRule("risk", TypeFamily.STRING),
-        ),
-        outputs=("metadata", "models"),
-    ),
-}
-
-
-_FLOATING_REF_NAMES = frozenset(
-    {"main", "master", "trunk", "develop", "development", "head"}
-)
 
 
 @dataclass(frozen=True)
@@ -206,7 +127,7 @@ def check_required_files(module_dir: Path) -> list[str]:
         return [f"module path is not a directory: {module_dir}"]
     return [
         f"missing required file: {name}"
-        for name in REQUIRED_FILES
+        for name in CC008_SPEC.required_files
         if not (module_dir / name).exists()
     ]
 
@@ -252,9 +173,12 @@ def check_terraform_block(parsed: dict) -> list[str]:
     if not juju:
         violations.append("terraform.tf: missing juju provider in required_providers")
         return violations
+    requirements = CC008_SPEC.terraform_block
     source = juju.get("source")
-    if not source or _unquote(source) != "juju/juju":
-        violations.append('terraform.tf: juju provider source must be "juju/juju"')
+    if not source or _unquote(source) != requirements.provider_source:
+        violations.append(
+            f'terraform.tf: juju provider source must be "{requirements.provider_source}"'
+        )
     version = juju.get("version")
     if not version:
         violations.append("terraform.tf: juju provider is missing a version constraint")
@@ -298,7 +222,7 @@ def _resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str
 def _defines_tying_resources(parsed_files: list[dict]) -> bool:
     """Return True if any file declares a Product-module tying resource/data block."""
     return any(
-        label in {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
+        label in CC008_SPEC.tying_resource_types
         for block_type in ("resource", "data")
         for label in _resource_type_labels(parsed_files, block_type)
     )
@@ -320,7 +244,9 @@ def classify_module_type(parsed_files: list[dict]) -> ModuleType:
     return ModuleType.COMPONENT
 
 
-def _check_variable_rule(rule: VariableRule, body: dict, module_type: ModuleType) -> list[str]:
+def _check_variable_rule(
+    rule: VariableRule, body: dict, module_type: ModuleType
+) -> list[str]:
     """Return violations for one mandatory variable's type/required/default rules."""
     violations: list[str] = []
     prefix = f'{module_type} module variable "{rule.name}"'
@@ -337,7 +263,7 @@ def _check_variable_rule(rule: VariableRule, body: dict, module_type: ModuleType
     has_default = "default" in body
     if rule.required and has_default:
         violations.append(f"{prefix}: must not declare a default (this variable is required)")
-    elif rule.default is not _NO_DEFAULT_CHECK and has_default and body["default"] != rule.default:
+    elif rule.default is not NO_DEFAULT_CHECK and has_default and body["default"] != rule.default:
         violations.append(
             f"{prefix}: default must be {rule.default!r}, found {body['default']!r}"
         )
@@ -353,7 +279,7 @@ def check_interface(
     ``variable_bodies``), so presence, type family, and default/required
     rules can all be checked from the same mapping.
     """
-    interface = MANDATORY_INTERFACES[module_type]
+    interface = CC008_SPEC.module_interfaces[module_type]
     violations: list[str] = []
     for rule in interface.variables:
         if rule.name not in variables:
@@ -390,7 +316,7 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
                         f'module "{name}": source must be pinned with ?ref=<tag|commit> '
                         "or a registry version"
                     )
-            elif ref_match.group(1).lower() in _FLOATING_REF_NAMES:
+            elif ref_match.group(1).lower() in CC008_SPEC.floating_ref_names:
                 violations.append(
                     f'module "{name}": ref "{ref_match.group(1)}" looks like a branch name, '
                     "not a pinned tag or commit (floating references are not allowed)"

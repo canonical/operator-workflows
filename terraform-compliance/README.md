@@ -3,6 +3,14 @@
 `cc008_check.py` verifies that Terraform modules follow the CC008 Terraform
 module standards. HCL is parsed with `python-hcl2`.
 
+`cc008_spec.py` is the single source of truth for *what* CC008 requires
+(required files, mandatory variables/outputs per module type and their
+type/required/default constraints, the Product-module tying-resource types,
+the floating-ref denylist) as plain dataclasses with no checking logic. To see
+the full CC008 contract this checker enforces, read `cc008_spec.py` alone —
+`cc008_check.py` only contains the *how* (HCL parsing, constraint math,
+alphabetical comparison, etc.) that evaluates it.
+
 The reusable workflow installs the pinned dependencies from `requirements.txt`
 and runs the checker against module directories in the caller repository.
 
