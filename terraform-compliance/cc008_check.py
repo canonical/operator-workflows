@@ -30,6 +30,8 @@ MANDATORY_CHARM_VARIABLES = (
 )
 
 MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
+MANDATORY_COMPONENT_VARIABLES = ("model_uuid",)
+MANDATORY_COMPONENT_OUTPUTS = ("components",)
 MANDATORY_PRODUCT_VARIABLES = ("logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
@@ -169,17 +171,67 @@ def check_alphabetical(parsed: dict, block_type: str, filename: str) -> list[str
     return []
 
 
-def is_product_module(parsed_files: list[dict]) -> bool:
+def is_composed_module(parsed_files: list[dict]) -> bool:
     """Return True when any parsed file composes other modules."""
     return any(parsed.get("module") for parsed in parsed_files)
 
 
+def _resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str]:
+    """Return the resource/data type label of every block of a given type.
+
+    ``resource``/``data`` blocks have two labels (type, name); python-hcl2
+    represents each as a single-key dict ``{type: {name: body}}``, so the
+    single key at this level is the resource/data type.
+    """
+    return [
+        _unquote(next(iter(block)))
+        for parsed in parsed_files
+        for block in parsed.get(block_type, [])
+    ]
+
+
+# Per CC008, Product modules "contain the definition of the various resources
+# required to tie components and charm modules together (e.g. juju models,
+# juju secrets, integrations, etc)". A Product module may not create the
+# model itself (it can just take model_uuid as an input, per CC008's own
+# "create or consume a model" wording), so juju_model alone is not a reliable
+# signal; any of these tying resource/data types is treated as one.
+_PRODUCT_TYING_RESOURCE_TYPES = frozenset(
+    {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
+)
+
+
+def _defines_tying_resources(parsed_files: list[dict]) -> bool:
+    """Return True if any file declares a Product-module tying resource/data block."""
+    return any(
+        label in _PRODUCT_TYING_RESOURCE_TYPES
+        for block_type in ("resource", "data")
+        for label in _resource_type_labels(parsed_files, block_type)
+    )
+
+
+def classify_module_type(parsed_files: list[dict]) -> str:
+    """Classify a module as "charm", "component", or "product".
+
+    A module with no ``module`` blocks is a charm module. A module that
+    composes other modules is a product module if it also defines at least
+    one resource/data block that ties components together (juju_model,
+    juju_secret, juju_integration, juju_offer); otherwise it is a component
+    module (bundles charm modules without any such tying resources).
+    """
+    if not is_composed_module(parsed_files):
+        return "charm"
+    if _defines_tying_resources(parsed_files):
+        return "product"
+    return "component"
+
+
 def check_interface(
-    variables: list[str], outputs: list[str], product: bool
+    variables: list[str], outputs: list[str], module_type: str
 ) -> list[str]:
     """Return violations for mandatory variables and outputs."""
     violations: list[str] = []
-    if product:
+    if module_type == "product":
         for variable in MANDATORY_PRODUCT_VARIABLES:
             if variable not in variables:
                 violations.append(
@@ -188,6 +240,18 @@ def check_interface(
         for output in MANDATORY_PRODUCT_OUTPUTS:
             if output not in outputs:
                 violations.append(f"product module missing mandatory output: {output}")
+        return violations
+    if module_type == "component":
+        for variable in MANDATORY_COMPONENT_VARIABLES:
+            if variable not in variables:
+                violations.append(
+                    f"component module missing mandatory variable: {variable}"
+                )
+        for output in MANDATORY_COMPONENT_OUTPUTS:
+            if output not in outputs:
+                violations.append(
+                    f"component module missing mandatory output: {output}"
+                )
         return violations
     for variable in MANDATORY_CHARM_VARIABLES:
         if variable not in variables:
@@ -253,7 +317,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         name for file in parsed_files for name in block_names(file, "variable")
     ]
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    product = is_product_module(parsed_files)
+    module_type = classify_module_type(parsed_files)
 
     checks = (
         CheckResult(
@@ -288,7 +352,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         CheckResult(
             "module-interface",
             "Module interface",
-            tuple(check_interface(variables, outputs, product)),
+            tuple(check_interface(variables, outputs, module_type)),
         ),
         CheckResult(
             "module-sources",
@@ -297,7 +361,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         ),
     )
     return ModuleReport(
-        module_type="product" if product else "charm",
+        module_type=module_type,
         checks=checks,
         variables=tuple(variables),
         outputs=tuple(outputs),
