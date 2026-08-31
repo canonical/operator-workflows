@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       terraform-directories:
-        description: JSON array of Terraform module directories to check.
+        description: Non-empty JSON array of Terraform module directories to check.
         required: true
         type: string
 

@@ -302,6 +302,28 @@ def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> Non
     assert "FAIL" in capsys.readouterr().out
 
 
+def test_main_returns_two_when_no_directories_are_configured(capsys, monkeypatch) -> None:
+  monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+  exit_code = cc008_check.main([])
+
+  output = capsys.readouterr().out
+  assert exit_code == 2
+  assert "ERROR: no Terraform module directories were provided" in output
+  assert "::error title=CC008 configuration::" in output
+
+
+def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
+  missing = tmp_path / "does-not-exist"
+
+  exit_code = cc008_check.main([str(missing)])
+
+  output = capsys.readouterr().out
+  assert exit_code == 1
+  assert f"module directory does not exist: {missing}" in output
+  assert "Summary: 1 checked, 0 passed, 1 failed" in output
+
+
 def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
   module = _write_charm_module(tmp_path)
 

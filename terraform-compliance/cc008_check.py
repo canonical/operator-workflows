@@ -79,6 +79,10 @@ def block_names(parsed: dict, block_type: str) -> list[str]:
 
 def check_required_files(module_dir: Path) -> list[str]:
     """Return violations for any missing required module file."""
+    if not module_dir.exists():
+        return [f"module directory does not exist: {module_dir}"]
+    if not module_dir.is_dir():
+        return [f"module path is not a directory: {module_dir}"]
     return [
         f"missing required file: {name}"
         for name in REQUIRED_FILES
@@ -257,12 +261,20 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Show variables, outputs, and module sources discovered during parsing.",
     )
-    parser.add_argument("directories", nargs="+", help="Terraform module directories to check.")
+    parser.add_argument("directories", nargs="*", help="Terraform module directories to check.")
     args = parser.parse_args(argv)
+    directories = [directory for directory in args.directories if directory.strip()]
 
-    print(f"Checking {len(args.directories)} Terraform module(s) for CC008 compliance")
+    if not directories:
+        message = "no Terraform module directories were provided"
+        print(f"ERROR: {message}")
+        if os.environ.get("GITHUB_ACTIONS") == "true":
+            print(f"::error title=CC008 configuration::{message}")
+        return 2
+
+    print(f"Checking {len(directories)} Terraform module(s) for CC008 compliance")
     failed_count = 0
-    for directory in args.directories:
+    for directory in directories:
         report = inspect_module(Path(directory))
         print(f"\nChecking {directory} ({report.module_type} module)")
         if args.verbose:
@@ -284,9 +296,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"PASS {directory}")
 
-    passed_count = len(args.directories) - failed_count
+    passed_count = len(directories) - failed_count
     print(
-        f"\nSummary: {len(args.directories)} checked, "
+        f"\nSummary: {len(directories)} checked, "
         f"{passed_count} passed, {failed_count} failed"
     )
     return 1 if failed_count else 0

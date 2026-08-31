@@ -17,7 +17,9 @@ uv run --with python-hcl2==8.1.3 python \
 ```
 
 Exit code `0` means every module passed; `1` means at least one module reported
-a violation.
+a violation. Exit code `2` means no module directories were provided. Missing
+paths and directories without the required Terraform module files fail the
+check rather than passing silently.
 
 ## Run the unit tests
 
