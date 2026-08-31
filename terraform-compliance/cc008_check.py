@@ -10,7 +10,6 @@ adds an ``__is_block__`` sentinel to block bodies; both are handled here.
 """
 
 import argparse
-import os
 import re
 import sys
 from dataclasses import dataclass
@@ -352,8 +351,7 @@ def main(argv: list[str] | None = None) -> int:
     if not directories:
         message = "no Terraform module directories were provided"
         print(f"ERROR: {message}")
-        if os.environ.get("GITHUB_ACTIONS") == "true":
-            print(f"::error title=CC008 configuration::{message}")
+        print(f"::error title=CC008 configuration::{message}")
         return 2
 
     label = f"check '{args.check}'" if args.check else "all checks"
@@ -383,8 +381,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {'FAIL' if check.violations else 'PASS'} {check.name}")
             for violation in check.violations:
                 print(f"  - {violation}")
-                if os.environ.get("GITHUB_ACTIONS") == "true":
-                    _emit_github_error(directory, violation)
+                _emit_github_error(directory, violation)
         if module_violations:
             failed_count += 1
             print(f"FAIL {directory}")
