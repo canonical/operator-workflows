@@ -48,9 +48,23 @@ _FLOATING_REF_NAMES = frozenset({"main", "master", "trunk", "develop", "developm
 class CheckResult:
     """Result of one category of CC008 checks."""
 
+    slug: str
     name: str
     violations: tuple[str, ...]
     skip_reason: str | None = None
+
+
+# Stable identifiers for each check category, in the order they run. Used by
+# --check to run a single category (e.g. as one CI workflow step per check)
+# and by --list-checks to enumerate them.
+CHECK_SLUGS = (
+    "required-files",
+    "terraform-configuration",
+    "variable-ordering",
+    "output-ordering",
+    "module-interface",
+    "module-sources",
+)
 
 
 @dataclass(frozen=True)
@@ -242,8 +256,11 @@ def inspect_module(module_dir: Path) -> ModuleReport:
     product = is_product_module(parsed_files)
 
     checks = (
-        CheckResult("Required files", tuple(check_required_files(module_dir))),
         CheckResult(
+            "required-files", "Required files", tuple(check_required_files(module_dir))
+        ),
+        CheckResult(
+            "terraform-configuration",
             "Terraform configuration",
             tuple(check_terraform_block(parsed["terraform.tf"]))
             if "terraform.tf" in parsed
@@ -251,6 +268,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
             None if "terraform.tf" in parsed else "terraform.tf is missing",
         ),
         CheckResult(
+            "variable-ordering",
             "Variable ordering",
             tuple(check_alphabetical(parsed["variables.tf"], "variable", "variables.tf"))
             if "variables.tf" in parsed
@@ -258,14 +276,21 @@ def inspect_module(module_dir: Path) -> ModuleReport:
             None if "variables.tf" in parsed else "variables.tf is missing",
         ),
         CheckResult(
+            "output-ordering",
             "Output ordering",
             tuple(check_alphabetical(parsed["outputs.tf"], "output", "outputs.tf"))
             if "outputs.tf" in parsed
             else (),
             None if "outputs.tf" in parsed else "outputs.tf is missing",
         ),
-        CheckResult("Module interface", tuple(check_interface(variables, outputs, product))),
-        CheckResult("Module sources", tuple(check_pinned_module_sources(parsed_files))),
+        CheckResult(
+            "module-interface",
+            "Module interface",
+            tuple(check_interface(variables, outputs, product)),
+        ),
+        CheckResult(
+            "module-sources", "Module sources", tuple(check_pinned_module_sources(parsed_files))
+        ),
     )
     return ModuleReport(
         module_type="product" if product else "charm",
@@ -295,8 +320,24 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Show variables, outputs, and module sources discovered during parsing.",
     )
+    parser.add_argument(
+        "--check",
+        choices=CHECK_SLUGS,
+        help="Run only this check category (see --list-checks). Runs all categories if omitted.",
+    )
+    parser.add_argument(
+        "--list-checks",
+        action="store_true",
+        help="Print the available --check slugs and exit.",
+    )
     parser.add_argument("directories", nargs="*", help="Terraform module directories to check.")
     args = parser.parse_args(argv)
+
+    if args.list_checks:
+        for slug in CHECK_SLUGS:
+            print(slug)
+        return 0
+
     directories = [directory for directory in args.directories if directory.strip()]
 
     if not directories:
@@ -306,16 +347,23 @@ def main(argv: list[str] | None = None) -> int:
             print(f"::error title=CC008 configuration::{message}")
         return 2
 
-    print(f"Checking {len(directories)} Terraform module(s) for CC008 compliance")
+    label = f"check '{args.check}'" if args.check else "all checks"
+    print(f"Checking {len(directories)} Terraform module(s) for CC008 compliance ({label})")
     failed_count = 0
     for directory in directories:
         report = inspect_module(Path(directory))
+        checks = (
+            [check for check in report.checks if check.slug == args.check]
+            if args.check
+            else report.checks
+        )
+        module_violations = [violation for check in checks for violation in check.violations]
         print(f"\nChecking {directory} ({report.module_type} module)")
         if args.verbose:
             print(f"  Variables: {', '.join(report.variables) or 'none'}")
             print(f"  Outputs: {', '.join(report.outputs) or 'none'}")
             print(f"  Module sources: {', '.join(report.sources) or 'none'}")
-        for check in report.checks:
+        for check in checks:
             if check.skip_reason:
                 print(f"  SKIP {check.name} ({check.skip_reason})")
                 continue
@@ -324,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"  - {violation}")
                 if os.environ.get("GITHUB_ACTIONS") == "true":
                     _emit_github_error(directory, violation)
-        if report.violations:
+        if module_violations:
             failed_count += 1
             print(f"FAIL {directory}")
         else:

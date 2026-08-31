@@ -7,6 +7,7 @@ from pathlib import Path
 
 import cc008_check
 import hcl2
+import pytest
 
 COMPLIANT_TERRAFORM_TF = """\
 terraform {
@@ -459,6 +460,57 @@ def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
   assert "PASS Module interface" in output
   assert "PASS Module sources" in output
   assert "Summary: 1 checked, 1 passed, 0 failed" in output
+
+
+def test_check_names_lists_available_check_slugs(capsys) -> None:
+    exit_code = cc008_check.main(["--list-checks"])
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    for slug in cc008_check.CHECK_SLUGS:
+        assert slug in output
+
+
+def test_check_filter_runs_only_the_selected_category(tmp_path: Path, capsys) -> None:
+    module = _write_charm_module(tmp_path)
+    (module / "variables.tf").write_text(
+        COMPLIANT_VARIABLES_TF.replace(
+            'variable "units" {\n  type    = number\n  default = 1\n}\n', ""
+        )
+    )
+
+    exit_code = cc008_check.main(["--check", "required-files", str(module)])
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "PASS Required files" in output
+    assert "Module interface" not in output
+    assert "missing mandatory variable" not in output
+
+
+def test_check_filter_still_fails_when_selected_category_fails(tmp_path: Path, capsys) -> None:
+    module = _write_charm_module(tmp_path)
+    (module / "variables.tf").write_text(
+        COMPLIANT_VARIABLES_TF.replace(
+            'variable "units" {\n  type    = number\n  default = 1\n}\n', ""
+        )
+    )
+
+    exit_code = cc008_check.main(["--check", "module-interface", str(module)])
+
+    output = capsys.readouterr().out
+    assert exit_code == 1
+    assert "FAIL Module interface" in output
+    assert "charm module missing mandatory variable: units" in output
+    assert "Required files" not in output
+
+
+def test_unknown_check_slug_is_rejected(tmp_path: Path) -> None:
+    module = _write_charm_module(tmp_path)
+
+    with pytest.raises(SystemExit) as excinfo:
+        cc008_check.main(["--check", "not-a-real-check", str(module)])
+    assert excinfo.value.code == 2
 
 
 def test_verbose_logs_discovered_interface(tmp_path: Path, capsys) -> None:

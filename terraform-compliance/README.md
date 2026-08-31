@@ -33,6 +33,12 @@ Pass `--verbose` locally to include discovered variables, outputs, and module
 sources. The reusable workflow always runs with `--verbose`. In GitHub Actions,
 violations are also emitted as error annotations.
 
+Pass `--check <slug>` to run only one check category (see `--list-checks` for
+the available slugs: `required-files`, `terraform-configuration`,
+`variable-ordering`, `output-ordering`, `module-interface`, `module-sources`).
+The reusable workflow runs each category as its own step, so a failure in one
+check is immediately visible without hiding the results of the others.
+
 ## Checks performed
 
 - Required files: `terraform.tf`, `variables.tf`, `outputs.tf`, `main.tf`, and
