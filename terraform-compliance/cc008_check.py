@@ -20,22 +20,6 @@ import hcl2
 
 REQUIRED_FILES = ("terraform.tf", "variables.tf", "outputs.tf", "main.tf", "README.md")
 
-MANDATORY_CHARM_VARIABLES = (
-    "app_name",
-    "channel",
-    "config",
-    "constraints",
-    "model_uuid",
-    "revision",
-    "units",
-)
-
-MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
-MANDATORY_COMPONENT_VARIABLES = ("model_uuid",)
-MANDATORY_COMPONENT_OUTPUTS = ("components",)
-MANDATORY_PRODUCT_VARIABLES = ("logging-config", "proxy", "risk")
-MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
-
 
 class ModuleType(str, Enum):
     """The CC008 module categories this checker distinguishes."""
@@ -43,6 +27,40 @@ class ModuleType(str, Enum):
     CHARM = "charm"
     COMPONENT = "component"
     PRODUCT = "product"
+
+
+@dataclass(frozen=True)
+class MandatoryInterface:
+    """The mandatory variables and outputs a CC008 module type must declare."""
+
+    variables: tuple[str, ...]
+    outputs: tuple[str, ...]
+
+
+# Single source of truth for CC008's mandatory interface per module type. Add
+# a new ModuleType member and an entry here to support another module kind.
+MANDATORY_INTERFACES: dict[ModuleType, MandatoryInterface] = {
+    ModuleType.CHARM: MandatoryInterface(
+        variables=(
+            "app_name",
+            "channel",
+            "config",
+            "constraints",
+            "model_uuid",
+            "revision",
+            "units",
+        ),
+        outputs=("application", "provides", "requires"),
+    ),
+    ModuleType.COMPONENT: MandatoryInterface(
+        variables=("model_uuid",),
+        outputs=("components",),
+    ),
+    ModuleType.PRODUCT: MandatoryInterface(
+        variables=("logging-config", "proxy", "risk"),
+        outputs=("metadata", "models"),
+    ),
+}
 
 
 _FLOATING_REF_NAMES = frozenset(
@@ -239,35 +257,16 @@ def check_interface(
     variables: list[str], outputs: list[str], module_type: ModuleType
 ) -> list[str]:
     """Return violations for mandatory variables and outputs."""
+    interface = MANDATORY_INTERFACES[module_type]
     violations: list[str] = []
-    if module_type == ModuleType.PRODUCT:
-        for variable in MANDATORY_PRODUCT_VARIABLES:
-            if variable not in variables:
-                violations.append(
-                    f"product module missing mandatory variable: {variable}"
-                )
-        for output in MANDATORY_PRODUCT_OUTPUTS:
-            if output not in outputs:
-                violations.append(f"product module missing mandatory output: {output}")
-        return violations
-    if module_type == ModuleType.COMPONENT:
-        for variable in MANDATORY_COMPONENT_VARIABLES:
-            if variable not in variables:
-                violations.append(
-                    f"component module missing mandatory variable: {variable}"
-                )
-        for output in MANDATORY_COMPONENT_OUTPUTS:
-            if output not in outputs:
-                violations.append(
-                    f"component module missing mandatory output: {output}"
-                )
-        return violations
-    for variable in MANDATORY_CHARM_VARIABLES:
+    for variable in interface.variables:
         if variable not in variables:
-            violations.append(f"charm module missing mandatory variable: {variable}")
-    for output in MANDATORY_CHARM_OUTPUTS:
+            violations.append(
+                f"{module_type} module missing mandatory variable: {variable}"
+            )
+    for output in interface.outputs:
         if output not in outputs:
-            violations.append(f"charm module missing mandatory output: {output}")
+            violations.append(f"{module_type} module missing mandatory output: {output}")
     return violations
 
 
