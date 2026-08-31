@@ -152,6 +152,52 @@ terraform {
     assert "terraform.tf: juju provider version must allow >= 1.0" in violations
 
 
+def test_terraform_block_juju_version_strictly_above_one_passes() -> None:
+    text = """\
+terraform {
+  required_version = "~> 1.12"
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "> 1.0.0"
+    }
+  }
+}
+"""
+    assert cc008_check.check_terraform_block(hcl2.loads(text)) == []
+
+
+def test_terraform_block_juju_exact_pin_at_one_passes() -> None:
+    text = """\
+terraform {
+  required_version = "~> 1.12"
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "1.0.0"
+    }
+  }
+}
+"""
+    assert cc008_check.check_terraform_block(hcl2.loads(text)) == []
+
+
+def test_terraform_block_juju_version_with_only_upper_bound_fails() -> None:
+    text = """\
+terraform {
+  required_version = "~> 1.12"
+  required_providers {
+    juju = {
+      source  = "juju/juju"
+      version = "< 3.0"
+    }
+  }
+}
+"""
+    violations = cc008_check.check_terraform_block(hcl2.loads(text))
+    assert "terraform.tf: juju provider version must allow >= 1.0" in violations
+
+
 def test_block_names_preserves_source_order() -> None:
     text = """\
 variable "zeta" {
@@ -217,8 +263,15 @@ def test_product_interface_requires_models_and_metadata() -> None:
     assert "product module missing mandatory output: metadata" in violations
 
 
+def test_product_interface_requires_mandatory_variables() -> None:
+    violations = cc008_check.check_interface(variables=[], outputs=[], product=True)
+    for variable in ("juju_controller", "logging-config", "proxy", "risk"):
+        assert f"product module missing mandatory variable: {variable}" in violations
+
+
 def test_compliant_product_interface_passes() -> None:
-    assert cc008_check.check_interface([], ["models", "metadata"], product=True) == []
+    variables = ["juju_controller", "logging-config", "proxy", "risk"]
+    assert cc008_check.check_interface(variables, ["models", "metadata"], product=True) == []
 
 
 def test_local_module_source_is_allowed() -> None:
@@ -269,6 +322,36 @@ def test_branch_ref_is_reported() -> None:
 def test_registry_version_source_is_allowed() -> None:
     text = 'module "ic" {\n  source  = "canonical/x/juju"\n  version = "1.2.0"\n}\n'
     assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+
+
+def test_bare_semver_ref_is_allowed() -> None:
+    text = (
+        'module "ic" {\n'
+        '  source = "git::https://github.com/canonical/not-yet-cc008//terraform?ref=1.4.2"\n'
+        "}\n"
+    )
+    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+
+
+def test_product_prefixed_semver_ref_is_allowed() -> None:
+    text = (
+        'module "ic" {\n'
+        '  source = "git::https://github.com/canonical/x-bundle//terraform'
+        '?ref=gateway-api-integrator-1.0.0"\n'
+        "}\n"
+    )
+    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+
+
+def test_prerelease_suffixed_ref_is_reported() -> None:
+    text = (
+        'module "ic" {\n'
+        '  source = "git::https://github.com/canonical/x-operator//terraform?ref=1.0.0-rc1"\n'
+        "}\n"
+    )
+    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    assert len(violations) == 1
+    assert "floating references are not allowed" in violations[0]
 
 
 def test_compliant_charm_module_has_no_violations(tmp_path: Path) -> None:

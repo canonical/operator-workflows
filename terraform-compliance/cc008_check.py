@@ -31,9 +31,15 @@ MANDATORY_CHARM_VARIABLES = (
 )
 
 MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
+MANDATORY_PRODUCT_VARIABLES = ("juju_controller", "logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
-_REF_PATTERN = re.compile(r"^(v?\d+\.\d+\.\d+|tf-\d+\.\d+\.\d+|[0-9a-f]{7,40})$")
+# A pinned ref is a commit SHA, or any tag ending in a semver suffix (optionally
+# prefixed, e.g. tf-1.2.3, v1.2.3, prometheus-k8s-1.1.2). External repositories
+# that do not yet follow CC008's tf-X.Y.Z/vX.Y.Z convention may still use a bare
+# semver tag; that is accepted too, since enforcing CC008 tag naming on a
+# repository outside this checker's scope is out of scope for this check.
+_REF_PATTERN = re.compile(r"^([\w.-]*\d+\.\d+\.\d+|[0-9a-f]{7,40})$")
 
 
 @dataclass(frozen=True)
@@ -90,6 +96,29 @@ def check_required_files(module_dir: Path) -> list[str]:
     ]
 
 
+# Matches one constraint clause, e.g. ">= 1.0", "> 1.0.0", "~> 1.12", "1.0.0".
+_CONSTRAINT_PATTERN = re.compile(r"^(~>|>=|>|=|!=|<=|<)?\s*(\d+)(?:\.(\d+))?(?:\.(\d+))?$")
+
+
+def _allows_juju_v1_or_above(constraint: str) -> bool:
+    """Return True if a version constraint string permits juju provider >= 1.0.0.
+
+    Handles comma-separated constraint lists (e.g. ">= 1.0, < 3.0") by checking
+    whether any clause establishes a lower bound at or above 1.0.0. A
+    constraint with only an upper bound (e.g. "< 3.0") does not guarantee
+    >= 1.0.0 and is therefore rejected.
+    """
+    for clause in constraint.split(","):
+        match = _CONSTRAINT_PATTERN.match(clause.strip())
+        if not match:
+            continue
+        operator, major, minor, patch = match.groups()
+        version = (int(major), int(minor or 0), int(patch or 0))
+        if operator in (None, ">=", ">", "=", "~>") and version >= (1, 0, 0):
+            return True
+    return False
+
+
 def check_terraform_block(parsed: dict) -> list[str]:
     """Return violations for the required_version and juju provider."""
     blocks = parsed.get("terraform", [])
@@ -112,7 +141,7 @@ def check_terraform_block(parsed: dict) -> list[str]:
     version = juju.get("version")
     if not version:
         violations.append("terraform.tf: juju provider is missing a version constraint")
-    elif ">= 1.0" not in re.sub(r"\s+", " ", _unquote(version)):
+    elif not _allows_juju_v1_or_above(_unquote(version)):
         violations.append("terraform.tf: juju provider version must allow >= 1.0")
     return violations
 
@@ -139,6 +168,9 @@ def check_interface(variables: list[str], outputs: list[str], product: bool) -> 
     """Return violations for mandatory variables and outputs."""
     violations: list[str] = []
     if product:
+        for variable in MANDATORY_PRODUCT_VARIABLES:
+            if variable not in variables:
+                violations.append(f"product module missing mandatory variable: {variable}")
         for output in MANDATORY_PRODUCT_OUTPUTS:
             if output not in outputs:
                 violations.append(f"product module missing mandatory output: {output}")
