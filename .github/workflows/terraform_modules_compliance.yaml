@@ -6,20 +6,10 @@ name: Terraform CC008 compliance check
 on:
   workflow_call:
     inputs:
-      python-version:
-        description: Python version used to run the checker.
-        required: false
-        default: "3.12"
-        type: string
       terraform-directories:
         description: JSON array of Terraform module directories to check.
         required: true
         type: string
-      verbose:
-        description: Show variables, outputs, and module sources discovered during parsing.
-        required: false
-        default: false
-        type: boolean
 
 permissions:
   contents: read
@@ -41,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7.0.0
         with:
-          python-version: ${{ inputs.python-version }}
+          python-version: "3.12"
       - name: Install checker dependencies
         run: >-
           python -m pip install
@@ -49,5 +39,5 @@ jobs:
       - name: Run CC008 compliance check
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
-          ${{ inputs.verbose && '--verbose' || '' }}
+          --verbose
           ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
