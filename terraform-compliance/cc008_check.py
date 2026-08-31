@@ -217,21 +217,10 @@ def _resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str
     ]
 
 
-# Per CC008, Product modules "contain the definition of the various resources
-# required to tie components and charm modules together (e.g. juju models,
-# juju secrets, integrations, etc)". A Product module may not create the
-# model itself (it can just take model_uuid as an input, per CC008's own
-# "create or consume a model" wording), so juju_model alone is not a reliable
-# signal; any of these tying resource/data types is treated as one.
-_PRODUCT_TYING_RESOURCE_TYPES = frozenset(
-    {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
-)
-
-
 def _defines_tying_resources(parsed_files: list[dict]) -> bool:
     """Return True if any file declares a Product-module tying resource/data block."""
     return any(
-        label in _PRODUCT_TYING_RESOURCE_TYPES
+        label in {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
         for block_type in ("resource", "data")
         for label in _resource_type_labels(parsed_files, block_type)
     )
@@ -266,7 +255,9 @@ def check_interface(
             )
     for output in interface.outputs:
         if output not in outputs:
-            violations.append(f"{module_type} module missing mandatory output: {output}")
+            violations.append(
+                f"{module_type} module missing mandatory output: {output}"
+            )
     return violations
 
 
@@ -382,10 +373,9 @@ def check_module(module_dir: Path) -> list[str]:
     return inspect_module(module_dir).violations
 
 
-def _emit_github_error(module: str, violation: str) -> None:
-    """Emit a GitHub Actions error annotation for a violation."""
-    message = f"{module}: {violation}".replace("%", "%25").replace("\r", "%0D")
-    print(f"::error title=CC008 compliance::{message.replace(chr(10), '%0A')}")
+def _escape_annotation(message: str) -> str:
+    """Escape a message for use in a GitHub Actions ``::error`` annotation."""
+    return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -423,7 +413,7 @@ def main(argv: list[str] | None = None) -> int:
     if not directories:
         message = "no Terraform module directories were provided"
         print(f"ERROR: {message}")
-        print(f"::error title=CC008 configuration::{message}")
+        print(f"::error title=CC008 configuration::{_escape_annotation(message)}")
         return 2
 
     label = f"check '{args.check}'" if args.check else "all checks"
@@ -453,7 +443,8 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {'FAIL' if check.violations else 'PASS'} {check.name}")
             for violation in check.violations:
                 print(f"  - {violation}")
-                _emit_github_error(directory, violation)
+                annotation = _escape_annotation(f"{directory}: {violation}")
+                print(f"::error title=CC008 compliance::{annotation}")
         if module_violations:
             failed_count += 1
             print(f"FAIL {directory}")
