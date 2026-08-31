@@ -45,13 +45,14 @@ violations are also emitted as error annotations.
 - Charm modules declare the mandatory variables and outputs.
 - Product modules declare the mandatory variables (`juju_controller`, `proxy`,
   `logging-config`, `risk`) and outputs (`models`, `metadata`).
-- Remote module sources are pinned to a tag or commit. A pinned ref may be a
-  commit SHA or any tag ending in a semver suffix (`tf-X.Y.Z`, `vX.Y.Z`,
-  `<product>-X.Y.Z`, or a bare `X.Y.Z`). Bare semver tags are accepted because
-  a dependency may live in a repository that does not yet follow CC008's own
-  tag-naming convention; enforcing that repository's tag naming is outside
-  this checker's scope — only that the ref is pinned (not a floating branch)
-  matters here.
+- Remote module sources declare a `?ref=...` (or a registry `version`). A ref
+  can be named anything — Terraform/git impose no required shape on tags, so
+  this checker does not try to validate ref naming. It only rejects the small
+  set of conventional default/floating branch names CC008 explicitly calls
+  out (`main`, `master`, `trunk`, `develop`, `development`, `head`, matched
+  case-insensitively). Any other ref value, including a bare semver tag from a
+  dependency that does not follow CC008's own `tf-X.Y.Z`/`vX.Y.Z` convention,
+  is treated as pinned.
 
 A module is treated as a product module when any of its files declares a
 `module` block; otherwise it is treated as a charm module. Component modules
@@ -62,12 +63,19 @@ instead.
 
 ## Known deviations from the CC008 spec
 
-- CC008 lists `providers.tf` as part of the standard module file structure.
-  This checker does not require it: none of the reference CC008-compliant
-  modules evaluated (including this repository's own product/charm modules)
-  use a separate `providers.tf` — provider configuration lives in the
-  `required_providers` block of `terraform.tf` instead. Enforcing
-  `providers.tf` today would fail every currently-compliant module.
+- CC008 lists `providers.tf` as part of the standard module file structure,
+  alongside `terraform.tf`. The two serve different purposes: `terraform.tf`
+  declares dependencies only (`required_version`, `required_providers` — which
+  provider and version range this module needs), while `providers.tf` would
+  hold actual `provider "juju" { ... }` *configuration* (controller address,
+  credentials). Terraform's own convention reserves `provider` configuration
+  blocks for root modules; a reusable Charm/Component/Product module (as
+  defined by CC008) is always instantiated by something else — a deployment, a
+  test harness, a higher-level product module — and that caller is the one
+  that provides the `provider "juju" {}` configuration. A CC008 module
+  therefore has nothing to put in `providers.tf`; declaring the dependency in
+  `terraform.tf` is the complete requirement. This checker does not require
+  `providers.tf` for that reason.
 - CC008 states `provides`/`requires` outputs are mandatory only *if the charm
   defines that relation*. Terraform alone cannot determine whether a charm
   declares `provides`/`requires` relations, so this checker treats both as

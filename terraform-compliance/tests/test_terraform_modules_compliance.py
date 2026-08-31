@@ -319,12 +319,38 @@ def test_branch_ref_is_reported() -> None:
     assert "floating references are not allowed" in violations[0]
 
 
+def test_branch_ref_is_reported_case_insensitively() -> None:
+    text = (
+        'module "ic" {\n'
+        '  source = "git::https://github.com/canonical/x-operator//terraform?ref=Main"\n'
+        "}\n"
+    )
+    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    assert len(violations) == 1
+    assert "floating references are not allowed" in violations[0]
+
+
+def test_other_known_default_branch_names_are_reported() -> None:
+    for branch in ("master", "develop", "trunk"):
+        text = (
+            'module "ic" {\n'
+            f'  source = "git::https://github.com/canonical/x-operator//terraform?ref={branch}"\n'
+            "}\n"
+        )
+        violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+        assert len(violations) == 1, branch
+        assert "floating references are not allowed" in violations[0]
+
+
 def test_registry_version_source_is_allowed() -> None:
     text = 'module "ic" {\n  source  = "canonical/x/juju"\n  version = "1.2.0"\n}\n'
     assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_bare_semver_ref_is_allowed() -> None:
+    # A dependency in a repository that does not yet follow CC008's own
+    # tag-naming convention may still be pinned with a bare semver tag.
+    # Enforcing that repository's tag naming is outside this checker's scope.
     text = (
         'module "ic" {\n'
         '  source = "git::https://github.com/canonical/not-yet-cc008//terraform?ref=1.4.2"\n'
@@ -343,15 +369,25 @@ def test_product_prefixed_semver_ref_is_allowed() -> None:
     assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
-def test_prerelease_suffixed_ref_is_reported() -> None:
+def test_prerelease_suffixed_ref_is_allowed() -> None:
+    # A ref has no required shape; a pre-release tag is a legitimate pin, not
+    # a branch, so it is not flagged.
     text = (
         'module "ic" {\n'
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=1.0.0-rc1"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
-    assert len(violations) == 1
-    assert "floating references are not allowed" in violations[0]
+    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+
+
+def test_arbitrary_named_tag_ref_is_allowed() -> None:
+    # Refs are not required to look like semver at all.
+    text = (
+        'module "ic" {\n'
+        '  source = "git::https://github.com/canonical/x-operator//terraform?ref=stable-release"\n'
+        "}\n"
+    )
+    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_compliant_charm_module_has_no_violations(tmp_path: Path) -> None:

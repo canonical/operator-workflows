@@ -34,12 +34,14 @@ MANDATORY_CHARM_OUTPUTS = ("application", "provides", "requires")
 MANDATORY_PRODUCT_VARIABLES = ("juju_controller", "logging-config", "proxy", "risk")
 MANDATORY_PRODUCT_OUTPUTS = ("metadata", "models")
 
-# A pinned ref is a commit SHA, or any tag ending in a semver suffix (optionally
-# prefixed, e.g. tf-1.2.3, v1.2.3, prometheus-k8s-1.1.2). External repositories
-# that do not yet follow CC008's tf-X.Y.Z/vX.Y.Z convention may still use a bare
-# semver tag; that is accepted too, since enforcing CC008 tag naming on a
-# repository outside this checker's scope is out of scope for this check.
-_REF_PATTERN = re.compile(r"^([\w.-]*\d+\.\d+\.\d+|[0-9a-f]{7,40})$")
+# Terraform/git give a ref no required shape: a pinned tag can be named
+# anything (tf-1.2.3, v1.2.3, prometheus-k8s-1.1.2, or a repository's own
+# convention that predates CC008). There is no regex that can reliably tell a
+# pinned tag from a floating branch by shape alone, so this checker does not
+# try to validate ref naming. It only flags the small set of conventional
+# default/floating branch names CC008 explicitly calls out as violations
+# ("Floating references (e.g. branches) are not allowed").
+_FLOATING_REF_NAMES = frozenset({"main", "master", "trunk", "develop", "development", "head"})
 
 
 @dataclass(frozen=True)
@@ -205,10 +207,10 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
                         f'module "{name}": source must be pinned with ?ref=<tag|commit> '
                         "or a registry version"
                     )
-            elif not _REF_PATTERN.match(ref_match.group(1)):
+            elif ref_match.group(1).lower() in _FLOATING_REF_NAMES:
                 violations.append(
-                    f'module "{name}": ref "{ref_match.group(1)}" is not a tag or commit '
-                    "(floating references are not allowed)"
+                    f'module "{name}": ref "{ref_match.group(1)}" looks like a branch name, '
+                    "not a pinned tag or commit (floating references are not allowed)"
                 )
     return violations
 
