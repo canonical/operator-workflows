@@ -198,13 +198,13 @@ CC008_SPEC = CC008Spec(
                 ),
             ),
             # provides/requires are CC008 "mandatory if the charm defines that
-            # relation"; Terraform can't tell whether it does, so this checker
-            # treats both as always mandatory (a documented, deliberate
-            # deviation). `offers` is genuinely optional.
+            # relation"; Terraform can't tell whether it does, so (like `units`)
+            # they are optional here - a charm without those relations is not
+            # flagged. `application` is always required.
             outputs=(
                 OutputRule("application"),
-                OutputRule("provides"),
-                OutputRule("requires"),
+                OutputRule("provides", optional=True),
+                OutputRule("requires", optional=True),
                 OutputRule("offers", optional=True),
             ),
         ),
@@ -220,6 +220,8 @@ CC008_SPEC = CC008Spec(
             ),
             outputs=(
                 OutputRule("components"),
+                OutputRule("provides", optional=True),
+                OutputRule("requires", optional=True),
                 OutputRule("offers", optional=True),
             ),
         ),

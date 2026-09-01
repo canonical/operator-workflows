@@ -72,9 +72,9 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
   variables and outputs (see "Module classification" below for how a module's
   type is determined):
   - Charm: `app_name`, `channel`, `config`, `constraints`, `model_uuid`,
-    `revision` variables; `application`, `provides`, `requires` outputs.
-    (`units` is validated but not *required* — see optional variables and
-    "Known deviations" below.)
+    `revision` variables; `application` output. (`units` and the
+    `provides`/`requires`/`offers` outputs are validated-if-present but not
+    required — see optional variables/outputs and "Known deviations" below.)
   - Component: `model_uuid` variable; `components` output.
   - Product: `logging-config`, `proxy`, `risk` variables; `metadata`, `models`
     outputs.
@@ -143,9 +143,11 @@ modules without tying them together).
   `providers.tf` for that reason.
 - CC008 states `provides`/`requires` outputs are mandatory only *if the charm
   defines that relation*. Terraform alone cannot determine whether a charm
-  declares `provides`/`requires` relations, so this checker treats both as
-  always mandatory for charm modules. This is intentionally stricter than the
-  spec.
+  declares `provides`/`requires` relations, so — like `units` below — this
+  checker treats both as optional outputs: a charm (or component) without
+  those relations is not flagged, and one that does declare them is accepted.
+  This avoids a false positive on charms with no such relation, at the cost of
+  not catching a charm that omits a relation output it should have.
 - CC008 lists `units` (number, default `1`) as a mandatory charm-module
   variable *except for subordinate charms, where it must not be provided*.
   Whether a charm is subordinate is declared in its `metadata.yaml`, which is

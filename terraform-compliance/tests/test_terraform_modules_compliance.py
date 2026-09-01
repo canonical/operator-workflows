@@ -265,8 +265,18 @@ def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
     violations = cc008_check.check_interface(variables={}, outputs=[], module_type="charm")
     for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision"):
         assert f"charm module missing mandatory variable: {variable}" in violations
-    for output in ("application", "provides", "requires"):
-        assert f"charm module missing mandatory output: {output}" in violations
+    assert "charm module missing mandatory output: application" in violations
+    # provides/requires/offers are optional and must not be reported missing.
+    for output in ("provides", "requires", "offers"):
+        assert f"charm module missing mandatory output: {output}" not in violations
+
+
+def test_charm_with_only_application_output_passes() -> None:
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(
+        variables, ["application"], module_type="charm"
+    )
+    assert violations == []
 
 
 def test_units_is_not_mandated_for_charm_modules() -> None:
