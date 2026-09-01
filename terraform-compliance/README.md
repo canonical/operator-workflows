@@ -7,9 +7,16 @@ module standards. HCL is parsed with `python-hcl2`.
 (required files, mandatory variables/outputs per module type and their
 type/required/default constraints, the Product-module tying-resource types,
 the floating-ref denylist) as plain dataclasses with no checking logic. To see
-the full CC008 contract this checker enforces, read `cc008_spec.py` alone —
-`cc008_check.py` only contains the *how* (HCL parsing, constraint math,
-alphabetical comparison, etc.) that evaluates it.
+the full CC008 contract this checker enforces, read `cc008_spec.py` alone.
+
+The source is split by concern:
+
+- `cc008_spec.py` — *what* CC008 requires (data only).
+- `terraform_hcl.py` — loading `.tf` files and normalising `python-hcl2`'s
+  output quirks (the `__is_block__` sentinel, quoted labels, nested
+  resource/data labels) into plain names and bodies.
+- `cc008_check.py` — the CC008 checks, module classification, reporting, and
+  CLI, built on the other two.
 
 The reusable workflow installs the pinned dependencies from `requirements.txt`
 and runs the checker against module directories in the caller repository.

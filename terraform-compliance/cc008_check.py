@@ -15,34 +15,23 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-import hcl2
 from cc008_spec import (
     CC008_SPEC,
     NO_DEFAULT_CHECK,
     ModuleType,
-    TypeFamily,
     VariableRule,
 )
-
-# Matches the outermost type keyword python-hcl2 leaves in a variable's `type`
-# expression, e.g. "string", "${map(string)}", "${object({...})}", "number".
-_TYPE_KEYWORD_PATTERN = re.compile(r"([a-z]+)\s*\(?")
-
-
-def _type_family(type_expr: str) -> TypeFamily | None:
-    """Return the broad TypeFamily of a variable's `type` expression, if known.
-
-    ``TypeFamily``'s own ``_missing_`` hook resolves Terraform's collection
-    keywords (``map``, ``object``, etc.) to ``TypeFamily.COLLECTION``, so
-    no separate lookup table is needed here.
-    """
-    match = _TYPE_KEYWORD_PATTERN.match(_unquote(type_expr).removeprefix("${").strip())
-    if not match:
-        return None
-    try:
-        return TypeFamily(match.group(1))
-    except ValueError:
-        return None
+from terraform_hcl import (
+    block_body,
+    block_label,
+    block_names,
+    load_module_files,
+    module_sources,
+    resource_type_labels,
+    type_family,
+    unquote,
+    variable_bodies,
+)
 
 
 @dataclass(frozen=True)
@@ -79,41 +68,6 @@ class ModuleReport:
     def violations(self) -> list[str]:
         """Return all violations across check categories."""
         return [violation for check in self.checks for violation in check.violations]
-
-
-def _unquote(value: str) -> str:
-    """Strip the surrounding double quotes python-hcl2 keeps on string literals."""
-    if len(value) >= 2 and value[0] == '"' and value[-1] == '"':
-        return value[1:-1]
-    return value
-
-
-def _block_label(block: dict) -> str:
-    """Return the single label of a one-labeled block (e.g. variable/output/module)."""
-    return next(key for key in block if key != "__is_block__")
-
-
-def _block_body(block: dict) -> dict:
-    """Return the body dict of a one-labeled block, keyed by its label."""
-    return block[_block_label(block)]
-
-
-def block_names(parsed: dict, block_type: str) -> list[str]:
-    """Return the ordered labels of blocks of a given type in a parsed file."""
-    return [_unquote(_block_label(block)) for block in parsed.get(block_type, [])]
-
-
-def variable_bodies(parsed_files: list[dict]) -> dict[str, dict]:
-    """Return a mapping of variable name to its parsed body dict.
-
-    Later declarations of the same name (across files) win, matching the
-    order files are discovered in.
-    """
-    return {
-        _unquote(_block_label(block)): _block_body(block)
-        for parsed in parsed_files
-        for block in parsed.get("variable", [])
-    }
 
 
 def check_required_files(module_dir: Path) -> list[str]:
@@ -172,14 +126,14 @@ def check_terraform_block(parsed: dict) -> list[str]:
         return violations
     requirements = CC008_SPEC.terraform_block
     source = juju.get("source")
-    if not source or _unquote(source) != requirements.provider_source:
+    if not source or unquote(source) != requirements.provider_source:
         violations.append(
             f'terraform.tf: juju provider source must be "{requirements.provider_source}"'
         )
     version = juju.get("version")
     if not version:
         violations.append("terraform.tf: juju provider is missing a version constraint")
-    elif not _allows_juju_v1_or_above(_unquote(version)):
+    elif not _allows_juju_v1_or_above(unquote(version)):
         violations.append("terraform.tf: juju provider version must allow >= 1.0")
     return violations
 
@@ -202,26 +156,12 @@ def is_composed_module(parsed_files: list[dict]) -> bool:
     return any(parsed.get("module") for parsed in parsed_files)
 
 
-def _resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str]:
-    """Return the resource/data type label of every block of a given type.
-
-    ``resource``/``data`` blocks have two labels (type, name); python-hcl2
-    represents each as a single-key dict ``{type: {name: body}}``, so the
-    single key at this level is the resource/data type.
-    """
-    return [
-        _unquote(_block_label(block))
-        for parsed in parsed_files
-        for block in parsed.get(block_type, [])
-    ]
-
-
 def _defines_tying_resources(parsed_files: list[dict]) -> bool:
     """Return True if any file declares a Product-module tying resource/data block."""
     return any(
         label in CC008_SPEC.tying_resource_types
         for block_type in ("resource", "data")
-        for label in _resource_type_labels(parsed_files, block_type)
+        for label in resource_type_labels(parsed_files, block_type)
     )
 
 
@@ -250,11 +190,11 @@ def _check_variable_rule(
 
     declared_type = body.get("type")
     if rule.type_family is not None and declared_type is not None:
-        family = _type_family(declared_type)
+        family = type_family(declared_type)
         if family is not None and family != rule.type_family:
             violations.append(
                 f"{prefix}: expected a {rule.type_family.value}-like type, "
-                f"found {_unquote(declared_type)}"
+                f"found {unquote(declared_type)}"
             )
 
     has_default = "default" in body
@@ -298,14 +238,14 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
     violations: list[str] = []
     for parsed in parsed_files:
         for block in parsed.get("module", []):
-            body = _block_body(block)
+            body = block_body(block)
             raw_source = body.get("source")
             if not raw_source:
                 continue
-            source = _unquote(raw_source)
+            source = unquote(raw_source)
             if source.startswith(("./", "../")):
                 continue
-            name = _unquote(_block_label(block))
+            name = unquote(block_label(block))
             ref_match = re.search(r'[?&]ref=([^&"]+)', source)
             if ref_match is None:
                 if not body.get("version"):
@@ -321,26 +261,9 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
     return violations
 
 
-def _load(path: Path) -> dict:
-    """Parse a Terraform file with python-hcl2."""
-    with path.open(encoding="utf-8") as handle:
-        return hcl2.load(handle)
-
-
-def _module_sources(parsed_files: list[dict]) -> list[str]:
-    """Return source values discovered in module blocks."""
-    sources: list[str] = []
-    for parsed in parsed_files:
-        for block in parsed.get("module", []):
-            source = _block_body(block).get("source")
-            if source:
-                sources.append(_unquote(source))
-    return sources
-
-
 def inspect_module(module_dir: Path) -> ModuleReport:
     """Return a detailed CC008 report for a Terraform module directory."""
-    parsed = {path.name: _load(path) for path in module_dir.glob("*.tf")}
+    parsed = load_module_files(module_dir)
     parsed_files = list(parsed.values())
     variable_bodies_by_name = variable_bodies(parsed_files)
     variables = list(variable_bodies_by_name)
@@ -393,7 +316,7 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         checks=checks,
         variables=tuple(variables),
         outputs=tuple(outputs),
-        sources=tuple(_module_sources(parsed_files)),
+        sources=tuple(module_sources(parsed_files)),
     )
 
 
