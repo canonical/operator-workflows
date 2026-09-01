@@ -151,10 +151,16 @@ CC008_SPEC = CC008Spec(
                 VariableRule("app_name", TypeFamily.STRING),
                 VariableRule("channel", TypeFamily.STRING),
                 VariableRule("config", TypeFamily.COLLECTION, default={}),
-                VariableRule("constraints", TypeFamily.STRING),
+                VariableRule("constraints", TypeFamily.STRING, default=None),
                 VariableRule("model_uuid", TypeFamily.STRING, required=True),
-                VariableRule("revision", TypeFamily.NUMBER),
-                VariableRule("units", TypeFamily.NUMBER, default=1),
+                VariableRule("revision", TypeFamily.NUMBER, default=None),
+                # CC008 lists `units` (number, default 1) as mandatory EXCEPT
+                # for subordinate charms, where it must NOT be provided.
+                # Whether a charm is subordinate is declared in its
+                # metadata.yaml, which is not visible from Terraform alone, so
+                # mandating `units` here would wrongly flag every subordinate
+                # charm module. We therefore do not enforce it.
+                # VariableRule("units", TypeFamily.NUMBER, default=1),
             ),
             outputs=("application", "provides", "requires"),
         ),

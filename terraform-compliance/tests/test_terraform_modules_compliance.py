@@ -263,10 +263,31 @@ def test_classify_module_type_product_when_tying_resource_present() -> None:
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
     violations = cc008_check.check_interface(variables={}, outputs=[], module_type="charm")
-    for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision", "units"):
+    for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision"):
         assert f"charm module missing mandatory variable: {variable}" in violations
     for output in ("application", "provides", "requires"):
         assert f"charm module missing mandatory output: {output}" in violations
+
+
+def test_units_is_not_mandated_for_charm_modules() -> None:
+    # CC008 exempts subordinate charms from `units`, and subordinate-ness is
+    # not detectable from Terraform, so `units` is intentionally not required.
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "app_name" {\n  type = string\n}\n'
+                'variable "channel" {\n  type = string\n}\n'
+                'variable "config" {\n  type = map(string)\n}\n'
+                'variable "constraints" {\n  type = string\n}\n'
+                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "revision" {\n  type = number\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert violations == []
 
 
 def test_compliant_charm_interface_passes() -> None:
@@ -324,35 +345,51 @@ def test_model_uuid_with_default_is_reported_as_not_required() -> None:
     assert 'variable "model_uuid": must not declare a default' in violations[0]
 
 
-def test_units_wrong_default_is_reported() -> None:
+def test_revision_wrong_default_is_reported() -> None:
     variables = cc008_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
-                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
-                    'variable "units" {\n  type    = number\n  default = 2\n}\n',
+                    'variable "revision" {\n  type    = number\n  default = null\n}\n',
+                    'variable "revision" {\n  type    = number\n  default = 5\n}\n',
                 )
             )
         ]
     )
     violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
     assert len(violations) == 1
-    assert 'variable "units": default must be 1' in violations[0]
+    assert 'variable "revision": default must be None' in violations[0]
 
 
-def test_units_wrong_type_family_is_reported() -> None:
+def test_constraints_wrong_default_is_reported() -> None:
     variables = cc008_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
-                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
-                    'variable "units" {\n  type    = string\n  default = "1"\n}\n',
+                    'variable "constraints" {\n  type    = string\n  default = null\n}\n',
+                    'variable "constraints" {\n  type    = string\n  default = "arch=amd64"\n}\n',
                 )
             )
         ]
     )
     violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
-    assert any('variable "units": expected a number-like type, found string' in v for v in violations)
+    assert len(violations) == 1
+    assert 'variable "constraints": default must be None' in violations[0]
+
+
+def test_revision_wrong_type_family_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "revision" {\n  type    = number\n  default = null\n}\n',
+                    'variable "revision" {\n  type    = string\n  default = null\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    assert any('variable "revision": expected a number-like type, found string' in v for v in violations)
 
 
 def test_config_map_type_family_passes_as_collection() -> None:
@@ -486,11 +523,11 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
     module = _write_charm_module(tmp_path)
     (module / "variables.tf").write_text(
         COMPLIANT_VARIABLES_TF.replace(
-            'variable "units" {\n  type    = number\n  default = 1\n}\n', ""
+            'variable "channel" {\n  type    = string\n  default = "1/stable"\n}\n', ""
         )
     )
     violations = cc008_check.check_module(module)
-    assert "charm module missing mandatory variable: units" in violations
+    assert "charm module missing mandatory variable: channel" in violations
 
 
 def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:

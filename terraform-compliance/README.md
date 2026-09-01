@@ -72,8 +72,8 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
   variables and outputs (see "Module classification" below for how a module's
   type is determined):
   - Charm: `app_name`, `channel`, `config`, `constraints`, `model_uuid`,
-    `revision`, `units` variables; `application`, `provides`, `requires`
-    outputs.
+    `revision` variables; `application`, `provides`, `requires` outputs.
+    (`units` is deliberately *not* required — see "Known deviations" below.)
   - Component: `model_uuid` variable; `components` output.
   - Product: `logging-config`, `proxy`, `risk` variables; `metadata`, `models`
     outputs.
@@ -81,8 +81,10 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
   `number`, `bool`, or `collection` for `map`/`list`/`set`/`object`/`tuple`)
   and, where CC008 is unambiguous, `required`/`default` rules:
   - `model_uuid` must not declare a `default` (it is always required).
-  - `units`' default, if declared, must be `1`; `config`'s default, if
-    declared, must be `{}`.
+  - Where CC008 states a default, it is enforced *if the variable declares a
+    default*: `config` must default to `{}`, and `constraints`/`revision`
+    must default to `null` (CC008 requires `revision`'s default be `null` so
+    the latest revision on a channel is deployed).
   - The type check is deliberately a broad family match, not an exact type
     comparison — CC008 doesn't mandate one specific collection/object shape
     for most of these variables, and exact-shape checks have already caused
@@ -130,3 +132,11 @@ modules without tying them together).
   declares `provides`/`requires` relations, so this checker treats both as
   always mandatory for charm modules. This is intentionally stricter than the
   spec.
+- CC008 lists `units` (number, default `1`) as a mandatory charm-module
+  variable *except for subordinate charms, where it must not be provided*.
+  Whether a charm is subordinate is declared in its `metadata.yaml`, which is
+  not visible from Terraform alone, so mandating `units` here would wrongly
+  flag every subordinate charm module. This checker therefore does not require
+  `units` at all (a missing `units` on a non-subordinate charm goes
+  unreported) — the opposite trade-off to `provides`/`requires` above,
+  chosen to avoid a guaranteed false positive on subordinate charms.
