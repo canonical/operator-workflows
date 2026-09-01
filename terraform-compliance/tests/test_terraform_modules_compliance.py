@@ -398,6 +398,49 @@ def test_config_map_type_family_passes_as_collection() -> None:
     assert not any('variable "config"' in v for v in violations)
 
 
+def test_absent_optional_variable_is_not_reported() -> None:
+    # `resources` is an optional charm variable; a charm that omits it must not
+    # be flagged.
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert not any("resources" in v for v in violations)
+
+
+def test_present_optional_variable_with_wrong_type_is_reported() -> None:
+    # `base` is an optional string variable; if declared it must be string-like.
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "base" {\n  type    = string\n  default = null\n}\n',
+                    'variable "base" {\n  type    = number\n  default = null\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert any('variable "base": expected a string-like type, found number' in v for v in violations)
+
+
+def test_present_optional_variable_with_valid_type_passes() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF
+                + 'variable "resources" {\n  type = map(string)\n  default = {}\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert not any("resources" in v for v in violations)
+
+
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert cc008_check.check_pinned_module_sources([parsed]) == []

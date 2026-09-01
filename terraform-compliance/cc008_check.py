@@ -220,6 +220,8 @@ def check_interface(
     violations: list[str] = []
     for rule in interface.variables:
         if rule.name not in variables:
+            if rule.optional:
+                continue
             violations.append(
                 f"{module_type} module missing mandatory variable: {rule.name}"
             )

@@ -93,6 +93,10 @@ class VariableRule:
     default: object = (
         NO_DEFAULT_CHECK  # exact value the default must equal, if declared
     )
+    # If True, the variable need not be declared; when absent it is skipped,
+    # when present its type/default rules still apply. (`required` is a
+    # separate axis: it constrains the default of a variable that must exist.)
+    optional: bool = False
 
 
 @dataclass(frozen=True)
@@ -161,6 +165,17 @@ CC008_SPEC = CC008Spec(
                 # mandating `units` here would wrongly flag every subordinate
                 # charm module. We therefore do not enforce it.
                 # VariableRule("units", TypeFamily.NUMBER, default=1),
+                # Optional CC008 charm variables: not required to exist, but
+                # when present must match the type the juju_application
+                # resource expects. Any other input name is allowed and
+                # unchecked.
+                VariableRule("base", TypeFamily.STRING, optional=True),
+                VariableRule("expose", TypeFamily.COLLECTION, optional=True),
+                VariableRule("resources", TypeFamily.COLLECTION, optional=True),
+                VariableRule("machines", TypeFamily.COLLECTION, optional=True),
+                VariableRule("endpoint_bindings", TypeFamily.COLLECTION, optional=True),
+                VariableRule("storage_directives", TypeFamily.COLLECTION, optional=True),
+                VariableRule("offered_endpoints", TypeFamily.COLLECTION, optional=True),
             ),
             outputs=("application", "provides", "requires"),
         ),
