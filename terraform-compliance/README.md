@@ -19,10 +19,14 @@ and runs the checker against module directories in the caller repository.
 From the `operator-workflows` repository:
 
 ```bash
-uv run --with python-hcl2==8.1.3 python \
+uv run -p 3.12 --with python-hcl2==8.1.3 python \
   terraform-compliance/cc008_check.py \
   /path/to/repository/terraform
 ```
+
+Requires Python 3.12 (the version the reusable workflow pins); the checker uses
+`enum.StrEnum` and `enum.nonmember`, so it needs at least Python 3.11. `-p 3.12`
+above keeps `uv` from falling back to an older interpreter it may have cached.
 
 Exit code `0` means every module passed; `1` means at least one module reported
 a violation. Exit code `2` means no module directories were provided. Missing
@@ -33,7 +37,7 @@ check rather than passing silently.
 
 ```bash
 PYTHONPATH=terraform-compliance \
-  uv run --with python-hcl2==8.1.3 --with pytest \
+  uv run -p 3.12 --with python-hcl2==8.1.3 --with pytest \
   pytest terraform-compliance/tests
 ```
 

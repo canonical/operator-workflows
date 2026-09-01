@@ -19,10 +19,11 @@ execution.
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum, nonmember
+from typing import Self
 
 
-class ModuleType(str, Enum):
+class ModuleType(StrEnum):
     """The CC008 module categories this checker distinguishes."""
 
     CHARM = "charm"
@@ -30,17 +31,7 @@ class ModuleType(str, Enum):
     PRODUCT = "product"
 
 
-# Terraform's own collection/structural type keywords, all bucketed into the
-# single TypeFamily.COLLECTION member (defined at module level, not inside
-# the Enum body: embedding it there requires `enum.nonmember`, which needs
-# Python >= 3.11, and there is no repo-wide Python version pin to guarantee
-# that locally - `uv run` without an explicit `-p` has been observed to fall
-# back to a 3.10 interpreter in this environment, which would break the
-# exact commands documented in README.md).
-_COLLECTION_TYPE_KEYWORDS = frozenset({"map", "list", "set", "object", "tuple"})
-
-
-class TypeFamily(str, Enum):
+class TypeFamily(StrEnum):
     """Broad Terraform type families, used to lightly validate variable types.
 
     Deliberately coarse (a bucket, not an exact type match) to avoid the kind
@@ -55,15 +46,22 @@ class TypeFamily(str, Enum):
     BOOL = "bool"
     COLLECTION = "collection"  # map(...), list(...), set(...), object({...})
 
+    # Terraform's own collection/structural type keywords, all bucketed into
+    # COLLECTION. Wrapped in `nonmember` so this stays a plain class
+    # attribute instead of becoming a spurious enum member.
+    _COLLECTION_KEYWORDS = nonmember(
+        frozenset({"map", "list", "set", "object", "tuple"})
+    )
+
     @classmethod
-    def _missing_(cls, value: object) -> "TypeFamily | None":
+    def _missing_(cls, value: object) -> Self | None:
         """Resolve Terraform's collection/structural keywords to COLLECTION.
 
         Lets ``TypeFamily("map")``, ``TypeFamily("object")``, etc. resolve
         directly to ``TypeFamily.COLLECTION`` without a separate lookup table
         in the checker.
         """
-        if value in _COLLECTION_TYPE_KEYWORDS:
+        if value in cls._COLLECTION_KEYWORDS:
             return cls.COLLECTION
         return None
 
@@ -93,7 +91,9 @@ class VariableRule:
     name: str
     type_family: TypeFamily | None = None
     required: bool = False  # must have no `default` at all (nullable is not enough)
-    default: object = NO_DEFAULT_CHECK  # exact value the default must equal, if declared
+    default: object = (
+        NO_DEFAULT_CHECK  # exact value the default must equal, if declared
+    )
 
 
 @dataclass(frozen=True)
