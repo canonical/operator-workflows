@@ -441,6 +441,52 @@ def test_present_optional_variable_with_valid_type_passes() -> None:
     assert not any("resources" in v for v in violations)
 
 
+def test_present_optional_variable_with_wrong_default_is_reported() -> None:
+    # `base` is optional and, when present, its default must be null.
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "base" {\n  type    = string\n  default = null\n}\n',
+                    'variable "base" {\n  type    = string\n  default = "ubuntu@24.04"\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert any('variable "base": default must be None' in v for v in violations)
+
+
+def test_component_expose_endpoints_optional_absent_is_ok() -> None:
+    variables = cc008_check.variable_bodies(
+        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["components"], module_type="component"
+    )
+    assert violations == []
+
+
+def test_component_expose_endpoints_wrong_type_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "expose_endpoints" {\n  type = string\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["components"], module_type="component"
+    )
+    assert any(
+        'variable "expose_endpoints": expected a collection-like type, found string' in v
+        for v in violations
+    )
+
+
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert cc008_check.check_pinned_module_sources([parsed]) == []

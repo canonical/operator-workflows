@@ -166,21 +166,35 @@ CC008_SPEC = CC008Spec(
                 # charm module. We therefore do not enforce it.
                 # VariableRule("units", TypeFamily.NUMBER, default=1),
                 # Optional CC008 charm variables: not required to exist, but
-                # when present must match the type the juju_application
-                # resource expects. Any other input name is allowed and
-                # unchecked.
-                VariableRule("base", TypeFamily.STRING, optional=True),
-                VariableRule("expose", TypeFamily.COLLECTION, optional=True),
-                VariableRule("resources", TypeFamily.COLLECTION, optional=True),
-                VariableRule("machines", TypeFamily.COLLECTION, optional=True),
-                VariableRule("endpoint_bindings", TypeFamily.COLLECTION, optional=True),
-                VariableRule("storage_directives", TypeFamily.COLLECTION, optional=True),
-                VariableRule("offered_endpoints", TypeFamily.COLLECTION, optional=True),
+                # when present must match the type and default the
+                # juju_application resource expects. Any other input name is
+                # allowed and unchecked.
+                VariableRule("base", TypeFamily.STRING, default=None, optional=True),
+                VariableRule("expose", TypeFamily.COLLECTION, default={}, optional=True),
+                VariableRule("resources", TypeFamily.COLLECTION, default={}, optional=True),
+                VariableRule("machines", TypeFamily.COLLECTION, default=[], optional=True),
+                VariableRule(
+                    "endpoint_bindings", TypeFamily.COLLECTION, default={}, optional=True
+                ),
+                VariableRule(
+                    "storage_directives", TypeFamily.COLLECTION, default={}, optional=True
+                ),
+                VariableRule(
+                    "offered_endpoints", TypeFamily.COLLECTION, default=[], optional=True
+                ),
             ),
             outputs=("application", "provides", "requires"),
         ),
         ModuleType.COMPONENT: ModuleInterface(
-            variables=(VariableRule("model_uuid", TypeFamily.STRING, required=True),),
+            variables=(
+                VariableRule("model_uuid", TypeFamily.STRING, required=True),
+                # Optional CC008 component variable. `<external_integrations>`
+                # is author-named (e.g. "ingress"), so it cannot be checked by
+                # a fixed name and is intentionally omitted.
+                VariableRule(
+                    "expose_endpoints", TypeFamily.COLLECTION, default=[], optional=True
+                ),
+            ),
             outputs=("components",),
         ),
         ModuleType.PRODUCT: ModuleInterface(
@@ -188,6 +202,12 @@ CC008_SPEC = CC008Spec(
                 VariableRule("logging-config", TypeFamily.STRING),
                 VariableRule("proxy", TypeFamily.COLLECTION),
                 VariableRule("risk", TypeFamily.STRING),
+                # CC008 defines no fixed-name optional *input* for Product
+                # modules: its optional inputs are author-named recommendations
+                # (network_bindings, per-charm/-component objects, deployment
+                # toggles), and its optional outputs (offers, credentials)
+                # can't be type-checked since Terraform infers output types
+                # from the value expression. Nothing to add here.
             ),
             outputs=("metadata", "models"),
         ),

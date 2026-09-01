@@ -96,10 +96,14 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
     checked for presence.
 - Optional variables (those CC008 lists as optional, e.g. the charm-module
   `base`, `expose`, `resources`, `machines`, `endpoint_bindings`,
-  `storage_directives`, `offered_endpoints`) are not required to exist: when
-  absent they are skipped, and when present they are validated against the
-  same type-family rules as mandatory variables. Any other, un-listed input
-  name is allowed and unchecked.
+  `storage_directives`, `offered_endpoints`, and the component-module
+  `expose_endpoints`) are not required to exist: when absent they are skipped,
+  and when present they are validated against the same type-family and
+  `default` rules as mandatory variables. Any other, un-listed input name is
+  allowed and unchecked. Product modules define no fixed-name optional input
+  (their optional inputs are author-named recommendations, and optional
+  outputs like `offers`/`credentials` can't be type-checked), so none are
+  enforced there.
 - Remote module sources declare a `?ref=...` (or a registry `version`). A ref
   can be named anything — Terraform/git impose no required shape on tags, so
   this checker does not try to validate ref naming. It only rejects the small
