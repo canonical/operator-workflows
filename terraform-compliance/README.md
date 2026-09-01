@@ -1,7 +1,7 @@
 # CC008 Terraform compliance checker
 
-Checks that Terraform modules follow the CC008 module standards. Runs in CI via
-the reusable `terraform_modules_compliance.yaml` workflow.
+Checks that Terraform modules follow the CC008 module standards.
+Runs in CI via the reusable `terraform_modules_compliance.yaml` workflow.
 
 Files:
 
@@ -11,17 +11,21 @@ Files:
 
 ## Usage
 
-Requires Python ≥ 3.11 (CI pins 3.12; `-p 3.12` stops `uv` picking an older
-cached interpreter).
+Requires Python ≥ 3.11
+
+### check
 
 ```bash
-# check
-uv run -p 3.12 --with python-hcl2==8.1.3 python \
+uv run --with python-hcl2==8.1.3 python \
   terraform-compliance/cc008_check.py /path/to/repo/terraform
+```
 
-# tests
-PYTHONPATH=terraform-compliance uv run -p 3.12 --with python-hcl2==8.1.3 \
+### tests
+
+```bash
+PYTHONPATH=terraform-compliance uv run --with python-hcl2==8.1.3 \
   --with pytest pytest terraform-compliance/tests
+
 ```
 
 Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
