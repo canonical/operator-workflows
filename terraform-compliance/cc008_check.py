@@ -1,13 +1,7 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""CC008 Terraform module compliance checker.
-
-Verifies that Terraform modules follow the CC008 (Terraform module standards)
-structure and interface requirements. HCL is parsed with python-hcl2, whose v8
-output keeps literal double quotes around string values and block labels and
-adds an ``__is_block__`` sentinel to block bodies; both are handled here.
-"""
+"""CC008 Terraform module compliance checker (the *how*; rules live in cc008_spec)."""
 
 import argparse
 import re
@@ -90,12 +84,9 @@ _CONSTRAINT_PATTERN = re.compile(
 
 
 def _allows_juju_v1_or_above(constraint: str) -> bool:
-    """Return True if a version constraint string permits juju provider >= 1.0.0.
+    """True if the version constraint permits juju provider >= 1.0.0.
 
-    Handles comma-separated constraint lists (e.g. ">= 1.0, < 3.0") by checking
-    whether any clause establishes a lower bound at or above 1.0.0. A
-    constraint with only an upper bound (e.g. "< 3.0") does not guarantee
-    >= 1.0.0 and is therefore rejected.
+    A constraint with only an upper bound (e.g. "< 3.0") is rejected.
     """
     for clause in constraint.split(","):
         match = _CONSTRAINT_PATTERN.match(clause.strip())
@@ -166,13 +157,8 @@ def _defines_tying_resources(parsed_files: list[dict]) -> bool:
 
 
 def classify_module_type(parsed_files: list[dict]) -> ModuleType:
-    """Classify a module as CHARM, COMPONENT, or PRODUCT.
-
-    A module with no ``module`` blocks is a charm module. A module that
-    composes other modules is a product module if it also defines at least
-    one resource/data block that ties components together (juju_model,
-    juju_secret, juju_integration, juju_offer); otherwise it is a component
-    module (bundles charm modules without any such tying resources).
+    """Classify a module as CHARM (no module blocks), PRODUCT (composes
+    modules and defines a tying resource), or COMPONENT (composes only).
     """
     if not is_composed_module(parsed_files):
         return ModuleType.CHARM
@@ -184,7 +170,7 @@ def classify_module_type(parsed_files: list[dict]) -> ModuleType:
 def _check_variable_rule(
     rule: VariableRule, body: dict, module_type: ModuleType
 ) -> list[str]:
-    """Return violations for one mandatory variable's type/required/default rules."""
+    """Return violations for one variable's type/required/default rules."""
     violations: list[str] = []
     prefix = f'{module_type} module variable "{rule.name}"'
 
@@ -210,11 +196,9 @@ def _check_variable_rule(
 def check_interface(
     variables: dict[str, dict], outputs: list[str], module_type: ModuleType
 ) -> list[str]:
-    """Return violations for mandatory variables and outputs.
+    """Return violations for mandatory/optional variables and outputs.
 
-    ``variables`` maps variable name to its parsed body dict (see
-    ``variable_bodies``), so presence, type family, and default/required
-    rules can all be checked from the same mapping.
+    ``variables`` maps name to parsed body (see ``variable_bodies``).
     """
     interface = CC008_SPEC.module_interfaces[module_type]
     violations: list[str] = []

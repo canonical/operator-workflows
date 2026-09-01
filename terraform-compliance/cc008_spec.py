@@ -1,21 +1,10 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""CC008 Terraform module standards, expressed as data.
+"""CC008 Terraform module requirements, as data.
 
-This module is the single source of truth for *what* CC008 requires: which
-files a module must have, the mandatory variables/outputs per module type
-(and their type family/required/default constraints), which resource types
-tie components together in a Product module, and which module-source refs
-count as floating (disallowed) branch names.
-
-Deliberately contains no checking logic (no HCL parsing, no comparisons, no
-``if`` statements beyond what a dataclass needs) - only value objects and
-their instantiation. ``cc008_check.py`` imports ``CC008_SPEC`` and contains
-all of the *how* (parsing, constraint math, alphabetical comparison, etc).
-This split means the CC008 contract enforced by this checker can be read and
-reviewed in full by reading this file alone, without following any code
-execution.
+Single source of truth for *what* CC008 requires; cc008_check.py holds the
+*how*. No checking logic here.
 """
 
 from dataclasses import dataclass
@@ -23,7 +12,7 @@ from enum import StrEnum, nonmember
 
 
 class ModuleType(StrEnum):
-    """The CC008 module categories this checker distinguishes."""
+    """CC008 module categories this checker distinguishes."""
 
     CHARM = "charm"
     COMPONENT = "component"
@@ -31,83 +20,51 @@ class ModuleType(StrEnum):
 
 
 class TypeFamily(StrEnum):
-    """Broad Terraform type families, used to lightly validate variable types.
-
-    Deliberately coarse (a bucket, not an exact type match) to avoid the kind
-    of false positives already seen with shape-based validation elsewhere in
-    this checker: CC008 does not mandate one specific collection/object shape
-    for most of these variables, so this only catches obvious mismatches such
-    as a numeric variable declared as a string.
-    """
+    """Broad Terraform type families (a coarse bucket, not an exact type)."""
 
     STRING = "string"
     NUMBER = "number"
     BOOL = "bool"
-    COLLECTION = "collection"  # map(...), list(...), set(...), object({...})
+    COLLECTION = "collection"  # map/list/set/object/tuple
 
-    # Terraform's own collection/structural type keywords, all bucketed into
-    # COLLECTION. Wrapped in `nonmember` so this stays a plain class
-    # attribute instead of becoming a spurious enum member.
+    # `nonmember` keeps this a plain attribute, not an enum member.
     _COLLECTION_KEYWORDS = nonmember(
         frozenset({"map", "list", "set", "object", "tuple"})
     )
 
     @classmethod
     def _missing_(cls, value: object) -> "TypeFamily | None":
-        """Resolve Terraform's collection/structural keywords to COLLECTION.
-
-        Lets ``TypeFamily("map")``, ``TypeFamily("object")``, etc. resolve
-        directly to ``TypeFamily.COLLECTION`` without a separate lookup table
-        in the checker.
-        """
+        """Resolve collection keywords (map, object, ...) to COLLECTION."""
         if value in cls._COLLECTION_KEYWORDS:
             return cls.COLLECTION
         return None
 
 
 class _NoDefaultCheck:
-    """Sentinel type meaning "don't check the default value".
-
-    A dedicated class (rather than a bare ``object()``) so its ``repr`` is
-    readable in test failure output and dataclass reprs, instead of an opaque
-    ``<object object at 0x...>``.
-    """
+    """Sentinel: don't check the default value (readable repr)."""
 
     def __repr__(self) -> str:
         return "NO_DEFAULT_CHECK"
 
 
-# ``None`` is itself a legitimate Terraform default that some rules DO check
-# for (e.g. a variable pinned to default exactly ``None``), so it cannot
-# double as "no opinion on the default" - hence this separate sentinel.
+# `None` is a valid Terraform default, so it can't double as "no opinion".
 NO_DEFAULT_CHECK = _NoDefaultCheck()
 
 
 @dataclass(frozen=True)
 class VariableRule:
-    """Constraints CC008 places on one mandatory variable."""
+    """One CC008 variable requirement."""
 
     name: str
     type_family: TypeFamily | None = None
-    required: bool = False  # must have no `default` at all (nullable is not enough)
-    default: object = (
-        NO_DEFAULT_CHECK  # exact value the default must equal, if declared
-    )
-    # If True, the variable need not be declared; when absent it is skipped,
-    # when present its type/default rules still apply. (`required` is a
-    # separate axis: it constrains the default of a variable that must exist.)
-    optional: bool = False
+    required: bool = False  # must declare no `default`
+    default: object = NO_DEFAULT_CHECK  # default must equal this, if declared
+    optional: bool = False  # may be absent; if present, still validated
 
 
 @dataclass(frozen=True)
 class OutputRule:
-    """Constraints CC008 places on one module output.
-
-    Terraform infers an output's type from its ``value`` expression - there is
-    no declared type to read - so outputs are presence-checked only, with no
-    ``type_family`` (unlike ``VariableRule``). ``optional`` marks an output
-    that may be absent.
-    """
+    """One CC008 output requirement (presence only; outputs have no type)."""
 
     name: str
     optional: bool = False
@@ -115,7 +72,7 @@ class OutputRule:
 
 @dataclass(frozen=True)
 class ModuleInterface:
-    """The mandatory variables and outputs a CC008 module type must declare."""
+    """Mandatory/optional variables and outputs for a module type."""
 
     variables: tuple[VariableRule, ...]
     outputs: tuple[OutputRule, ...]
@@ -123,7 +80,7 @@ class ModuleInterface:
 
 @dataclass(frozen=True)
 class TerraformBlockRequirements:
-    """CC008's requirements for a module's `terraform.tf` provider block."""
+    """Required `terraform.tf` provider settings."""
 
     provider_source: str
     minimum_provider_version: str
@@ -140,8 +97,6 @@ class CC008Spec:
     module_interfaces: dict[ModuleType, ModuleInterface]
 
 
-# The single source of truth for CC008's requirements. Add a new ModuleType
-# member and a `module_interfaces` entry here to support another module kind.
 CC008_SPEC = CC008Spec(
     required_files=(
         "terraform.tf",
@@ -154,12 +109,11 @@ CC008_SPEC = CC008Spec(
         provider_source="juju/juju",
         minimum_provider_version="1.0.0",
     ),
-    # Resource/data block types whose presence indicates a module ties
-    # components together, per CC008's definition of Product modules.
+    # Resource/data types that mark a module as tying components together.
     tying_resource_types=frozenset(
         {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
     ),
-    # Conventional default/floating branch names rejected as module refs.
+    # Floating branch names disallowed as module refs.
     floating_ref_names=frozenset(
         {"main", "master", "trunk", "develop", "development", "head"}
     ),
@@ -172,17 +126,10 @@ CC008_SPEC = CC008Spec(
                 VariableRule("constraints", TypeFamily.STRING, default=None),
                 VariableRule("model_uuid", TypeFamily.STRING, required=True),
                 VariableRule("revision", TypeFamily.NUMBER, default=None),
-                # CC008 lists `units` (number, default 1) as mandatory EXCEPT
-                # for subordinate charms, where it must NOT be provided.
-                # Subordinate-ness is declared in metadata.yaml, invisible to
-                # Terraform, so `units` is optional: a subordinate may omit it
-                # without being flagged, while a charm that does declare it
-                # still gets its number-type and default-1 validated.
+                # Optional: subordinate charms must omit units, and
+                # subordinate-ness isn't visible from Terraform.
                 VariableRule("units", TypeFamily.NUMBER, default=1, optional=True),
-                # Optional CC008 charm variables: not required to exist, but
-                # when present must match the type and default the
-                # juju_application resource expects. Any other input name is
-                # allowed and unchecked.
+                # Optional CC008 charm variables (validated only when present).
                 VariableRule("base", TypeFamily.STRING, default=None, optional=True),
                 VariableRule("expose", TypeFamily.COLLECTION, default={}, optional=True),
                 VariableRule("resources", TypeFamily.COLLECTION, default={}, optional=True),
@@ -197,10 +144,8 @@ CC008_SPEC = CC008Spec(
                     "offered_endpoints", TypeFamily.COLLECTION, default=[], optional=True
                 ),
             ),
-            # provides/requires are CC008 "mandatory if the charm defines that
-            # relation"; Terraform can't tell whether it does, so (like `units`)
-            # they are optional here - a charm without those relations is not
-            # flagged. `application` is always required.
+            # provides/requires: CC008 "mandatory if the relation exists",
+            # undetectable from Terraform, so optional here.
             outputs=(
                 OutputRule("application"),
                 OutputRule("provides", optional=True),
@@ -211,9 +156,7 @@ CC008_SPEC = CC008Spec(
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
                 VariableRule("model_uuid", TypeFamily.STRING, required=True),
-                # Optional CC008 component variable. `<external_integrations>`
-                # is author-named (e.g. "ingress"), so it cannot be checked by
-                # a fixed name and is intentionally omitted.
+                # `<external_integrations>` is author-named, so unchecked.
                 VariableRule(
                     "expose_endpoints", TypeFamily.COLLECTION, default=[], optional=True
                 ),
@@ -230,12 +173,7 @@ CC008_SPEC = CC008Spec(
                 VariableRule("logging-config", TypeFamily.STRING),
                 VariableRule("proxy", TypeFamily.COLLECTION),
                 VariableRule("risk", TypeFamily.STRING),
-                # CC008 defines no fixed-name optional *input* for Product
-                # modules: its optional inputs are author-named recommendations
-                # (network_bindings, per-charm/-component objects, deployment
-                # toggles), and its optional outputs (offers, credentials)
-                # can't be type-checked since Terraform infers output types
-                # from the value expression. Nothing to add here.
+                # Product has no fixed-name optional input to check.
             ),
             outputs=(
                 OutputRule("metadata"),
