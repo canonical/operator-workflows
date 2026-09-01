@@ -73,7 +73,8 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
   type is determined):
   - Charm: `app_name`, `channel`, `config`, `constraints`, `model_uuid`,
     `revision` variables; `application`, `provides`, `requires` outputs.
-    (`units` is deliberately *not* required — see "Known deviations" below.)
+    (`units` is validated but not *required* — see optional variables and
+    "Known deviations" below.)
   - Component: `model_uuid` variable; `components` output.
   - Product: `logging-config`, `proxy`, `risk` variables; `metadata`, `models`
     outputs.
@@ -95,15 +96,18 @@ reports a PASS/FAIL breakdown per category plus a summary in a single pass.
     from the `value` expression — so outputs are not type-checked, only
     checked for presence.
 - Optional variables (those CC008 lists as optional, e.g. the charm-module
-  `base`, `expose`, `resources`, `machines`, `endpoint_bindings`,
+  `units`, `base`, `expose`, `resources`, `machines`, `endpoint_bindings`,
   `storage_directives`, `offered_endpoints`, and the component-module
   `expose_endpoints`) are not required to exist: when absent they are skipped,
   and when present they are validated against the same type-family and
   `default` rules as mandatory variables. Any other, un-listed input name is
   allowed and unchecked. Product modules define no fixed-name optional input
-  (their optional inputs are author-named recommendations, and optional
-  outputs like `offers`/`credentials` can't be type-checked), so none are
+  (their optional inputs are author-named recommendations), so none are
   enforced there.
+- Outputs are checked for presence only (Terraform infers an output's type
+  from its `value` expression, so there is nothing to type-check). Mandatory
+  outputs must exist; optional outputs (the charm/component `offers`, and the
+  product `offers`/`credentials`) may be absent.
 - Remote module sources declare a `?ref=...` (or a registry `version`). A ref
   can be named anything — Terraform/git impose no required shape on tags, so
   this checker does not try to validate ref naming. It only rejects the small
@@ -146,7 +150,9 @@ modules without tying them together).
   variable *except for subordinate charms, where it must not be provided*.
   Whether a charm is subordinate is declared in its `metadata.yaml`, which is
   not visible from Terraform alone, so mandating `units` here would wrongly
-  flag every subordinate charm module. This checker therefore does not require
-  `units` at all (a missing `units` on a non-subordinate charm goes
-  unreported) — the opposite trade-off to `provides`/`requires` above,
-  chosen to avoid a guaranteed false positive on subordinate charms.
+  flag every subordinate charm module. This checker therefore treats `units`
+  as *optional*: a subordinate charm may omit it without being flagged (a
+  missing `units` on a non-subordinate charm goes unreported), but a charm
+  that does declare it still has its `number` type and default `1` validated.
+  This is the opposite trade-off to `provides`/`requires` above, chosen to
+  avoid a guaranteed false positive on subordinate charms.

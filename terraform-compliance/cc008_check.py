@@ -228,9 +228,9 @@ def check_interface(
             continue
         violations.extend(_check_variable_rule(rule, variables[rule.name], module_type))
     for output in interface.outputs:
-        if output not in outputs:
+        if output.name not in outputs and not output.optional:
             violations.append(
-                f"{module_type} module missing mandatory output: {output}"
+                f"{module_type} module missing mandatory output: {output.name}"
             )
     return violations
 

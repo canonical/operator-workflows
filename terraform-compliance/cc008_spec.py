@@ -100,11 +100,25 @@ class VariableRule:
 
 
 @dataclass(frozen=True)
+class OutputRule:
+    """Constraints CC008 places on one module output.
+
+    Terraform infers an output's type from its ``value`` expression - there is
+    no declared type to read - so outputs are presence-checked only, with no
+    ``type_family`` (unlike ``VariableRule``). ``optional`` marks an output
+    that may be absent.
+    """
+
+    name: str
+    optional: bool = False
+
+
+@dataclass(frozen=True)
 class ModuleInterface:
     """The mandatory variables and outputs a CC008 module type must declare."""
 
     variables: tuple[VariableRule, ...]
-    outputs: tuple[str, ...]
+    outputs: tuple[OutputRule, ...]
 
 
 @dataclass(frozen=True)
@@ -160,11 +174,11 @@ CC008_SPEC = CC008Spec(
                 VariableRule("revision", TypeFamily.NUMBER, default=None),
                 # CC008 lists `units` (number, default 1) as mandatory EXCEPT
                 # for subordinate charms, where it must NOT be provided.
-                # Whether a charm is subordinate is declared in its
-                # metadata.yaml, which is not visible from Terraform alone, so
-                # mandating `units` here would wrongly flag every subordinate
-                # charm module. We therefore do not enforce it.
-                # VariableRule("units", TypeFamily.NUMBER, default=1),
+                # Subordinate-ness is declared in metadata.yaml, invisible to
+                # Terraform, so `units` is optional: a subordinate may omit it
+                # without being flagged, while a charm that does declare it
+                # still gets its number-type and default-1 validated.
+                VariableRule("units", TypeFamily.NUMBER, default=1, optional=True),
                 # Optional CC008 charm variables: not required to exist, but
                 # when present must match the type and default the
                 # juju_application resource expects. Any other input name is
@@ -183,7 +197,16 @@ CC008_SPEC = CC008Spec(
                     "offered_endpoints", TypeFamily.COLLECTION, default=[], optional=True
                 ),
             ),
-            outputs=("application", "provides", "requires"),
+            # provides/requires are CC008 "mandatory if the charm defines that
+            # relation"; Terraform can't tell whether it does, so this checker
+            # treats both as always mandatory (a documented, deliberate
+            # deviation). `offers` is genuinely optional.
+            outputs=(
+                OutputRule("application"),
+                OutputRule("provides"),
+                OutputRule("requires"),
+                OutputRule("offers", optional=True),
+            ),
         ),
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
@@ -195,7 +218,10 @@ CC008_SPEC = CC008Spec(
                     "expose_endpoints", TypeFamily.COLLECTION, default=[], optional=True
                 ),
             ),
-            outputs=("components",),
+            outputs=(
+                OutputRule("components"),
+                OutputRule("offers", optional=True),
+            ),
         ),
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
@@ -209,7 +235,12 @@ CC008_SPEC = CC008Spec(
                 # can't be type-checked since Terraform infers output types
                 # from the value expression. Nothing to add here.
             ),
-            outputs=("metadata", "models"),
+            outputs=(
+                OutputRule("metadata"),
+                OutputRule("models"),
+                OutputRule("offers", optional=True),
+                OutputRule("credentials", optional=True),
+            ),
         ),
     },
 )

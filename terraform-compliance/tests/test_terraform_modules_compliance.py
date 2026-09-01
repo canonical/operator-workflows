@@ -487,6 +487,60 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
     )
 
 
+def test_units_present_with_wrong_type_is_reported() -> None:
+    # units is optional, but when declared it must be number-like.
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
+                    'variable "units" {\n  type    = string\n  default = "1"\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert any('variable "units": expected a number-like type, found string' in v for v in violations)
+
+
+def test_units_present_with_wrong_default_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "units" {\n  type    = number\n  default = 1\n}\n',
+                    'variable "units" {\n  type    = number\n  default = 2\n}\n',
+                )
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert any('variable "units": default must be 1' in v for v in violations)
+
+
+def test_optional_output_absent_is_not_reported() -> None:
+    # `offers` is an optional charm output; omitting it is fine.
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert not any("offers" in v for v in violations)
+
+
+def test_optional_output_present_is_allowed() -> None:
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(
+        variables,
+        ["application", "provides", "requires", "offers"],
+        module_type="charm",
+    )
+    assert violations == []
+
+
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert cc008_check.check_pinned_module_sources([parsed]) == []
