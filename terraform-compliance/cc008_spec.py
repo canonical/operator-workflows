@@ -20,7 +20,6 @@ execution.
 
 from dataclasses import dataclass
 from enum import StrEnum, nonmember
-from typing import Self
 
 
 class ModuleType(StrEnum):
@@ -54,7 +53,7 @@ class TypeFamily(StrEnum):
     )
 
     @classmethod
-    def _missing_(cls, value: object) -> Self | None:
+    def _missing_(cls, value: object) -> "TypeFamily | None":
         """Resolve Terraform's collection/structural keywords to COLLECTION.
 
         Lets ``TypeFamily("map")``, ``TypeFamily("object")``, etc. resolve
