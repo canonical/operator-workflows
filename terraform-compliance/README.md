@@ -49,6 +49,7 @@ product; composes only → component.
 - `providers.tf` is not required (CC008 modules are non-root, so have no
   provider config to place there).
 - Output types aren't checked (Terraform infers them from the value).
-- `units` and `provides`/`requires` are treated as optional, since subordinate
-  charms omit `units` and relation outputs are conditional — neither is
-  detectable from Terraform alone.
+- `provides`/`requires` outputs are optional: CC008 makes them mandatory only
+  when the charm defines that relation, which Terraform can't detect.
+- `units` is optional: CC008 requires it except on subordinate charms (which
+  must omit it), and subordinate-ness isn't visible from Terraform.
