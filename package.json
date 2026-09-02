@@ -42,7 +42,7 @@
     "@actions/exec": "3.0.0",
     "@actions/github": "9.1.1",
     "@actions/glob": "0.7.0",
-    "js-yaml": "5.3.0"
+    "js-yaml": "5.4.1"
   },
   "devDependencies": {
     "@eslint/compat": "^2.0.2",
@@ -68,6 +68,6 @@
     "rollup": "^4.57.1",
     "ts-jest": "^29.4.6",
     "ts-jest-resolver": "^2.0.1",
-    "typescript": "^6.0.0"
+    "typescript": "^7.0.0"
   }
 }
