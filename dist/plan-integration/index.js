@@ -119089,7 +119089,10 @@ async function listCanonicalK8sImages(ctrArgs) {
         'list',
         '-q'
     ]);
-    return output.stdout.split(/\r?\n/).map(ref => ref.trim()).filter(Boolean);
+    return output.stdout
+        .split(/\r?\n/)
+        .map(ref => ref.trim())
+        .filter(Boolean);
 }
 async function importCanonicalK8sImage(archivePath, image) {
     const ctrArgs = [
@@ -119112,8 +119115,8 @@ async function importCanonicalK8sImage(archivePath, image) {
     let imported = await listCanonicalK8sImages(ctrArgs);
     if (!imported.includes(image)) {
         const candidates = imported.filter(ref => !before.includes(ref) && !ref.includes('@sha256:'));
-        if (candidates.length === 0) {
-            throw new Error(`Canonical Kubernetes containerd import did not produce image ${image}`);
+        if (candidates.length !== 1) {
+            throw new Error(`Canonical Kubernetes containerd import produced ${candidates.length} candidate images for ${image}`);
         }
         await exec('sudo', [
             CANONICAL_K8S_CTR,

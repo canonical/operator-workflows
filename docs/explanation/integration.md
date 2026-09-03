@@ -25,8 +25,8 @@ The resources are shared between workflows using the GitHub Action artifact or
 the GitHub container registry. Image resources' destinations can further be
 specified by the user using `upload-image` input.
 
-When the workflow is executed from a fork, the resources are shared via the
-filesystem.
+When the workflow is executed from a fork, artifact mode shares the resources
+through GitHub Actions artifacts and the selected provider's local image path.
 
 ### Charm
 

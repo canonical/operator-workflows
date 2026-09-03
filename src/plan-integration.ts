@@ -112,7 +112,10 @@ async function listCanonicalK8sImages(ctrArgs: string[]): Promise<string[]> {
     'list',
     '-q'
   ])
-  return output.stdout.split(/\r?\n/).map(ref => ref.trim()).filter(Boolean)
+  return output.stdout
+    .split(/\r?\n/)
+    .map(ref => ref.trim())
+    .filter(Boolean)
 }
 
 async function importCanonicalK8sImage(
@@ -142,9 +145,9 @@ async function importCanonicalK8sImage(
     const candidates = imported.filter(
       ref => !before.includes(ref) && !ref.includes('@sha256:')
     )
-    if (candidates.length === 0) {
+    if (candidates.length !== 1) {
       throw new Error(
-        `Canonical Kubernetes containerd import did not produce image ${image}`
+        `Canonical Kubernetes containerd import produced ${candidates.length} candidate images for ${image}`
       )
     }
     await exec.exec('sudo', [
