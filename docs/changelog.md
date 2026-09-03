@@ -10,6 +10,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-08-27
+
+- In `promote_charm.yaml`, replace the `canonical/charming-actions/release-charm` action with an
+inline `charmcraft status`/`charmcraft release` implementation. This avoids failures caused by
+the action's GitHub Release tag lookup, which no longer matches releases produced by newer
+publish pipelines. The workflow's inputs are unchanged; the `tag-prefix` input is now deprecated
+and unused, and the workflow no longer creates a git tag or GitHub Release as part of promotion.
+
 ## 2026-08-21
 
 - In `promote-charm.yaml`, pass the `charmcraft-channel` input to the
