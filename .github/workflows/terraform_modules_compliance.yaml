@@ -21,11 +21,18 @@ jobs:
     steps:
       - name: Checkout caller repository
         uses: actions/checkout@v7.0.1
+      - name: Get workflow version
+        id: workflow-version
+        uses: canonical/get-workflow-version-action@v1.0.4
+        with:
+          repository-name: canonical/operator-workflows
+          file-name: terraform_modules_compliance.yaml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout compliance checker
         uses: actions/checkout@v7.0.1
         with:
           repository: canonical/operator-workflows
-          ref: feat/terraform-compliance
+          ref: ${{ steps.workflow-version.outputs.sha }}
           sparse-checkout: terraform-compliance
           path: .operator-workflows
       - name: Set up Python
@@ -40,4 +47,4 @@ jobs:
         run: >-
           python .operator-workflows/terraform-compliance/cc008_check.py
           --verbose
-          ${{ join(fromJSON(inputs.terraform-directories), ' ') }}
+          ${{ join(fromJSON(inputs['terraform-directories']), ' ') }}
