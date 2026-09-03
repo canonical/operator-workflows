@@ -105,9 +105,9 @@ Tox argument: `--charm-file=./<charm-build-output-file>.charm`
 
 The rocks are pushed to the local MicroK8s image registry (localhost:32000)
 using `rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...` command if the
-rock is downloaded as a tarball artifact. Artifact mode is used by default for pull-request test runs with the default
-MicroK8s provider. Other events and providers use registry mode unless
-`upload-image: artifact` is explicitly selected. Artifact archives are retained for
+rock is downloaded as a tarball artifact. Artifact mode is used by default for fork pull requests regardless of provider, and for
+pull-request test runs with the default MicroK8s provider. All other event/provider
+combinations use registry mode unless `upload-image: artifact` is explicitly selected. Artifact archives are retained for
 30 days by default; override this with `artifact-retention-days`.
 
 Tox argument: `--<rock-name>-image=<local-registry-image-name>`

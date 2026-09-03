@@ -143,8 +143,9 @@ on:
           Can be either 'artifact' or 'registry'. 'artifact' uploads built images as
           GitHub Actions artifacts and uses a local registry during tests. 'registry'
           pushes images to GHCR. If unspecified, artifact mode is used for test
-          pull-request events with the default MicroK8s provider; other events and providers
-          retain registry mode unless overridden.
+          fork pull requests regardless of provider, and for pull-request events with the
+          default MicroK8s provider. All other event/provider combinations retain registry mode
+          unless overridden.
           Use 'registry' when a remote image is explicitly required.
         default: ""
       artifact-retention-days:

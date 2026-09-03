@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 2026-09-03
 
-- Default integration-test image builds to artifact mode for pull-request test runs with the default MicroK8s provider; other events and providers retain registry mode unless overridden, with a configurable 30-day artifact retention period. Use `upload-image: registry` when a remote GHCR image is required.
+- Default integration-test image builds to artifact mode for fork pull requests regardless of provider, and for pull-request test runs with the default MicroK8s provider; all other event/provider combinations retain registry mode unless overridden, with a configurable 30-day artifact retention period. Use `upload-image: registry` when a remote GHCR image is required.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 

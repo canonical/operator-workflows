@@ -175,6 +175,6 @@ jobs:
     secrets: inherit
 ```
 
-`integration_test.yaml` uses artifact mode by default for pull-request test events with the default MicroK8s provider and retains build artifacts for 30 days. Other events and providers retain registry mode unless `upload-image` is explicitly set. Set `artifact-retention-days` to override the retention period, or set `upload-image: registry` when the test explicitly requires a remote GHCR image.
+`integration_test.yaml` uses artifact mode by default for fork pull requests regardless of provider, and for pull-request test events with the default MicroK8s provider. All other event/provider combinations retain registry mode unless `upload-image` is explicitly set. Build artifacts are retained for 30 days by default. Set `artifact-retention-days` to override the retention period, or set `upload-image: registry` when the test explicitly requires a remote GHCR image.
 
 > **Note:** `packages: write` is needed when `upload-image: registry` is selected or when `publish_charm.yaml` pushes OCI images to `ghcr.io`. Artifact-mode test runs do not push to GHCR, but the reusable workflow currently retains this permission for explicit registry opt-in. If your charm has no OCI images, `contents: read` is sufficient for `integration_test.yaml`.
