@@ -8,6 +8,13 @@
   "schedule": [
     "* * * * 0,6"
   ],
+  "packageRules": [
+    {
+      "description": "Hold TypeScript within @typescript-eslint's peer range until it supports newer (peer: typescript >=4.8.4 <6.1.0).",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<6.1.0"
+    }
+  ],
   "vulnerabilityAlerts": {
     "enabled": true
   }
