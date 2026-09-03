@@ -15,6 +15,10 @@ on:
         description: Actions operator provider channel as per https://github.com/charmed-kubernetes/actions-operator#usage
         type: string
         default: latest/stable
+      containerd-socket:
+        type: string
+        description: Canonical Kubernetes containerd socket used for artifact image imports.
+        default: /opt/containerd/run/containerd/containerd.sock
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -303,6 +307,7 @@ jobs:
           microk8s-addons: >-
             ${{
               (
+                inputs.provider == 'microk8s' &&
                 inputs.image-output-type == 'file' &&
                 !contains(inputs.microk8s-addons, 'registry')
               ) &&
@@ -355,6 +360,8 @@ jobs:
           plan: ${{ inputs.plan }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           check-run-id: ${{ job.check_run_id }}
+          provider: ${{ inputs.provider }}
+          containerd-socket: ${{ inputs.containerd-socket }}
       - name: Charm name setting
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
         run: |

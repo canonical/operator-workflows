@@ -31,6 +31,10 @@ on:
         type: string
         description: The directory for the charm under the working-directory
         default: "."
+      containerd-socket:
+        type: string
+        description: Canonical Kubernetes containerd socket used for artifact image imports.
+        default: /opt/containerd/run/containerd/containerd.sock
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -141,7 +145,8 @@ on:
         type: string
         description: >-
           Can be either 'artifact' or 'registry'. 'artifact' uploads built images as
-          GitHub Actions artifacts and uses a local registry during tests. 'registry'
+          GitHub Actions artifacts and loads images into the provider during tests (the
+          MicroK8s local registry or Canonical Kubernetes containerd). 'registry'
           pushes images to GHCR. If unspecified, artifact mode is used for test
           fork pull requests regardless of provider, and for pull-request events with the
           default MicroK8s provider. All other event/provider combinations retain registry mode
@@ -396,6 +401,7 @@ jobs:
     with:
       bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
+      containerd-socket: ${{ inputs.containerd-socket }}
       extra-arguments: ${{ inputs.extra-arguments }}
       juju-channel: ${{ inputs.juju-channel }}
       microk8s-addons: ${{ inputs.microk8s-addons }}

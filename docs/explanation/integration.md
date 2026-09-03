@@ -103,12 +103,15 @@ Tox argument: `--charm-file=./<charm-build-output-file>.charm`
 
 ### Rock
 
-The rocks are pushed to the local MicroK8s image registry (localhost:32000)
-using `rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...` command if the
-rock is downloaded as a tarball artifact. Artifact mode is used by default for fork pull requests regardless of provider, and for
-pull-request test runs with the default MicroK8s provider. All other event/provider
-combinations use registry mode unless `upload-image: artifact` is explicitly selected. Artifact archives are retained for
-30 days by default; override this with `artifact-retention-days`.
+Artifact-mode rocks downloaded as tarballs are loaded into the test provider. On
+MicroK8s, the workflow pushes them to `localhost:32000` with
+`rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...`. On Canonical Kubernetes
+(`provider: k8s`), it imports them directly into containerd's `k8s.io` namespace using the
+configured containerd socket (default: `/opt/containerd/run/containerd/containerd.sock`); no local registry is assumed. Configure `containerd-socket` when Canonical Kubernetes uses a different base directory. Artifact mode is used by default
+for fork pull requests regardless of provider, and for pull-request test runs with the default
+MicroK8s provider. All other event/provider combinations use registry mode unless
+`upload-image: artifact` is explicitly selected. Artifact archives are retained for 30 days by
+default; override this with `artifact-retention-days`.
 
 Tox argument: `--<rock-name>-image=<local-registry-image-name>`
 
