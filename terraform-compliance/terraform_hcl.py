@@ -86,5 +86,9 @@ def load_file(path: Path) -> dict:
 
 
 def load_module_files(module_dir: Path) -> dict[str, dict]:
-    """Map filename to parsed contents for a module's .tf files."""
-    return {path.name: load_file(path) for path in module_dir.glob("*.tf")}
+    """Map filename to parsed contents for a module's .tf files.
+
+    Files are parsed in sorted order so variable-override order and verbose
+    output are deterministic across filesystems.
+    """
+    return {path.name: load_file(path) for path in sorted(module_dir.glob("*.tf"))}

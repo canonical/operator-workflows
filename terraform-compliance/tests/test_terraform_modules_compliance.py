@@ -766,3 +766,14 @@ def test_github_actions_failure_emits_error_annotations(
   assert "SKIP Terraform configuration (terraform.tf is missing)" in output
   assert "SKIP Variable ordering (variables.tf is missing)" in output
   assert "SKIP Output ordering (outputs.tf is missing)" in output
+
+
+def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> None:
+    module = tmp_path / "module"
+    module.mkdir()
+    for name in ("zeta.tf", "alpha.tf", "main.tf"):
+        (module / name).write_text('variable "x" {\n  type = string\n}\n')
+
+    parsed = cc008_check.load_module_files(module)
+
+    assert list(parsed) == ["alpha.tf", "main.tf", "zeta.tf"]
