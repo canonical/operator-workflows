@@ -31,6 +31,10 @@ on:
         type: string
         description: The directory for the charm under the working-directory
         default: "."
+      containerd-socket:
+        type: string
+        description: Canonical Kubernetes containerd socket used for artifact image imports.
+        default: /opt/containerd/run/containerd/containerd.sock
       extra-arguments:
         description: Additional arguments to pass to the integration test execution
         type: string
@@ -140,12 +144,19 @@ on:
       upload-image:
         type: string
         description: >-
-          Can be either 'artifact' or 'registry', which determines the method by which images used 
-          in integration tests are uploaded. If set to 'artifact', the images will be uploaded as GitHub 
-          action artifacts. If set to 'registry', the images will be uploaded to ghcr. 
-          If this parameter is not specified, the default behavior is to use 'artifact' for pull requests 
-          originating from forked repositories, and 'registry' for all other cases.
+          Can be either 'artifact' or 'registry'. 'artifact' uploads built images as
+          GitHub Actions artifacts and loads images into the provider during tests (the
+          MicroK8s local registry or Canonical Kubernetes containerd). 'registry'
+          pushes images to GHCR. If unspecified, artifact mode is used for test
+          fork pull requests regardless of provider, and for pull-request events with the
+          default MicroK8s provider. All other event/provider combinations retain registry mode
+          unless overridden.
+          Use 'registry' when a remote image is explicitly required.
         default: ""
+      artifact-retention-days:
+        type: number
+        description: Number of days to retain build artifacts.
+        default: 30
       use-canonical-k8s:
         type: boolean
         description: (Experimental) Whether to use canonical k8s instead of microk8s
@@ -170,6 +181,7 @@ jobs:
     runs-on: ${{ inputs.builder-runner-label }}
     outputs:
       plan: ${{ steps.plan.outputs.plan }}
+      image-output-type: ${{ steps.plan.outputs.image-output-type }}
       has-code-changes: ${{ steps.changes.outputs.has_code_changes }}
     steps:
       - name: Validate input
@@ -182,11 +194,13 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
             fetch-depth: 0
-      - uses: canonical/operator-workflows/internal/plan@main
+      - uses: yanksyoon/operator-workflows/internal/plan@fix/isd-512-artifact-default
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
           upload-image: ${{ inputs.upload-image }}
+          provider: ${{ inputs.provider }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
           working-directory: ${{ inputs.working-directory }}
 
       - name: Find changes
@@ -256,11 +270,7 @@ jobs:
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
-        uses: canonical/get-workflow-version-action@v1.0.4
-        with:
-          repository-name: canonical/operator-workflows
-          file-name: integration_test.yaml
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "sha=${{ job.workflow_sha }}" >> "$GITHUB_OUTPUT"
       - name: Install charmbuild
         if: ${{ matrix.build.type == 'charm' }}
         run: |
@@ -272,11 +282,12 @@ jobs:
         if: ${{ matrix.build.type == 'rock' }}
         run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
         shell: bash
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: yanksyoon/operator-workflows/internal/build@fix/isd-512-artifact-default
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
           build-context: ${{ inputs.build-context }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   plan-scan:
@@ -286,7 +297,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: yanksyoon/operator-workflows/internal/plan-scan@fix/isd-512-artifact-default
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}
@@ -390,6 +401,7 @@ jobs:
     with:
       bootstrap-options: ${{ inputs.bootstrap-options }}
       channel: ${{ inputs.channel }}
+      containerd-socket: ${{ inputs.containerd-socket }}
       extra-arguments: ${{ inputs.extra-arguments }}
       juju-channel: ${{ inputs.juju-channel }}
       microk8s-addons: ${{ inputs.microk8s-addons }}
@@ -413,6 +425,7 @@ jobs:
       tmate-timeout: ${{ inputs.tmate-timeout }}
       with-uv: ${{ inputs.with-uv }}
       working-directory: ${{ inputs.working-directory }}
+      image-output-type: ${{ needs.plan.outputs.image-output-type || (inputs.upload-image == 'registry' && 'registry' || inputs.upload-image == 'artifact' && 'file' || (github.event_name == 'pull_request' && (inputs.provider == 'microk8s' || github.event.pull_request.head.repo.full_name != github.repository)) && 'file' || 'registry') }}
   required_status_checks:
     name: Required Integration Test Status Checks
     runs-on: ${{ inputs.builder-runner-label }}

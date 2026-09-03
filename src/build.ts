@@ -12,6 +12,13 @@ import { DefaultArtifactClient } from '@actions/artifact'
 import fs from 'fs'
 import path from 'path'
 
+function artifactUploadOptions(): { retentionDays?: number } {
+  const retentionDays = Number(core.getInput('artifact-retention-days'))
+  return Number.isInteger(retentionDays) && retentionDays > 0
+    ? { retentionDays }
+    : {}
+}
+
 interface BuildCharmParams {
   plan: BuildPlan
   buildContext: string
@@ -55,7 +62,8 @@ async function buildCharm(params: BuildCharmParams): Promise<void> {
   await artifact.uploadArtifact(
     params.plan.output,
     [...charmFiles, manifestFile],
-    params.plan.source_directory
+    params.plan.source_directory,
+    artifactUploadOptions()
   )
 }
 
@@ -90,7 +98,8 @@ async function buildFileResource(plan: BuildPlan): Promise<void> {
   await artifact.uploadArtifact(
     plan.output,
     [...resourceFiles, manifestFile],
-    plan.source_directory
+    plan.source_directory,
+    artifactUploadOptions()
   )
 }
 
@@ -127,7 +136,8 @@ async function buildDockerImage({
     await artifact.uploadArtifact(
       plan.output,
       [manifest, path.join(plan.source_directory, file)],
-      plan.source_directory
+      plan.source_directory,
+      artifactUploadOptions()
     )
   }
   if (plan.output_type == 'registry') {
@@ -146,7 +156,8 @@ async function buildDockerImage({
     await artifact.uploadArtifact(
       plan.output,
       [manifest],
-      plan.source_directory
+      plan.source_directory,
+      artifactUploadOptions()
     )
   }
 }
@@ -220,7 +231,8 @@ async function restoreRock(
     await artifact.uploadArtifact(
       plan.output,
       [manifestFile],
-      plan.source_directory
+      plan.source_directory,
+      artifactUploadOptions()
     )
     return true
   }
@@ -279,7 +291,8 @@ async function buildRock({
     await artifact.uploadArtifact(
       plan.output,
       [...rocks, manifestFile],
-      plan.source_directory
+      plan.source_directory,
+      artifactUploadOptions()
     )
   } else {
     const tree = await gitTreeId(plan.source_directory)
@@ -320,7 +333,8 @@ async function buildRock({
     await artifact.uploadArtifact(
       plan.output,
       [manifestFile],
-      plan.source_directory
+      plan.source_directory,
+      artifactUploadOptions()
     )
   }
 }

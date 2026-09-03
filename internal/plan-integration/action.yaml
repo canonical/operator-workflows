@@ -11,6 +11,14 @@ inputs:
   check-run-id:
     description: check run id
     required: true
+  provider:
+    description: Integration provider used for image transport.
+    required: false
+    default: microk8s
+  containerd-socket:
+    description: Canonical Kubernetes containerd socket for side-loading image archives.
+    required: false
+    default: ''
 outputs:
   scans:
     description: required scans.

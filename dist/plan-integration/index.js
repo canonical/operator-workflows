@@ -29615,6 +29615,50 @@ function exec(commandLine, args, options) {
         return runner.exec();
     });
 }
+/**
+ * Exec a command and get the output.
+ * Output will be streamed to the live console.
+ * Returns promise with the exit code and collected stdout and stderr
+ *
+ * @param     commandLine           command to execute (can include additional args). Must be correctly escaped.
+ * @param     args                  optional arguments for tool. Escaping is handled by the lib.
+ * @param     options               optional exec options.  See ExecOptions
+ * @returns   Promise<ExecOutput>   exit code, stdout, and stderr
+ */
+function getExecOutput(commandLine, args, options) {
+    return __awaiter$b(this, void 0, void 0, function* () {
+        var _a, _b;
+        let stdout = '';
+        let stderr = '';
+        //Using string decoder covers the case where a mult-byte character is split
+        const stdoutDecoder = new require$$5$3.StringDecoder('utf8');
+        const stderrDecoder = new require$$5$3.StringDecoder('utf8');
+        const originalStdoutListener = (_a = void 0 ) === null || _a === void 0 ? void 0 : _a.stdout;
+        const originalStdErrListener = (_b = void 0 ) === null || _b === void 0 ? void 0 : _b.stderr;
+        const stdErrListener = (data) => {
+            stderr += stderrDecoder.write(data);
+            if (originalStdErrListener) {
+                originalStdErrListener(data);
+            }
+        };
+        const stdOutListener = (data) => {
+            stdout += stdoutDecoder.write(data);
+            if (originalStdoutListener) {
+                originalStdoutListener(data);
+            }
+        };
+        const listeners = Object.assign(Object.assign({}, void 0 ), { stdout: stdOutListener, stderr: stdErrListener });
+        const exitCode = yield exec(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        //flush any remaining characters
+        stdout += stdoutDecoder.end();
+        stderr += stderrDecoder.end();
+        return {
+            exitCode,
+            stdout,
+            stderr
+        };
+    });
+}
 
 (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -119035,9 +119079,65 @@ async function downloadArtifact(artifact, id) {
     }
     throw new Error('failed to download artifact');
 }
+const CANONICAL_K8S_CTR = '/snap/k8s/current/bin/ctr';
+const CANONICAL_K8S_CONTAINERD_SOCKET = '/opt/containerd/run/containerd/containerd.sock';
+async function listCanonicalK8sImages(ctrArgs) {
+    const output = await getExecOutput('sudo', [
+        CANONICAL_K8S_CTR,
+        ...ctrArgs,
+        'images',
+        'list',
+        '-q'
+    ]);
+    return output.stdout
+        .split(/\r?\n/)
+        .map(ref => ref.trim())
+        .filter(Boolean);
+}
+async function importCanonicalK8sImage(archivePath, image) {
+    const ctrArgs = [
+        '--address',
+        getInput('containerd-socket') || CANONICAL_K8S_CONTAINERD_SOCKET,
+        '--namespace',
+        'k8s.io'
+    ];
+    const before = await listCanonicalK8sImages(ctrArgs);
+    await exec('sudo', [
+        CANONICAL_K8S_CTR,
+        ...ctrArgs,
+        'images',
+        'import',
+        '--all-platforms',
+        '--index-name',
+        image,
+        archivePath
+    ]);
+    let imported = await listCanonicalK8sImages(ctrArgs);
+    if (!imported.includes(image)) {
+        const candidates = imported.filter(ref => !before.includes(ref) && !ref.includes('@sha256:'));
+        if (candidates.length !== 1) {
+            throw new Error(`Canonical Kubernetes containerd import produced ${candidates.length} candidate images for ${image}`);
+        }
+        await exec('sudo', [
+            CANONICAL_K8S_CTR,
+            ...ctrArgs,
+            'images',
+            'tag',
+            '--force',
+            candidates[0],
+            image
+        ]);
+        imported = await listCanonicalK8sImages(ctrArgs);
+    }
+    if (!imported.includes(image)) {
+        throw new Error(`Canonical Kubernetes containerd import did not produce expected image ${image}`);
+    }
+    info(`Imported ${image} into Canonical Kubernetes containerd`);
+}
 async function run() {
     try {
         const plan = JSON.parse(getInput('plan'));
+        const provider = getInput('provider') || 'microk8s';
         await waitBuild(getInput('github-token'), Number(getInput('check-run-id')));
         const artifact = new DefaultArtifactClient();
         const args = [];
@@ -119066,13 +119166,18 @@ async function run() {
                         const archiveType = file.endsWith('.rock')
                             ? 'oci-archive'
                             : 'docker-archive';
-                        await exec('rockcraft.skopeo', [
-                            'copy',
-                            '--insecure-policy',
-                            '--dest-tls-verify=false',
-                            `${archiveType}:${path$1.join(tmp, file)}`,
-                            `docker://${image}`
-                        ]);
+                        if (provider === 'k8s') {
+                            await importCanonicalK8sImage(path$1.join(tmp, file), image);
+                        }
+                        else {
+                            await exec('rockcraft.skopeo', [
+                                'copy',
+                                '--insecure-policy',
+                                '--dest-tls-verify=false',
+                                `${archiveType}:${path$1.join(tmp, file)}`,
+                                `docker://${image}`
+                            ]);
+                        }
                         args.push(`--${name}-image=${image}`);
                     }
                 }

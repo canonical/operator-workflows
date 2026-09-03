@@ -123964,7 +123964,7 @@ function normalizePath(p) {
 function sanitizeArtifactName(name) {
     return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-');
 }
-function fromFork() {
+function isForkPullRequest() {
     const context = context$2;
     if (context.eventName !== 'pull_request') {
         return false;
@@ -123972,6 +123972,16 @@ function fromFork() {
     return (
     // @ts-expect-error GitHub payload typing does not model all pull_request fields.
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login);
+}
+function usesArtifactByDefault(provider) {
+    return (isForkPullRequest() ||
+        (provider === 'microk8s' && context$2.eventName === 'pull_request'));
+}
+function artifactUploadOptions() {
+    const retentionDays = Number(getInput('artifact-retention-days'));
+    return Number.isInteger(retentionDays) && retentionDays > 0
+        ? { retentionDays }
+        : {};
 }
 async function planBuildCharm(workingDir, id) {
     const allCharmcraftFiles = await (await create(path__namespace.join(workingDir, '**', 'charmcraft.yaml'))).glob();
@@ -124106,11 +124116,12 @@ async function run() {
             id = `${id}__${identity}`;
         }
         const workingDir = normalizePath(getInput('working-directory'));
+        const provider = getInput('provider') || 'microk8s';
         let imageOutputType;
         const uploadImage = getInput('upload-image');
         switch (uploadImage) {
             case '':
-                imageOutputType = fromFork() ? 'file' : 'registry';
+                imageOutputType = usesArtifactByDefault(provider) ? 'file' : 'registry';
                 break;
             case 'artifact':
                 imageOutputType = 'file';
@@ -124133,8 +124144,9 @@ async function run() {
         const pathFile = path__namespace.join(tmp, 'plan.json');
         const planJson = JSON.stringify(plan, null, 2);
         fs__namespace.writeFileSync(pathFile, planJson);
-        await artifact.uploadArtifact(sanitizeArtifactName(`${id}__plan`), [pathFile], tmp, {});
+        await artifact.uploadArtifact(sanitizeArtifactName(`${id}__plan`), [pathFile], tmp, artifactUploadOptions());
         setOutput('plan', planJson);
+        setOutput('image-output-type', imageOutputType);
     }
     catch (error) {
         // Fail the workflow run if an error occurs

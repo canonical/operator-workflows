@@ -100,9 +100,79 @@ async function downloadArtifact(
   throw new Error('failed to download artifact')
 }
 
+const CANONICAL_K8S_CTR = '/snap/k8s/current/bin/ctr'
+const CANONICAL_K8S_CONTAINERD_SOCKET =
+  '/opt/containerd/run/containerd/containerd.sock'
+
+async function listCanonicalK8sImages(ctrArgs: string[]): Promise<string[]> {
+  const output = await exec.getExecOutput('sudo', [
+    CANONICAL_K8S_CTR,
+    ...ctrArgs,
+    'images',
+    'list',
+    '-q'
+  ])
+  return output.stdout
+    .split(/\r?\n/)
+    .map(ref => ref.trim())
+    .filter(Boolean)
+}
+
+async function importCanonicalK8sImage(
+  archivePath: string,
+  image: string
+): Promise<void> {
+  const ctrArgs = [
+    '--address',
+    core.getInput('containerd-socket') || CANONICAL_K8S_CONTAINERD_SOCKET,
+    '--namespace',
+    'k8s.io'
+  ]
+  const before = await listCanonicalK8sImages(ctrArgs)
+  await exec.exec('sudo', [
+    CANONICAL_K8S_CTR,
+    ...ctrArgs,
+    'images',
+    'import',
+    '--all-platforms',
+    '--index-name',
+    image,
+    archivePath
+  ])
+
+  let imported = await listCanonicalK8sImages(ctrArgs)
+  if (!imported.includes(image)) {
+    const candidates = imported.filter(
+      ref => !before.includes(ref) && !ref.includes('@sha256:')
+    )
+    if (candidates.length !== 1) {
+      throw new Error(
+        `Canonical Kubernetes containerd import produced ${candidates.length} candidate images for ${image}`
+      )
+    }
+    await exec.exec('sudo', [
+      CANONICAL_K8S_CTR,
+      ...ctrArgs,
+      'images',
+      'tag',
+      '--force',
+      candidates[0],
+      image
+    ])
+    imported = await listCanonicalK8sImages(ctrArgs)
+  }
+  if (!imported.includes(image)) {
+    throw new Error(
+      `Canonical Kubernetes containerd import did not produce expected image ${image}`
+    )
+  }
+  core.info(`Imported ${image} into Canonical Kubernetes containerd`)
+}
+
 export async function run(): Promise<void> {
   try {
     const plan: Plan = JSON.parse(core.getInput('plan'))
+    const provider = core.getInput('provider') || 'microk8s'
     await waitBuild(
       core.getInput('github-token'),
       Number(core.getInput('check-run-id'))
@@ -146,13 +216,17 @@ export async function run(): Promise<void> {
             const archiveType = file.endsWith('.rock')
               ? 'oci-archive'
               : 'docker-archive'
-            await exec.exec('rockcraft.skopeo', [
-              'copy',
-              '--insecure-policy',
-              '--dest-tls-verify=false',
-              `${archiveType}:${path.join(tmp, file)}`,
-              `docker://${image}`
-            ])
+            if (provider === 'k8s') {
+              await importCanonicalK8sImage(path.join(tmp, file), image)
+            } else {
+              await exec.exec('rockcraft.skopeo', [
+                'copy',
+                '--insecure-policy',
+                '--dest-tls-verify=false',
+                `${archiveType}:${path.join(tmp, file)}`,
+                `docker://${image}`
+              ])
+            }
             args.push(`--${name}-image=${image}`)
           }
         }

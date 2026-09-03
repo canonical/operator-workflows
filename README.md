@@ -156,9 +156,9 @@ GitHub organisations can set the default `GITHUB_TOKEN` permissions to read-only
 | `docs_spread.yaml` | `contents: read` | Checks out the repository for Spread-based documentation testing |
 | `docs.yaml` | `contents: read` | Checks out the repository for Vale and Lychee linting |
 | `generate_terraform_docs.yaml` | `contents: write`<br>`pull-requests: write` | Commits generated Terraform docs and opens a PR with the changes |
-| `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; pushes built OCI images to `ghcr.io` when `upload-image: registry` is used or when running on non-forked PRs; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
+| `integration_test.yaml` | `contents: read`<br>`packages: write`<br>`pull-requests: write` *(optional)* | Checks out the repository; uploads built OCI images as GitHub artifacts for test events by default, or pushes to `ghcr.io` when `upload-image: registry` is explicitly selected; `pull-requests: write` is only needed to post `.trivyignore` warning comments (non-fatal if absent) |
 | `promote_charm.yaml` | `contents: read` | Checks out the repository to read `charmcraft.yaml`; releases the charm revision via `charmcraft release` (no git tag or release is created) |
-| `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; pushes OCI images to `ghcr.io`; downloads build artifacts from a prior integration test run |
+| `publish_charm.yaml` | `contents: write`<br>`packages: write`<br>`actions: read` | Creates git tags and releases libraries; publishes OCI image resources from artifacts or explicitly selected registry images; downloads build artifacts from a prior integration test run |
 | `terraform_modules_release.yaml` | `contents: write` *(push to main only)* | Creates and pushes a semver tag; on PRs runs compliance checks with `contents: read` |
 | `terraform_modules_test.yaml` | `contents: read` | Checks out the repository to run `terraform test` |
 | `test.yaml` | `contents: read`<br>`pull-requests: write` | Checks out the repository; `charming-actions/check-libraries` posts a comment on PRs when charm libraries are out of date |
@@ -175,4 +175,6 @@ jobs:
     secrets: inherit
 ```
 
-> **Note:** `packages: write` is only needed by `integration_test.yaml` and `publish_charm.yaml` when OCI images are pushed to `ghcr.io`. If your charm has no OCI images, `contents: read` is sufficient for `integration_test.yaml`.
+`integration_test.yaml` uses artifact mode by default for fork pull requests regardless of provider, and for pull-request test events with the default MicroK8s provider. All other event/provider combinations retain registry mode unless `upload-image` is explicitly set. Build artifacts are retained for 30 days by default. Set `artifact-retention-days` to override the retention period, or set `upload-image: registry` when the test explicitly requires a remote GHCR image.
+
+> **Note:** `packages: write` is needed when `upload-image: registry` is selected or when `publish_charm.yaml` pushes OCI images to `ghcr.io`. Artifact-mode test runs do not push to GHCR, but the reusable workflow currently retains this permission for explicit registry opt-in. If your charm has no OCI images, `contents: read` is sufficient for `integration_test.yaml`.

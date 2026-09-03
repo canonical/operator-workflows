@@ -19,7 +19,7 @@ function sanitizeArtifactName(name: string): string {
   return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-')
 }
 
-function fromFork(): boolean {
+function isForkPullRequest(): boolean {
   const context = github.context
   if (context.eventName !== 'pull_request') {
     return false
@@ -28,6 +28,20 @@ function fromFork(): boolean {
     // @ts-expect-error GitHub payload typing does not model all pull_request fields.
     context.repo.owner !== context.payload.pull_request.head.repo.owner.login
   )
+}
+
+function usesArtifactByDefault(provider: string): boolean {
+  return (
+    isForkPullRequest() ||
+    (provider === 'microk8s' && github.context.eventName === 'pull_request')
+  )
+}
+
+function artifactUploadOptions(): { retentionDays?: number } {
+  const retentionDays = Number(core.getInput('artifact-retention-days'))
+  return Number.isInteger(retentionDays) && retentionDays > 0
+    ? { retentionDays }
+    : {}
 }
 
 async function planBuildCharm(
@@ -229,11 +243,12 @@ export async function run(): Promise<void> {
       id = `${id}__${identity}`
     }
     const workingDir: string = normalizePath(core.getInput('working-directory'))
+    const provider = core.getInput('provider') || 'microk8s'
     let imageOutputType: 'file' | 'registry'
     const uploadImage = core.getInput('upload-image')
     switch (uploadImage) {
       case '':
-        imageOutputType = fromFork() ? 'file' : 'registry'
+        imageOutputType = usesArtifactByDefault(provider) ? 'file' : 'registry'
         break
       case 'artifact':
         imageOutputType = 'file'
@@ -260,9 +275,10 @@ export async function run(): Promise<void> {
       sanitizeArtifactName(`${id}__plan`),
       [pathFile],
       tmp,
-      {}
+      artifactUploadOptions()
     )
     core.setOutput('plan', planJson)
+    core.setOutput('image-output-type', imageOutputType)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
