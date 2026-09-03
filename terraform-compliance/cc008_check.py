@@ -222,20 +222,18 @@ def check_interface(
             violations.append(
                 f"{module_type} module missing mandatory output: {output.name}"
             )
-    if interface.strict_variables:
-        known = {rule.name for rule in interface.variables}
-        violations.extend(
-            f"{module_type} module declares unexpected variable: {name}"
-            for name in variables
-            if name not in known
-        )
-    if interface.strict_outputs:
-        known = {output.name for output in interface.outputs}
-        violations.extend(
-            f"{module_type} module declares unexpected output: {name}"
-            for name in outputs
-            if name not in known
-        )
+    # CC008 allows arbitrary extra variables/outputs, but names retired under
+    # CC008 (e.g. endpoints, split into provides/requires) must not be used.
+    violations.extend(
+        f'{module_type} module declares deprecated variable: {name}'
+        for name in variables
+        if name in CC008_SPEC.deprecated_names
+    )
+    violations.extend(
+        f'{module_type} module declares deprecated output: {name}'
+        for name in outputs
+        if name in CC008_SPEC.deprecated_names
+    )
     return violations
 
 

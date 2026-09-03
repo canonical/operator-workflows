@@ -57,8 +57,6 @@ class ModuleInterface:
 
     variables: tuple[VariableRule, ...]
     outputs: tuple[OutputRule, ...]
-    strict_variables: bool = False  # variables outside the rule set are violations
-    strict_outputs: bool = False  # outputs outside the rule set are violations
 
 
 @dataclass(frozen=True)
@@ -77,6 +75,7 @@ class CC008Spec:
     terraform_block: TerraformBlockRequirements
     tying_resource_types: frozenset[str]
     floating_ref_names: frozenset[str]
+    deprecated_names: frozenset[str]
     module_interfaces: dict[ModuleType, ModuleInterface]
 
 
@@ -100,6 +99,8 @@ CC008_SPEC = CC008Spec(
     floating_ref_names=frozenset(
         {"main", "master", "trunk", "develop", "development", "head"}
     ),
+    # Names retired under CC008 (endpoints was split into provides/requires).
+    deprecated_names=frozenset({"endpoint", "endpoints"}),
     module_interfaces={
         ModuleType.CHARM: ModuleInterface(
             variables=(
@@ -135,8 +136,6 @@ CC008_SPEC = CC008Spec(
                 OutputRule("requires", optional=True),
                 OutputRule("offers", optional=True),
             ),
-            strict_variables=True,
-            strict_outputs=True,
         ),
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
@@ -152,7 +151,6 @@ CC008_SPEC = CC008Spec(
                 OutputRule("requires", optional=True),
                 OutputRule("offers", optional=True),
             ),
-            strict_outputs=True,
         ),
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
@@ -167,7 +165,6 @@ CC008_SPEC = CC008Spec(
                 OutputRule("offers", optional=True),
                 OutputRule("credentials", optional=True),
             ),
-            strict_outputs=True,
         ),
     },
 )

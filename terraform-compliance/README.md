@@ -40,10 +40,9 @@ Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
 - Variable and output blocks are alphabetical.
 - Mandatory variables/outputs per module type (charm, component, product),
   plus a broad type-family check and CC008 defaults where unambiguous. Optional
-  variables/outputs are validated only when present. Charm modules are also
-  checked for *unexpected* variables and outputs (the charm interface is
-  closed); component and product modules are checked for unexpected *outputs*
-  only, since they may declare author-named external-integration variables.
+  variables/outputs are validated only when present. CC008 allows arbitrary
+  extra variables and outputs, but names retired under CC008 (e.g. `endpoints`,
+  split into `provides`/`requires`) are flagged as deprecated.
 - Remote module sources are pinned (a `?ref=` that isn't a floating branch, or
   a registry `version`).
 

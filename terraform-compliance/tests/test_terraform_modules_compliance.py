@@ -814,7 +814,7 @@ def test_github_shorthand_source_with_version_but_no_ref_is_reported() -> None:
     assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]
 
 
-def test_charm_unexpected_variable_is_reported() -> None:
+def test_charm_deprecated_variable_is_reported() -> None:
     variables = cc008_check.variable_bodies(
         [
             hcl2.loads(
@@ -826,22 +826,40 @@ def test_charm_unexpected_variable_is_reported() -> None:
     violations = cc008_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
-    assert "charm module declares unexpected variable: endpoints" in violations
+    assert "charm module declares deprecated variable: endpoints" in violations
 
 
-def test_charm_unexpected_output_is_reported() -> None:
+def test_charm_deprecated_output_is_reported() -> None:
     variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
     violations = cc008_check.check_interface(
         variables,
         ["application", "provides", "requires", "endpoint"],
         module_type="charm",
     )
-    assert "charm module declares unexpected output: endpoint" in violations
+    assert "charm module declares deprecated output: endpoint" in violations
+
+
+def test_charm_allows_arbitrary_extra_variable_and_output() -> None:
+    # CC008: "Other inputs are allowed" / "Any other outputs are allowed".
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF
+                + 'variable "extra_thing" {\n  type = string\n  default = null\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables,
+        ["application", "provides", "requires", "custom_output"],
+        module_type="charm",
+    )
+    assert violations == []
 
 
 def test_component_allows_author_named_variables() -> None:
     # Component modules may declare author-named external-integration inputs, so
-    # unknown variables must not be reported; unknown outputs still are.
+    # unknown variables must not be reported.
     variables = cc008_check.variable_bodies(
         [
             hcl2.loads(
@@ -856,11 +874,11 @@ def test_component_allows_author_named_variables() -> None:
     assert violations == []
 
 
-def test_component_unexpected_output_is_reported() -> None:
+def test_component_deprecated_output_is_reported() -> None:
     variables = cc008_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
     )
     violations = cc008_check.check_interface(
         variables, ["components", "endpoints"], module_type="component"
     )
-    assert "component module declares unexpected output: endpoints" in violations
+    assert "component module declares deprecated output: endpoints" in violations
