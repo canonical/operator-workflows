@@ -240,7 +240,6 @@ _VCS_OR_URL_SOURCE_PATTERN = re.compile(
     r"|^git@"                # scp-style git, e.g. git@github.com:org/repo.git
     r"|^\w+://"              # any URL scheme, e.g. https://, ssh://
     r"|^github\.com/"        # GitHub shorthand
-    r"|^bitbucket\.org/"     # Bitbucket shorthand
 )
 
 
