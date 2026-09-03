@@ -786,3 +786,29 @@ def test_typefamily_is_defined_in_terraform_hcl() -> None:
     # Not derived from cc008_spec anymore: terraform_hcl must not import it.
     source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
     assert "cc008_spec" not in source
+
+
+def test_vcs_source_with_version_but_no_ref_is_reported() -> None:
+    # `version` only applies to registry sources, so a git source without a
+    # ?ref= pin must fail even when a version is present.
+    text = (
+        'module "ic" {\n'
+        '  source  = "git::https://github.com/canonical/x-operator//terraform"\n'
+        '  version = "1.2.0"\n'
+        "}\n"
+    )
+    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    assert len(violations) == 1
+    assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]
+
+
+def test_github_shorthand_source_with_version_but_no_ref_is_reported() -> None:
+    text = (
+        'module "ic" {\n'
+        '  source  = "github.com/canonical/x-operator"\n'
+        '  version = "1.2.0"\n'
+        "}\n"
+    )
+    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    assert len(violations) == 1
+    assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]

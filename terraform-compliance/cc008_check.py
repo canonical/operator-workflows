@@ -219,6 +219,22 @@ def check_interface(
     return violations
 
 
+# Terraform source addresses that are VCS/URL (not registry) sources. `version`
+# only applies to registry sources, so these must be pinned with an explicit ref.
+_VCS_OR_URL_SOURCE_PATTERN = re.compile(
+    r"^(?:git|hg|s3|gcs)::"  # forced source type, e.g. git::https://...
+    r"|^git@"                # scp-style git, e.g. git@github.com:org/repo.git
+    r"|^\w+://"              # any URL scheme, e.g. https://, ssh://
+    r"|^github\.com/"        # GitHub shorthand
+    r"|^bitbucket\.org/"     # Bitbucket shorthand
+)
+
+
+def _is_vcs_or_url_source(source: str) -> bool:
+    """True if a module source is a VCS/URL source rather than a registry one."""
+    return _VCS_OR_URL_SOURCE_PATTERN.search(source) is not None
+
+
 def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
     """Return violations for module sources not pinned to a tag or commit."""
     violations: list[str] = []
@@ -233,16 +249,27 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
                 continue
             name = unquote(block_label(block))
             ref_match = re.search(r'[?&]ref=([^&"]+)', source)
-            if ref_match is None:
+            if _is_vcs_or_url_source(source):
+                if ref_match is None:
+                    violations.append(
+                        f'module "{name}": source must be pinned with ?ref=<tag|commit>'
+                    )
+                elif ref_match.group(1).lower() in CC008_SPEC.floating_ref_names:
+                    violations.append(
+                        f'module "{name}": ref "{ref_match.group(1)}" looks like a '
+                        "branch name, not a pinned tag or commit (floating "
+                        "references are not allowed)"
+                    )
+            elif ref_match is None:
                 if not body.get("version"):
                     violations.append(
-                        f'module "{name}": source must be pinned with ?ref=<tag|commit> '
-                        "or a registry version"
+                        f'module "{name}": source must be pinned with a registry version'
                     )
             elif ref_match.group(1).lower() in CC008_SPEC.floating_ref_names:
                 violations.append(
-                    f'module "{name}": ref "{ref_match.group(1)}" looks like a branch name, '
-                    "not a pinned tag or commit (floating references are not allowed)"
+                    f'module "{name}": ref "{ref_match.group(1)}" looks like a '
+                    "branch name, not a pinned tag or commit (floating "
+                    "references are not allowed)"
                 )
     return violations
 
