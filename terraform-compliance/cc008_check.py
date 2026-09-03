@@ -216,6 +216,20 @@ def check_interface(
             violations.append(
                 f"{module_type} module missing mandatory output: {output.name}"
             )
+    if interface.strict_variables:
+        known = {rule.name for rule in interface.variables}
+        violations.extend(
+            f"{module_type} module declares unexpected variable: {name}"
+            for name in variables
+            if name not in known
+        )
+    if interface.strict_outputs:
+        known = {output.name for output in interface.outputs}
+        violations.extend(
+            f"{module_type} module declares unexpected output: {name}"
+            for name in outputs
+            if name not in known
+        )
     return violations
 
 

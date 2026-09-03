@@ -812,3 +812,55 @@ def test_github_shorthand_source_with_version_but_no_ref_is_reported() -> None:
     violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]
+
+
+def test_charm_unexpected_variable_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF
+                + 'variable "endpoints" {\n  type = map(string)\n  default = {}\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert "charm module declares unexpected variable: endpoints" in violations
+
+
+def test_charm_unexpected_output_is_reported() -> None:
+    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = cc008_check.check_interface(
+        variables,
+        ["application", "provides", "requires", "endpoint"],
+        module_type="charm",
+    )
+    assert "charm module declares unexpected output: endpoint" in violations
+
+
+def test_component_allows_author_named_variables() -> None:
+    # Component modules may declare author-named external-integration inputs, so
+    # unknown variables must not be reported; unknown outputs still are.
+    variables = cc008_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "my_integration" {\n  type = string\n}\n'
+            )
+        ]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["components"], module_type="component"
+    )
+    assert violations == []
+
+
+def test_component_unexpected_output_is_reported() -> None:
+    variables = cc008_check.variable_bodies(
+        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+    )
+    violations = cc008_check.check_interface(
+        variables, ["components", "endpoints"], module_type="component"
+    )
+    assert "component module declares unexpected output: endpoints" in violations
