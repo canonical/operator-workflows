@@ -10,9 +10,9 @@
   ],
   "packageRules": [
     {
-      "description": "Hold TypeScript below 7 until @typescript-eslint supports it (peer: typescript >=4.8.4 <6.1.0).",
+      "description": "Hold TypeScript within @typescript-eslint's peer range until it supports newer (peer: typescript >=4.8.4 <6.1.0).",
       "matchPackageNames": ["typescript"],
-      "allowedVersions": "<7.0.0"
+      "allowedVersions": "<6.1.0"
     }
   ],
   "vulnerabilityAlerts": {
