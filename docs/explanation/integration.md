@@ -107,7 +107,7 @@ Artifact-mode rocks downloaded as tarballs are loaded into the test provider. On
 MicroK8s, the workflow pushes them to `localhost:32000` with
 `rockcraft.skopeo copy --insecure-policy --dest-tls-verify=false ...`. On Canonical Kubernetes
 (`provider: k8s`), it imports them directly into containerd's `k8s.io` namespace using the
-configured containerd socket (default: `/opt/containerd/run/containerd/containerd.sock`); no local registry is assumed. Configure `containerd-socket` when Canonical Kubernetes uses a different base directory. Artifact mode is used by default
+configured containerd socket (default: `/opt/containerd/run/containerd/containerd.sock`); no registry service is assumed. The imported image keeps its `localhost:32000/...` reference and must use the local image (`IfNotPresent`/`Never`), not pull from a registry. Configure `containerd-socket` when Canonical Kubernetes uses a different base directory. This path targets the bootstrapped runner node; multi-node clusters need the archive imported on every possible workload node. Artifact mode is used by default
 for fork pull requests regardless of provider, and for pull-request test runs with the default
 MicroK8s provider. All other event/provider combinations use registry mode unless
 `upload-image: artifact` is explicitly selected. Artifact archives are retained for 30 days by
@@ -117,9 +117,10 @@ Tox argument: `--<rock-name>-image=<local-registry-image-name>`
 
 ### Docker
 
-The Docker images are referred to from the image registry that is output from
-the build step. Artifact-mode builds are loaded into the local test registry;
-`upload-image: registry` uses the GitHub Container Registry (ghcr).
+The Docker images are referred to from the image reference output from the
+build step. Artifact-mode archives are imported into Canonical Kubernetes
+containerd or loaded into the MicroK8s local registry; `upload-image: registry`
+uses the GitHub Container Registry (ghcr).
 
 Tox argument: `--<image-name>-image=<image-resource-uri>`
 

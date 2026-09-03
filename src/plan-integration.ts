@@ -104,6 +104,17 @@ const CANONICAL_K8S_CTR = '/snap/k8s/current/bin/ctr'
 const CANONICAL_K8S_CONTAINERD_SOCKET =
   '/opt/containerd/run/containerd/containerd.sock'
 
+async function listCanonicalK8sImages(ctrArgs: string[]): Promise<string[]> {
+  const output = await exec.getExecOutput('sudo', [
+    CANONICAL_K8S_CTR,
+    ...ctrArgs,
+    'images',
+    'list',
+    '-q'
+  ])
+  return output.stdout.split(/\r?\n/).map(ref => ref.trim()).filter(Boolean)
+}
+
 async function importCanonicalK8sImage(
   archivePath: string,
   image: string
@@ -114,26 +125,40 @@ async function importCanonicalK8sImage(
     '--namespace',
     'k8s.io'
   ]
+  const before = await listCanonicalK8sImages(ctrArgs)
   await exec.exec('sudo', [
     CANONICAL_K8S_CTR,
     ...ctrArgs,
     'images',
     'import',
     '--all-platforms',
-    '--base-name',
+    '--index-name',
     image,
     archivePath
   ])
 
-  const imported = await exec.getExecOutput('sudo', [
-    CANONICAL_K8S_CTR,
-    ...ctrArgs,
-    'images',
-    'list',
-    '-q'
-  ])
-  const references = imported.stdout.split(/\r?\n/).map(ref => ref.trim())
-  if (!references.includes(image)) {
+  let imported = await listCanonicalK8sImages(ctrArgs)
+  if (!imported.includes(image)) {
+    const candidates = imported.filter(
+      ref => !before.includes(ref) && !ref.includes('@sha256:')
+    )
+    if (candidates.length === 0) {
+      throw new Error(
+        `Canonical Kubernetes containerd import did not produce image ${image}`
+      )
+    }
+    await exec.exec('sudo', [
+      CANONICAL_K8S_CTR,
+      ...ctrArgs,
+      'images',
+      'tag',
+      '--force',
+      candidates[0],
+      image
+    ])
+    imported = await listCanonicalK8sImages(ctrArgs)
+  }
+  if (!imported.includes(image)) {
     throw new Error(
       `Canonical Kubernetes containerd import did not produce expected image ${image}`
     )
