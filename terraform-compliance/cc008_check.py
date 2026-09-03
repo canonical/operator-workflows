@@ -185,8 +185,14 @@ def _check_variable_rule(
 
     has_default = "default" in body
     if rule.required and has_default:
-        violations.append(f"{prefix}: must not declare a default (this variable is required)")
-    elif rule.default is not NO_DEFAULT_CHECK and has_default and body["default"] != rule.default:
+        violations.append(
+            f"{prefix}: must not declare a default (this variable is required)"
+        )
+    elif (
+        rule.default is not NO_DEFAULT_CHECK
+        and has_default
+        and body["default"] != rule.default
+    ):
         violations.append(
             f"{prefix}: default must be {rule.default!r}, found {body['default']!r}"
         )
@@ -233,18 +239,14 @@ def check_interface(
     return violations
 
 
-# Terraform source addresses that are VCS/URL (not registry) sources. `version`
-# only applies to registry sources, so these must be pinned with an explicit ref.
-_VCS_OR_URL_SOURCE_PATTERN = re.compile(
-    r"^(?:git|hg|s3|gcs)::"  # forced source type, e.g. git::https://...
-    r"|^git@"                # scp-style git, e.g. git@github.com:org/repo.git
-    r"|^\w+://"              # any URL scheme, e.g. https://, ssh://
-    r"|^github\.com/"        # GitHub shorthand
-)
-
-
 def _is_vcs_or_url_source(source: str) -> bool:
     """True if a module source is a VCS/URL source rather than a registry one."""
+    _VCS_OR_URL_SOURCE_PATTERN = re.compile(
+        r"^git::"
+        r"|^git@"
+        r"|^\w+://"
+        r"|^github\.com/"
+    )
     return _VCS_OR_URL_SOURCE_PATTERN.search(source) is not None
 
 
