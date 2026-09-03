@@ -189,7 +189,7 @@ jobs:
       - uses: actions/checkout@v7.0.1
         with:
             fetch-depth: 0
-      - uses: canonical/operator-workflows/internal/plan@main
+      - uses: yanksyoon/operator-workflows/internal/plan@fix/isd-512-artifact-default
         id: plan
         with:
           identifier: ${{ inputs.identifier }}
@@ -281,7 +281,7 @@ jobs:
         if: ${{ matrix.build.type == 'rock' }}
         run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
         shell: bash
-      - uses: canonical/operator-workflows/internal/build@main
+      - uses: yanksyoon/operator-workflows/internal/build@fix/isd-512-artifact-default
         id: build
         with:
           build-plan: ${{ toJSON(matrix.build) }}
@@ -296,7 +296,7 @@ jobs:
     outputs:
       scans: ${{ steps.plan-scan.outputs.scans }}
     steps:
-      - uses: canonical/operator-workflows/internal/plan-scan@main
+      - uses: yanksyoon/operator-workflows/internal/plan-scan@fix/isd-512-artifact-default
         id: plan-scan
         with:
           plan: ${{ needs.plan.outputs.plan }}

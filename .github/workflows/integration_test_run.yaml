@@ -349,7 +349,7 @@ jobs:
           VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
       - run: sudo snap install rockcraft --channel ${{ inputs.rockcraft-channel }} --classic
       - name: Plan Integration
-        uses: canonical/operator-workflows/internal/plan-integration@main
+        uses: yanksyoon/operator-workflows/internal/plan-integration@fix/isd-512-artifact-default
         id: plan-integration
         with:
           plan: ${{ inputs.plan }}
