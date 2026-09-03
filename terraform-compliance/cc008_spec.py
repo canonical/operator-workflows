@@ -8,7 +8,9 @@ Single source of truth for *what* CC008 requires; cc008_check.py holds the
 """
 
 from dataclasses import dataclass
-from enum import StrEnum, nonmember
+from enum import StrEnum
+
+from terraform_hcl import TypeFamily
 
 
 class ModuleType(StrEnum):
@@ -17,27 +19,6 @@ class ModuleType(StrEnum):
     CHARM = "charm"
     COMPONENT = "component"
     PRODUCT = "product"
-
-
-class TypeFamily(StrEnum):
-    """Broad Terraform type families (a coarse bucket, not an exact type)."""
-
-    STRING = "string"
-    NUMBER = "number"
-    BOOL = "bool"
-    COLLECTION = "collection"  # map/list/set/object/tuple
-
-    # `nonmember` keeps this a plain attribute, not an enum member.
-    _COLLECTION_KEYWORDS = nonmember(
-        frozenset({"map", "list", "set", "object", "tuple"})
-    )
-
-    @classmethod
-    def _missing_(cls, value: object) -> "TypeFamily | None":
-        """Resolve collection keywords (map, object, ...) to COLLECTION."""
-        if value in cls._COLLECTION_KEYWORDS:
-            return cls.COLLECTION
-        return None
 
 
 class _NoDefaultCheck:

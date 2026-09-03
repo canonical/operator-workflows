@@ -777,3 +777,12 @@ def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> Non
     parsed = cc008_check.load_module_files(module)
 
     assert list(parsed) == ["alpha.tf", "main.tf", "zeta.tf"]
+
+
+def test_typefamily_is_defined_in_terraform_hcl() -> None:
+    import terraform_hcl
+
+    assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family("map(string)")
+    # Not derived from cc008_spec anymore: terraform_hcl must not import it.
+    source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
+    assert "cc008_spec" not in source

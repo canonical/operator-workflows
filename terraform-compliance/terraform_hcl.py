@@ -8,13 +8,34 @@ two-labeled resource/data blocks) but nothing about CC008.
 """
 
 import re
+from enum import StrEnum, nonmember
 from pathlib import Path
 
 import hcl2
-from cc008_spec import TypeFamily
 
 # Outermost type keyword in a variable's `type`, e.g. "string", "${map(...)}".
 _TYPE_KEYWORD_PATTERN = re.compile(r"([a-z]+)\s*\(?")
+
+
+class TypeFamily(StrEnum):
+    """Broad Terraform type families (a coarse bucket, not an exact type)."""
+
+    STRING = "string"
+    NUMBER = "number"
+    BOOL = "bool"
+    COLLECTION = "collection"  # map/list/set/object/tuple
+
+    # `nonmember` keeps this a plain attribute, not an enum member.
+    _COLLECTION_KEYWORDS = nonmember(
+        frozenset({"map", "list", "set", "object", "tuple"})
+    )
+
+    @classmethod
+    def _missing_(cls, value: object) -> "TypeFamily | None":
+        """Resolve collection keywords (map, object, ...) to COLLECTION."""
+        if value in cls._COLLECTION_KEYWORDS:
+            return cls.COLLECTION
+        return None
 
 
 def unquote(value: str) -> str:
