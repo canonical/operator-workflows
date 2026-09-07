@@ -10,9 +10,8 @@
   ],
   "packageRules": [
     {
-      "description": "Hold TypeScript within @typescript-eslint's peer range until it supports newer (peer: typescript >=4.8.4 <6.1.0).",
+      "description": "Isolate TypeScript in its own PR so an incompatible bump (e.g. ahead of @typescript-eslint's peer range) fails CI alone and self-merges once compatible, without holding back or blocking other updates.",
       "matchPackageNames": ["typescript"],
-      "allowedVersions": "<6.1.0",
       "groupName": "typescript",
       "groupSlug": "typescript"
     }
