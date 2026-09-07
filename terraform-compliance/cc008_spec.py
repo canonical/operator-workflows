@@ -119,7 +119,7 @@ CC008_SPEC = CC008Spec(
                 VariableRule("resources", TypeFamily.COLLECTION, default={}, optional=True),
                 VariableRule("machines", TypeFamily.COLLECTION, default=[], optional=True),
                 VariableRule(
-                    "endpoint_bindings", TypeFamily.COLLECTION, default={}, optional=True
+                    "endpoint_bindings", TypeFamily.COLLECTION, default=[], optional=True
                 ),
                 VariableRule(
                     "storage_directives", TypeFamily.COLLECTION, default={}, optional=True
