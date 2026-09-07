@@ -1,10 +1,11 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""CC008 Terraform module requirements, as data.
+"""Terraform module requirements, as data.
 
-Single source of truth for *what* CC008 requires; cc008_check.py holds the
-*how*. No checking logic here.
+Single source of truth for *what* the checker requires; terraform_check.py
+holds the *how*, generically applying whatever spec it is given. No checking
+logic here. ``DEFAULT_SPEC`` below currently encodes the CC008 standard.
 """
 
 from dataclasses import dataclass
@@ -14,7 +15,7 @@ from terraform_hcl import TypeFamily
 
 
 class ModuleType(StrEnum):
-    """CC008 module categories this checker distinguishes."""
+    """Module categories this checker distinguishes."""
 
     CHARM = "charm"
     COMPONENT = "component"
@@ -34,7 +35,7 @@ NO_DEFAULT_CHECK = _NoDefaultCheck()
 
 @dataclass(frozen=True)
 class VariableRule:
-    """One CC008 variable requirement."""
+    """One variable requirement."""
 
     name: str
     type_family: TypeFamily | None = None
@@ -45,7 +46,7 @@ class VariableRule:
 
 @dataclass(frozen=True)
 class OutputRule:
-    """One CC008 output requirement (presence only; outputs have no type)."""
+    """One output requirement (presence only; outputs have no type)."""
 
     name: str
     optional: bool = False
@@ -68,8 +69,8 @@ class TerraformBlockRequirements:
 
 
 @dataclass(frozen=True)
-class CC008Spec:
-    """The full set of CC008 requirements this checker enforces."""
+class ModuleSpec:
+    """The full set of requirements a Terraform module must satisfy."""
 
     required_files: tuple[str, ...]
     terraform_block: TerraformBlockRequirements
@@ -79,7 +80,8 @@ class CC008Spec:
     module_interfaces: dict[ModuleType, ModuleInterface]
 
 
-CC008_SPEC = CC008Spec(
+# The spec currently enforced: the CC008 Terraform module standard.
+DEFAULT_SPEC = ModuleSpec(
     required_files=(
         "terraform.tf",
         "variables.tf",

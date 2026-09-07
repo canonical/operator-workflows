@@ -1,13 +1,14 @@
-# CC008 Terraform compliance checker
+# Terraform module compliance checker
 
-Checks that Terraform modules follow the CC008 module standards.
+Generic checker that validates Terraform modules against a configurable spec.
+The spec enforced by default is [CC008](../CC008.md).
 Runs in CI via the reusable `terraform_modules_compliance.yaml` workflow.
 
 Files:
 
-- `cc008_spec.py` — the CC008 requirements, as data.
+- `terraform_spec.py` — the requirements, as data (`DEFAULT_SPEC` currently encodes CC008).
 - `terraform_hcl.py` — `.tf` loading and `python-hcl2` normalisation.
-- `cc008_check.py` — the checks and CLI.
+- `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
 
 ## Usage
 
@@ -17,7 +18,7 @@ Requires Python ≥ 3.11
 
 ```bash
 uv run --with python-hcl2==8.1.3 python \
-  terraform-compliance/cc008_check.py /path/to/repo/terraform
+  terraform-compliance/terraform_check.py /path/to/repo/terraform
 ```
 
 ### tests

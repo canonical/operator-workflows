@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   check-compliance:
-    name: CC008 compliance
+    name: Terraform modules compliance
     runs-on: ubuntu-latest
     steps:
       - name: Checkout caller repository
@@ -45,6 +45,6 @@ jobs:
           --requirement .operator-workflows/terraform-compliance/requirements.txt
       - name: Check compliance
         run: >-
-          python .operator-workflows/terraform-compliance/cc008_check.py
+          python .operator-workflows/terraform-compliance/terraform_check.py
           --verbose
           ${{ join(fromJSON(inputs['terraform-directories']), ' ') }}

@@ -1,12 +1,12 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""Unit tests for the CC008 Terraform compliance checker."""
+"""Unit tests for the Terraform module compliance checker."""
 
 from pathlib import Path
 
-import cc008_check
 import hcl2
+import terraform_check
 
 COMPLIANT_TERRAFORM_TF = """\
 terraform {
@@ -98,7 +98,7 @@ def test_missing_required_files_are_reported(tmp_path: Path) -> None:
     module = tmp_path / "empty"
     module.mkdir()
 
-    violations = cc008_check.check_required_files(module)
+    violations = terraform_check.check_required_files(module)
 
     assert "missing required file: terraform.tf" in violations
     assert "missing required file: variables.tf" in violations
@@ -108,7 +108,7 @@ def test_missing_required_files_are_reported(tmp_path: Path) -> None:
 
 
 def test_compliant_terraform_block_has_no_violations() -> None:
-    assert cc008_check.check_terraform_block(hcl2.loads(COMPLIANT_TERRAFORM_TF)) == []
+    assert terraform_check.check_terraform_block(hcl2.loads(COMPLIANT_TERRAFORM_TF)) == []
 
 
 def test_terraform_block_missing_required_version() -> None:
@@ -122,7 +122,7 @@ terraform {
   }
 }
 """
-    violations = cc008_check.check_terraform_block(hcl2.loads(text))
+    violations = terraform_check.check_terraform_block(hcl2.loads(text))
     assert "terraform.tf: missing required_version" in violations
 
 
@@ -132,7 +132,7 @@ terraform {
   required_version = "~> 1.12"
 }
 """
-    violations = cc008_check.check_terraform_block(hcl2.loads(text))
+    violations = terraform_check.check_terraform_block(hcl2.loads(text))
     assert "terraform.tf: missing juju provider in required_providers" in violations
 
 
@@ -148,7 +148,7 @@ terraform {
   }
 }
 """
-    violations = cc008_check.check_terraform_block(hcl2.loads(text))
+    violations = terraform_check.check_terraform_block(hcl2.loads(text))
     assert "terraform.tf: juju provider version must allow >= 1.0" in violations
 
 
@@ -164,7 +164,7 @@ terraform {
   }
 }
 """
-    assert cc008_check.check_terraform_block(hcl2.loads(text)) == []
+    assert terraform_check.check_terraform_block(hcl2.loads(text)) == []
 
 
 def test_terraform_block_juju_exact_pin_at_one_passes() -> None:
@@ -179,7 +179,7 @@ terraform {
   }
 }
 """
-    assert cc008_check.check_terraform_block(hcl2.loads(text)) == []
+    assert terraform_check.check_terraform_block(hcl2.loads(text)) == []
 
 
 def test_terraform_block_juju_version_with_only_upper_bound_fails() -> None:
@@ -194,7 +194,7 @@ terraform {
   }
 }
 """
-    violations = cc008_check.check_terraform_block(hcl2.loads(text))
+    violations = terraform_check.check_terraform_block(hcl2.loads(text))
     assert "terraform.tf: juju provider version must allow >= 1.0" in violations
 
 
@@ -207,7 +207,7 @@ variable "alpha" {
   type = string
 }
 """
-    assert cc008_check.block_names(hcl2.loads(text), "variable") == ["zeta", "alpha"]
+    assert terraform_check.block_names(hcl2.loads(text), "variable") == ["zeta", "alpha"]
 
 
 def test_alphabetical_variables_pass() -> None:
@@ -219,7 +219,7 @@ variable "beta" {
   type = string
 }
 """
-    assert cc008_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf") == []
+    assert terraform_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf") == []
 
 
 def test_unordered_variables_are_reported() -> None:
@@ -231,7 +231,7 @@ variable "alpha" {
   type = string
 }
 """
-    violations = cc008_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf")
+    violations = terraform_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf")
     assert len(violations) == 1
     assert "variables.tf: variable blocks are not alphabetical" in violations[0]
 
@@ -239,18 +239,18 @@ variable "alpha" {
 def test_is_composed_module_detects_module_blocks() -> None:
     charm = hcl2.loads('resource "juju_application" "demo" {\n  name = var.app_name\n}\n')
     composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert cc008_check.is_composed_module([charm]) is False
-    assert cc008_check.is_composed_module([composed]) is True
+    assert terraform_check.is_composed_module([charm]) is False
+    assert terraform_check.is_composed_module([composed]) is True
 
 
 def test_classify_module_type_charm_when_no_module_blocks() -> None:
     charm = hcl2.loads('resource "juju_application" "demo" {\n  name = var.app_name\n}\n')
-    assert cc008_check.classify_module_type([charm]) == "charm"
+    assert terraform_check.classify_module_type([charm]) == "charm"
 
 
 def test_classify_module_type_component_when_no_tying_resources() -> None:
     composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert cc008_check.classify_module_type([composed]) == "component"
+    assert terraform_check.classify_module_type([composed]) == "component"
 
 
 def test_classify_module_type_product_when_tying_resource_present() -> None:
@@ -258,11 +258,11 @@ def test_classify_module_type_product_when_tying_resource_present() -> None:
         'module "demo" {\n  source = "../modules/demo"\n}\n'
         'resource "juju_integration" "demo" {\n  model_uuid = var.model_uuid\n}\n'
     )
-    assert cc008_check.classify_module_type([composed]) == "product"
+    assert terraform_check.classify_module_type([composed]) == "product"
 
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="charm")
+    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="charm")
     for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision"):
         assert f"charm module missing mandatory variable: {variable}" in violations
     assert "charm module missing mandatory output: application" in violations
@@ -272,8 +272,8 @@ def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
 
 
 def test_charm_with_only_application_output_passes() -> None:
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(
         variables, ["application"], module_type="charm"
     )
     assert violations == []
@@ -282,7 +282,7 @@ def test_charm_with_only_application_output_passes() -> None:
 def test_units_is_not_mandated_for_charm_modules() -> None:
     # CC008 exempts subordinate charms from `units`, and subordinate-ness is
     # not detectable from Terraform, so `units` is intentionally not required.
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 'variable "app_name" {\n  type = string\n}\n'
@@ -294,47 +294,47 @@ def test_units_is_not_mandated_for_charm_modules() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert violations == []
 
 
 def test_compliant_charm_interface_passes() -> None:
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
     outputs = ["application", "provides", "requires"]
-    assert cc008_check.check_interface(variables, outputs, module_type="charm") == []
+    assert terraform_check.check_interface(variables, outputs, module_type="charm") == []
 
 
 def test_component_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="component")
+    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="component")
     assert "component module missing mandatory variable: model_uuid" in violations
     assert "component module missing mandatory output: components" in violations
 
 
 def test_compliant_component_interface_passes() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
     )
-    violations = cc008_check.check_interface(variables, ["components"], module_type="component")
+    violations = terraform_check.check_interface(variables, ["components"], module_type="component")
     assert violations == []
 
 
 def test_product_interface_requires_models_and_metadata() -> None:
-    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="product")
+    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="product")
     assert "product module missing mandatory output: models" in violations
     assert "product module missing mandatory output: metadata" in violations
 
 
 def test_product_interface_requires_mandatory_variables() -> None:
-    violations = cc008_check.check_interface(variables={}, outputs=[], module_type="product")
+    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="product")
     for variable in ("logging-config", "proxy", "risk"):
         assert f"product module missing mandatory variable: {variable}" in violations
     assert "product module missing mandatory variable: juju_controller" not in violations
 
 
 def test_compliant_product_interface_passes() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 'variable "logging-config" {\n  type = string\n}\n'
@@ -343,20 +343,20 @@ def test_compliant_product_interface_passes() -> None:
             )
         ]
     )
-    assert cc008_check.check_interface(variables, ["models", "metadata"], module_type="product") == []
+    assert terraform_check.check_interface(variables, ["models", "metadata"], module_type="product") == []
 
 
 def test_model_uuid_with_default_is_reported_as_not_required() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n  default = null\n}\n')]
     )
-    violations = cc008_check.check_interface(variables, ["components"], module_type="component")
+    violations = terraform_check.check_interface(variables, ["components"], module_type="component")
     assert len(violations) == 1
     assert 'variable "model_uuid": must not declare a default' in violations[0]
 
 
 def test_revision_wrong_default_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -366,13 +366,13 @@ def test_revision_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
     assert len(violations) == 1
     assert 'variable "revision": default must be None' in violations[0]
 
 
 def test_constraints_wrong_default_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -382,13 +382,13 @@ def test_constraints_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
     assert len(violations) == 1
     assert 'variable "constraints": default must be None' in violations[0]
 
 
 def test_revision_wrong_type_family_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -398,21 +398,21 @@ def test_revision_wrong_type_family_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
     assert any('variable "revision": expected a number-like type, found string' in v for v in violations)
 
 
 def test_config_map_type_family_passes_as_collection() -> None:
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
     assert not any('variable "config"' in v for v in violations)
 
 
 def test_absent_optional_variable_is_not_reported() -> None:
     # `resources` is an optional charm variable; a charm that omits it must not
     # be flagged.
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert not any("resources" in v for v in violations)
@@ -420,7 +420,7 @@ def test_absent_optional_variable_is_not_reported() -> None:
 
 def test_present_optional_variable_with_wrong_type_is_reported() -> None:
     # `base` is an optional string variable; if declared it must be string-like.
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -430,14 +430,14 @@ def test_present_optional_variable_with_wrong_type_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any('variable "base": expected a string-like type, found number' in v for v in violations)
 
 
 def test_present_optional_variable_with_valid_type_passes() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF
@@ -445,7 +445,7 @@ def test_present_optional_variable_with_valid_type_passes() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert not any("resources" in v for v in violations)
@@ -453,7 +453,7 @@ def test_present_optional_variable_with_valid_type_passes() -> None:
 
 def test_present_optional_variable_with_wrong_default_is_reported() -> None:
     # `base` is optional and, when present, its default must be null.
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -463,24 +463,24 @@ def test_present_optional_variable_with_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any('variable "base": default must be None' in v for v in violations)
 
 
 def test_component_expose_endpoints_optional_absent_is_ok() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
     )
     assert violations == []
 
 
 def test_component_expose_endpoints_wrong_type_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 'variable "model_uuid" {\n  type = string\n}\n'
@@ -488,7 +488,7 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
     )
     assert any(
@@ -499,7 +499,7 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
 
 def test_units_present_with_wrong_type_is_reported() -> None:
     # units is optional, but when declared it must be number-like.
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -509,14 +509,14 @@ def test_units_present_with_wrong_type_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any('variable "units": expected a number-like type, found string' in v for v in violations)
 
 
 def test_units_present_with_wrong_default_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF.replace(
@@ -526,7 +526,7 @@ def test_units_present_with_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any('variable "units": default must be 1' in v for v in violations)
@@ -534,16 +534,16 @@ def test_units_present_with_wrong_default_is_reported() -> None:
 
 def test_optional_output_absent_is_not_reported() -> None:
     # `offers` is an optional charm output; omitting it is fine.
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert not any("offers" in v for v in violations)
 
 
 def test_optional_output_present_is_allowed() -> None:
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(
         variables,
         ["application", "provides", "requires", "offers"],
         module_type="charm",
@@ -553,7 +553,7 @@ def test_optional_output_present_is_allowed() -> None:
 
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert cc008_check.check_pinned_module_sources([parsed]) == []
+    assert terraform_check.check_pinned_module_sources([parsed]) == []
 
 
 def test_tag_pinned_remote_source_is_allowed() -> None:
@@ -562,7 +562,7 @@ def test_tag_pinned_remote_source_is_allowed() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=tf-2.0.0&depth=1"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_commit_pinned_remote_source_is_allowed() -> None:
@@ -571,7 +571,7 @@ def test_commit_pinned_remote_source_is_allowed() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=1a2b3c4d"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_unpinned_remote_source_is_reported() -> None:
@@ -580,7 +580,7 @@ def test_unpinned_remote_source_is_reported() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert 'module "ic": source must be pinned' in violations[0]
 
@@ -591,7 +591,7 @@ def test_branch_ref_is_reported() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=main"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert "floating references are not allowed" in violations[0]
 
@@ -602,7 +602,7 @@ def test_branch_ref_is_reported_case_insensitively() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=Main"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert "floating references are not allowed" in violations[0]
 
@@ -614,14 +614,14 @@ def test_other_known_default_branch_names_are_reported() -> None:
             f'  source = "git::https://github.com/canonical/x-operator//terraform?ref={branch}"\n'
             "}\n"
         )
-        violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+        violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
         assert len(violations) == 1, branch
         assert "floating references are not allowed" in violations[0]
 
 
 def test_registry_version_source_is_allowed() -> None:
     text = 'module "ic" {\n  source  = "canonical/x/juju"\n  version = "1.2.0"\n}\n'
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_bare_semver_ref_is_allowed() -> None:
@@ -633,7 +633,7 @@ def test_bare_semver_ref_is_allowed() -> None:
         '  source = "git::https://github.com/canonical/not-yet-cc008//terraform?ref=1.4.2"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_product_prefixed_semver_ref_is_allowed() -> None:
@@ -643,7 +643,7 @@ def test_product_prefixed_semver_ref_is_allowed() -> None:
         '?ref=gateway-api-integrator-1.0.0"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_prerelease_suffixed_ref_is_allowed() -> None:
@@ -654,7 +654,7 @@ def test_prerelease_suffixed_ref_is_allowed() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=1.0.0-rc1"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_arbitrary_named_tag_ref_is_allowed() -> None:
@@ -664,12 +664,12 @@ def test_arbitrary_named_tag_ref_is_allowed() -> None:
         '  source = "git::https://github.com/canonical/x-operator//terraform?ref=stable-release"\n'
         "}\n"
     )
-    assert cc008_check.check_pinned_module_sources([hcl2.loads(text)]) == []
+    assert terraform_check.check_pinned_module_sources([hcl2.loads(text)]) == []
 
 
 def test_compliant_charm_module_has_no_violations(tmp_path: Path) -> None:
     module = _write_charm_module(tmp_path)
-    assert cc008_check.check_module(module) == []
+    assert terraform_check.check_module(module) == []
 
 
 def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None:
@@ -679,13 +679,13 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
             'variable "channel" {\n  type    = string\n  default = "1/stable"\n}\n', ""
         )
     )
-    violations = cc008_check.check_module(module)
+    violations = terraform_check.check_module(module)
     assert "charm module missing mandatory variable: channel" in violations
 
 
 def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
     module = _write_charm_module(tmp_path)
-    exit_code = cc008_check.main([str(module)])
+    exit_code = terraform_check.main([str(module)])
     assert exit_code == 0
     assert "PASS" in capsys.readouterr().out
 
@@ -693,7 +693,7 @@ def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
 def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> None:
     module = tmp_path / "broken"
     module.mkdir()
-    exit_code = cc008_check.main([str(module)])
+    exit_code = terraform_check.main([str(module)])
     assert exit_code == 1
     assert "FAIL" in capsys.readouterr().out
 
@@ -701,18 +701,18 @@ def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> Non
 def test_main_returns_two_when_no_directories_are_configured(capsys, monkeypatch) -> None:
   monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-  exit_code = cc008_check.main([])
+  exit_code = terraform_check.main([])
 
   output = capsys.readouterr().out
   assert exit_code == 2
   assert "ERROR: no Terraform module directories were provided" in output
-  assert "::error title=CC008 configuration::" in output
+  assert "::error title=Terraform compliance configuration::" in output
 
 
 def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
   missing = tmp_path / "does-not-exist"
 
-  exit_code = cc008_check.main([str(missing)])
+  exit_code = terraform_check.main([str(missing)])
 
   output = capsys.readouterr().out
   assert exit_code == 1
@@ -723,11 +723,11 @@ def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
 def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
   module = _write_charm_module(tmp_path)
 
-  exit_code = cc008_check.main([str(module)])
+  exit_code = terraform_check.main([str(module)])
 
   output = capsys.readouterr().out
   assert exit_code == 0
-  assert "Checking 1 Terraform module(s) for CC008 compliance" in output
+  assert "Checking 1 Terraform module(s) for compliance" in output
   assert f"Checking {module} (charm module)" in output
   assert "PASS Required files" in output
   assert "PASS Terraform configuration" in output
@@ -741,7 +741,7 @@ def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
 def test_verbose_logs_discovered_interface(tmp_path: Path, capsys) -> None:
   module = _write_charm_module(tmp_path)
 
-  exit_code = cc008_check.main(["--verbose", str(module)])
+  exit_code = terraform_check.main(["--verbose", str(module)])
 
   output = capsys.readouterr().out
   assert exit_code == 0
@@ -757,11 +757,11 @@ def test_github_actions_failure_emits_error_annotations(
   module.mkdir()
   monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-  exit_code = cc008_check.main([str(module)])
+  exit_code = terraform_check.main([str(module)])
 
   output = capsys.readouterr().out
   assert exit_code == 1
-  assert "::error title=CC008 compliance::" in output
+  assert "::error title=Terraform compliance::" in output
   assert "missing required file: terraform.tf" in output
   assert "SKIP Terraform configuration (terraform.tf is missing)" in output
   assert "SKIP Variable ordering (variables.tf is missing)" in output
@@ -774,7 +774,7 @@ def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> Non
     for name in ("zeta.tf", "alpha.tf", "main.tf"):
         (module / name).write_text('variable "x" {\n  type = string\n}\n')
 
-    parsed = cc008_check.load_module_files(module)
+    parsed = terraform_check.load_module_files(module)
 
     assert list(parsed) == ["alpha.tf", "main.tf", "zeta.tf"]
 
@@ -783,9 +783,9 @@ def test_typefamily_is_defined_in_terraform_hcl() -> None:
     import terraform_hcl
 
     assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family("map(string)")
-    # Not derived from cc008_spec anymore: terraform_hcl must not import it.
+    # Not derived from terraform_spec anymore: terraform_hcl must not import it.
     source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
-    assert "cc008_spec" not in source
+    assert "terraform_spec" not in source
 
 
 def test_vcs_source_with_version_but_no_ref_is_reported() -> None:
@@ -797,7 +797,7 @@ def test_vcs_source_with_version_but_no_ref_is_reported() -> None:
         '  version = "1.2.0"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]
 
@@ -809,13 +809,13 @@ def test_github_shorthand_source_with_version_but_no_ref_is_reported() -> None:
         '  version = "1.2.0"\n'
         "}\n"
     )
-    violations = cc008_check.check_pinned_module_sources([hcl2.loads(text)])
+    violations = terraform_check.check_pinned_module_sources([hcl2.loads(text)])
     assert len(violations) == 1
     assert 'module "ic": source must be pinned with ?ref=<tag|commit>' in violations[0]
 
 
 def test_charm_deprecated_variable_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF
@@ -823,15 +823,15 @@ def test_charm_deprecated_variable_is_reported() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert "charm module declares deprecated variable: endpoints" in violations
 
 
 def test_charm_deprecated_output_is_reported() -> None:
-    variables = cc008_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = cc008_check.check_interface(
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    violations = terraform_check.check_interface(
         variables,
         ["application", "provides", "requires", "endpoint"],
         module_type="charm",
@@ -841,7 +841,7 @@ def test_charm_deprecated_output_is_reported() -> None:
 
 def test_charm_allows_arbitrary_extra_variable_and_output() -> None:
     # CC008: "Other inputs are allowed" / "Any other outputs are allowed".
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 COMPLIANT_VARIABLES_TF
@@ -849,7 +849,7 @@ def test_charm_allows_arbitrary_extra_variable_and_output() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables,
         ["application", "provides", "requires", "custom_output"],
         module_type="charm",
@@ -860,7 +860,7 @@ def test_charm_allows_arbitrary_extra_variable_and_output() -> None:
 def test_component_allows_author_named_variables() -> None:
     # Component modules may declare author-named external-integration inputs, so
     # unknown variables must not be reported.
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
                 'variable "model_uuid" {\n  type = string\n}\n'
@@ -868,17 +868,17 @@ def test_component_allows_author_named_variables() -> None:
             )
         ]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
     )
     assert violations == []
 
 
 def test_component_deprecated_output_is_reported() -> None:
-    variables = cc008_check.variable_bodies(
+    variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
     )
-    violations = cc008_check.check_interface(
+    violations = terraform_check.check_interface(
         variables, ["components", "endpoints"], module_type="component"
     )
     assert "component module declares deprecated output: endpoints" in violations

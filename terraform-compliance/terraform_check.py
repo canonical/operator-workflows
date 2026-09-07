@@ -1,7 +1,12 @@
 # Copyright 2026 Canonical Ltd.
 # See LICENSE file for licensing details.
 
-"""CC008 Terraform module compliance checker (the *how*; rules live in cc008_spec)."""
+"""Generic Terraform module compliance checker (the *how*; rules live in terraform_spec).
+
+Every check function takes an explicit ``spec`` argument (defaulting to
+``DEFAULT_SPEC``), so this module has no hardcoded dependency on any
+particular standard, including CC008.
+"""
 
 import argparse
 import re
@@ -9,9 +14,10 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from cc008_spec import (
-    CC008_SPEC,
+from terraform_spec import (
+    DEFAULT_SPEC,
     NO_DEFAULT_CHECK,
+    ModuleSpec,
     ModuleType,
     VariableRule,
 )
@@ -30,7 +36,7 @@ from terraform_hcl import (
 
 @dataclass(frozen=True)
 class CheckResult:
-    """Result of one category of CC008 checks."""
+    """Result of one category of compliance checks."""
 
     slug: str
     name: str
@@ -50,7 +56,7 @@ CHECK_SLUGS = (
 
 @dataclass(frozen=True)
 class ModuleReport:
-    """Detailed CC008 report for one Terraform module."""
+    """Detailed compliance report for one Terraform module."""
 
     module_type: ModuleType
     checks: tuple[CheckResult, ...]
@@ -64,7 +70,7 @@ class ModuleReport:
         return [violation for check in self.checks for violation in check.violations]
 
 
-def check_required_files(module_dir: Path) -> list[str]:
+def check_required_files(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
     """Return violations for any missing required module file."""
     if not module_dir.exists():
         return [f"module directory does not exist: {module_dir}"]
@@ -72,7 +78,7 @@ def check_required_files(module_dir: Path) -> list[str]:
         return [f"module path is not a directory: {module_dir}"]
     return [
         f"missing required file: {name}"
-        for name in CC008_SPEC.required_files
+        for name in spec.required_files
         if not (module_dir / name).exists()
     ]
 
@@ -99,7 +105,7 @@ def _allows_juju_v1_or_above(constraint: str) -> bool:
     return False
 
 
-def check_terraform_block(parsed: dict) -> list[str]:
+def check_terraform_block(parsed: dict, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
     """Return violations for the required_version and juju provider."""
     blocks = parsed.get("terraform", [])
     if not blocks:
@@ -115,7 +121,7 @@ def check_terraform_block(parsed: dict) -> list[str]:
     if not juju:
         violations.append("terraform.tf: missing juju provider in required_providers")
         return violations
-    requirements = CC008_SPEC.terraform_block
+    requirements = spec.terraform_block
     source = juju.get("source")
     if not source or unquote(source) != requirements.provider_source:
         violations.append(
@@ -147,22 +153,24 @@ def is_composed_module(parsed_files: list[dict]) -> bool:
     return any(parsed.get("module") for parsed in parsed_files)
 
 
-def _defines_tying_resources(parsed_files: list[dict]) -> bool:
+def _defines_tying_resources(parsed_files: list[dict], spec: ModuleSpec) -> bool:
     """Return True if any file declares a Product-module tying resource/data block."""
     return any(
-        label in CC008_SPEC.tying_resource_types
+        label in spec.tying_resource_types
         for block_type in ("resource", "data")
         for label in resource_type_labels(parsed_files, block_type)
     )
 
 
-def classify_module_type(parsed_files: list[dict]) -> ModuleType:
+def classify_module_type(
+    parsed_files: list[dict], spec: ModuleSpec = DEFAULT_SPEC
+) -> ModuleType:
     """Classify a module as CHARM (no module blocks), PRODUCT (composes
     modules and defines a tying resource), or COMPONENT (composes only).
     """
     if not is_composed_module(parsed_files):
         return ModuleType.CHARM
-    if _defines_tying_resources(parsed_files):
+    if _defines_tying_resources(parsed_files, spec):
         return ModuleType.PRODUCT
     return ModuleType.COMPONENT
 
@@ -200,13 +208,16 @@ def _check_variable_rule(
 
 
 def check_interface(
-    variables: dict[str, dict], outputs: list[str], module_type: ModuleType
+    variables: dict[str, dict],
+    outputs: list[str],
+    module_type: ModuleType,
+    spec: ModuleSpec = DEFAULT_SPEC,
 ) -> list[str]:
     """Return violations for mandatory/optional variables and outputs.
 
     ``variables`` maps name to parsed body (see ``variable_bodies``).
     """
-    interface = CC008_SPEC.module_interfaces[module_type]
+    interface = spec.module_interfaces[module_type]
     violations: list[str] = []
     for rule in interface.variables:
         if rule.name not in variables:
@@ -222,17 +233,17 @@ def check_interface(
             violations.append(
                 f"{module_type} module missing mandatory output: {output.name}"
             )
-    # CC008 allows arbitrary extra variables/outputs, but names retired under
-    # CC008 (e.g. endpoints, split into provides/requires) must not be used.
+    # The spec allows arbitrary extra variables/outputs, but retired names
+    # (e.g. endpoints, split into provides/requires under CC008) must not be used.
     violations.extend(
         f'{module_type} module declares deprecated variable: {name}'
         for name in variables
-        if name in CC008_SPEC.deprecated_names
+        if name in spec.deprecated_names
     )
     violations.extend(
         f'{module_type} module declares deprecated output: {name}'
         for name in outputs
-        if name in CC008_SPEC.deprecated_names
+        if name in spec.deprecated_names
     )
     return violations
 
@@ -248,7 +259,9 @@ def _is_vcs_or_url_source(source: str) -> bool:
     return _VCS_OR_URL_SOURCE_PATTERN.search(source) is not None
 
 
-def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
+def check_pinned_module_sources(
+    parsed_files: list[dict], spec: ModuleSpec = DEFAULT_SPEC
+) -> list[str]:
     """Return violations for module sources not pinned to a tag or commit."""
     violations: list[str] = []
     for parsed in parsed_files:
@@ -267,7 +280,7 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
                     violations.append(
                         f'module "{name}": source must be pinned with ?ref=<tag|commit>'
                     )
-                elif ref_match.group(1).lower() in CC008_SPEC.floating_ref_names:
+                elif ref_match.group(1).lower() in spec.floating_ref_names:
                     violations.append(
                         f'module "{name}": ref "{ref_match.group(1)}" looks like a '
                         "branch name, not a pinned tag or commit (floating "
@@ -278,7 +291,7 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
                     violations.append(
                         f'module "{name}": source must be pinned with a registry version'
                     )
-            elif ref_match.group(1).lower() in CC008_SPEC.floating_ref_names:
+            elif ref_match.group(1).lower() in spec.floating_ref_names:
                 violations.append(
                     f'module "{name}": ref "{ref_match.group(1)}" looks like a '
                     "branch name, not a pinned tag or commit (floating "
@@ -287,23 +300,25 @@ def check_pinned_module_sources(parsed_files: list[dict]) -> list[str]:
     return violations
 
 
-def inspect_module(module_dir: Path) -> ModuleReport:
-    """Return a detailed CC008 report for a Terraform module directory."""
+def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleReport:
+    """Return a detailed compliance report for a Terraform module directory."""
     parsed = load_module_files(module_dir)
     parsed_files = list(parsed.values())
     variable_bodies_by_name = variable_bodies(parsed_files)
     variables = list(variable_bodies_by_name)
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    module_type = classify_module_type(parsed_files)
+    module_type = classify_module_type(parsed_files, spec)
 
     checks = (
         CheckResult(
-            "required-files", "Required files", tuple(check_required_files(module_dir))
+            "required-files",
+            "Required files",
+            tuple(check_required_files(module_dir, spec)),
         ),
         CheckResult(
             "terraform-configuration",
             "Terraform configuration",
-            tuple(check_terraform_block(parsed["terraform.tf"]))
+            tuple(check_terraform_block(parsed["terraform.tf"], spec))
             if "terraform.tf" in parsed
             else (),
             None if "terraform.tf" in parsed else "terraform.tf is missing",
@@ -329,12 +344,12 @@ def inspect_module(module_dir: Path) -> ModuleReport:
         CheckResult(
             "module-interface",
             "Module interface",
-            tuple(check_interface(variable_bodies_by_name, outputs, module_type)),
+            tuple(check_interface(variable_bodies_by_name, outputs, module_type, spec)),
         ),
         CheckResult(
             "module-sources",
             "Module sources",
-            tuple(check_pinned_module_sources(parsed_files)),
+            tuple(check_pinned_module_sources(parsed_files, spec)),
         ),
     )
     return ModuleReport(
@@ -346,9 +361,9 @@ def inspect_module(module_dir: Path) -> ModuleReport:
     )
 
 
-def check_module(module_dir: Path) -> list[str]:
-    """Return all CC008 violations for a single Terraform module directory."""
-    return inspect_module(module_dir).violations
+def check_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
+    """Return all violations for a single Terraform module directory."""
+    return inspect_module(module_dir, spec).violations
 
 
 def _escape_annotation(message: str) -> str:
@@ -357,9 +372,9 @@ def _escape_annotation(message: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Run the CC008 compliance check over the given module directories."""
+    """Run the Terraform module compliance check over the given directories."""
     parser = argparse.ArgumentParser(
-        description="Check Terraform modules for CC008 compliance."
+        description="Check Terraform modules for compliance with the configured spec."
     )
     parser.add_argument(
         "--verbose",
@@ -391,12 +406,12 @@ def main(argv: list[str] | None = None) -> int:
     if not directories:
         message = "no Terraform module directories were provided"
         print(f"ERROR: {message}")
-        print(f"::error title=CC008 configuration::{_escape_annotation(message)}")
+        print(f"::error title=Terraform compliance configuration::{_escape_annotation(message)}")
         return 2
 
     label = f"check '{args.check}'" if args.check else "all checks"
     print(
-        f"Checking {len(directories)} Terraform module(s) for CC008 compliance ({label})"
+        f"Checking {len(directories)} Terraform module(s) for compliance ({label})"
     )
     failed_count = 0
     for directory in directories:
@@ -422,7 +437,7 @@ def main(argv: list[str] | None = None) -> int:
             for violation in check.violations:
                 print(f"  - {violation}")
                 annotation = _escape_annotation(f"{directory}: {violation}")
-                print(f"::error title=CC008 compliance::{annotation}")
+                print(f"::error title=Terraform compliance::{annotation}")
         if module_violations:
             failed_count += 1
             print(f"FAIL {directory}")
