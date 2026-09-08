@@ -63,7 +63,7 @@ jobs:
             git diff --ignore-space-at-eol --text dist/
             exit 1
           fi
-  check:
+  unit-tests-check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     timeout-minutes: 5
