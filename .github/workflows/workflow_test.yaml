@@ -113,7 +113,7 @@ jobs:
     permissions:
       contents: write
     uses: ./.github/workflows/allure_report.yaml
-  check:
+  integration-tests-check:
     runs-on: ubuntu-latest
     if: always() && !cancelled()
     timeout-minutes: 5
