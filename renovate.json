@@ -8,6 +8,14 @@
   "schedule": [
     "* * * * 0,6"
   ],
+  "packageRules": [
+    {
+      "description": "Isolate TypeScript in its own PR so an incompatible bump (e.g. ahead of @typescript-eslint's peer range) fails CI alone and self-merges once compatible, without holding back or blocking other updates.",
+      "matchPackageNames": ["typescript"],
+      "groupName": "typescript",
+      "groupSlug": "typescript"
+    }
+  ],
   "vulnerabilityAlerts": {
     "enabled": true
   }
