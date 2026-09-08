@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-09-01
+
+- Add `terraform_modules_compliance.yaml` workflow that checks if the structure of terraform
+modules is compliant with the CC008 spec.
+
 ## 2026-08-27
 
 - In `promote_charm.yaml`, replace the `canonical/charming-actions/release-charm` action with an
@@ -45,7 +50,7 @@ the Charmcraft version specified in the input is used across the workflow.
 
 ## 2026-06-10
 
-- Fix failing step in `docs.yaml` by including `apt-get update` in the docutils step. 
+- Fix failing step in `docs.yaml` by including `apt-get update` in the docutils step.
 
 ## 2026-06-04
 
@@ -69,7 +74,7 @@ the Charmcraft version specified in the input is used across the workflow.
 - Fix missing `--break-system-packages` flag for installing `pipx` on newer OSes.
 - Remove allure logging to remove accidental sensitive value logging.
 - Remove use of secrets.INTEGRATION_TEST_ARGS and fail integration tests if it is used.
-- Removed "jira.yml" workflow. Users should use https://github.com/canonical/gh-jira-sync-bot instead.
+- Removed "jira.yml" workflow. Users should use <https://github.com/canonical/gh-jira-sync-bot> instead.
 
 ## 2026-04-15
 
@@ -77,6 +82,7 @@ the Charmcraft version specified in the input is used across the workflow.
 - Don't publish a new release on CharmHub if only terraform files have been modified.
 
 ## 2026-04-14
+
 - Support get-workflow-version-action for self-hosted runners.
 
 ## 2026-04-09
@@ -93,7 +99,6 @@ the Charmcraft version specified in the input is used across the workflow.
 
 - Drop zap support.
 - Removal of discourse-gatekeeper
-
 
 ## 2026-04-13
 

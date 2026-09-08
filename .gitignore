@@ -101,3 +101,15 @@ __tests__/runner/*
 .idea
 .vscode
 *.code-workspace
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+*.egg-info/
+.venv/
+venv/
