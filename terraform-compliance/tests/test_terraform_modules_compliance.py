@@ -108,7 +108,9 @@ def test_missing_required_files_are_reported(tmp_path: Path) -> None:
 
 
 def test_compliant_terraform_block_has_no_violations() -> None:
-    assert terraform_check.check_terraform_block(hcl2.loads(COMPLIANT_TERRAFORM_TF)) == []
+    assert (
+        terraform_check.check_terraform_block(hcl2.loads(COMPLIANT_TERRAFORM_TF)) == []
+    )
 
 
 def test_terraform_block_missing_required_version() -> None:
@@ -207,7 +209,10 @@ variable "alpha" {
   type = string
 }
 """
-    assert terraform_check.block_names(hcl2.loads(text), "variable") == ["zeta", "alpha"]
+    assert terraform_check.block_names(hcl2.loads(text), "variable") == [
+        "zeta",
+        "alpha",
+    ]
 
 
 def test_alphabetical_variables_pass() -> None:
@@ -219,7 +224,10 @@ variable "beta" {
   type = string
 }
 """
-    assert terraform_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf") == []
+    assert (
+        terraform_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf")
+        == []
+    )
 
 
 def test_unordered_variables_are_reported() -> None:
@@ -231,20 +239,26 @@ variable "alpha" {
   type = string
 }
 """
-    violations = terraform_check.check_alphabetical(hcl2.loads(text), "variable", "variables.tf")
+    violations = terraform_check.check_alphabetical(
+        hcl2.loads(text), "variable", "variables.tf"
+    )
     assert len(violations) == 1
     assert "variables.tf: variable blocks are not alphabetical" in violations[0]
 
 
 def test_is_composed_module_detects_module_blocks() -> None:
-    charm = hcl2.loads('resource "juju_application" "demo" {\n  name = var.app_name\n}\n')
+    charm = hcl2.loads(
+        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+    )
     composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert terraform_check.is_composed_module([charm]) is False
     assert terraform_check.is_composed_module([composed]) is True
 
 
 def test_classify_module_type_charm_when_no_module_blocks() -> None:
-    charm = hcl2.loads('resource "juju_application" "demo" {\n  name = var.app_name\n}\n')
+    charm = hcl2.loads(
+        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+    )
     assert terraform_check.classify_module_type([charm]) == "charm"
 
 
@@ -262,8 +276,17 @@ def test_classify_module_type_product_when_tying_resource_present() -> None:
 
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="charm")
-    for variable in ("app_name", "channel", "config", "constraints", "model_uuid", "revision"):
+    violations = terraform_check.check_interface(
+        variables={}, outputs=[], module_type="charm"
+    )
+    for variable in (
+        "app_name",
+        "channel",
+        "config",
+        "constraints",
+        "model_uuid",
+        "revision",
+    ):
         assert f"charm module missing mandatory variable: {variable}" in violations
     assert "charm module missing mandatory output: application" in violations
     # provides/requires/offers are optional and must not be reported missing.
@@ -303,11 +326,15 @@ def test_units_is_not_mandated_for_charm_modules() -> None:
 def test_compliant_charm_interface_passes() -> None:
     variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
     outputs = ["application", "provides", "requires"]
-    assert terraform_check.check_interface(variables, outputs, module_type="charm") == []
+    assert (
+        terraform_check.check_interface(variables, outputs, module_type="charm") == []
+    )
 
 
 def test_component_interface_requires_mandatory_variables_and_outputs() -> None:
-    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="component")
+    violations = terraform_check.check_interface(
+        variables={}, outputs=[], module_type="component"
+    )
     assert "component module missing mandatory variable: model_uuid" in violations
     assert "component module missing mandatory output: components" in violations
 
@@ -316,21 +343,25 @@ def test_compliant_component_interface_passes() -> None:
     variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
     )
-    violations = terraform_check.check_interface(variables, ["components"], module_type="component")
+    violations = terraform_check.check_interface(
+        variables, ["components"], module_type="component"
+    )
     assert violations == []
 
 
 def test_product_interface_requires_models_and_metadata() -> None:
-    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="product")
+    violations = terraform_check.check_interface(
+        variables={}, outputs=[], module_type="product"
+    )
     assert "product module missing mandatory output: models" in violations
     assert "product module missing mandatory output: metadata" in violations
 
 
 def test_product_interface_requires_mandatory_variables() -> None:
-    violations = terraform_check.check_interface(variables={}, outputs=[], module_type="product")
-    for variable in ("logging-config", "proxy", "risk"):
-        assert f"product module missing mandatory variable: {variable}" in violations
-    assert "product module missing mandatory variable: juju_controller" not in violations
+    violations = terraform_check.check_interface(
+        variables={}, outputs=[], module_type="product"
+    )
+    assert "product module missing mandatory variable: risk" in violations
 
 
 def test_compliant_product_interface_passes() -> None:
@@ -343,14 +374,21 @@ def test_compliant_product_interface_passes() -> None:
             )
         ]
     )
-    assert terraform_check.check_interface(variables, ["models", "metadata"], module_type="product") == []
+    assert (
+        terraform_check.check_interface(
+            variables, ["models", "metadata"], module_type="product"
+        )
+        == []
+    )
 
 
 def test_model_uuid_with_default_is_reported_as_not_required() -> None:
     variables = terraform_check.variable_bodies(
         [hcl2.loads('variable "model_uuid" {\n  type = string\n  default = null\n}\n')]
     )
-    violations = terraform_check.check_interface(variables, ["components"], module_type="component")
+    violations = terraform_check.check_interface(
+        variables, ["components"], module_type="component"
+    )
     assert len(violations) == 1
     assert 'variable "model_uuid": must not declare a default' in violations[0]
 
@@ -366,7 +404,9 @@ def test_revision_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
     assert len(violations) == 1
     assert 'variable "revision": default must be None' in violations[0]
 
@@ -382,7 +422,9 @@ def test_constraints_wrong_default_is_reported() -> None:
             )
         ]
     )
-    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
     assert len(violations) == 1
     assert 'variable "constraints": default must be None' in violations[0]
 
@@ -398,13 +440,20 @@ def test_revision_wrong_type_family_is_reported() -> None:
             )
         ]
     )
-    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
-    assert any('variable "revision": expected a number-like type, found string' in v for v in violations)
+    violations = terraform_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
+    assert any(
+        'variable "revision": expected a number-like type, found string' in v
+        for v in violations
+    )
 
 
 def test_config_map_type_family_passes_as_collection() -> None:
     variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
-    violations = terraform_check.check_interface(variables, ["application", "provides", "requires"], module_type="charm")
+    violations = terraform_check.check_interface(
+        variables, ["application", "provides", "requires"], module_type="charm"
+    )
     assert not any('variable "config"' in v for v in violations)
 
 
@@ -433,7 +482,10 @@ def test_present_optional_variable_with_wrong_type_is_reported() -> None:
     violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
-    assert any('variable "base": expected a string-like type, found number' in v for v in violations)
+    assert any(
+        'variable "base": expected a string-like type, found number' in v
+        for v in violations
+    )
 
 
 def test_present_optional_variable_with_valid_type_passes() -> None:
@@ -492,7 +544,8 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
         variables, ["components"], module_type="component"
     )
     assert any(
-        'variable "expose_endpoints": expected a collection-like type, found string' in v
+        'variable "expose_endpoints": expected a collection-like type, found string'
+        in v
         for v in violations
     )
 
@@ -512,7 +565,10 @@ def test_units_present_with_wrong_type_is_reported() -> None:
     violations = terraform_check.check_interface(
         variables, ["application", "provides", "requires"], module_type="charm"
     )
-    assert any('variable "units": expected a number-like type, found string' in v for v in violations)
+    assert any(
+        'variable "units": expected a number-like type, found string' in v
+        for v in violations
+    )
 
 
 def test_units_present_with_wrong_default_is_reported() -> None:
@@ -698,74 +754,79 @@ def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> Non
     assert "FAIL" in capsys.readouterr().out
 
 
-def test_main_returns_two_when_no_directories_are_configured(capsys, monkeypatch) -> None:
-  monkeypatch.setenv("GITHUB_ACTIONS", "true")
+def test_main_returns_two_when_no_directories_are_configured(
+    capsys, monkeypatch
+) -> None:
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-  exit_code = terraform_check.main([])
+    exit_code = terraform_check.main([])
 
-  output = capsys.readouterr().out
-  assert exit_code == 2
-  assert "ERROR: no Terraform module directories were provided" in output
-  assert "::error title=Terraform compliance configuration::" in output
+    output = capsys.readouterr().out
+    assert exit_code == 2
+    assert "ERROR: no Terraform module directories were provided" in output
+    assert "::error title=Terraform compliance configuration::" in output
 
 
 def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
-  missing = tmp_path / "does-not-exist"
+    missing = tmp_path / "does-not-exist"
 
-  exit_code = terraform_check.main([str(missing)])
+    exit_code = terraform_check.main([str(missing)])
 
-  output = capsys.readouterr().out
-  assert exit_code == 1
-  assert f"module directory does not exist: {missing}" in output
-  assert "Summary: 1 checked, 0 passed, 1 failed" in output
+    output = capsys.readouterr().out
+    assert exit_code == 1
+    assert f"module directory does not exist: {missing}" in output
+    assert "Summary: 1 checked, 0 passed, 1 failed" in output
 
 
 def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
-  module = _write_charm_module(tmp_path)
+    module = _write_charm_module(tmp_path)
 
-  exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main([str(module)])
 
-  output = capsys.readouterr().out
-  assert exit_code == 0
-  assert "Checking 1 Terraform module(s) for compliance" in output
-  assert f"Checking {module} (charm module)" in output
-  assert "PASS Required files" in output
-  assert "PASS Terraform configuration" in output
-  assert "PASS Variable ordering" in output
-  assert "PASS Output ordering" in output
-  assert "PASS Module interface" in output
-  assert "PASS Module sources" in output
-  assert "Summary: 1 checked, 1 passed, 0 failed" in output
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Checking 1 Terraform module(s) for compliance" in output
+    assert f"Checking {module} (charm module)" in output
+    assert "PASS Required files" in output
+    assert "PASS Terraform configuration" in output
+    assert "PASS Variable ordering" in output
+    assert "PASS Output ordering" in output
+    assert "PASS Module interface" in output
+    assert "PASS Module sources" in output
+    assert "Summary: 1 checked, 1 passed, 0 failed" in output
 
 
 def test_verbose_logs_discovered_interface(tmp_path: Path, capsys) -> None:
-  module = _write_charm_module(tmp_path)
+    module = _write_charm_module(tmp_path)
 
-  exit_code = terraform_check.main(["--verbose", str(module)])
+    exit_code = terraform_check.main(["--verbose", str(module)])
 
-  output = capsys.readouterr().out
-  assert exit_code == 0
-  assert "Variables: app_name, base, channel, config, constraints, model_uuid, revision, units" in output
-  assert "Outputs: application, provides, requires" in output
-  assert "Module sources: none" in output
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert (
+        "Variables: app_name, base, channel, config, constraints, model_uuid, revision, units"
+        in output
+    )
+    assert "Outputs: application, provides, requires" in output
+    assert "Module sources: none" in output
 
 
 def test_github_actions_failure_emits_error_annotations(
-  tmp_path: Path, capsys, monkeypatch
+    tmp_path: Path, capsys, monkeypatch
 ) -> None:
-  module = tmp_path / "broken"
-  module.mkdir()
-  monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    module = tmp_path / "broken"
+    module.mkdir()
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-  exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main([str(module)])
 
-  output = capsys.readouterr().out
-  assert exit_code == 1
-  assert "::error title=Terraform compliance::" in output
-  assert "missing required file: terraform.tf" in output
-  assert "SKIP Terraform configuration (terraform.tf is missing)" in output
-  assert "SKIP Variable ordering (variables.tf is missing)" in output
-  assert "SKIP Output ordering (outputs.tf is missing)" in output
+    output = capsys.readouterr().out
+    assert exit_code == 1
+    assert "::error title=Terraform compliance::" in output
+    assert "missing required file: terraform.tf" in output
+    assert "SKIP Terraform configuration (terraform.tf is missing)" in output
+    assert "SKIP Variable ordering (variables.tf is missing)" in output
+    assert "SKIP Output ordering (outputs.tf is missing)" in output
 
 
 def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> None:
@@ -782,7 +843,9 @@ def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> Non
 def test_typefamily_is_defined_in_terraform_hcl() -> None:
     import terraform_hcl
 
-    assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family("map(string)")
+    assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family(
+        "map(string)"
+    )
     # Not derived from terraform_spec anymore: terraform_hcl must not import it.
     source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
     assert "terraform_spec" not in source

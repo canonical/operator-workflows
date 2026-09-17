@@ -14,13 +14,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from terraform_spec import (
-    DEFAULT_SPEC,
-    NO_DEFAULT_CHECK,
-    ModuleSpec,
-    ModuleType,
-    VariableRule,
-)
 from terraform_hcl import (
     block_body,
     block_label,
@@ -31,6 +24,14 @@ from terraform_hcl import (
     type_family,
     unquote,
     variable_bodies,
+)
+from terraform_spec import (
+    DEFAULT_FORBIDDEN,
+    DEFAULT_SPEC,
+    DEFAULT_UNCHECKED,
+    ModuleSpec,
+    ModuleType,
+    VariableRule,
 )
 
 
@@ -70,7 +71,9 @@ class ModuleReport:
         return [violation for check in self.checks for violation in check.violations]
 
 
-def check_required_files(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
+def check_required_files(
+    module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC
+) -> list[str]:
     """Return violations for any missing required module file."""
     if not module_dir.exists():
         return [f"module directory does not exist: {module_dir}"]
@@ -192,12 +195,12 @@ def _check_variable_rule(
             )
 
     has_default = "default" in body
-    if rule.required and has_default:
+    if rule.default is DEFAULT_FORBIDDEN and has_default:
         violations.append(
             f"{prefix}: must not declare a default (this variable is required)"
         )
     elif (
-        rule.default is not NO_DEFAULT_CHECK
+        rule.default is not DEFAULT_UNCHECKED
         and has_default
         and body["default"] != rule.default
     ):
@@ -236,12 +239,12 @@ def check_interface(
     # The spec allows arbitrary extra variables/outputs, but retired names
     # (e.g. endpoints, split into provides/requires under CC008) must not be used.
     violations.extend(
-        f'{module_type} module declares deprecated variable: {name}'
+        f"{module_type} module declares deprecated variable: {name}"
         for name in variables
         if name in spec.deprecated_names
     )
     violations.extend(
-        f'{module_type} module declares deprecated output: {name}'
+        f"{module_type} module declares deprecated output: {name}"
         for name in outputs
         if name in spec.deprecated_names
     )
@@ -406,13 +409,13 @@ def main(argv: list[str] | None = None) -> int:
     if not directories:
         message = "no Terraform module directories were provided"
         print(f"ERROR: {message}")
-        print(f"::error title=Terraform compliance configuration::{_escape_annotation(message)}")
+        print(
+            f"::error title=Terraform compliance configuration::{_escape_annotation(message)}"
+        )
         return 2
 
     label = f"check '{args.check}'" if args.check else "all checks"
-    print(
-        f"Checking {len(directories)} Terraform module(s) for compliance ({label})"
-    )
+    print(f"Checking {len(directories)} Terraform module(s) for compliance ({label})")
     failed_count = 0
     for directory in directories:
         report = inspect_module(Path(directory))

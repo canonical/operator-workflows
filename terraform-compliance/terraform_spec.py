@@ -22,15 +22,19 @@ class ModuleType(StrEnum):
     PRODUCT = "product"
 
 
-class _NoDefaultCheck:
-    """Sentinel: don't check the default value (readable repr)."""
+class _DefaultSentinel:
+    """Named sentinel for a variable default policy."""
+
+    def __init__(self, name: str) -> None:
+        self.name = name
 
     def __repr__(self) -> str:
-        return "NO_DEFAULT_CHECK"
+        return self.name
 
 
-# `None` is a valid Terraform default, so it can't double as "no opinion".
-NO_DEFAULT_CHECK = _NoDefaultCheck()
+# `None` is a valid Terraform default, so explicit sentinels represent policies.
+DEFAULT_UNCHECKED = _DefaultSentinel("DEFAULT_UNCHECKED")
+DEFAULT_FORBIDDEN = _DefaultSentinel("DEFAULT_FORBIDDEN")
 
 
 @dataclass(frozen=True)
@@ -39,8 +43,7 @@ class VariableRule:
 
     name: str
     type_family: TypeFamily | None = None
-    required: bool = False  # must declare no `default`
-    default: object = NO_DEFAULT_CHECK  # default must equal this, if declared
+    default: object = DEFAULT_UNCHECKED
     optional: bool = False  # may be absent; if present, still validated
 
 
@@ -110,24 +113,47 @@ DEFAULT_SPEC = ModuleSpec(
                 VariableRule("channel", TypeFamily.STRING),
                 VariableRule("config", TypeFamily.COLLECTION, default={}),
                 VariableRule("constraints", TypeFamily.STRING, default=None),
-                VariableRule("model_uuid", TypeFamily.STRING, required=True),
+                VariableRule(
+                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                ),
                 VariableRule("revision", TypeFamily.NUMBER, default=None),
                 # Optional: subordinate charms must omit units, and
                 # subordinate-ness isn't visible from Terraform.
                 VariableRule("units", TypeFamily.NUMBER, default=1, optional=True),
                 # Optional CC008 charm variables (validated only when present).
                 VariableRule("base", TypeFamily.STRING, default=None, optional=True),
-                VariableRule("expose", TypeFamily.COLLECTION, default={}, optional=True),
-                VariableRule("resources", TypeFamily.COLLECTION, default={}, optional=True),
-                VariableRule("machines", TypeFamily.COLLECTION, default=[], optional=True),
                 VariableRule(
-                    "endpoint_bindings", TypeFamily.COLLECTION, default=[], optional=True
+                    "expose", TypeFamily.COLLECTION, default={}, optional=True
                 ),
                 VariableRule(
-                    "storage_directives", TypeFamily.COLLECTION, default={}, optional=True
+                    "resources",
+                    TypeFamily.COLLECTION,
+                    default={},
+                    optional=True,
                 ),
                 VariableRule(
-                    "offered_endpoints", TypeFamily.COLLECTION, default=[], optional=True
+                    "machines",
+                    TypeFamily.COLLECTION,
+                    default=[],
+                    optional=True,
+                ),
+                VariableRule(
+                    "endpoint_bindings",
+                    TypeFamily.COLLECTION,
+                    default=[],
+                    optional=True,
+                ),
+                VariableRule(
+                    "storage_directives",
+                    TypeFamily.COLLECTION,
+                    default={},
+                    optional=True,
+                ),
+                VariableRule(
+                    "offered_endpoints",
+                    TypeFamily.COLLECTION,
+                    default=[],
+                    optional=True,
                 ),
             ),
             # provides/requires: CC008 "mandatory if the relation exists",
@@ -141,10 +167,15 @@ DEFAULT_SPEC = ModuleSpec(
         ),
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
-                VariableRule("model_uuid", TypeFamily.STRING, required=True),
+                VariableRule(
+                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                ),
                 # `<external_integrations>` is author-named, so unchecked.
                 VariableRule(
-                    "expose_endpoints", TypeFamily.COLLECTION, default=[], optional=True
+                    "expose_endpoints",
+                    TypeFamily.COLLECTION,
+                    default=[],
+                    optional=True,
                 ),
             ),
             outputs=(
@@ -156,10 +187,11 @@ DEFAULT_SPEC = ModuleSpec(
         ),
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
-                VariableRule("logging-config", TypeFamily.STRING),
-                VariableRule("proxy", TypeFamily.COLLECTION),
                 VariableRule("risk", TypeFamily.STRING),
-                # Product has no fixed-name optional input to check.
+                # logging-config/proxy: CC008 "mandatory if the module creates/manages the juju model",
+                # marked optional for lack of conditional checking mechanism.
+                VariableRule("logging-config", TypeFamily.STRING, optional=True),
+                VariableRule("proxy", TypeFamily.COLLECTION, optional=True),
             ),
             outputs=(
                 OutputRule("metadata"),
