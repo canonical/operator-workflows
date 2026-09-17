@@ -188,9 +188,10 @@ DEFAULT_SPEC = ModuleSpec(
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
                 VariableRule("risk", TypeFamily.STRING),
+                # logging-config/proxy: CC008 "mandatory if the module creates/manages the juju model",
+                # marked optional for lack of conditional checking mechanism.
                 VariableRule("logging-config", TypeFamily.STRING, optional=True),
                 VariableRule("proxy", TypeFamily.COLLECTION, optional=True),
-                # Product has no fixed-name optional input to check.
             ),
             outputs=(
                 OutputRule("metadata"),
