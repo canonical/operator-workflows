@@ -187,9 +187,9 @@ DEFAULT_SPEC = ModuleSpec(
         ),
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
-                VariableRule("logging-config", TypeFamily.STRING),
-                VariableRule("proxy", TypeFamily.COLLECTION),
                 VariableRule("risk", TypeFamily.STRING),
+                VariableRule("logging-config", TypeFamily.STRING, optional=True),
+                VariableRule("proxy", TypeFamily.COLLECTION, optional=True),
                 # Product has no fixed-name optional input to check.
             ),
             outputs=(
