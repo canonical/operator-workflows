@@ -48,6 +48,10 @@ on:
           Identifier for the integration test job: This is used to distinguish between multiple integration test jobs
           running within the same workflow. It is recommended to set this identifier to the job name.
         default: ""
+      extra-ignored-file-patterns:
+        description: Additional extended-regex (grep -E) patterns for files that should not trigger the build/integration-test jobs, on top of the built-in defaults (*.md, *.rst, *.custom_wordlist.txt, LICENSE)
+        type: string
+        default: ""
       modules:
         description: List of testing modules to run the tests in JSON format, i.e. '["foo", "bar"]'. Each element will be passed to pytest through tox as -k argument
         type: string
@@ -197,6 +201,10 @@ jobs:
             REMOTE=$(git remote show)
             CHANGED_FILES=$(git diff --name-only "$REMOTE/${{ github.event.pull_request.base.ref }}" "${{ github.event.pull_request.head.sha }}")
             IGNORED_PATTERNS="\.md$|\.rst$|\.custom_wordlist\.txt$|^LICENSE$"
+            EXTRA_IGNORED_PATTERNS="${{ inputs.extra-ignored-file-patterns }}"
+            if [ -n "$EXTRA_IGNORED_PATTERNS" ]; then
+              IGNORED_PATTERNS="${IGNORED_PATTERNS}|${EXTRA_IGNORED_PATTERNS}"
+            fi
             CODE_FILE_CHANGES=$(echo "$CHANGED_FILES" | grep -Ev "$IGNORED_PATTERNS" | wc -l)
             has_code_changes=$([[ $CODE_FILE_CHANGES -eq "0" ]] && echo 'False' || echo 'True')
           fi
