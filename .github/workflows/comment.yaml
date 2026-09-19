@@ -19,7 +19,7 @@ env:
 jobs:
   setup-env:
     name: Setup environment
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     outputs:
       IS_PR: ${{ steps.call.outputs.IS_PR || steps.run.outputs.IS_PR }}
       OWNER: ${{ steps.call.outputs.OWNER || steps.run.outputs.OWNER }}
@@ -54,7 +54,7 @@ jobs:
 
   comment-on-prs:
     name: Comment on PRs
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: setup-env
     if: ${{ needs.setup-env.outputs.IS_PR }}
     steps:
