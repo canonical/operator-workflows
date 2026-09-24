@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-09-18
+
+- Add `extra-ignored-file-patterns` input to the `integration_test.yaml` workflow to allow
+ignoring additional file patterns when deciding whether to trigger the build/integration-test jobs.
+
 ## 2026-09-01
 
 - Add `terraform_modules_compliance.yaml` workflow that checks if the structure of terraform
