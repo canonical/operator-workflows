@@ -69,6 +69,15 @@ def variable_bodies(parsed_files: list[dict]) -> dict[str, dict]:
     }
 
 
+def output_bodies(parsed_files: list[dict]) -> dict[str, dict]:
+    """Map output name to its parsed body (later declarations win)."""
+    return {
+        unquote(block_label(block)): block_body(block)
+        for parsed in parsed_files
+        for block in parsed.get("output", [])
+    }
+
+
 def resource_type_labels(parsed_files: list[dict], block_type: str) -> list[str]:
     """Return the resource/data *type* label of each block of a given type."""
     return [

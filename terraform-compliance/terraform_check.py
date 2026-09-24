@@ -20,6 +20,7 @@ from terraform_hcl import (
     block_names,
     load_module_files,
     module_sources,
+    output_bodies,
     resource_type_labels,
     type_family,
     unquote,
@@ -207,6 +208,8 @@ def _check_variable_rule(
         violations.append(
             f"{prefix}: default must be {rule.default!r}, found {body['default']!r}"
         )
+    if rule.nullable is not None and body.get("nullable", True) is not rule.nullable:
+        violations.append(f"{prefix}: nullable must be {str(rule.nullable).lower()}")
     return violations
 
 
@@ -248,6 +251,45 @@ def check_interface(
         for name in outputs
         if name in spec.deprecated_names
     )
+    return violations
+
+
+def check_output_shapes(
+    parsed_files: list[dict],
+    module_type: ModuleType,
+    spec: ModuleSpec = DEFAULT_SPEC,
+) -> list[str]:
+    """Return violations for output value shapes that can be checked statically."""
+    outputs = output_bodies(parsed_files)
+    violations: list[str] = []
+    for rule in spec.module_interfaces[module_type].outputs:
+        if rule.name not in outputs:
+            continue
+        value = outputs[rule.name].get("value")
+        if rule.expected_resource_type is not None:
+            resource_reference = re.compile(
+                rf"^\$\{{{re.escape(rule.expected_resource_type)}\.[^.}}]+\}}$"
+            )
+            if not isinstance(value, str) or not resource_reference.fullmatch(value):
+                violations.append(
+                    f'{module_type} module output "{rule.name}": must reference a '
+                    f"complete {rule.expected_resource_type} resource"
+                )
+        if rule.literal_map_entry_fields and isinstance(value, dict):
+            required_fields = set(rule.literal_map_entry_fields)
+            for entry_name, entry in value.items():
+                if (
+                    isinstance(entry, str)
+                    and entry.startswith("${")
+                    and entry.endswith("}")
+                ):
+                    continue
+                if not isinstance(entry, dict) or not required_fields.issubset(entry):
+                    fields = ", ".join(rule.literal_map_entry_fields)
+                    violations.append(
+                        f'{module_type} module output "{rule.name}" entry '
+                        f'"{entry_name}": must be an object containing {fields}'
+                    )
     return violations
 
 
@@ -347,7 +389,10 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
         CheckResult(
             "module-interface",
             "Module interface",
-            tuple(check_interface(variable_bodies_by_name, outputs, module_type, spec)),
+            tuple(
+                check_interface(variable_bodies_by_name, outputs, module_type, spec)
+                + check_output_shapes(parsed_files, module_type, spec)
+            ),
         ),
         CheckResult(
             "module-sources",

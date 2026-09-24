@@ -44,6 +44,11 @@ Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
   variables/outputs are validated only when present. CC008 allows arbitrary
   extra variables and outputs, but names retired under CC008 (e.g. `endpoints`,
   split into `provides`/`requires`) are flagged as deprecated.
+- Required non-null variables explicitly declare `nullable = false`.
+- Charm `application` outputs reference the complete `juju_application`
+  resource. Literal `provides`/`requires` maps contain endpoint objects with
+  `kind`, `name`, and `endpoint` fields; computed output and entry expressions
+  are left to Terraform.
 - Remote module sources are pinned (a `?ref=` that isn't a floating branch, or
   a registry `version`).
 
@@ -55,7 +60,7 @@ product; composes only → component.
 
 - `providers.tf` is not required (CC008 modules are non-root, so have no
   provider config to place there).
-- Output types aren't checked (Terraform infers them from the value).
+- General output types aren't checked (Terraform infers them from the value).
 - `provides`/`requires` outputs are optional: CC008 makes them mandatory only
   when the charm defines that relation, which Terraform can't detect.
 - `units` is optional: CC008 requires it except on subordinate charms (which

@@ -22,8 +22,9 @@ terraform {
 
 COMPLIANT_VARIABLES_TF = """\
 variable "app_name" {
-  type    = string
-  default = "demo"
+    type     = string
+    default  = "demo"
+    nullable = false
 }
 
 variable "base" {
@@ -32,8 +33,9 @@ variable "base" {
 }
 
 variable "channel" {
-  type    = string
-  default = "1/stable"
+    type     = string
+    default  = "1/stable"
+    nullable = false
 }
 
 variable "config" {
@@ -47,7 +49,8 @@ variable "constraints" {
 }
 
 variable "model_uuid" {
-  type = string
+    type     = string
+    nullable = false
 }
 
 variable "revision" {
@@ -308,11 +311,11 @@ def test_units_is_not_mandated_for_charm_modules() -> None:
     variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
-                'variable "app_name" {\n  type = string\n}\n'
-                'variable "channel" {\n  type = string\n}\n'
+                'variable "app_name" {\n  type = string\n  nullable = false\n}\n'
+                'variable "channel" {\n  type = string\n  nullable = false\n}\n'
                 'variable "config" {\n  type = map(string)\n}\n'
                 'variable "constraints" {\n  type = string\n}\n'
-                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
                 'variable "revision" {\n  type = number\n}\n'
             )
         ]
@@ -341,7 +344,11 @@ def test_component_interface_requires_mandatory_variables_and_outputs() -> None:
 
 def test_compliant_component_interface_passes() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
@@ -384,13 +391,36 @@ def test_compliant_product_interface_passes() -> None:
 
 def test_model_uuid_with_default_is_reported_as_not_required() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n  default = null\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n'
+                "  type = string\n"
+                "  default = null\n"
+                "  nullable = false\n"
+                "}\n"
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
     )
     assert len(violations) == 1
     assert 'variable "model_uuid": must not declare a default' in violations[0]
+
+
+def test_required_non_nullable_charm_variables_are_reported() -> None:
+    for name in ("app_name", "channel", "model_uuid"):
+        variables = terraform_check.variable_bodies(
+            [hcl2.loads(COMPLIANT_VARIABLES_TF)]
+        )
+        variables[name].pop("nullable")
+        violations = terraform_check.check_interface(
+            variables, ["application", "provides", "requires"], module_type="charm"
+        )
+        assert any(
+            f'variable "{name}": nullable must be false' in violation
+            for violation in violations
+        )
 
 
 def test_revision_wrong_default_is_reported() -> None:
@@ -523,7 +553,11 @@ def test_present_optional_variable_with_wrong_default_is_reported() -> None:
 
 def test_component_expose_endpoints_optional_absent_is_ok() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
@@ -605,6 +639,76 @@ def test_optional_output_present_is_allowed() -> None:
         module_type="charm",
     )
     assert violations == []
+
+
+def test_application_output_must_reference_complete_juju_application() -> None:
+    parsed = hcl2.loads(
+        'output "application" {\n  value = juju_application.demo.name\n}\n'
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="charm")
+
+    assert violations == [
+        (
+            'charm module output "application": must reference a complete '
+            "juju_application resource"
+        )
+    ]
+
+
+def test_application_output_accepts_complete_juju_application() -> None:
+    parsed = hcl2.loads('output "application" {\n  value = juju_application.demo\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_literal_endpoint_output_entries_must_be_objects() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        '  value = { squid_auth_helper = "squid-auth-helper" }\n'
+        "}\n"
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="charm")
+
+    assert violations == [
+        (
+            'charm module output "requires" entry "squid_auth_helper": must be an '
+            "object containing kind, name, endpoint"
+        )
+    ]
+
+
+def test_literal_endpoint_output_accepts_endpoint_objects() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        "  value = {\n"
+        "    squid_auth_helper = {\n"
+        '      kind     = "endpoint"\n'
+        "      name     = juju_application.demo.name\n"
+        '      endpoint = "squid-auth-helper"\n'
+        "    }\n"
+        "  }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_computed_endpoint_output_is_not_statically_validated() -> None:
+    parsed = hcl2.loads('output "requires" {\n  value = local.required_endpoints\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_computed_entry_in_literal_endpoint_map_is_not_statically_validated() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        "  value = { squid_auth_helper = local.squid_auth_helper_endpoint }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
 
 
 def test_local_module_source_is_allowed() -> None:
@@ -732,7 +836,12 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
     module = _write_charm_module(tmp_path)
     (module / "variables.tf").write_text(
         COMPLIANT_VARIABLES_TF.replace(
-            'variable "channel" {\n  type    = string\n  default = "1/stable"\n}\n', ""
+            'variable "channel" {\n'
+            "    type     = string\n"
+            '    default  = "1/stable"\n'
+            "    nullable = false\n"
+            "}\n",
+            "",
         )
     )
     violations = terraform_check.check_module(module)
@@ -926,7 +1035,7 @@ def test_component_allows_author_named_variables() -> None:
     variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
-                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
                 'variable "my_integration" {\n  type = string\n}\n'
             )
         ]

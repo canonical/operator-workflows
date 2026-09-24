@@ -44,15 +44,18 @@ class VariableRule:
     name: str
     type_family: TypeFamily | None = None
     default: object = DEFAULT_UNCHECKED
+    nullable: bool | None = None
     optional: bool = False  # may be absent; if present, still validated
 
 
 @dataclass(frozen=True)
 class OutputRule:
-    """One output requirement (presence only; outputs have no type)."""
+    """One output presence and statically-checkable value-shape requirement."""
 
     name: str
     optional: bool = False
+    expected_resource_type: str | None = None
+    literal_map_entry_fields: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -109,12 +112,15 @@ DEFAULT_SPEC = ModuleSpec(
     module_interfaces={
         ModuleType.CHARM: ModuleInterface(
             variables=(
-                VariableRule("app_name", TypeFamily.STRING),
-                VariableRule("channel", TypeFamily.STRING),
+                VariableRule("app_name", TypeFamily.STRING, nullable=False),
+                VariableRule("channel", TypeFamily.STRING, nullable=False),
                 VariableRule("config", TypeFamily.COLLECTION, default={}),
                 VariableRule("constraints", TypeFamily.STRING, default=None),
                 VariableRule(
-                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                    "model_uuid",
+                    TypeFamily.STRING,
+                    default=DEFAULT_FORBIDDEN,
+                    nullable=False,
                 ),
                 VariableRule("revision", TypeFamily.NUMBER, default=None),
                 # Optional: subordinate charms must omit units, and
@@ -159,16 +165,27 @@ DEFAULT_SPEC = ModuleSpec(
             # provides/requires: CC008 "mandatory if the relation exists",
             # undetectable from Terraform, so optional here.
             outputs=(
-                OutputRule("application"),
-                OutputRule("provides", optional=True),
-                OutputRule("requires", optional=True),
+                OutputRule("application", expected_resource_type="juju_application"),
+                OutputRule(
+                    "provides",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
+                OutputRule(
+                    "requires",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
                 OutputRule("offers", optional=True),
             ),
         ),
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
                 VariableRule(
-                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                    "model_uuid",
+                    TypeFamily.STRING,
+                    default=DEFAULT_FORBIDDEN,
+                    nullable=False,
                 ),
                 # `<external_integrations>` is author-named, so unchecked.
                 VariableRule(
@@ -180,8 +197,16 @@ DEFAULT_SPEC = ModuleSpec(
             ),
             outputs=(
                 OutputRule("components"),
-                OutputRule("provides", optional=True),
-                OutputRule("requires", optional=True),
+                OutputRule(
+                    "provides",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
+                OutputRule(
+                    "requires",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
                 OutputRule("offers", optional=True),
             ),
         ),
