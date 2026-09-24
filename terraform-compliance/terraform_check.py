@@ -22,7 +22,7 @@ from terraform_hcl import (
     module_sources,
     output_bodies,
     resource_type_labels,
-    type_family,
+    terraform_type,
     unquote,
     variable_bodies,
 )
@@ -201,14 +201,14 @@ def _check_variable_rule(
     prefix = f'{module_type} module variable "{rule.name}"'
 
     declared_type = body.get("type")
-    if rule.type_family is not None and declared_type is None:
+    if rule.allowed_type is not None and not isinstance(declared_type, str):
         violations.append(f"{prefix}: missing type declaration")
-    elif rule.type_family is not None:
-        family = type_family(declared_type)
-        if family is not None and family != rule.type_family:
+    elif rule.allowed_type is not None:
+        declared_terraform_type = terraform_type(declared_type)
+        if declared_terraform_type != rule.allowed_type:
             violations.append(
-                f"{prefix}: expected a {rule.type_family.value}-like type, "
-                f"found {unquote(declared_type)}"
+                f"{prefix}: expected type {rule.allowed_type}, "
+                f"found {declared_terraform_type or unquote(declared_type)}"
             )
 
     has_default = "default" in body

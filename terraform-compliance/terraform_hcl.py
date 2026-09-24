@@ -8,7 +8,7 @@ two-labeled resource/data blocks) but nothing about CC008.
 """
 
 import re
-from enum import StrEnum, nonmember
+from enum import StrEnum
 from pathlib import Path
 
 import hcl2
@@ -17,25 +17,18 @@ import hcl2
 _TYPE_KEYWORD_PATTERN = re.compile(r"([a-z]+)\s*\(?")
 
 
-class TypeFamily(StrEnum):
-    """Broad Terraform type families (a coarse bucket, not an exact type)."""
+class TerraformType(StrEnum):
+    """Outermost Terraform variable type constraint keywords."""
 
-    STRING = "string"
-    NUMBER = "number"
+    ANY = "any"
     BOOL = "bool"
-    COLLECTION = "collection"  # map/list/set/object/tuple
-
-    # `nonmember` keeps this a plain attribute, not an enum member.
-    _COLLECTION_KEYWORDS = nonmember(
-        frozenset({"map", "list", "set", "object", "tuple"})
-    )
-
-    @classmethod
-    def _missing_(cls, value: object) -> "TypeFamily | None":
-        """Resolve collection keywords (map, object, ...) to COLLECTION."""
-        if value in cls._COLLECTION_KEYWORDS:
-            return cls.COLLECTION
-        return None
+    LIST = "list"
+    MAP = "map"
+    NUMBER = "number"
+    OBJECT = "object"
+    SET = "set"
+    STRING = "string"
+    TUPLE = "tuple"
 
 
 def unquote(value: str) -> str:
@@ -98,13 +91,13 @@ def module_sources(parsed_files: list[dict]) -> list[str]:
     return sources
 
 
-def type_family(type_expr: str) -> TypeFamily | None:
-    """Return the broad TypeFamily of a variable's `type` expression."""
+def terraform_type(type_expr: str) -> TerraformType | None:
+    """Return the outermost Terraform type of a variable type expression."""
     match = _TYPE_KEYWORD_PATTERN.match(unquote(type_expr).removeprefix("${").strip())
     if not match:
         return None
     try:
-        return TypeFamily(match.group(1))
+        return TerraformType(match.group(1))
     except ValueError:
         return None
 

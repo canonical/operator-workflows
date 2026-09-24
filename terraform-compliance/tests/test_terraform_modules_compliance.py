@@ -507,7 +507,7 @@ def test_revision_wrong_type_family_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "revision": expected a number-like type, found string' in v
+        'variable "revision": expected type number, found string' in v
         for v in violations
     )
 
@@ -518,6 +518,44 @@ def test_config_map_type_family_passes_as_collection() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert not any('variable "config"' in v for v in violations)
+
+
+def test_config_wrong_outer_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "config" {\n  type    = map(string)\n  default = {}\n}\n',
+                    'variable "config" {\n  type    = list(string)\n  default = {}\n}\n',
+                )
+            )
+        ]
+    )
+
+    violations = terraform_check.check_interface(
+        variables, ["application"], module_type="charm"
+    )
+
+    assert 'charm module variable "config": expected type map, found list' in violations
+
+
+def test_product_proxy_wrong_outer_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "risk" {\n  type = string\n}\n'
+                'variable "proxy" {\n  type = map(string)\n}\n'
+            )
+        ]
+    )
+
+    violations = terraform_check.check_interface(
+        variables, ["models", "metadata"], module_type="product"
+    )
+
+    assert (
+        'product module variable "proxy": expected type object, found map' in violations
+    )
 
 
 def test_absent_optional_variable_is_not_reported() -> None:
@@ -546,8 +584,7 @@ def test_present_optional_variable_with_wrong_type_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "base": expected a string-like type, found number' in v
-        for v in violations
+        'variable "base": expected type string, found number' in v for v in violations
     )
 
 
@@ -611,8 +648,7 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
         variables, ["components"], module_type="component"
     )
     assert any(
-        'variable "expose_endpoints": expected a collection-like type, found string'
-        in v
+        'variable "expose_endpoints": expected type list, found string' in v
         for v in violations
     )
 
@@ -633,8 +669,7 @@ def test_units_present_with_wrong_type_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "units": expected a number-like type, found string' in v
-        for v in violations
+        'variable "units": expected type number, found string' in v for v in violations
     )
 
 
@@ -982,15 +1017,54 @@ def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> Non
     assert list(parsed) == ["alpha.tf", "main.tf", "zeta.tf"]
 
 
-def test_typefamily_is_defined_in_terraform_hcl() -> None:
+def test_terraform_types_are_defined_in_terraform_hcl() -> None:
     import terraform_hcl
 
-    assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family(
+    assert {member.value for member in terraform_hcl.TerraformType} == {
+        "any",
+        "bool",
+        "list",
+        "map",
+        "number",
+        "object",
+        "set",
+        "string",
+        "tuple",
+    }
+    assert terraform_hcl.TerraformType.MAP is terraform_hcl.terraform_type(
         "map(string)"
     )
     # Not derived from terraform_spec anymore: terraform_hcl must not import it.
     source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
     assert "terraform_spec" not in source
+
+
+def test_variable_rule_accepts_one_type() -> None:
+    import terraform_hcl
+    from terraform_spec import VariableRule
+
+    rule = VariableRule("targets", allowed_type=terraform_hcl.TerraformType.SET)
+
+    assert rule.allowed_type is terraform_hcl.TerraformType.SET
+    assert (
+        terraform_check._check_variable_rule(
+            rule, {"type": "${set(string)}"}, module_type="charm"
+        )
+        == []
+    )
+
+
+def test_variable_rule_without_type_policy_skips_type_check() -> None:
+    from terraform_spec import VariableRule
+
+    rule = VariableRule("expose")
+
+    assert (
+        terraform_check._check_variable_rule(
+            rule, {"type": "${list(string)}"}, module_type="charm"
+        )
+        == []
+    )
 
 
 def test_vcs_source_with_version_but_no_ref_is_reported() -> None:
