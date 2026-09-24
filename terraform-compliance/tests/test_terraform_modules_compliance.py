@@ -3,10 +3,12 @@
 
 """Unit tests for the Terraform module compliance checker."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import hcl2
 import terraform_check
+from terraform_spec import DEFAULT_SPEC
 
 COMPLIANT_TERRAFORM_TF = """\
 terraform {
@@ -116,6 +118,26 @@ def test_compliant_terraform_block_has_no_violations() -> None:
     )
 
 
+def test_multiple_terraform_blocks_are_reported() -> None:
+    parsed = hcl2.loads(COMPLIANT_TERRAFORM_TF + COMPLIANT_TERRAFORM_TF)
+    assert "terraform.tf: expected exactly one terraform block, found 2" in (
+        terraform_check.check_terraform_block(parsed)
+    )
+
+
+def test_provider_minimum_comes_from_spec() -> None:
+    requirements = replace(
+        DEFAULT_SPEC.terraform_block, minimum_provider_version="2.0.0"
+    )
+    spec = replace(DEFAULT_SPEC, terraform_block=requirements)
+
+    violations = terraform_check.check_terraform_block(
+        hcl2.loads(COMPLIANT_TERRAFORM_TF), spec
+    )
+
+    assert "terraform.tf: juju provider version must allow >= 2.0.0" in violations
+
+
 def test_terraform_block_missing_required_version() -> None:
     text = """\
 terraform {
@@ -154,7 +176,7 @@ terraform {
 }
 """
     violations = terraform_check.check_terraform_block(hcl2.loads(text))
-    assert "terraform.tf: juju provider version must allow >= 1.0" in violations
+    assert "terraform.tf: juju provider version must allow >= 1.0.0" in violations
 
 
 def test_terraform_block_juju_version_strictly_above_one_passes() -> None:
@@ -200,7 +222,7 @@ terraform {
 }
 """
     violations = terraform_check.check_terraform_block(hcl2.loads(text))
-    assert "terraform.tf: juju provider version must allow >= 1.0" in violations
+    assert "terraform.tf: juju provider version must allow >= 1.0.0" in violations
 
 
 def test_block_names_preserves_source_order() -> None:
@@ -421,6 +443,17 @@ def test_required_non_nullable_charm_variables_are_reported() -> None:
             f'variable "{name}": nullable must be false' in violation
             for violation in violations
         )
+
+
+def test_standard_variable_without_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    variables["revision"].pop("type")
+
+    violations = terraform_check.check_interface(
+        variables, ["application"], module_type="charm"
+    )
+
+    assert 'charm module variable "revision": missing type declaration' in violations
 
 
 def test_revision_wrong_default_is_reported() -> None:

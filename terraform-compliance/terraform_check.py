@@ -93,18 +93,23 @@ _CONSTRAINT_PATTERN = re.compile(
 )
 
 
-def _allows_juju_v1_or_above(constraint: str) -> bool:
-    """True if the version constraint permits juju provider >= 1.0.0.
+def _allows_minimum_version(constraint: str, minimum: str) -> bool:
+    """True if the version constraint permits at least the minimum version.
 
     A constraint with only an upper bound (e.g. "< 3.0") is rejected.
     """
+    minimum_match = _CONSTRAINT_PATTERN.match(minimum)
+    if minimum_match is None:
+        return False
+    _, min_major, min_minor, min_patch = minimum_match.groups()
+    minimum_version = (int(min_major), int(min_minor or 0), int(min_patch or 0))
     for clause in constraint.split(","):
         match = _CONSTRAINT_PATTERN.match(clause.strip())
         if not match:
             continue
         operator, major, minor, patch = match.groups()
         version = (int(major), int(minor or 0), int(patch or 0))
-        if operator in (None, ">=", ">", "=", "~>") and version >= (1, 0, 0):
+        if operator in (None, ">=", ">", "=", "~>") and version >= minimum_version:
             return True
     return False
 
@@ -116,6 +121,10 @@ def check_terraform_block(parsed: dict, spec: ModuleSpec = DEFAULT_SPEC) -> list
         return ["terraform.tf: missing terraform block"]
     block = blocks[0]
     violations: list[str] = []
+    if len(blocks) != 1:
+        violations.append(
+            f"terraform.tf: expected exactly one terraform block, found {len(blocks)}"
+        )
     if not block.get("required_version"):
         violations.append("terraform.tf: missing required_version")
     providers = block.get("required_providers")
@@ -134,8 +143,13 @@ def check_terraform_block(parsed: dict, spec: ModuleSpec = DEFAULT_SPEC) -> list
     version = juju.get("version")
     if not version:
         violations.append("terraform.tf: juju provider is missing a version constraint")
-    elif not _allows_juju_v1_or_above(unquote(version)):
-        violations.append("terraform.tf: juju provider version must allow >= 1.0")
+    elif not _allows_minimum_version(
+        unquote(version), requirements.minimum_provider_version
+    ):
+        violations.append(
+            "terraform.tf: juju provider version must allow >= "
+            f"{requirements.minimum_provider_version}"
+        )
     return violations
 
 
@@ -187,7 +201,9 @@ def _check_variable_rule(
     prefix = f'{module_type} module variable "{rule.name}"'
 
     declared_type = body.get("type")
-    if rule.type_family is not None and declared_type is not None:
+    if rule.type_family is not None and declared_type is None:
+        violations.append(f"{prefix}: missing type declaration")
+    elif rule.type_family is not None:
         family = type_family(declared_type)
         if family is not None and family != rule.type_family:
             violations.append(
