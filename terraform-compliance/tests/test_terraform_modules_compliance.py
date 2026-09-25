@@ -3,10 +3,12 @@
 
 """Unit tests for the Terraform module compliance checker."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import hcl2
 import terraform_check
+from terraform_spec import DEFAULT_SPEC
 
 COMPLIANT_TERRAFORM_TF = """\
 terraform {
@@ -22,8 +24,9 @@ terraform {
 
 COMPLIANT_VARIABLES_TF = """\
 variable "app_name" {
-  type    = string
-  default = "demo"
+    type     = string
+    default  = "demo"
+    nullable = false
 }
 
 variable "base" {
@@ -32,8 +35,9 @@ variable "base" {
 }
 
 variable "channel" {
-  type    = string
-  default = "1/stable"
+    type     = string
+    default  = "1/stable"
+    nullable = false
 }
 
 variable "config" {
@@ -47,7 +51,8 @@ variable "constraints" {
 }
 
 variable "model_uuid" {
-  type = string
+    type     = string
+    nullable = false
 }
 
 variable "revision" {
@@ -113,6 +118,26 @@ def test_compliant_terraform_block_has_no_violations() -> None:
     )
 
 
+def test_multiple_terraform_blocks_are_reported() -> None:
+    parsed = hcl2.loads(COMPLIANT_TERRAFORM_TF + COMPLIANT_TERRAFORM_TF)
+    assert "terraform.tf: expected exactly one terraform block, found 2" in (
+        terraform_check.check_terraform_block(parsed)
+    )
+
+
+def test_provider_minimum_comes_from_spec() -> None:
+    requirements = replace(
+        DEFAULT_SPEC.terraform_block, minimum_provider_version="2.0.0"
+    )
+    spec = replace(DEFAULT_SPEC, terraform_block=requirements)
+
+    violations = terraform_check.check_terraform_block(
+        hcl2.loads(COMPLIANT_TERRAFORM_TF), spec
+    )
+
+    assert "terraform.tf: juju provider version must allow >= 2.0.0" in violations
+
+
 def test_terraform_block_missing_required_version() -> None:
     text = """\
 terraform {
@@ -151,7 +176,7 @@ terraform {
 }
 """
     violations = terraform_check.check_terraform_block(hcl2.loads(text))
-    assert "terraform.tf: juju provider version must allow >= 1.0" in violations
+    assert "terraform.tf: juju provider version must allow >= 1.0.0" in violations
 
 
 def test_terraform_block_juju_version_strictly_above_one_passes() -> None:
@@ -197,7 +222,7 @@ terraform {
 }
 """
     violations = terraform_check.check_terraform_block(hcl2.loads(text))
-    assert "terraform.tf: juju provider version must allow >= 1.0" in violations
+    assert "terraform.tf: juju provider version must allow >= 1.0.0" in violations
 
 
 def test_block_names_preserves_source_order() -> None:
@@ -308,11 +333,11 @@ def test_units_is_not_mandated_for_charm_modules() -> None:
     variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
-                'variable "app_name" {\n  type = string\n}\n'
-                'variable "channel" {\n  type = string\n}\n'
+                'variable "app_name" {\n  type = string\n  nullable = false\n}\n'
+                'variable "channel" {\n  type = string\n  nullable = false\n}\n'
                 'variable "config" {\n  type = map(string)\n}\n'
                 'variable "constraints" {\n  type = string\n}\n'
-                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
                 'variable "revision" {\n  type = number\n}\n'
             )
         ]
@@ -341,7 +366,11 @@ def test_component_interface_requires_mandatory_variables_and_outputs() -> None:
 
 def test_compliant_component_interface_passes() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
@@ -384,13 +413,47 @@ def test_compliant_product_interface_passes() -> None:
 
 def test_model_uuid_with_default_is_reported_as_not_required() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n  default = null\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n'
+                "  type = string\n"
+                "  default = null\n"
+                "  nullable = false\n"
+                "}\n"
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
     )
     assert len(violations) == 1
     assert 'variable "model_uuid": must not declare a default' in violations[0]
+
+
+def test_required_non_nullable_charm_variables_are_reported() -> None:
+    for name in ("app_name", "channel", "model_uuid"):
+        variables = terraform_check.variable_bodies(
+            [hcl2.loads(COMPLIANT_VARIABLES_TF)]
+        )
+        variables[name].pop("nullable")
+        violations = terraform_check.check_interface(
+            variables, ["application", "provides", "requires"], module_type="charm"
+        )
+        assert any(
+            f'variable "{name}": nullable must be false' in violation
+            for violation in violations
+        )
+
+
+def test_standard_variable_without_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies([hcl2.loads(COMPLIANT_VARIABLES_TF)])
+    variables["revision"].pop("type")
+
+    violations = terraform_check.check_interface(
+        variables, ["application"], module_type="charm"
+    )
+
+    assert 'charm module variable "revision": missing type declaration' in violations
 
 
 def test_revision_wrong_default_is_reported() -> None:
@@ -444,7 +507,7 @@ def test_revision_wrong_type_family_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "revision": expected a number-like type, found string' in v
+        'variable "revision": expected type number, found string' in v
         for v in violations
     )
 
@@ -455,6 +518,44 @@ def test_config_map_type_family_passes_as_collection() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert not any('variable "config"' in v for v in violations)
+
+
+def test_config_wrong_outer_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies(
+        [
+            hcl2.loads(
+                COMPLIANT_VARIABLES_TF.replace(
+                    'variable "config" {\n  type    = map(string)\n  default = {}\n}\n',
+                    'variable "config" {\n  type    = list(string)\n  default = {}\n}\n',
+                )
+            )
+        ]
+    )
+
+    violations = terraform_check.check_interface(
+        variables, ["application"], module_type="charm"
+    )
+
+    assert 'charm module variable "config": expected type map, found list' in violations
+
+
+def test_product_proxy_wrong_outer_type_is_reported() -> None:
+    variables = terraform_check.variable_bodies(
+        [
+            hcl2.loads(
+                'variable "risk" {\n  type = string\n}\n'
+                'variable "proxy" {\n  type = map(string)\n}\n'
+            )
+        ]
+    )
+
+    violations = terraform_check.check_interface(
+        variables, ["models", "metadata"], module_type="product"
+    )
+
+    assert (
+        'product module variable "proxy": expected type object, found map' in violations
+    )
 
 
 def test_absent_optional_variable_is_not_reported() -> None:
@@ -483,8 +584,7 @@ def test_present_optional_variable_with_wrong_type_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "base": expected a string-like type, found number' in v
-        for v in violations
+        'variable "base": expected type string, found number' in v for v in violations
     )
 
 
@@ -523,7 +623,11 @@ def test_present_optional_variable_with_wrong_default_is_reported() -> None:
 
 def test_component_expose_endpoints_optional_absent_is_ok() -> None:
     variables = terraform_check.variable_bodies(
-        [hcl2.loads('variable "model_uuid" {\n  type = string\n}\n')]
+        [
+            hcl2.loads(
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
+            )
+        ]
     )
     violations = terraform_check.check_interface(
         variables, ["components"], module_type="component"
@@ -544,8 +648,7 @@ def test_component_expose_endpoints_wrong_type_is_reported() -> None:
         variables, ["components"], module_type="component"
     )
     assert any(
-        'variable "expose_endpoints": expected a collection-like type, found string'
-        in v
+        'variable "expose_endpoints": expected type list, found string' in v
         for v in violations
     )
 
@@ -566,8 +669,7 @@ def test_units_present_with_wrong_type_is_reported() -> None:
         variables, ["application", "provides", "requires"], module_type="charm"
     )
     assert any(
-        'variable "units": expected a number-like type, found string' in v
-        for v in violations
+        'variable "units": expected type number, found string' in v for v in violations
     )
 
 
@@ -605,6 +707,76 @@ def test_optional_output_present_is_allowed() -> None:
         module_type="charm",
     )
     assert violations == []
+
+
+def test_application_output_must_reference_complete_juju_application() -> None:
+    parsed = hcl2.loads(
+        'output "application" {\n  value = juju_application.demo.name\n}\n'
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="charm")
+
+    assert violations == [
+        (
+            'charm module output "application": must reference a complete '
+            "juju_application resource"
+        )
+    ]
+
+
+def test_application_output_accepts_complete_juju_application() -> None:
+    parsed = hcl2.loads('output "application" {\n  value = juju_application.demo\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_literal_endpoint_output_entries_must_be_objects() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        '  value = { squid_auth_helper = "squid-auth-helper" }\n'
+        "}\n"
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="charm")
+
+    assert violations == [
+        (
+            'charm module output "requires" entry "squid_auth_helper": must be an '
+            "object containing kind, name, endpoint"
+        )
+    ]
+
+
+def test_literal_endpoint_output_accepts_endpoint_objects() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        "  value = {\n"
+        "    squid_auth_helper = {\n"
+        '      kind     = "endpoint"\n'
+        "      name     = juju_application.demo.name\n"
+        '      endpoint = "squid-auth-helper"\n'
+        "    }\n"
+        "  }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_computed_endpoint_output_is_not_statically_validated() -> None:
+    parsed = hcl2.loads('output "requires" {\n  value = local.required_endpoints\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
+
+
+def test_computed_entry_in_literal_endpoint_map_is_not_statically_validated() -> None:
+    parsed = hcl2.loads(
+        'output "requires" {\n'
+        "  value = { squid_auth_helper = local.squid_auth_helper_endpoint }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
 
 
 def test_local_module_source_is_allowed() -> None:
@@ -732,7 +904,12 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
     module = _write_charm_module(tmp_path)
     (module / "variables.tf").write_text(
         COMPLIANT_VARIABLES_TF.replace(
-            'variable "channel" {\n  type    = string\n  default = "1/stable"\n}\n', ""
+            'variable "channel" {\n'
+            "    type     = string\n"
+            '    default  = "1/stable"\n'
+            "    nullable = false\n"
+            "}\n",
+            "",
         )
     )
     violations = terraform_check.check_module(module)
@@ -840,15 +1017,54 @@ def test_load_module_files_orders_files_deterministically(tmp_path: Path) -> Non
     assert list(parsed) == ["alpha.tf", "main.tf", "zeta.tf"]
 
 
-def test_typefamily_is_defined_in_terraform_hcl() -> None:
+def test_terraform_types_are_defined_in_terraform_hcl() -> None:
     import terraform_hcl
 
-    assert terraform_hcl.TypeFamily.COLLECTION is terraform_hcl.type_family(
+    assert {member.value for member in terraform_hcl.TerraformType} == {
+        "any",
+        "bool",
+        "list",
+        "map",
+        "number",
+        "object",
+        "set",
+        "string",
+        "tuple",
+    }
+    assert terraform_hcl.TerraformType.MAP is terraform_hcl.terraform_type(
         "map(string)"
     )
     # Not derived from terraform_spec anymore: terraform_hcl must not import it.
     source = Path("terraform-compliance/terraform_hcl.py").read_text(encoding="utf-8")
     assert "terraform_spec" not in source
+
+
+def test_variable_rule_accepts_one_type() -> None:
+    import terraform_hcl
+    from terraform_spec import VariableRule
+
+    rule = VariableRule("targets", allowed_type=terraform_hcl.TerraformType.SET)
+
+    assert rule.allowed_type is terraform_hcl.TerraformType.SET
+    assert (
+        terraform_check._check_variable_rule(
+            rule, {"type": "${set(string)}"}, module_type="charm"
+        )
+        == []
+    )
+
+
+def test_variable_rule_without_type_policy_skips_type_check() -> None:
+    from terraform_spec import VariableRule
+
+    rule = VariableRule("expose")
+
+    assert (
+        terraform_check._check_variable_rule(
+            rule, {"type": "${list(string)}"}, module_type="charm"
+        )
+        == []
+    )
 
 
 def test_vcs_source_with_version_but_no_ref_is_reported() -> None:
@@ -926,7 +1142,7 @@ def test_component_allows_author_named_variables() -> None:
     variables = terraform_check.variable_bodies(
         [
             hcl2.loads(
-                'variable "model_uuid" {\n  type = string\n}\n'
+                'variable "model_uuid" {\n  type = string\n  nullable = false\n}\n'
                 'variable "my_integration" {\n  type = string\n}\n'
             )
         ]

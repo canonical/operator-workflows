@@ -11,7 +11,7 @@ logic here. ``DEFAULT_SPEC`` below currently encodes the CC008 standard.
 from dataclasses import dataclass
 from enum import StrEnum
 
-from terraform_hcl import TypeFamily
+from terraform_hcl import TerraformType
 
 
 class ModuleType(StrEnum):
@@ -42,17 +42,20 @@ class VariableRule:
     """One variable requirement."""
 
     name: str
-    type_family: TypeFamily | None = None
+    allowed_type: TerraformType | None = None
     default: object = DEFAULT_UNCHECKED
+    nullable: bool | None = None
     optional: bool = False  # may be absent; if present, still validated
 
 
 @dataclass(frozen=True)
 class OutputRule:
-    """One output requirement (presence only; outputs have no type)."""
+    """One output presence and statically-checkable value-shape requirement."""
 
     name: str
     optional: bool = False
+    expected_resource_type: str | None = None
+    literal_map_entry_fields: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -109,49 +112,50 @@ DEFAULT_SPEC = ModuleSpec(
     module_interfaces={
         ModuleType.CHARM: ModuleInterface(
             variables=(
-                VariableRule("app_name", TypeFamily.STRING),
-                VariableRule("channel", TypeFamily.STRING),
-                VariableRule("config", TypeFamily.COLLECTION, default={}),
-                VariableRule("constraints", TypeFamily.STRING, default=None),
+                VariableRule("app_name", TerraformType.STRING, nullable=False),
+                VariableRule("channel", TerraformType.STRING, nullable=False),
+                VariableRule("config", TerraformType.MAP, default={}),
+                VariableRule("constraints", TerraformType.STRING, default=None),
                 VariableRule(
-                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                    "model_uuid",
+                    TerraformType.STRING,
+                    default=DEFAULT_FORBIDDEN,
+                    nullable=False,
                 ),
-                VariableRule("revision", TypeFamily.NUMBER, default=None),
+                VariableRule("revision", TerraformType.NUMBER, default=None),
                 # Optional: subordinate charms must omit units, and
                 # subordinate-ness isn't visible from Terraform.
-                VariableRule("units", TypeFamily.NUMBER, default=1, optional=True),
+                VariableRule("units", TerraformType.NUMBER, default=1, optional=True),
                 # Optional CC008 charm variables (validated only when present).
-                VariableRule("base", TypeFamily.STRING, default=None, optional=True),
-                VariableRule(
-                    "expose", TypeFamily.COLLECTION, default={}, optional=True
-                ),
+                VariableRule("base", TerraformType.STRING, default=None, optional=True),
+                VariableRule("expose", default={}, optional=True),
                 VariableRule(
                     "resources",
-                    TypeFamily.COLLECTION,
+                    TerraformType.MAP,
                     default={},
                     optional=True,
                 ),
                 VariableRule(
                     "machines",
-                    TypeFamily.COLLECTION,
+                    TerraformType.SET,
                     default=[],
                     optional=True,
                 ),
                 VariableRule(
                     "endpoint_bindings",
-                    TypeFamily.COLLECTION,
+                    TerraformType.SET,
                     default=[],
                     optional=True,
                 ),
                 VariableRule(
                     "storage_directives",
-                    TypeFamily.COLLECTION,
+                    TerraformType.MAP,
                     default={},
                     optional=True,
                 ),
                 VariableRule(
                     "offered_endpoints",
-                    TypeFamily.COLLECTION,
+                    TerraformType.LIST,
                     default=[],
                     optional=True,
                 ),
@@ -159,39 +163,58 @@ DEFAULT_SPEC = ModuleSpec(
             # provides/requires: CC008 "mandatory if the relation exists",
             # undetectable from Terraform, so optional here.
             outputs=(
-                OutputRule("application"),
-                OutputRule("provides", optional=True),
-                OutputRule("requires", optional=True),
+                OutputRule("application", expected_resource_type="juju_application"),
+                OutputRule(
+                    "provides",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
+                OutputRule(
+                    "requires",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
                 OutputRule("offers", optional=True),
             ),
         ),
         ModuleType.COMPONENT: ModuleInterface(
             variables=(
                 VariableRule(
-                    "model_uuid", TypeFamily.STRING, default=DEFAULT_FORBIDDEN
+                    "model_uuid",
+                    TerraformType.STRING,
+                    default=DEFAULT_FORBIDDEN,
+                    nullable=False,
                 ),
                 # `<external_integrations>` is author-named, so unchecked.
                 VariableRule(
                     "expose_endpoints",
-                    TypeFamily.COLLECTION,
+                    TerraformType.LIST,
                     default=[],
                     optional=True,
                 ),
             ),
             outputs=(
                 OutputRule("components"),
-                OutputRule("provides", optional=True),
-                OutputRule("requires", optional=True),
+                OutputRule(
+                    "provides",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
+                OutputRule(
+                    "requires",
+                    optional=True,
+                    literal_map_entry_fields=("kind", "name", "endpoint"),
+                ),
                 OutputRule("offers", optional=True),
             ),
         ),
         ModuleType.PRODUCT: ModuleInterface(
             variables=(
-                VariableRule("risk", TypeFamily.STRING),
+                VariableRule("risk", TerraformType.STRING),
                 # logging-config/proxy: CC008 "mandatory if the module creates/manages the juju model",
                 # marked optional for lack of conditional checking mechanism.
-                VariableRule("logging-config", TypeFamily.STRING, optional=True),
-                VariableRule("proxy", TypeFamily.COLLECTION, optional=True),
+                VariableRule("logging-config", TerraformType.STRING, optional=True),
+                VariableRule("proxy", TerraformType.OBJECT, optional=True),
             ),
             outputs=(
                 OutputRule("metadata"),

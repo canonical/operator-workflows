@@ -20,8 +20,9 @@ from terraform_hcl import (
     block_names,
     load_module_files,
     module_sources,
+    output_bodies,
     resource_type_labels,
-    type_family,
+    terraform_type,
     unquote,
     variable_bodies,
 )
@@ -92,18 +93,23 @@ _CONSTRAINT_PATTERN = re.compile(
 )
 
 
-def _allows_juju_v1_or_above(constraint: str) -> bool:
-    """True if the version constraint permits juju provider >= 1.0.0.
+def _allows_minimum_version(constraint: str, minimum: str) -> bool:
+    """True if the version constraint permits at least the minimum version.
 
     A constraint with only an upper bound (e.g. "< 3.0") is rejected.
     """
+    minimum_match = _CONSTRAINT_PATTERN.match(minimum)
+    if minimum_match is None:
+        return False
+    _, min_major, min_minor, min_patch = minimum_match.groups()
+    minimum_version = (int(min_major), int(min_minor or 0), int(min_patch or 0))
     for clause in constraint.split(","):
         match = _CONSTRAINT_PATTERN.match(clause.strip())
         if not match:
             continue
         operator, major, minor, patch = match.groups()
         version = (int(major), int(minor or 0), int(patch or 0))
-        if operator in (None, ">=", ">", "=", "~>") and version >= (1, 0, 0):
+        if operator in (None, ">=", ">", "=", "~>") and version >= minimum_version:
             return True
     return False
 
@@ -115,6 +121,10 @@ def check_terraform_block(parsed: dict, spec: ModuleSpec = DEFAULT_SPEC) -> list
         return ["terraform.tf: missing terraform block"]
     block = blocks[0]
     violations: list[str] = []
+    if len(blocks) != 1:
+        violations.append(
+            f"terraform.tf: expected exactly one terraform block, found {len(blocks)}"
+        )
     if not block.get("required_version"):
         violations.append("terraform.tf: missing required_version")
     providers = block.get("required_providers")
@@ -133,8 +143,13 @@ def check_terraform_block(parsed: dict, spec: ModuleSpec = DEFAULT_SPEC) -> list
     version = juju.get("version")
     if not version:
         violations.append("terraform.tf: juju provider is missing a version constraint")
-    elif not _allows_juju_v1_or_above(unquote(version)):
-        violations.append("terraform.tf: juju provider version must allow >= 1.0")
+    elif not _allows_minimum_version(
+        unquote(version), requirements.minimum_provider_version
+    ):
+        violations.append(
+            "terraform.tf: juju provider version must allow >= "
+            f"{requirements.minimum_provider_version}"
+        )
     return violations
 
 
@@ -186,12 +201,14 @@ def _check_variable_rule(
     prefix = f'{module_type} module variable "{rule.name}"'
 
     declared_type = body.get("type")
-    if rule.type_family is not None and declared_type is not None:
-        family = type_family(declared_type)
-        if family is not None and family != rule.type_family:
+    if rule.allowed_type is not None and not isinstance(declared_type, str):
+        violations.append(f"{prefix}: missing type declaration")
+    elif rule.allowed_type is not None:
+        declared_terraform_type = terraform_type(declared_type)
+        if declared_terraform_type != rule.allowed_type:
             violations.append(
-                f"{prefix}: expected a {rule.type_family.value}-like type, "
-                f"found {unquote(declared_type)}"
+                f"{prefix}: expected type {rule.allowed_type}, "
+                f"found {declared_terraform_type or unquote(declared_type)}"
             )
 
     has_default = "default" in body
@@ -207,6 +224,8 @@ def _check_variable_rule(
         violations.append(
             f"{prefix}: default must be {rule.default!r}, found {body['default']!r}"
         )
+    if rule.nullable is not None and body.get("nullable", True) is not rule.nullable:
+        violations.append(f"{prefix}: nullable must be {str(rule.nullable).lower()}")
     return violations
 
 
@@ -248,6 +267,45 @@ def check_interface(
         for name in outputs
         if name in spec.deprecated_names
     )
+    return violations
+
+
+def check_output_shapes(
+    parsed_files: list[dict],
+    module_type: ModuleType,
+    spec: ModuleSpec = DEFAULT_SPEC,
+) -> list[str]:
+    """Return violations for output value shapes that can be checked statically."""
+    outputs = output_bodies(parsed_files)
+    violations: list[str] = []
+    for rule in spec.module_interfaces[module_type].outputs:
+        if rule.name not in outputs:
+            continue
+        value = outputs[rule.name].get("value")
+        if rule.expected_resource_type is not None:
+            resource_reference = re.compile(
+                rf"^\$\{{{re.escape(rule.expected_resource_type)}\.[^.}}]+\}}$"
+            )
+            if not isinstance(value, str) or not resource_reference.fullmatch(value):
+                violations.append(
+                    f'{module_type} module output "{rule.name}": must reference a '
+                    f"complete {rule.expected_resource_type} resource"
+                )
+        if rule.literal_map_entry_fields and isinstance(value, dict):
+            required_fields = set(rule.literal_map_entry_fields)
+            for entry_name, entry in value.items():
+                if (
+                    isinstance(entry, str)
+                    and entry.startswith("${")
+                    and entry.endswith("}")
+                ):
+                    continue
+                if not isinstance(entry, dict) or not required_fields.issubset(entry):
+                    fields = ", ".join(rule.literal_map_entry_fields)
+                    violations.append(
+                        f'{module_type} module output "{rule.name}" entry '
+                        f'"{entry_name}": must be an object containing {fields}'
+                    )
     return violations
 
 
@@ -347,7 +405,10 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
         CheckResult(
             "module-interface",
             "Module interface",
-            tuple(check_interface(variable_bodies_by_name, outputs, module_type, spec)),
+            tuple(
+                check_interface(variable_bodies_by_name, outputs, module_type, spec)
+                + check_output_shapes(parsed_files, module_type, spec)
+            ),
         ),
         CheckResult(
             "module-sources",
