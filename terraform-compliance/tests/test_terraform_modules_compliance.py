@@ -779,6 +779,57 @@ def test_computed_entry_in_literal_endpoint_map_is_not_statically_validated() ->
     assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
 
 
+def test_metadata_output_missing_keys_is_reported() -> None:
+    parsed = hcl2.loads('output "metadata" {\n  value = { name = "demo" }\n}\n')
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="product")
+
+    assert violations == [
+        'product module output "metadata": must be an object containing exactly '
+        "version, updated_at, deployed_at"
+    ]
+
+
+def test_metadata_output_with_extra_key_is_reported() -> None:
+    parsed = hcl2.loads(
+        'output "metadata" {\n'
+        "  value = {\n"
+        '    version      = "1.0.0"\n'
+        '    updated_at   = "2024-01-01"\n'
+        '    deployed_at  = "2024-01-02"\n'
+        '    name         = "demo"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="product")
+
+    assert violations == [
+        'product module output "metadata": must be an object containing exactly '
+        "version, updated_at, deployed_at"
+    ]
+
+
+def test_metadata_output_with_exact_keys_is_allowed() -> None:
+    parsed = hcl2.loads(
+        'output "metadata" {\n'
+        "  value = {\n"
+        '    version     = "1.0.0"\n'
+        '    updated_at  = "2024-01-01"\n'
+        '    deployed_at = "2024-01-02"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="product") == []
+
+
+def test_computed_metadata_output_is_not_statically_validated() -> None:
+    parsed = hcl2.loads('output "metadata" {\n  value = local.metadata\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="product") == []
+
+
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert terraform_check.check_pinned_module_sources([parsed]) == []

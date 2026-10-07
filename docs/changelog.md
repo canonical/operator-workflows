@@ -8,6 +8,10 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-10-07
 
+- Validate that the product module's `metadata` output contains exactly the
+`version`, `updated_at`, and `deployed_at` keys, via new `OutputRule.required_keys`
+and `OutputRule.allow_extra_keys` fields in `terraform-compliance/terraform_spec.py`,
+checked by `terraform_check.check_output_shapes`.
 - Add a `terraform-check-all` command (`terraform-compliance/terraform_check_all.py`)
 that discovers Terraform module directories under a repository root by
 locating `main.tf` files (skipping vendor/hidden directories and any
