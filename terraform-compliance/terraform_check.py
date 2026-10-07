@@ -306,6 +306,22 @@ def check_output_shapes(
                         f'{module_type} module output "{rule.name}" entry '
                         f'"{entry_name}": must be an object containing {fields}'
                     )
+        if rule.required_keys and isinstance(value, dict):
+            missing_keys = [key for key in rule.required_keys if key not in value]
+            extra_keys = (
+                [key for key in value if key not in rule.required_keys]
+                if not rule.allow_extra_keys
+                else []
+            )
+            if missing_keys or extra_keys:
+                fields = ", ".join(rule.required_keys)
+                qualifier = (
+                    "containing" if rule.allow_extra_keys else "containing exactly"
+                )
+                violations.append(
+                    f'{module_type} module output "{rule.name}": must be an object '
+                    f"{qualifier} {fields}"
+                )
     return violations
 
 
