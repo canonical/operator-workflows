@@ -14,6 +14,28 @@ Files:
 
 Requires Python ≥ 3.11
 
+### Install as a tool
+
+Install the `terraform-check` CLI straight from this monorepo's subdirectory:
+
+```bash
+uv tool install "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"
+terraform-check /path/to/repo/terraform
+```
+
+Or run it once without installing anything:
+
+```bash
+uvx --from "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance" \
+  terraform-check /path/to/repo/terraform
+```
+
+> Note: `uv run <url>/terraform_check.py` (running the bare script by raw file
+> URL) is **not** supported — the checker is split across `terraform_check.py`,
+> `terraform_hcl.py`, and `terraform_spec.py`, and a single-file URL run can't
+> resolve those sibling imports. Use the `uvx --from git+url` form above
+> instead.
+
 ### check
 
 ```bash
