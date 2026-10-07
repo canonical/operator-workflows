@@ -19,7 +19,6 @@ dev = ["pytest"]
 py-modules = [
     "terraform_check",
     "terraform_check_all",
-    "terraform_discover",
     "terraform_hcl",
     "terraform_spec",
 ]
