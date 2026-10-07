@@ -75,6 +75,9 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     root = Path(args.root)
+    if not root.is_dir():
+        print(f"ERROR: repository root is not a directory: {root}")
+        return 2
     included = discover_module_directories(root)
 
     if not included:
