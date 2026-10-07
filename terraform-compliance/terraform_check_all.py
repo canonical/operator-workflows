@@ -8,13 +8,14 @@ and the compliance checks: module type is classified from HCL content via
 """
 
 import argparse
-import os
 import sys
 from pathlib import Path
 
 import terraform_check
 
-# Directories never worth walking into while searching for Terraform modules.
+# Directories never worth walking into while searching for Terraform modules,
+# including "tests" directories whose Terraform modules (and all nested
+# content) are ignored.
 EXCLUDED_DIR_NAMES = frozenset(
     {
         ".git",
@@ -25,11 +26,9 @@ EXCLUDED_DIR_NAMES = frozenset(
         ".mypy_cache",
         ".pytest_cache",
         ".tox",
+        "tests",
     }
 )
-
-# Directories whose Terraform modules (and all nested content) are ignored.
-_IGNORED_DIR_NAME = "tests"
 
 
 def discover_module_directories(root: Path) -> list[Path]:
@@ -40,18 +39,13 @@ def discover_module_directories(root: Path) -> list[Path]:
     with everything beneath it).
     """
     included: list[Path] = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        current = Path(dirpath)
-        dirnames[:] = sorted(
-            name
-            for name in dirnames
-            if name not in EXCLUDED_DIR_NAMES and name != _IGNORED_DIR_NAME
-        )
-        if current.name == _IGNORED_DIR_NAME:
+    for current in sorted(root.rglob("*")):
+        if not current.is_dir():
             continue
-        if "main.tf" not in filenames:
+        if set(current.relative_to(root).parts) & EXCLUDED_DIR_NAMES:
             continue
-        included.append(current)
+        if (current / "main.tf").is_file():
+            included.append(current)
     return included
 
 
