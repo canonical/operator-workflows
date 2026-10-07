@@ -44,15 +44,18 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     if not included:
-        print("No Terraform modules found" if not errors else "No Terraform modules checked")
-        return 1 if errors else 0
+        if errors:
+            print(
+                f"\nSummary: 0 checked, 0 passed, 0 failed, {len(errors)} unsupported"
+            )
+            return 1
+        print("No Terraform modules found")
+        return 0
 
     check_argv = (["--verbose"] if args.verbose else []) + [
         str(directory) for directory in included
     ]
-    check_exit_code = terraform_check.main(check_argv)
-
-    return check_exit_code or (1 if errors else 0)
+    return terraform_check.main(check_argv, unsupported_count=len(errors))
 
 
 if __name__ == "__main__":

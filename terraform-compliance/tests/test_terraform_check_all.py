@@ -38,7 +38,7 @@ def test_all_compliant_modules_pass(tmp_path: Path, capsys) -> None:
 
     out = capsys.readouterr().out
     assert exit_code == 0
-    assert "2 checked, 2 passed, 0 failed" in out
+    assert "2 checked, 2 passed, 0 failed, 0 unsupported" in out
 
 
 def test_unsupported_module_type_fails_even_if_others_pass(
@@ -53,7 +53,19 @@ def test_unsupported_module_type_fails_even_if_others_pass(
     out = capsys.readouterr().out
     assert exit_code == 1
     assert f"Unsupported module type: {tmp_path / 'widgets'}" in out
-    assert "1 checked, 1 passed, 0 failed" in out
+    assert "1 checked, 1 passed, 0 failed, 1 unsupported" in out
+
+
+def test_only_unsupported_module_types_found(tmp_path: Path, capsys) -> None:
+    (tmp_path / "widgets").mkdir()
+    (tmp_path / "widgets" / "main.tf").write_text("")
+
+    exit_code = terraform_check_all.main([str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert exit_code == 1
+    assert f"Unsupported module type: {tmp_path / 'widgets'}" in out
+    assert "Summary: 0 checked, 0 passed, 0 failed, 1 unsupported" in out
 
 
 def test_tests_directory_is_not_checked(tmp_path: Path, capsys) -> None:
@@ -65,7 +77,7 @@ def test_tests_directory_is_not_checked(tmp_path: Path, capsys) -> None:
 
     out = capsys.readouterr().out
     assert exit_code == 0
-    assert "1 checked, 1 passed, 0 failed" in out
+    assert "1 checked, 1 passed, 0 failed, 0 unsupported" in out
     assert "Unsupported module type" not in out
     assert str(tmp_path / "tests") not in out
 
@@ -79,4 +91,4 @@ def test_noncompliant_module_fails(tmp_path: Path, capsys) -> None:
 
     out = capsys.readouterr().out
     assert exit_code == 1
-    assert "1 checked, 0 passed, 1 failed" in out
+    assert "1 checked, 0 passed, 1 failed, 0 unsupported" in out

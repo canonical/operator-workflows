@@ -435,8 +435,16 @@ def escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
-def main(argv: list[str] | None = None) -> int:
-    """Run the Terraform module compliance check over the given directories."""
+def main(argv: list[str] | None = None, unsupported_count: int | None = None) -> int:
+    """Run the Terraform module compliance check over the given directories.
+
+    ``unsupported_count``, when not ``None``, is reported as an additional
+    "N unsupported" element in the final summary line, and makes the exit
+    code non-zero whenever it is nonzero. It is not exposed as a CLI flag;
+    it exists for callers such as ``terraform_check_all`` that discover
+    directories to check and also want to surface directories they skipped
+    as unsupported.
+    """
     parser = argparse.ArgumentParser(
         description="Check Terraform modules for compliance with the configured spec."
     )
@@ -509,11 +517,14 @@ def main(argv: list[str] | None = None) -> int:
             print(f"PASS {directory}")
 
     passed_count = len(directories) - failed_count
-    print(
+    summary = (
         f"\nSummary: {len(directories)} checked, "
         f"{passed_count} passed, {failed_count} failed"
     )
-    return 1 if failed_count else 0
+    if unsupported_count is not None:
+        summary += f", {unsupported_count} unsupported"
+    print(summary)
+    return 1 if failed_count or unsupported_count else 0
 
 
 if __name__ == "__main__":

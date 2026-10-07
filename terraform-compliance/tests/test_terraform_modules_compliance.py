@@ -923,6 +923,32 @@ def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
     assert "PASS" in capsys.readouterr().out
 
 
+def test_main_summary_omits_unsupported_by_default(tmp_path: Path, capsys) -> None:
+    module = _write_charm_module(tmp_path)
+    terraform_check.main([str(module)])
+    assert "unsupported" not in capsys.readouterr().out
+
+
+def test_main_summary_reports_unsupported_count_when_given(
+    tmp_path: Path, capsys
+) -> None:
+    module = _write_charm_module(tmp_path)
+    exit_code = terraform_check.main([str(module)], unsupported_count=2)
+    out = capsys.readouterr().out
+    assert exit_code == 1
+    assert "Summary: 1 checked, 1 passed, 0 failed, 2 unsupported" in out
+
+
+def test_main_summary_shows_zero_unsupported_without_failing(
+    tmp_path: Path, capsys
+) -> None:
+    module = _write_charm_module(tmp_path)
+    exit_code = terraform_check.main([str(module)], unsupported_count=0)
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "Summary: 1 checked, 1 passed, 0 failed, 0 unsupported" in out
+
+
 def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> None:
     module = tmp_path / "broken"
     module.mkdir()

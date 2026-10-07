@@ -65,6 +65,12 @@ This directory-name classification only decides what gets discovered and
 checked; the compliance checks themselves still infer the module's actual
 type (charm/component/product) from its HCL content, same as `terraform-check`.
 
+The final summary line includes an unsupported-module count alongside the
+usual checked/passed/failed counts, e.g.
+`Summary: 1 checked, 1 passed, 0 failed, 1 unsupported`; a nonzero
+unsupported count makes the overall exit code `1` even if every checked
+module passes.
+
 ### check
 
 ```bash
