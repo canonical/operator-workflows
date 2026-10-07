@@ -9,10 +9,9 @@ Files:
 - `terraform_spec.py` — the requirements, as data (`DEFAULT_SPEC` currently encodes CC008).
 - `terraform_hcl.py` — `.tf` loading and `python-hcl2` normalisation.
 - `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
-- `terraform_discover.py` — finds Terraform module directories in a
-  repository tree and classifies them by directory name (for `terraform-check-all`).
-- `terraform_check_all.py` — the `terraform-check-all` CLI: discovers modules
-  and runs `terraform_check` against all of them.
+- `terraform_check_all.py` — the `terraform-check-all` CLI: discovers
+  Terraform module directories in a repository tree (by locating `main.tf`
+  files) and runs `terraform_check` against all of them.
 
 ## Usage
 
@@ -52,27 +51,10 @@ terraform-check-all /path/to/repo
 
 It walks the given root, skipping `.git`, `.terraform`, `.venv`,
 `node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
-looking for `main.tf` files. Each discovered module directory is classified
-by its name/path:
-
-- named exactly `terraform` → a charm module, checked.
-- directly nested under a directory named `charm` (e.g.
-  `terraform/charm/haproxy`) → a charm module, checked, regardless of its
-  own name.
-- name contains `product` (case-insensitive) → a product module, checked.
-- named exactly `tests` → ignored, along with everything beneath it.
-- anything else → reported as `Unsupported module type: <path>` and counted
-  as a failure; scanning continues and other modules are still checked.
-
-This directory-name classification only decides what gets discovered and
-checked; the compliance checks themselves still infer the module's actual
-type (charm/component/product) from its HCL content, same as `terraform-check`.
-
-The final summary line includes an unsupported-module count alongside the
-usual checked/passed/failed counts, e.g.
-`Summary: 1 checked, 1 passed, 0 failed, 1 unsupported`; a nonzero
-unsupported count makes the overall exit code `1` even if every checked
-module passes.
+looking for `main.tf` files (a directory named exactly `tests` is ignored,
+along with everything beneath it). Every discovered module directory is
+then checked with `terraform-check`, which infers the module's actual type
+(charm/component/product) from its HCL content.
 
 ### check
 
