@@ -53,9 +53,12 @@ terraform-check-all /path/to/repo
 It walks the given root, skipping `.git`, `.terraform`, `.venv`,
 `node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
 looking for `main.tf` files. Each discovered module directory is classified
-by its own name (not the directory containing it):
+by its name/path:
 
 - named exactly `terraform` → a charm module, checked.
+- directly nested under a directory named `charm` (e.g.
+  `terraform/charm/haproxy`) → a charm module, checked, regardless of its
+  own name.
 - name contains `product` (case-insensitive) → a product module, checked.
 - named exactly `tests` → ignored, along with everything beneath it.
 - anything else → reported as `Unsupported module type: <path>` and counted

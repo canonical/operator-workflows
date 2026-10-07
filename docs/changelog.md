@@ -14,7 +14,11 @@ under a repository root by locating `main.tf` files, classifies each by
 directory name (`terraform` → charm, name containing `product` → product,
 `tests` → ignored, anything else → `Unsupported module type: <path>`
 failure), and runs the existing `terraform-check` compliance checks against
-all discovered modules.
+all discovered modules. The final summary now also reports an `N
+unsupported` count, failing the run when nonzero. Module directories
+directly nested under a directory named `charm` (e.g.
+`terraform/charm/haproxy`) are also classified as charm modules,
+regardless of their own name.
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
 compliance checker can be installed as a CLI with `uv tool install
 "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,

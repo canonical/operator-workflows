@@ -27,6 +27,21 @@ def test_classify_terraform_substring_is_not_charm(tmp_path: Path) -> None:
         classify_module_path(module)
 
 
+def test_classify_nested_under_charm_directory_is_charm(tmp_path: Path) -> None:
+    module = tmp_path / "terraform" / "charm" / "haproxy"
+
+    assert classify_module_path(module) is ModulePathClassification.CHARM
+
+
+def test_classify_charm_directory_itself_is_not_charm(tmp_path: Path) -> None:
+    # Only directories *nested under* "charm" are recognised this way; the
+    # "charm" directory itself (with main.tf directly inside it) isn't.
+    module = tmp_path / "terraform" / "charm"
+
+    with pytest.raises(UnsupportedModuleType):
+        classify_module_path(module)
+
+
 @pytest.mark.parametrize(
     "name", ["product", "my-product", "Product", "PRODUCT-foo", "foo-product-bar"]
 )
@@ -59,6 +74,23 @@ def test_discover_includes_charm_and_product_modules(tmp_path: Path) -> None:
 
     assert sorted(included) == sorted(
         [tmp_path / "terraform", tmp_path / "some-product"]
+    )
+    assert errors == []
+
+
+def test_discover_includes_modules_nested_under_charm_directory(
+    tmp_path: Path,
+) -> None:
+    _touch_main_tf(tmp_path / "terraform" / "charm" / "haproxy")
+    _touch_main_tf(tmp_path / "terraform" / "charm" / "another-charm")
+
+    included, errors = discover_module_directories(tmp_path)
+
+    assert sorted(included) == sorted(
+        [
+            tmp_path / "terraform" / "charm" / "haproxy",
+            tmp_path / "terraform" / "charm" / "another-charm",
+        ]
     )
     assert errors == []
 

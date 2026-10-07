@@ -3,11 +3,12 @@
 
 """Discover Terraform module directories in a repository tree.
 
-Finds every ``main.tf`` and classifies its containing directory by name, so
-that ``terraform_check_all`` knows which directories to run the compliance
-checker (``terraform_check``) against. This classification is only used for
-*discovery*: the actual per-module compliance checks still rely on
-``terraform_check.classify_module_type``, which inspects HCL content.
+Finds every ``main.tf`` and classifies its containing directory by name/path,
+so that ``terraform_check_all`` knows which directories to run the
+compliance checker (``terraform_check``) against. This classification is
+only used for *discovery*: the actual per-module compliance checks still
+rely on ``terraform_check.classify_module_type``, which inspects HCL
+content.
 """
 
 import os
@@ -48,14 +49,18 @@ class UnsupportedModuleType(ValueError):
 
 
 def classify_module_path(module_dir: Path) -> ModulePathClassification:
-    """Classify a module directory for discovery purposes, by its own name.
+    """Classify a module directory for discovery purposes, by its path.
 
-    Raises ``UnsupportedModuleType`` if the name matches no known
+    Raises ``UnsupportedModuleType`` if the name/path matches no known
     convention. Callers are expected to have already excluded directories
     named ``tests`` before calling this (see ``discover_module_directories``).
     """
     name = module_dir.name
     if name == "terraform":
+        return ModulePathClassification.CHARM
+    # e.g. terraform/charm/haproxy/main.tf: an arbitrarily-named module
+    # directory nested directly under a "charm" directory is a charm module.
+    if module_dir.parent.name == "charm":
         return ModulePathClassification.CHARM
     if "product" in name.lower():
         return ModulePathClassification.PRODUCT
