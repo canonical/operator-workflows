@@ -1,0 +1,25 @@
+# Copyright 2026 Canonical Ltd.
+# See LICENSE file for licensing details.
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "terraform-compliance"
+version = "0.1.0"
+description = "Generic Terraform module compliance checker enforcing a configurable spec (default: CC008)"
+requires-python = ">=3.11"
+dependencies = ["python-hcl2==8.1.4"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools]
+py-modules = ["terraform_check", "terraform_hcl", "terraform_spec"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[project.scripts]
+terraform-check = "terraform_check:main"

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-07
+
+- Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
+compliance checker can be installed as a CLI with `uv tool install
+"git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,
+exposing a `terraform-check` command. Documented the install and `uvx
+--from` no-install alternative in `terraform-compliance/README.md`;
+existing `uv run --with python-hcl2` invocations are unchanged.
+
 ## 2026-09-18
 
 - Add `extra-ignored-file-patterns` input to the `integration_test.yaml` workflow to allow
