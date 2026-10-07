@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if not included:
         print("No Terraform modules found")
-        return 0
+        return 1
 
     check_argv = (["--verbose"] if args.verbose else []) + [
         str(directory) for directory in included
