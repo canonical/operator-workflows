@@ -430,7 +430,7 @@ def check_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]
     return inspect_module(module_dir, spec).violations
 
 
-def _escape_annotation(message: str) -> str:
+def escape_annotation(message: str) -> str:
     """Escape a message for use in a GitHub Actions ``::error`` annotation."""
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
@@ -471,7 +471,7 @@ def main(argv: list[str] | None = None) -> int:
         message = "no Terraform module directories were provided"
         print(f"ERROR: {message}")
         print(
-            f"::error title=Terraform compliance configuration::{_escape_annotation(message)}"
+            f"::error title=Terraform compliance configuration::{escape_annotation(message)}"
         )
         return 2
 
@@ -500,7 +500,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {'FAIL' if check.violations else 'PASS'} {check.name}")
             for violation in check.violations:
                 print(f"  - {violation}")
-                annotation = _escape_annotation(f"{directory}: {violation}")
+                annotation = escape_annotation(f"{directory}: {violation}")
                 print(f"::error title=Terraform compliance::{annotation}")
         if module_violations:
             failed_count += 1

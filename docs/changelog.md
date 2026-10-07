@@ -8,6 +8,13 @@ Each revision is versioned by the date of the revision.
 
 ## 2026-10-07
 
+- Add a `terraform-check-all` command (`terraform-compliance/terraform_check_all.py`
+and `terraform_discover.py`) that discovers Terraform module directories
+under a repository root by locating `main.tf` files, classifies each by
+directory name (`terraform` → charm, name containing `product` → product,
+`tests` → ignored, anything else → `Unsupported module type: <path>`
+failure), and runs the existing `terraform-check` compliance checks against
+all discovered modules.
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
 compliance checker can be installed as a CLI with `uv tool install
 "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,
