@@ -9,6 +9,9 @@ Files:
 - `terraform_spec.py` — the requirements, as data (`DEFAULT_SPEC` currently encodes CC008).
 - `terraform_hcl.py` — `.tf` loading and `python-hcl2` normalisation.
 - `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
+- `terraform_check_all.py` — the `terraform-check-all` CLI: discovers
+  Terraform module directories in a repository tree (by locating `main.tf`
+  files) and runs `terraform_check` against all of them.
 
 ## Usage
 
@@ -35,6 +38,23 @@ uvx --from "git+https://github.com/canonical/operator-workflows@main#subdirector
 > `terraform_hcl.py`, and `terraform_spec.py`, and a single-file URL run can't
 > resolve those sibling imports. Use the `uvx --from git+url` form above
 > instead.
+
+### Install as a tool: check all modules in a repository
+
+Once installed (see above), `terraform-check-all` discovers every Terraform
+module in a repository and checks all of them in one go, instead of listing
+each module directory by hand:
+
+```bash
+terraform-check-all /path/to/repo
+```
+
+It walks the given root, skipping `.git`, `.terraform`, `.venv`,
+`node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
+looking for `main.tf` files (a directory named exactly `tests` is ignored,
+along with everything beneath it). Every discovered module directory is
+then checked with `terraform-check`, which infers the module's actual type
+(charm/component/product) from its HCL content.
 
 ### check
 

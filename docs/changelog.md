@@ -14,6 +14,13 @@ login shell.
 
 ## 2026-10-07
 
+- Add a `terraform-check-all` command (`terraform-compliance/terraform_check_all.py`)
+that discovers Terraform module directories under a repository root by
+locating `main.tf` files (skipping vendor/hidden directories and any
+directory named `tests`, along with everything beneath it), and runs the
+existing `terraform-check` compliance checks against all discovered
+modules, which infers each module's type (charm/component/product) from
+its HCL content via `terraform_check.classify_module_type`.
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
 compliance checker can be installed as a CLI with `uv tool install
 "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,
