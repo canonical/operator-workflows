@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-09
+
+- Always add `~/.local/bin` to `PATH` in the `integration_test.yaml` build job, so tools installed by
+`pipx` or `pip install --user` are found on self-hosted runners that do not start the runner from a
+login shell.
+
 ## 2026-10-07
 
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
