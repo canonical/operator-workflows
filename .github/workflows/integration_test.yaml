@@ -260,9 +260,11 @@ jobs:
               python3 -m pip install --upgrade ${PIP_BREAK_FLAG} pip
               python3 -m pip install --user ${PIP_BREAK_FLAG} pipx
               python3 -m pipx ensurepath
-              echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
             fi
           fi
+          # pipx and `pip install --user` install into ~/.local/bin, which is only on PATH when the
+          # runner was started from a login shell.
+          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
       - name: Get workflow version
         id: workflow-version
         if: ${{ matrix.build.type == 'charm' }}
