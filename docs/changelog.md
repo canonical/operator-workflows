@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-12
+
+- `terraform-check-all` now also discovers Terraform module directories by
+locating `terraform.tf` files, in addition to `main.tf`.
+- Module type detection for composed modules no longer relies on tying
+resources: a path element containing `product`/`component`, or an `outputs.tf`
+containing `juju_model` (product) / `components` (component), decides the
+type. Unidentified modules fail a new `module-type` check.
+
 ## 2026-10-09
 
 - Always add `~/.local/bin` to `PATH` in the `integration_test.yaml` build job, so tools installed by

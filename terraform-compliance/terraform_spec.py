@@ -80,7 +80,9 @@ class ModuleSpec:
 
     required_files: tuple[str, ...]
     terraform_block: TerraformBlockRequirements
-    tying_resource_types: frozenset[str]
+    # Text found in outputs.tf that identifies a composed module's type.
+    product_output_marker: str
+    component_output_marker: str
     floating_ref_names: frozenset[str]
     deprecated_names: frozenset[str]
     module_interfaces: dict[ModuleType, ModuleInterface]
@@ -99,10 +101,8 @@ DEFAULT_SPEC = ModuleSpec(
         provider_source="juju/juju",
         minimum_provider_version="1.0.0",
     ),
-    # Resource/data types that mark a module as tying components together.
-    tying_resource_types=frozenset(
-        {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
-    ),
+    product_output_marker="juju_model",
+    component_output_marker="components",
     # Floating branch names disallowed as module refs.
     floating_ref_names=frozenset(
         {"main", "master", "trunk", "develop", "development", "head"}

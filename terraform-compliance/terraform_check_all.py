@@ -31,10 +31,14 @@ EXCLUDED_DIR_NAMES = frozenset(
 )
 
 
+MODULE_MARKER_FILES = ("main.tf", "terraform.tf")
+
+
 def discover_module_directories(root: Path) -> list[Path]:
     """Find Terraform module directories under ``root``.
 
-    Walks the tree looking for ``main.tf`` files, pruning known vendor/hidden
+    Walks the tree looking for ``main.tf`` or ``terraform.tf`` files (each
+    directory is reported once), pruning known vendor/hidden
     directories and any directory named ``tests`` (which is ignored along
     with everything beneath it).
     """
@@ -44,7 +48,7 @@ def discover_module_directories(root: Path) -> list[Path]:
             continue
         if set(current.relative_to(root).parts) & EXCLUDED_DIR_NAMES:
             continue
-        if (current / "main.tf").is_file():
+        if any((current / marker).is_file() for marker in MODULE_MARKER_FILES):
             included.append(current)
     return included
 
@@ -54,7 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description=(
             "Discover Terraform module directories under a repository root "
-            "(by locating main.tf files) and check all of them for "
+            "(by locating main.tf or terraform.tf files) and check all of them for "
             "compliance with the configured spec."
         )
     )
@@ -78,9 +82,11 @@ def main(argv: list[str] | None = None) -> int:
         print("No Terraform modules found")
         return 1
 
-    check_argv = (["--verbose"] if args.verbose else []) + [
-        str(directory) for directory in included
-    ]
+    check_argv = (
+        (["--verbose"] if args.verbose else [])
+        + ["--root", str(root)]
+        + [str(directory) for directory in included]
+    )
     return terraform_check.main(check_argv)
 
 

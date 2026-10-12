@@ -11,7 +11,7 @@ Files:
 - `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
 - `terraform_check_all.py` — the `terraform-check-all` CLI: discovers
   Terraform module directories in a repository tree (by locating `main.tf`
-  files) and runs `terraform_check` against all of them.
+  or `terraform.tf` files) and runs `terraform_check` against all of them.
 
 ## Usage
 
@@ -51,7 +51,7 @@ terraform-check-all /path/to/repo
 
 It walks the given root, skipping `.git`, `.terraform`, `.venv`,
 `node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
-looking for `main.tf` files (a directory named exactly `tests` is ignored,
+looking for `main.tf` or `terraform.tf` files (a directory named exactly `tests` is ignored,
 along with everything beneath it). Every discovered module directory is
 then checked with `terraform-check`, which infers the module's actual type
 (charm/component/product) from its HCL content.
@@ -94,9 +94,12 @@ Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
 - Remote module sources are pinned (a `?ref=` that isn't a floating branch, or
   a registry `version`).
 
-Module type is inferred: no `module` blocks → charm; composes modules and
-defines a `juju_model`/`juju_secret`/`juju_integration`/`juju_offer` →
-product; composes only → component.
+Module type is inferred: no `module` blocks → charm. A module composing other
+modules is a product if a path element (relative to the `--root` given to
+`terraform-check`, or the path as given) contains `product`, a component if it
+contains `component`; otherwise a product if `outputs.tf` contains `juju_model`,
+a component if it contains `components`. If no rule matches, the "Module type"
+check fails (`module-type`) and the module-interface check is skipped.
 
 ## Known deviations
 

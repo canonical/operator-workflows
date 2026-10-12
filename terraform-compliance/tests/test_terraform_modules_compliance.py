@@ -280,24 +280,85 @@ def test_is_composed_module_detects_module_blocks() -> None:
     assert terraform_check.is_composed_module([composed]) is True
 
 
-def test_classify_module_type_charm_when_no_module_blocks() -> None:
-    charm = hcl2.loads(
-        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+COMPOSED_MAIN_TF = 'module "demo" {\n  source = "../modules/demo"\n}\n'
+
+
+def _classify(tmp_path: Path, relative_dir: str, main_tf: str, outputs_tf: str | None):
+    module = tmp_path / relative_dir
+    module.mkdir(parents=True)
+    if outputs_tf is not None:
+        (module / "outputs.tf").write_text(outputs_tf)
+    return terraform_check.classify_module_type(
+        [hcl2.loads(main_tf)], module, root=tmp_path
     )
-    assert terraform_check.classify_module_type([charm]) == "charm"
 
 
-def test_classify_module_type_component_when_no_tying_resources() -> None:
-    composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert terraform_check.classify_module_type([composed]) == "component"
+def test_classify_module_type_charm_when_no_module_blocks(tmp_path: Path) -> None:
+    charm = 'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+    assert _classify(tmp_path, "terraform", charm, None) == "charm"
 
 
-def test_classify_module_type_product_when_tying_resource_present() -> None:
-    composed = hcl2.loads(
-        'module "demo" {\n  source = "../modules/demo"\n}\n'
-        'resource "juju_integration" "demo" {\n  model_uuid = var.model_uuid\n}\n'
+def test_classify_module_type_from_path_elements(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "my-product/terraform", COMPOSED_MAIN_TF, None) == (
+        "product"
     )
-    assert terraform_check.classify_module_type([composed]) == "product"
+    assert _classify(tmp_path, "components/loki", COMPOSED_MAIN_TF, None) == (
+        "component"
+    )
+
+
+def test_classify_module_type_ignores_path_above_root(tmp_path: Path) -> None:
+    root = tmp_path / "product-checkout"
+    module = root / "terraform"
+    module.mkdir(parents=True)
+    assert (
+        terraform_check.classify_module_type(
+            [hcl2.loads(COMPOSED_MAIN_TF)], module, root=root
+        )
+        is None
+    )
+
+
+def test_classify_module_type_from_outputs(tmp_path: Path) -> None:
+    assert (
+        _classify(
+            tmp_path, "a", COMPOSED_MAIN_TF, 'output "x" {\n  value = juju_model.m\n}\n'
+        )
+        == "product"
+    )
+    assert (
+        _classify(
+            tmp_path,
+            "loki-operators/terraform",
+            COMPOSED_MAIN_TF,
+            'output "components" {\n  value = {}\n}\n',
+        )
+        == "component"
+    )
+
+
+def test_classify_module_type_path_wins_over_outputs(tmp_path: Path) -> None:
+    outputs = 'output "components" {\n  value = {}\n}\n'
+    assert _classify(tmp_path, "product", COMPOSED_MAIN_TF, outputs) == "product"
+
+
+def test_classify_module_type_unidentified(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "terraform", COMPOSED_MAIN_TF, 'output "x" {}\n') is None
+
+
+def test_unidentified_module_reports_rules(tmp_path: Path) -> None:
+    module = tmp_path / "terraform"
+    module.mkdir()
+    (module / "main.tf").write_text(COMPOSED_MAIN_TF)
+
+    report = terraform_check.inspect_module(module, root=tmp_path)
+
+    assert report.module_type is None
+    violations = report.violations
+    assert any(
+        "module type is not identified" in v and "juju_model" in v and "components" in v
+        for v in violations
+    )
 
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:

@@ -36,10 +36,21 @@ def test_discover_finds_any_directory_with_main_tf(tmp_path: Path) -> None:
     )
 
 
+def test_discover_finds_terraform_tf_only_directory_once(tmp_path: Path) -> None:
+    (tmp_path / "only-terraform").mkdir()
+    (tmp_path / "only-terraform" / "terraform.tf").write_text("")
+    _write_compliant_module(tmp_path / "both")
+
+    included = terraform_check_all.discover_module_directories(tmp_path)
+
+    assert sorted(included) == sorted([tmp_path / "only-terraform", tmp_path / "both"])
+
+
 def test_discover_ignores_tests_directory_entirely(tmp_path: Path) -> None:
     _write_compliant_module(tmp_path / "terraform")
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests" / "main.tf").write_text("")
+    (tmp_path / "tests" / "terraform.tf").write_text("")
 
     included = terraform_check_all.discover_module_directories(tmp_path)
 
