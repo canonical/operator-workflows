@@ -36,6 +36,14 @@ def test_discover_finds_any_directory_with_main_tf(tmp_path: Path) -> None:
     )
 
 
+def test_discover_includes_root_when_it_is_a_module(tmp_path: Path) -> None:
+    (tmp_path / "main.tf").write_text("")
+
+    included = terraform_check_all.discover_module_directories(tmp_path)
+
+    assert included == [tmp_path]
+
+
 def test_discover_finds_terraform_tf_only_directory_once(tmp_path: Path) -> None:
     (tmp_path / "only-terraform").mkdir()
     (tmp_path / "only-terraform" / "terraform.tf").write_text("")

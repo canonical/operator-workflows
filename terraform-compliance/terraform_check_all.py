@@ -43,7 +43,7 @@ def discover_module_directories(root: Path) -> list[Path]:
     with everything beneath it).
     """
     included: list[Path] = []
-    for current in sorted(root.rglob("*")):
+    for current in [root, *sorted(root.rglob("*"))]:
         if not current.is_dir():
             continue
         if set(current.relative_to(root).parts) & EXCLUDED_DIR_NAMES:
