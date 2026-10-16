@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-12
+
+- `terraform-check-all` now also discovers Terraform module directories by
+locating `terraform.tf` files, in addition to `main.tf`.
+- Module type detection for composed modules no longer relies on tying
+resources: a path element containing `product`/`component`, or an `outputs.tf`
+containing `juju_model` (product) / `components` (component), decides the
+type. Unidentified modules fail a new `module-type` check.
+
 ## 2026-10-09
 
 - Always add `~/.local/bin` to `PATH` in the `integration_test.yaml` build job, so tools installed by
@@ -14,6 +23,17 @@ login shell.
 
 ## 2026-10-07
 
+- Validate that the product module's `metadata` output contains exactly the
+`version`, `updated_at`, and `deployed_at` keys, via new `OutputRule.required_keys`
+and `OutputRule.allow_extra_keys` fields in `terraform-compliance/terraform_spec.py`,
+checked by `terraform_check.check_output_shapes`.
+- Add a `terraform-check-all` command (`terraform-compliance/terraform_check_all.py`)
+that discovers Terraform module directories under a repository root by
+locating `main.tf` files (skipping vendor/hidden directories and any
+directory named `tests`, along with everything beneath it), and runs the
+existing `terraform-check` compliance checks against all discovered
+modules, which infers each module's type (charm/component/product) from
+its HCL content via `terraform_check.classify_module_type`.
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
 compliance checker can be installed as a CLI with `uv tool install
 "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,

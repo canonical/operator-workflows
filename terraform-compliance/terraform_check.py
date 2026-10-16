@@ -21,7 +21,6 @@ from terraform_hcl import (
     load_module_files,
     module_sources,
     output_bodies,
-    resource_type_labels,
     terraform_type,
     unquote,
     variable_bodies,
@@ -48,6 +47,7 @@ class CheckResult:
 
 CHECK_SLUGS = (
     "required-files",
+    "module-type",
     "terraform-configuration",
     "variable-ordering",
     "output-ordering",
@@ -60,7 +60,7 @@ CHECK_SLUGS = (
 class ModuleReport:
     """Detailed compliance report for one Terraform module."""
 
-    module_type: ModuleType
+    module_type: ModuleType | None
     checks: tuple[CheckResult, ...]
     variables: tuple[str, ...]
     outputs: tuple[str, ...]
@@ -171,26 +171,54 @@ def is_composed_module(parsed_files: list[dict]) -> bool:
     return any(parsed.get("module") for parsed in parsed_files)
 
 
-def _defines_tying_resources(parsed_files: list[dict], spec: ModuleSpec) -> bool:
-    """Return True if any file declares a Product-module tying resource/data block."""
-    return any(
-        label in spec.tying_resource_types
-        for block_type in ("resource", "data")
-        for label in resource_type_labels(parsed_files, block_type)
-    )
+UNIDENTIFIED_MODULE_TYPE_MESSAGE = (
+    "module type is not identified: a module composing other modules must either "
+    "have a path element containing 'product' or 'component', or have an "
+    "outputs.tf containing '{product}' (product module) or '{component}' "
+    "(component module)"
+)
+
+
+def _type_from_path(path_parts: tuple[str, ...]) -> ModuleType | None:
+    """Return the type named by the path elements, None if absent or ambiguous."""
+    lowered = [part.lower() for part in path_parts]
+    is_product = any(ModuleType.PRODUCT in part for part in lowered)
+    is_component = any(ModuleType.COMPONENT in part for part in lowered)
+    if is_product == is_component:
+        return None
+    return ModuleType.PRODUCT if is_product else ModuleType.COMPONENT
+
+
+def _type_from_outputs(outputs_text: str, spec: ModuleSpec) -> ModuleType | None:
+    """Return the type implied by markers in the outputs.tf text, if any."""
+    if spec.product_output_marker in outputs_text:
+        return ModuleType.PRODUCT
+    if spec.component_output_marker in outputs_text:
+        return ModuleType.COMPONENT
+    return None
 
 
 def classify_module_type(
-    parsed_files: list[dict], spec: ModuleSpec = DEFAULT_SPEC
-) -> ModuleType:
-    """Classify a module as CHARM (no module blocks), PRODUCT (composes
-    modules and defines a tying resource), or COMPONENT (composes only).
+    parsed_files: list[dict],
+    module_dir: Path,
+    spec: ModuleSpec = DEFAULT_SPEC,
+    root: Path | None = None,
+) -> ModuleType | None:
+    """Classify a module, or return None when its type cannot be identified.
+
+    A module without ``module`` blocks is a CHARM. For a composed module, the
+    type comes from the path (relative to ``root`` when given) containing
+    "product" or "component", then from the markers in outputs.tf.
     """
     if not is_composed_module(parsed_files):
         return ModuleType.CHARM
-    if _defines_tying_resources(parsed_files, spec):
-        return ModuleType.PRODUCT
-    return ModuleType.COMPONENT
+    relative_dir = module_dir.relative_to(root) if root else module_dir
+    path_type = _type_from_path(relative_dir.parts)
+    if path_type:
+        return path_type
+    outputs_file = module_dir / "outputs.tf"
+    outputs_text = outputs_file.read_text() if outputs_file.is_file() else ""
+    return _type_from_outputs(outputs_text, spec)
 
 
 def _check_variable_rule(
@@ -306,6 +334,22 @@ def check_output_shapes(
                         f'{module_type} module output "{rule.name}" entry '
                         f'"{entry_name}": must be an object containing {fields}'
                     )
+        if rule.required_keys and isinstance(value, dict):
+            missing_keys = [key for key in rule.required_keys if key not in value]
+            extra_keys = (
+                [key for key in value if key not in rule.required_keys]
+                if not rule.allow_extra_keys
+                else []
+            )
+            if missing_keys or extra_keys:
+                fields = ", ".join(rule.required_keys)
+                qualifier = (
+                    "containing" if rule.allow_extra_keys else "containing exactly"
+                )
+                violations.append(
+                    f'{module_type} module output "{rule.name}": must be an object '
+                    f"{qualifier} {fields}"
+                )
     return violations
 
 
@@ -361,20 +405,34 @@ def check_pinned_module_sources(
     return violations
 
 
-def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleReport:
+def inspect_module(
+    module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC, root: Path | None = None
+) -> ModuleReport:
     """Return a detailed compliance report for a Terraform module directory."""
     parsed = load_module_files(module_dir)
     parsed_files = list(parsed.values())
     variable_bodies_by_name = variable_bodies(parsed_files)
     variables = list(variable_bodies_by_name)
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    module_type = classify_module_type(parsed_files, spec)
+    module_type = classify_module_type(parsed_files, module_dir, spec, root)
 
     checks = (
         CheckResult(
             "required-files",
             "Required files",
             tuple(check_required_files(module_dir, spec)),
+        ),
+        CheckResult(
+            "module-type",
+            "Module type",
+            ()
+            if module_type
+            else (
+                UNIDENTIFIED_MODULE_TYPE_MESSAGE.format(
+                    product=spec.product_output_marker,
+                    component=spec.component_output_marker,
+                ),
+            ),
         ),
         CheckResult(
             "terraform-configuration",
@@ -408,7 +466,10 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
             tuple(
                 check_interface(variable_bodies_by_name, outputs, module_type, spec)
                 + check_output_shapes(parsed_files, module_type, spec)
-            ),
+            )
+            if module_type
+            else (),
+            None if module_type else "module type is not identified",
         ),
         CheckResult(
             "module-sources",
@@ -425,9 +486,11 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
     )
 
 
-def check_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
+def check_module(
+    module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC, root: Path | None = None
+) -> list[str]:
     """Return all violations for a single Terraform module directory."""
-    return inspect_module(module_dir, spec).violations
+    return inspect_module(module_dir, spec, root).violations
 
 
 def _escape_annotation(message: str) -> str:
@@ -456,6 +519,14 @@ def main(argv: list[str] | None = None) -> int:
         help="Print the available --check slugs and exit.",
     )
     parser.add_argument(
+        "--root",
+        type=Path,
+        help=(
+            "Repository root; module paths are made relative to it when "
+            "identifying module types (defaults to the paths as given)."
+        ),
+    )
+    parser.add_argument(
         "directories", nargs="*", help="Terraform module directories to check."
     )
     args = parser.parse_args(argv)
@@ -479,7 +550,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Checking {len(directories)} Terraform module(s) for compliance ({label})")
     failed_count = 0
     for directory in directories:
-        report = inspect_module(Path(directory))
+        report = inspect_module(Path(directory), root=args.root)
         checks = (
             [check for check in report.checks if check.slug == args.check]
             if args.check
@@ -488,7 +559,7 @@ def main(argv: list[str] | None = None) -> int:
         module_violations = [
             violation for check in checks for violation in check.violations
         ]
-        print(f"\nChecking {directory} ({report.module_type} module)")
+        print(f"\nChecking {directory} ({report.module_type or 'unidentified'} module)")
         if args.verbose:
             print(f"  Variables: {', '.join(report.variables) or 'none'}")
             print(f"  Outputs: {', '.join(report.outputs) or 'none'}")
