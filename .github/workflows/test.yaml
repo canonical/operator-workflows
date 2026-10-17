@@ -209,7 +209,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7.0.1
       - name: Setup Tflint
-        uses: terraform-linters/setup-tflint@v6.3.1
+        uses: terraform-linters/setup-tflint@v6.3.2
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
@@ -276,7 +276,7 @@ jobs:
           
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v10.1.0
+        uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: >-
             ${{ steps.python-version.outputs.file == ''
