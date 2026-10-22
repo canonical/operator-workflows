@@ -3,7 +3,8 @@
   "automerge": true,
   "extends": [
     "config:base",
-    "group:all"
+    "group:all",
+    "helpers:pinGitHubActionDigests"
   ],
   "schedule": [
     "* * * * 0,6"
