@@ -92,7 +92,7 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Prepare juju tf provider environment
       run: |
-        sudo dpkg -P docker.io docker-ce docker-ce-cli containerd containerd.io
+        sudo dpkg -P docker-buildx docker-compose-v2 docker.io docker-ce docker-ce-cli containerd containerd.io
         sudo rm -Rf /run/containerd
         sudo iptables -F FORWARD
         sudo iptables -P FORWARD ACCEPT
