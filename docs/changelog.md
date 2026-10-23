@@ -21,6 +21,7 @@ alias of `terraform-check`. The discovery settings live in `terraform_spec.py`.
 Unidentified modules fail a new `module-type` check.
 - `main.tf` is no longer a required module file.
 
+
 ## 2026-10-21
 
 - Pin external actions to commit SHAs (kept up to date by Renovate) and make the workflows

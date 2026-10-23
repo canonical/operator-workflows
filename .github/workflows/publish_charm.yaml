@@ -75,7 +75,7 @@ jobs:
       destination-channel: ${{ steps.select-channel.outputs.name }}
     steps:
       - name: Select charmhub channel
-        uses: canonical/charming-actions/channel@2.7.0
+        uses: canonical/charming-actions/channel@1753e0803f70445132e92acd45c905aba6473225 # 2.7.0
         id: select-channel
         continue-on-error: true
   plan:
@@ -95,7 +95,7 @@ jobs:
           workflow-file: ${{ inputs.integration-test-workflow-file }}
           workflow-run-id: ${{ inputs.workflow-run-id }}
           identifier: ${{ inputs.identifier }}
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
             fetch-depth: 0
       - name: Find changes
@@ -117,7 +117,7 @@ jobs:
     outputs:
       charm-directory: ${{ steps.publish.outputs.charm-directory }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: sudo snap install charmcraft --channel ${{ inputs.charmcraft-channel }} --classic
         # required to use skopeo embedded within rockcraft - otherwise a docker error
         # "io: read/write on closed pipe" will happen
@@ -152,7 +152,7 @@ jobs:
           done
           rm version
       - name: Upload charm to charmhub
-        uses: canonical/charming-actions/upload-charm@2.7.0
+        uses: canonical/charming-actions/upload-charm@1753e0803f70445132e92acd45c905aba6473225 # 2.7.0
         with:
           built-charm-path: ${{ steps.publish.outputs.charms }}
           charmcraft-channel: ${{ inputs.charmcraft-channel }}
@@ -168,7 +168,7 @@ jobs:
     if: ${{ inputs.publish-libs && needs.plan.outputs.has-code-changes == 'True' }}
     needs: [ plan, publish-charm ]
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Change directory
         run: |
           TEMP_DIR=$(mktemp -d)
@@ -176,7 +176,7 @@ jobs:
           rm -rf .* * || :
           cp -rp $TEMP_DIR/. .
           rm -rf $TEMP_DIR
-      - uses: canonical/charming-actions/release-libraries@2.7.0
+      - uses: canonical/charming-actions/release-libraries@1753e0803f70445132e92acd45c905aba6473225 # 2.7.0
         name: Release libs
         with:
           credentials: ${{ secrets.CHARMHUB_TOKEN }}

@@ -3,7 +3,8 @@
   "automerge": true,
   "extends": [
     "config:base",
-    "group:all"
+    "group:all",
+    "helpers:pinGitHubActionDigests"
   ],
   "schedule": [
     "* * * * 0,6"
@@ -14,6 +15,12 @@
       "matchPackageNames": ["typescript"],
       "groupName": "typescript",
       "groupSlug": "typescript"
+    },
+    {
+      "description": "The internal/* actions of this repository intentionally float on main (see README); do not pin them to digests.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["canonical/operator-workflows", "canonical/operator-workflows/**"],
+      "pinDigests": false
     }
   ],
   "vulnerabilityAlerts": {
