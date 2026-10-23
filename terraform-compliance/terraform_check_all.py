@@ -3,8 +3,8 @@
 
 """CLI that discovers Terraform modules in a repository and checks all of
 them for compliance (see ``terraform_check`` for discovery/classification
-and the compliance checks: module type is classified from HCL content via
-``terraform_check.classify_module_type``).
+and the compliance checks: module type is classified from the module path and
+outputs.tf via ``terraform_check.classify_module_type``).
 """
 
 import argparse
@@ -37,9 +37,9 @@ MODULE_MARKER_FILES = ("main.tf", "terraform.tf")
 def discover_module_directories(root: Path) -> list[Path]:
     """Find Terraform module directories under ``root``.
 
-    Walks the tree looking for ``main.tf`` or ``terraform.tf`` files (each
-    directory is reported once), pruning known vendor/hidden
-    directories and any directory named ``tests`` (which is ignored along
+    Walks the tree looking for ``main.tf`` or ``terraform.tf`` files (legacy
+    modules may lack ``terraform.tf``; each directory is reported once), pruning
+    known vendor/hidden directories and any directory named ``tests`` (which is ignored along
     with everything beneath it).
     """
     included: list[Path] = []

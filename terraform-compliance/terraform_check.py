@@ -166,27 +166,30 @@ def check_alphabetical(parsed: dict, block_type: str, filename: str) -> list[str
     return []
 
 
-def is_composed_module(parsed_files: list[dict]) -> bool:
-    """Return True when any parsed file composes other modules."""
-    return any(parsed.get("module") for parsed in parsed_files)
-
-
 UNIDENTIFIED_MODULE_TYPE_MESSAGE = (
-    "module type is not identified: a module composing other modules must either "
-    "have a path element containing 'product' or 'component', or have an "
-    "outputs.tf containing '{product}' (product module) or '{component}' "
-    "(component module)"
+    "module type is not identified: the module must either have a path element "
+    "containing 'product', 'component' or 'charm', or have an outputs.tf "
+    "containing '{product}' (product module), '{component}' (component module) "
+    "or '{charm}' (charm module)"
 )
+
+
+def _path_names_type(module_type: ModuleType, lowered_parts: list[str]) -> bool:
+    """Return True if a path element names the module type.
+
+    "charm" must be a whole word so that e.g. "charmed-spark" is not a charm.
+    """
+    if module_type == ModuleType.CHARM:
+        words = [word for part in lowered_parts for word in re.split(r"[-_.]", part)]
+        return any(word in (ModuleType.CHARM, f"{ModuleType.CHARM}s") for word in words)
+    return any(module_type in part for part in lowered_parts)
 
 
 def _type_from_path(path_parts: tuple[str, ...]) -> ModuleType | None:
     """Return the type named by the path elements, None if absent or ambiguous."""
     lowered = [part.lower() for part in path_parts]
-    is_product = any(ModuleType.PRODUCT in part for part in lowered)
-    is_component = any(ModuleType.COMPONENT in part for part in lowered)
-    if is_product == is_component:
-        return None
-    return ModuleType.PRODUCT if is_product else ModuleType.COMPONENT
+    named_types = [kind for kind in ModuleType if _path_names_type(kind, lowered)]
+    return named_types[0] if len(named_types) == 1 else None
 
 
 def _type_from_outputs(outputs_text: str, spec: ModuleSpec) -> ModuleType | None:
@@ -195,23 +198,21 @@ def _type_from_outputs(outputs_text: str, spec: ModuleSpec) -> ModuleType | None
         return ModuleType.PRODUCT
     if spec.component_output_marker in outputs_text:
         return ModuleType.COMPONENT
+    if spec.charm_output_marker in outputs_text:
+        return ModuleType.CHARM
     return None
 
 
 def classify_module_type(
-    parsed_files: list[dict],
     module_dir: Path,
     spec: ModuleSpec = DEFAULT_SPEC,
     root: Path | None = None,
 ) -> ModuleType | None:
     """Classify a module, or return None when its type cannot be identified.
 
-    A module without ``module`` blocks is a CHARM. For a composed module, the
-    type comes from the path (relative to ``root`` when given) containing
-    "product" or "component", then from the markers in outputs.tf.
+    The type comes from the path (relative to ``root`` when given) containing
+    "product", "component" or "charm", then from the markers in outputs.tf.
     """
-    if not is_composed_module(parsed_files):
-        return ModuleType.CHARM
     relative_dir = module_dir.relative_to(root) if root else module_dir
     path_type = _type_from_path(relative_dir.parts)
     if path_type:
@@ -414,7 +415,7 @@ def inspect_module(
     variable_bodies_by_name = variable_bodies(parsed_files)
     variables = list(variable_bodies_by_name)
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    module_type = classify_module_type(parsed_files, module_dir, spec, root)
+    module_type = classify_module_type(module_dir, spec, root)
 
     checks = (
         CheckResult(
@@ -431,6 +432,7 @@ def inspect_module(
                 UNIDENTIFIED_MODULE_TYPE_MESSAGE.format(
                     product=spec.product_output_marker,
                     component=spec.component_output_marker,
+                    charm=spec.charm_output_marker,
                 ),
             ),
         ),

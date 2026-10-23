@@ -83,9 +83,10 @@ class ModuleSpec:
 
     required_files: tuple[str, ...]
     terraform_block: TerraformBlockRequirements
-    # Text found in outputs.tf that identifies a composed module's type.
+    # Text found in outputs.tf that identifies a module's type.
     product_output_marker: str
     component_output_marker: str
+    charm_output_marker: str
     floating_ref_names: frozenset[str]
     deprecated_names: frozenset[str]
     module_interfaces: dict[ModuleType, ModuleInterface]
@@ -97,7 +98,6 @@ DEFAULT_SPEC = ModuleSpec(
         "terraform.tf",
         "variables.tf",
         "outputs.tf",
-        "main.tf",
         "README.md",
     ),
     terraform_block=TerraformBlockRequirements(
@@ -106,6 +106,7 @@ DEFAULT_SPEC = ModuleSpec(
     ),
     product_output_marker="juju_model",
     component_output_marker="components",
+    charm_output_marker="juju_application",
     # Floating branch names disallowed as module refs.
     floating_ref_names=frozenset(
         {"main", "master", "trunk", "develop", "development", "head"}

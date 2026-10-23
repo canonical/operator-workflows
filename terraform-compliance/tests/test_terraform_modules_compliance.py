@@ -108,7 +108,7 @@ def test_missing_required_files_are_reported(tmp_path: Path) -> None:
     assert "missing required file: terraform.tf" in violations
     assert "missing required file: variables.tf" in violations
     assert "missing required file: outputs.tf" in violations
-    assert "missing required file: main.tf" in violations
+    assert "missing required file: main.tf" not in violations
     assert "missing required file: README.md" in violations
 
 
@@ -271,92 +271,78 @@ variable "alpha" {
     assert "variables.tf: variable blocks are not alphabetical" in violations[0]
 
 
-def test_is_composed_module_detects_module_blocks() -> None:
-    charm = hcl2.loads(
-        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
-    )
-    composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert terraform_check.is_composed_module([charm]) is False
-    assert terraform_check.is_composed_module([composed]) is True
-
-
-COMPOSED_MAIN_TF = 'module "demo" {\n  source = "../modules/demo"\n}\n'
-
-
-def _classify(tmp_path: Path, relative_dir: str, main_tf: str, outputs_tf: str | None):
+def _classify(tmp_path: Path, relative_dir: str, outputs_tf: str | None):
     module = tmp_path / relative_dir
     module.mkdir(parents=True)
     if outputs_tf is not None:
         (module / "outputs.tf").write_text(outputs_tf)
-    return terraform_check.classify_module_type(
-        [hcl2.loads(main_tf)], module, root=tmp_path
-    )
-
-
-def test_classify_module_type_charm_when_no_module_blocks(tmp_path: Path) -> None:
-    charm = 'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
-    assert _classify(tmp_path, "terraform", charm, None) == "charm"
+    return terraform_check.classify_module_type(module, root=tmp_path)
 
 
 def test_classify_module_type_from_path_elements(tmp_path: Path) -> None:
-    assert _classify(tmp_path, "my-product/terraform", COMPOSED_MAIN_TF, None) == (
-        "product"
-    )
-    assert _classify(tmp_path, "components/loki", COMPOSED_MAIN_TF, None) == (
-        "component"
-    )
+    assert _classify(tmp_path, "my-product/terraform", None) == "product"
+    assert _classify(tmp_path, "components/loki", None) == "component"
+    assert _classify(tmp_path, "charms/loki", None) == "charm"
+
+
+def test_classify_module_type_charmed_name_is_not_a_charm(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "products/charmed-spark", None) == "product"
+
+
+def test_classify_module_type_component_without_module_blocks(tmp_path: Path) -> None:
+    outputs = 'output "application" {\n  value = juju_application.demo\n}\n'
+    assert _classify(tmp_path, "components/kyuubi", outputs) == "component"
 
 
 def test_classify_module_type_ignores_path_above_root(tmp_path: Path) -> None:
     root = tmp_path / "product-checkout"
     module = root / "terraform"
     module.mkdir(parents=True)
-    assert (
-        terraform_check.classify_module_type(
-            [hcl2.loads(COMPOSED_MAIN_TF)], module, root=root
-        )
-        is None
-    )
+    assert terraform_check.classify_module_type(module, root=root) is None
 
 
 def test_classify_module_type_from_outputs(tmp_path: Path) -> None:
     assert (
-        _classify(
-            tmp_path, "a", COMPOSED_MAIN_TF, 'output "x" {\n  value = juju_model.m\n}\n'
-        )
+        _classify(tmp_path, "a", 'output "x" {\n  value = juju_model.m\n}\n')
         == "product"
     )
     assert (
         _classify(
-            tmp_path,
-            "loki-operators/terraform",
-            COMPOSED_MAIN_TF,
-            'output "components" {\n  value = {}\n}\n',
+            tmp_path, "loki-operators/terraform", 'output "components" {\n  value = {}\n}\n'
         )
         == "component"
+    )
+    assert (
+        _classify(
+            tmp_path, "b", 'output "application" {\n  value = juju_application.a\n}\n'
+        )
+        == "charm"
     )
 
 
 def test_classify_module_type_path_wins_over_outputs(tmp_path: Path) -> None:
     outputs = 'output "components" {\n  value = {}\n}\n'
-    assert _classify(tmp_path, "product", COMPOSED_MAIN_TF, outputs) == "product"
+    assert _classify(tmp_path, "product", outputs) == "product"
 
 
 def test_classify_module_type_unidentified(tmp_path: Path) -> None:
-    assert _classify(tmp_path, "terraform", COMPOSED_MAIN_TF, 'output "x" {}\n') is None
+    assert _classify(tmp_path, "terraform", 'output "x" {}\n') is None
 
 
 def test_unidentified_module_reports_rules(tmp_path: Path) -> None:
     module = tmp_path / "terraform"
     module.mkdir()
-    (module / "main.tf").write_text(COMPOSED_MAIN_TF)
+    (module / "outputs.tf").write_text('output "x" {}\n')
 
     report = terraform_check.inspect_module(module, root=tmp_path)
 
     assert report.module_type is None
     violations = report.violations
     assert any(
-        "module type is not identified" in v and "juju_model" in v and "components" in v
+        "module type is not identified" in v
+        and "juju_model" in v
+        and "components" in v
+        and "juju_application" in v
         for v in violations
     )
 

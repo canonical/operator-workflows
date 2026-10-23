@@ -10,8 +10,8 @@ Files:
 - `terraform_hcl.py` — `.tf` loading and `python-hcl2` normalisation.
 - `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
 - `terraform_check_all.py` — the `terraform-check-all` CLI: discovers
-  Terraform module directories in a repository tree (by locating `main.tf`
-  or `terraform.tf` files) and runs `terraform_check` against all of them.
+  Terraform module directories in a repository tree (by locating
+  `main.tf` or `terraform.tf` files) and runs `terraform_check` against all of them.
 
 ## Usage
 
@@ -51,10 +51,10 @@ terraform-check-all /path/to/repo
 
 It walks the given root, skipping `.git`, `.terraform`, `.venv`,
 `node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
-looking for `main.tf` or `terraform.tf` files (a directory named exactly `tests` is ignored,
+looking for `main.tf` or `terraform.tf` files (legacy modules may lack `terraform.tf`; a directory named exactly `tests` is ignored,
 along with everything beneath it). Every discovered module directory is
-then checked with `terraform-check`, which infers the module's actual type
-(charm/component/product) from its HCL content.
+then checked with `terraform-check`, which infers the module's type
+(charm/component/product) from its path and `outputs.tf`.
 
 ### check
 
@@ -76,8 +76,7 @@ Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
 
 ## What it checks
 
-- Required files: `terraform.tf`, `variables.tf`, `outputs.tf`, `main.tf`,
-  `README.md`.
+- Required files: `terraform.tf`, `variables.tf`, `outputs.tf`, `README.md`.
 - `terraform.tf` has `required_version` and a `juju/juju` provider allowing
   `>= 1.0.0`.
 - Variable and output blocks are alphabetical.
@@ -94,12 +93,14 @@ Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
 - Remote module sources are pinned (a `?ref=` that isn't a floating branch, or
   a registry `version`).
 
-Module type is inferred: no `module` blocks → charm. A module composing other
-modules is a product if a path element (relative to the `--root` given to
-`terraform-check`, or the path as given) contains `product`, a component if it
-contains `component`; otherwise a product if `outputs.tf` contains `juju_model`,
-a component if it contains `components`. If no rule matches, the "Module type"
-check fails (`module-type`) and the module-interface check is skipped.
+Module type is inferred, never guessed from the HCL body. A path element
+(relative to the `--root` given to `terraform-check`, or the path as given)
+containing `product` or `component`, or the whole word `charm`/`charms` (so
+`charmed-spark` is not a charm), names the type; a path naming several types is
+ambiguous. Otherwise `outputs.tf` decides: `juju_model` means product,
+`components` means component, `juju_application` means charm. If no rule matches,
+the "Module type" check fails (`module-type`) and the module-interface check is
+skipped.
 
 ## Known deviations
 
