@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-23
+
+- Add `terraform-check` autodiscovery: each path is searched for Terraform module
+directories (those containing `main.tf` or `terraform.tf`, skipping vendor/hidden
+directories and any directory named `tests`) and all of them are checked.
+Directories with `.tf` files but no marker file are reported as warnings. Use
+`--no-discover` to check the given directories as modules (the reusable
+`terraform_modules_compliance.yaml` workflow does). `terraform-check-all` is kept as an
+alias of `terraform-check`. The discovery settings live in `terraform_spec.py`.
+- Module type detection no longer guesses from the HCL body: a path element containing
+`product`/`component` or the word `charm`, or an `outputs.tf` containing `juju_model`
+(product) / `components` (component) / `juju_application` (charm), decides the type.
+Unidentified modules fail a new `module-type` check.
+- `main.tf` is no longer a required module file.
+
 ## 2026-10-21
 
 - Pin external actions to commit SHAs (kept up to date by Renovate) and make the workflows

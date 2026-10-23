@@ -108,7 +108,7 @@ def test_missing_required_files_are_reported(tmp_path: Path) -> None:
     assert "missing required file: terraform.tf" in violations
     assert "missing required file: variables.tf" in violations
     assert "missing required file: outputs.tf" in violations
-    assert "missing required file: main.tf" in violations
+    assert "missing required file: main.tf" not in violations
     assert "missing required file: README.md" in violations
 
 
@@ -271,33 +271,80 @@ variable "alpha" {
     assert "variables.tf: variable blocks are not alphabetical" in violations[0]
 
 
-def test_is_composed_module_detects_module_blocks() -> None:
-    charm = hcl2.loads(
-        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+def _classify(tmp_path: Path, relative_dir: str, outputs_tf: str | None):
+    module = tmp_path / relative_dir
+    module.mkdir(parents=True)
+    if outputs_tf is not None:
+        (module / "outputs.tf").write_text(outputs_tf)
+    return terraform_check.classify_module_type(module, root=tmp_path)
+
+
+def test_classify_module_type_from_path_elements(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "my-product/terraform", None) == "product"
+    assert _classify(tmp_path, "components/loki", None) == "component"
+    assert _classify(tmp_path, "charms/loki", None) == "charm"
+
+
+def test_classify_module_type_charmed_name_is_not_a_charm(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "products/charmed-spark", None) == "product"
+
+
+def test_classify_module_type_component_without_module_blocks(tmp_path: Path) -> None:
+    outputs = 'output "application" {\n  value = juju_application.demo\n}\n'
+    assert _classify(tmp_path, "components/kyuubi", outputs) == "component"
+
+
+def test_classify_module_type_ignores_path_above_root(tmp_path: Path) -> None:
+    root = tmp_path / "product-checkout"
+    module = root / "terraform"
+    module.mkdir(parents=True)
+    assert terraform_check.classify_module_type(module, root=root) is None
+
+
+def test_classify_module_type_from_outputs(tmp_path: Path) -> None:
+    assert (
+        _classify(tmp_path, "a", 'output "x" {\n  value = juju_model.m\n}\n')
+        == "product"
     )
-    composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert terraform_check.is_composed_module([charm]) is False
-    assert terraform_check.is_composed_module([composed]) is True
-
-
-def test_classify_module_type_charm_when_no_module_blocks() -> None:
-    charm = hcl2.loads(
-        'resource "juju_application" "demo" {\n  name = var.app_name\n}\n'
+    assert (
+        _classify(
+            tmp_path, "loki-operators/terraform", 'output "components" {\n  value = {}\n}\n'
+        )
+        == "component"
     )
-    assert terraform_check.classify_module_type([charm]) == "charm"
-
-
-def test_classify_module_type_component_when_no_tying_resources() -> None:
-    composed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
-    assert terraform_check.classify_module_type([composed]) == "component"
-
-
-def test_classify_module_type_product_when_tying_resource_present() -> None:
-    composed = hcl2.loads(
-        'module "demo" {\n  source = "../modules/demo"\n}\n'
-        'resource "juju_integration" "demo" {\n  model_uuid = var.model_uuid\n}\n'
+    assert (
+        _classify(
+            tmp_path, "b", 'output "application" {\n  value = juju_application.a\n}\n'
+        )
+        == "charm"
     )
-    assert terraform_check.classify_module_type([composed]) == "product"
+
+
+def test_classify_module_type_path_wins_over_outputs(tmp_path: Path) -> None:
+    outputs = 'output "components" {\n  value = {}\n}\n'
+    assert _classify(tmp_path, "product", outputs) == "product"
+
+
+def test_classify_module_type_unidentified(tmp_path: Path) -> None:
+    assert _classify(tmp_path, "terraform", 'output "x" {}\n') is None
+
+
+def test_unidentified_module_reports_rules(tmp_path: Path) -> None:
+    module = tmp_path / "terraform"
+    module.mkdir()
+    (module / "outputs.tf").write_text('output "x" {}\n')
+
+    report = terraform_check.inspect_module(module, root=tmp_path)
+
+    assert report.module_type is None
+    violations = report.violations
+    assert any(
+        "module type is not identified" in v
+        and "juju_model" in v
+        and "components" in v
+        and "juju_application" in v
+        for v in violations
+    )
 
 
 def test_charm_interface_requires_mandatory_variables_and_outputs() -> None:
@@ -779,6 +826,57 @@ def test_computed_entry_in_literal_endpoint_map_is_not_statically_validated() ->
     assert terraform_check.check_output_shapes([parsed], module_type="charm") == []
 
 
+def test_metadata_output_missing_keys_is_reported() -> None:
+    parsed = hcl2.loads('output "metadata" {\n  value = { name = "demo" }\n}\n')
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="product")
+
+    assert violations == [
+        'product module output "metadata": must be an object containing exactly '
+        "version, updated_at, deployed_at"
+    ]
+
+
+def test_metadata_output_with_extra_key_is_reported() -> None:
+    parsed = hcl2.loads(
+        'output "metadata" {\n'
+        "  value = {\n"
+        '    version      = "1.0.0"\n'
+        '    updated_at   = "2024-01-01"\n'
+        '    deployed_at  = "2024-01-02"\n'
+        '    name         = "demo"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    violations = terraform_check.check_output_shapes([parsed], module_type="product")
+
+    assert violations == [
+        'product module output "metadata": must be an object containing exactly '
+        "version, updated_at, deployed_at"
+    ]
+
+
+def test_metadata_output_with_exact_keys_is_allowed() -> None:
+    parsed = hcl2.loads(
+        'output "metadata" {\n'
+        "  value = {\n"
+        '    version     = "1.0.0"\n'
+        '    updated_at  = "2024-01-01"\n'
+        '    deployed_at = "2024-01-02"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    assert terraform_check.check_output_shapes([parsed], module_type="product") == []
+
+
+def test_computed_metadata_output_is_not_statically_validated() -> None:
+    parsed = hcl2.loads('output "metadata" {\n  value = local.metadata\n}\n')
+
+    assert terraform_check.check_output_shapes([parsed], module_type="product") == []
+
+
 def test_local_module_source_is_allowed() -> None:
     parsed = hcl2.loads('module "demo" {\n  source = "../modules/demo"\n}\n')
     assert terraform_check.check_pinned_module_sources([parsed]) == []
@@ -918,7 +1016,7 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
 
 def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
     module = _write_charm_module(tmp_path)
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
     assert exit_code == 0
     assert "PASS" in capsys.readouterr().out
 
@@ -926,7 +1024,7 @@ def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
 def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> None:
     module = tmp_path / "broken"
     module.mkdir()
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
     assert exit_code == 1
     assert "FAIL" in capsys.readouterr().out
 
@@ -940,14 +1038,14 @@ def test_main_returns_two_when_no_directories_are_configured(
 
     output = capsys.readouterr().out
     assert exit_code == 2
-    assert "ERROR: no Terraform module directories were provided" in output
+    assert "ERROR: no Terraform paths were provided" in output
     assert "::error title=Terraform compliance configuration::" in output
 
 
 def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
     missing = tmp_path / "does-not-exist"
 
-    exit_code = terraform_check.main([str(missing)])
+    exit_code = terraform_check.main(["--no-discover", str(missing)])
 
     output = capsys.readouterr().out
     assert exit_code == 1
@@ -958,7 +1056,7 @@ def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
 def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
     module = _write_charm_module(tmp_path)
 
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
 
     output = capsys.readouterr().out
     assert exit_code == 0
@@ -995,7 +1093,7 @@ def test_github_actions_failure_emits_error_annotations(
     module.mkdir()
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
 
     output = capsys.readouterr().out
     assert exit_code == 1
@@ -1161,3 +1259,101 @@ def test_component_deprecated_output_is_reported() -> None:
         variables, ["components", "endpoints"], module_type="component"
     )
     assert "component module declares deprecated output: endpoints" in violations
+
+
+def _write_compliant_module(module: Path) -> None:
+    module.mkdir(parents=True)
+    (module / "terraform.tf").write_text(COMPLIANT_TERRAFORM_TF)
+    (module / "variables.tf").write_text(COMPLIANT_VARIABLES_TF)
+    (module / "outputs.tf").write_text(COMPLIANT_OUTPUTS_TF)
+    (module / "main.tf").write_text(COMPLIANT_MAIN_TF)
+    (module / "README.md").write_text("# demo\n")
+
+
+def test_discover_finds_main_tf_or_terraform_tf_once(tmp_path: Path) -> None:
+    _write_compliant_module(tmp_path / "both")
+    (tmp_path / "legacy").mkdir()
+    (tmp_path / "legacy" / "main.tf").write_text("")
+    (tmp_path / "new").mkdir()
+    (tmp_path / "new" / "terraform.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert sorted(modules) == sorted(
+        [tmp_path / "both", tmp_path / "legacy", tmp_path / "new"]
+    )
+    assert unmarked == []
+
+
+def test_discover_includes_root_when_it_is_a_module(tmp_path: Path) -> None:
+    (tmp_path / "terraform.tf").write_text("")
+
+    modules, _ = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == [tmp_path]
+
+
+def test_discover_reports_unmarked_tf_directories(tmp_path: Path) -> None:
+    (tmp_path / "loose").mkdir()
+    (tmp_path / "loose" / "variables.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == []
+    assert unmarked == [tmp_path / "loose"]
+
+
+def test_discover_ignores_tests_vendor_and_hidden_directories(tmp_path: Path) -> None:
+    _write_compliant_module(tmp_path / "terraform")
+    for excluded in ("tests", ".git", ".terraform", ".venv", "node_modules"):
+        (tmp_path / excluded / "nested").mkdir(parents=True)
+        (tmp_path / excluded / "nested" / "terraform.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == [tmp_path / "terraform"]
+    assert unmarked == []
+
+
+def test_main_discovers_and_checks_all_modules(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+    _write_compliant_module(tmp_path / "charms" / "other")
+
+    exit_code = terraform_check.main([str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "2 checked, 2 passed, 0 failed" in out
+
+
+def test_main_warns_about_unmarked_directories(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+    (tmp_path / "loose").mkdir()
+    (tmp_path / "loose" / "outputs.tf").write_text("")
+
+    exit_code = terraform_check.main([str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "::warning title=Terraform compliance::" in out
+    assert "loose" in out
+
+
+def test_main_fails_when_no_modules_found(tmp_path: Path, capsys) -> None:
+    assert terraform_check.main([str(tmp_path)]) == 1
+    assert "No Terraform modules found" in capsys.readouterr().out
+
+
+def test_main_rejects_non_directory_root(tmp_path: Path) -> None:
+    assert terraform_check.main([str(tmp_path / "missing")]) == 2
+
+
+def test_main_no_discover_checks_given_directories(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+
+    exit_code = terraform_check.main(
+        ["--no-discover", "--root", str(tmp_path), str(tmp_path / "charms" / "demo")]
+    )
+
+    assert exit_code == 0
+    assert "1 checked, 1 passed, 0 failed" in capsys.readouterr().out
