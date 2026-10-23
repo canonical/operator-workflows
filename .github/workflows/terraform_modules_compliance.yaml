@@ -47,4 +47,5 @@ jobs:
         run: >-
           python .operator-workflows/terraform-compliance/terraform_check.py
           --verbose
+          --no-discover
           ${{ join(fromJSON(inputs['terraform-directories']), ' ') }}

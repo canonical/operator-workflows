@@ -500,10 +500,61 @@ def _escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
+def _is_excluded(path: Path, root: Path, spec: ModuleSpec) -> bool:
+    return bool(set(path.relative_to(root).parts) & spec.discovery_excluded_dir_names)
+
+
+def discover_module_directories(
+    root: Path, spec: ModuleSpec = DEFAULT_SPEC
+) -> tuple[list[Path], list[Path]]:
+    """Find Terraform module directories under ``root``.
+
+    Returns ``(modules, unmarked)``: directories holding one of the spec's
+    module marker files (each reported once), and directories holding ``.tf``
+    files but no marker file, which are not checked. Directories named in the
+    spec's exclusions (e.g. ``tests``) are ignored with everything beneath.
+    """
+    modules: list[Path] = []
+    unmarked: list[Path] = []
+    for current in [root, *sorted(root.rglob("*"))]:
+        if not current.is_dir() or _is_excluded(current, root, spec):
+            continue
+        if any((current / marker).is_file() for marker in spec.module_marker_files):
+            modules.append(current)
+        elif any(current.glob("*.tf")):
+            unmarked.append(current)
+    return modules, unmarked
+
+
+def _discover_all(
+    roots: list[Path], spec: ModuleSpec = DEFAULT_SPEC
+) -> list[tuple[Path, Path]]:
+    """Return ``(module directory, root it was found under)`` for all roots."""
+    found: list[tuple[Path, Path]] = []
+    for root in roots:
+        modules, unmarked = discover_module_directories(root, spec)
+        for directory in unmarked:
+            markers = " or ".join(spec.module_marker_files)
+            message = f"{directory}: contains .tf files but no {markers}; not checked"
+            print(f"WARNING: {message}")
+            print(f"::warning title=Terraform compliance::{_escape_annotation(message)}")
+        found.extend((module, root) for module in modules)
+    return found
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Run the Terraform module compliance check over the given directories."""
+    """Run the Terraform module compliance check over the given paths."""
     parser = argparse.ArgumentParser(
-        description="Check Terraform modules for compliance with the configured spec."
+        description=(
+            "Check Terraform modules for compliance with the configured spec. "
+            "By default each path is a repository root searched for module "
+            "directories (those containing main.tf or terraform.tf)."
+        )
+    )
+    parser.add_argument(
+        "--no-discover",
+        action="store_true",
+        help="Treat each path as a module directory instead of searching it.",
     )
     parser.add_argument(
         "--verbose",
@@ -525,11 +576,14 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help=(
             "Repository root; module paths are made relative to it when "
-            "identifying module types (defaults to the paths as given)."
+            "identifying module types (defaults to the searched root when "
+            "discovering, otherwise to the paths as given)."
         ),
     )
     parser.add_argument(
-        "directories", nargs="*", help="Terraform module directories to check."
+        "paths",
+        nargs="*",
+        help="Repository roots to search (or module directories with --no-discover).",
     )
     args = parser.parse_args(argv)
 
@@ -538,21 +592,35 @@ def main(argv: list[str] | None = None) -> int:
             print(slug)
         return 0
 
-    directories = [directory for directory in args.directories if directory.strip()]
+    paths = [Path(path) for path in args.paths if path.strip()]
 
-    if not directories:
-        message = "no Terraform module directories were provided"
+    if not paths:
+        message = "no Terraform paths were provided"
         print(f"ERROR: {message}")
         print(
             f"::error title=Terraform compliance configuration::{_escape_annotation(message)}"
         )
         return 2
 
+    if args.no_discover:
+        targets = [(path, args.root) for path in paths]
+    else:
+        invalid = [path for path in paths if not path.is_dir()]
+        if invalid:
+            print(f"ERROR: not a directory: {', '.join(map(str, invalid))}")
+            return 2
+        targets = [
+            (module, args.root or root) for module, root in _discover_all(paths)
+        ]
+        if not targets:
+            print("No Terraform modules found")
+            return 1
+
     label = f"check '{args.check}'" if args.check else "all checks"
-    print(f"Checking {len(directories)} Terraform module(s) for compliance ({label})")
+    print(f"Checking {len(targets)} Terraform module(s) for compliance ({label})")
     failed_count = 0
-    for directory in directories:
-        report = inspect_module(Path(directory), root=args.root)
+    for directory, root in targets:
+        report = inspect_module(directory, root=root)
         checks = (
             [check for check in report.checks if check.slug == args.check]
             if args.check
@@ -581,9 +649,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"PASS {directory}")
 
-    passed_count = len(directories) - failed_count
+    passed_count = len(targets) - failed_count
     print(
-        f"\nSummary: {len(directories)} checked, "
+        f"\nSummary: {len(targets)} checked, "
         f"{passed_count} passed, {failed_count} failed"
     )
     return 1 if failed_count else 0

@@ -6,14 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
-## 2026-10-12
+## 2026-10-23
 
-- `terraform-check-all` now also discovers Terraform module directories by
-locating `terraform.tf` files, in addition to `main.tf`.
-- Module type detection for composed modules no longer relies on tying
-resources: a path element containing `product`/`component`, or an `outputs.tf`
-containing `juju_model` (product) / `components` (component), decides the
-type. Unidentified modules fail a new `module-type` check.
+- Add `terraform-check` autodiscovery: each path is searched for Terraform module
+directories (those containing `main.tf` or `terraform.tf`, skipping vendor/hidden
+directories and any directory named `tests`) and all of them are checked.
+Directories with `.tf` files but no marker file are reported as warnings. Use
+`--no-discover` to check the given directories as modules (the reusable
+`terraform_modules_compliance.yaml` workflow does). `terraform-check-all` is kept as an
+alias of `terraform-check`. The discovery settings live in `terraform_spec.py`.
+- Module type detection no longer guesses from the HCL body: a path element containing
+`product`/`component` or the word `charm`, or an `outputs.tf` containing `juju_model`
+(product) / `components` (component) / `juju_application` (charm), decides the type.
+Unidentified modules fail a new `module-type` check.
+- `main.tf` is no longer a required module file.
+
+## 2026-10-21
+
+- Pin external actions to commit SHAs (kept up to date by Renovate) and make the workflows
+(`terraform_modules_compliance.yaml`, `docs_spread.yaml`, `test.yaml` and, for the `charmbuild`
+install, `integration_test.yaml`) resolve their files at the commit they were called with, so pinning
+a workflow version pins everything they use. The integration test and publish workflows still
+reference their own `internal/*` actions at `@main`.
 
 ## 2026-10-09
 
@@ -23,17 +37,6 @@ login shell.
 
 ## 2026-10-07
 
-- Validate that the product module's `metadata` output contains exactly the
-`version`, `updated_at`, and `deployed_at` keys, via new `OutputRule.required_keys`
-and `OutputRule.allow_extra_keys` fields in `terraform-compliance/terraform_spec.py`,
-checked by `terraform_check.check_output_shapes`.
-- Add a `terraform-check-all` command (`terraform-compliance/terraform_check_all.py`)
-that discovers Terraform module directories under a repository root by
-locating `main.tf` files (skipping vendor/hidden directories and any
-directory named `tests`, along with everything beneath it), and runs the
-existing `terraform-check` compliance checks against all discovered
-modules, which infers each module's type (charm/component/product) from
-its HCL content via `terraform_check.classify_module_type`.
 - Add `pyproject.toml` to `terraform-compliance/` so the Terraform module
 compliance checker can be installed as a CLI with `uv tool install
 "git+https://github.com/canonical/operator-workflows@main#subdirectory=terraform-compliance"`,

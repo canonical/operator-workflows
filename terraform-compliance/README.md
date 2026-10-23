@@ -9,9 +9,9 @@ Files:
 - `terraform_spec.py` — the requirements, as data (`DEFAULT_SPEC` currently encodes CC008).
 - `terraform_hcl.py` — `.tf` loading and `python-hcl2` normalisation.
 - `terraform_check.py` — the checks and CLI (spec-agnostic; takes a spec argument).
-- `terraform_check_all.py` — the `terraform-check-all` CLI: discovers
-  Terraform module directories in a repository tree (by locating
-  `main.tf` or `terraform.tf` files) and runs `terraform_check` against all of them.
+  By default it discovers Terraform module directories under each given path
+  (by locating the spec's marker files, `main.tf` or `terraform.tf`).
+  The `terraform-check-all` command is an alias of `terraform-check`.
 
 ## Usage
 
@@ -41,26 +41,29 @@ uvx --from "git+https://github.com/canonical/operator-workflows@main#subdirector
 
 ### Install as a tool: check all modules in a repository
 
-Once installed (see above), `terraform-check-all` discovers every Terraform
-module in a repository and checks all of them in one go, instead of listing
-each module directory by hand:
+Once installed (see above), `terraform-check` (also available as
+`terraform-check-all`, kept for compatibility) discovers every Terraform
+module under the given repository root and checks all of them in one go:
 
 ```bash
-terraform-check-all /path/to/repo
+terraform-check /path/to/repo
 ```
 
 It walks the given root, skipping `.git`, `.terraform`, `.venv`,
 `node_modules`, `__pycache__`, `.mypy_cache`, `.pytest_cache`, and `.tox`,
-looking for `main.tf` or `terraform.tf` files (legacy modules may lack `terraform.tf`; a directory named exactly `tests` is ignored,
-along with everything beneath it). Every discovered module directory is
-then checked with `terraform-check`, which infers the module's type
-(charm/component/product) from its path and `outputs.tf`.
+looking for `main.tf` or `terraform.tf` files (legacy modules may lack
+`terraform.tf`; a directory named exactly `tests` is ignored, along with
+everything beneath it). Directories containing `.tf` files but neither marker
+are reported as warnings and not checked. Every discovered module is then
+checked, and its type (charm/component/product) is inferred from its path and
+`outputs.tf`. Pass `--no-discover` to treat each path as a module directory
+instead (used by the reusable workflow).
 
 ### check
 
 ```bash
 uv run --with python-hcl2==8.1.3 python \
-  terraform-compliance/terraform_check.py /path/to/repo/terraform
+  terraform-compliance/terraform_check.py /path/to/repo
 ```
 
 ### tests
@@ -71,8 +74,8 @@ PYTHONPATH=terraform-compliance uv run --with python-hcl2==8.1.3 \
 
 ```
 
-Exit codes: `0` pass, `1` violations found, `2` no directories given. Flags:
-`--verbose`, `--check <slug>`, `--list-checks`.
+Exit codes: `0` pass, `1` violations found (or no modules discovered), `2` no or invalid paths given. Flags:
+`--verbose`, `--check <slug>`, `--list-checks`, `--no-discover`, `--root`.
 
 ## What it checks
 

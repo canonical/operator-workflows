@@ -1016,7 +1016,7 @@ def test_check_module_reports_missing_mandatory_variable(tmp_path: Path) -> None
 
 def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
     module = _write_charm_module(tmp_path)
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
     assert exit_code == 0
     assert "PASS" in capsys.readouterr().out
 
@@ -1024,7 +1024,7 @@ def test_main_returns_zero_for_compliant_module(tmp_path: Path, capsys) -> None:
 def test_main_returns_one_for_noncompliant_module(tmp_path: Path, capsys) -> None:
     module = tmp_path / "broken"
     module.mkdir()
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
     assert exit_code == 1
     assert "FAIL" in capsys.readouterr().out
 
@@ -1038,14 +1038,14 @@ def test_main_returns_two_when_no_directories_are_configured(
 
     output = capsys.readouterr().out
     assert exit_code == 2
-    assert "ERROR: no Terraform module directories were provided" in output
+    assert "ERROR: no Terraform paths were provided" in output
     assert "::error title=Terraform compliance configuration::" in output
 
 
 def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
     missing = tmp_path / "does-not-exist"
 
-    exit_code = terraform_check.main([str(missing)])
+    exit_code = terraform_check.main(["--no-discover", str(missing)])
 
     output = capsys.readouterr().out
     assert exit_code == 1
@@ -1056,7 +1056,7 @@ def test_nonexistent_module_directory_fails(tmp_path: Path, capsys) -> None:
 def test_main_logs_categories_and_summary(tmp_path: Path, capsys) -> None:
     module = _write_charm_module(tmp_path)
 
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
 
     output = capsys.readouterr().out
     assert exit_code == 0
@@ -1093,7 +1093,7 @@ def test_github_actions_failure_emits_error_annotations(
     module.mkdir()
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
 
-    exit_code = terraform_check.main([str(module)])
+    exit_code = terraform_check.main(["--no-discover", str(module)])
 
     output = capsys.readouterr().out
     assert exit_code == 1
@@ -1259,3 +1259,101 @@ def test_component_deprecated_output_is_reported() -> None:
         variables, ["components", "endpoints"], module_type="component"
     )
     assert "component module declares deprecated output: endpoints" in violations
+
+
+def _write_compliant_module(module: Path) -> None:
+    module.mkdir(parents=True)
+    (module / "terraform.tf").write_text(COMPLIANT_TERRAFORM_TF)
+    (module / "variables.tf").write_text(COMPLIANT_VARIABLES_TF)
+    (module / "outputs.tf").write_text(COMPLIANT_OUTPUTS_TF)
+    (module / "main.tf").write_text(COMPLIANT_MAIN_TF)
+    (module / "README.md").write_text("# demo\n")
+
+
+def test_discover_finds_main_tf_or_terraform_tf_once(tmp_path: Path) -> None:
+    _write_compliant_module(tmp_path / "both")
+    (tmp_path / "legacy").mkdir()
+    (tmp_path / "legacy" / "main.tf").write_text("")
+    (tmp_path / "new").mkdir()
+    (tmp_path / "new" / "terraform.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert sorted(modules) == sorted(
+        [tmp_path / "both", tmp_path / "legacy", tmp_path / "new"]
+    )
+    assert unmarked == []
+
+
+def test_discover_includes_root_when_it_is_a_module(tmp_path: Path) -> None:
+    (tmp_path / "terraform.tf").write_text("")
+
+    modules, _ = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == [tmp_path]
+
+
+def test_discover_reports_unmarked_tf_directories(tmp_path: Path) -> None:
+    (tmp_path / "loose").mkdir()
+    (tmp_path / "loose" / "variables.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == []
+    assert unmarked == [tmp_path / "loose"]
+
+
+def test_discover_ignores_tests_vendor_and_hidden_directories(tmp_path: Path) -> None:
+    _write_compliant_module(tmp_path / "terraform")
+    for excluded in ("tests", ".git", ".terraform", ".venv", "node_modules"):
+        (tmp_path / excluded / "nested").mkdir(parents=True)
+        (tmp_path / excluded / "nested" / "terraform.tf").write_text("")
+
+    modules, unmarked = terraform_check.discover_module_directories(tmp_path)
+
+    assert modules == [tmp_path / "terraform"]
+    assert unmarked == []
+
+
+def test_main_discovers_and_checks_all_modules(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+    _write_compliant_module(tmp_path / "charms" / "other")
+
+    exit_code = terraform_check.main([str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "2 checked, 2 passed, 0 failed" in out
+
+
+def test_main_warns_about_unmarked_directories(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+    (tmp_path / "loose").mkdir()
+    (tmp_path / "loose" / "outputs.tf").write_text("")
+
+    exit_code = terraform_check.main([str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert exit_code == 0
+    assert "::warning title=Terraform compliance::" in out
+    assert "loose" in out
+
+
+def test_main_fails_when_no_modules_found(tmp_path: Path, capsys) -> None:
+    assert terraform_check.main([str(tmp_path)]) == 1
+    assert "No Terraform modules found" in capsys.readouterr().out
+
+
+def test_main_rejects_non_directory_root(tmp_path: Path) -> None:
+    assert terraform_check.main([str(tmp_path / "missing")]) == 2
+
+
+def test_main_no_discover_checks_given_directories(tmp_path: Path, capsys) -> None:
+    _write_compliant_module(tmp_path / "charms" / "demo")
+
+    exit_code = terraform_check.main(
+        ["--no-discover", "--root", str(tmp_path), str(tmp_path / "charms" / "demo")]
+    )
+
+    assert exit_code == 0
+    assert "1 checked, 1 passed, 0 failed" in capsys.readouterr().out

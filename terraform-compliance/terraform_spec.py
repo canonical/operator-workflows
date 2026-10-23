@@ -82,6 +82,11 @@ class ModuleSpec:
     """The full set of requirements a Terraform module must satisfy."""
 
     required_files: tuple[str, ...]
+    # Files whose presence marks a directory as a module during autodiscovery
+    # (legacy modules may lack terraform.tf).
+    module_marker_files: tuple[str, ...]
+    # Directory names skipped by autodiscovery, along with everything beneath.
+    discovery_excluded_dir_names: frozenset[str]
     terraform_block: TerraformBlockRequirements
     # Text found in outputs.tf that identifies a module's type.
     product_output_marker: str
@@ -99,6 +104,20 @@ DEFAULT_SPEC = ModuleSpec(
         "variables.tf",
         "outputs.tf",
         "README.md",
+    ),
+    module_marker_files=("main.tf", "terraform.tf"),
+    discovery_excluded_dir_names=frozenset(
+        {
+            ".git",
+            ".terraform",
+            ".venv",
+            "node_modules",
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache",
+            ".tox",
+            "tests",
+        }
     ),
     terraform_block=TerraformBlockRequirements(
         provider_source="juju/juju",

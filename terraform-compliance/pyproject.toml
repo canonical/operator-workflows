@@ -18,7 +18,6 @@ dev = ["pytest"]
 [tool.setuptools]
 py-modules = [
     "terraform_check",
-    "terraform_check_all",
     "terraform_hcl",
     "terraform_spec",
 ]
@@ -28,4 +27,4 @@ testpaths = ["tests"]
 
 [project.scripts]
 terraform-check = "terraform_check:main"
-terraform-check-all = "terraform_check_all:main"
+terraform-check-all = "terraform_check:main"
