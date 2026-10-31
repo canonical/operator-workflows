@@ -209,7 +209,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Tflint
-        uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
+        uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
@@ -260,13 +260,13 @@ jobs:
 
       - name: Setup Python (from project file)
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file != '' }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version-file: ${{ steps.python-version.outputs.file }}
 
       - name: Setup Python
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file == '' }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ inputs.python-version || steps.python-version.outputs.version }}
 
@@ -276,7 +276,7 @@ jobs:
           
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           python-version: >-
             ${{ steps.python-version.outputs.file == ''
@@ -379,7 +379,7 @@ jobs:
         run: |
           curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/${{ job.workflow_repository }}/${{ job.workflow_sha }}/.github/files/.licenserc.yaml
       - name: Check license headers
-        uses: apache/skywalking-eyes/header@7f98a36a3cbbb2b876b6a05ddc24315b82c77737 # main
+        uses: apache/skywalking-eyes/header@5c28835454eb069b7a4667430f2c40a3d5a9912c # main
         with:
           config: .licenserc.yaml
   lib-check:
