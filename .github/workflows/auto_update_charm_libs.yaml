@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Resolve charmcraft.yaml
@@ -55,7 +55,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: rm -f charmcraft.yaml
       - name: Create pull request
-        uses: canonical/create-pull-request@main
+        uses: canonical/create-pull-request@f6f95ebd450baeb02e6448decb08578ce69ee184 # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update charm libraries"

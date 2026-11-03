@@ -145,7 +145,7 @@ jobs:
       - name: Wait for last autorefresh
         run: sudo snap watch --last=auto-refresh?
         timeout-minutes: 10
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Integration tests variable setting
         shell: python
         run: |
@@ -175,7 +175,7 @@ jobs:
           GITHUB_ENV_FILE.close()
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v10.1.0
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           python-version: ${{ env.python-version }}
       - name: Install tox with UV
@@ -239,7 +239,7 @@ jobs:
       - name: Upload Default Allure results
         if: env.ENABLE_ALLURE == 'true' && github.run_attempt == '1'
         timeout-minutes: 3
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: allure-fallback-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-default/
@@ -290,9 +290,9 @@ jobs:
       - name: Setup Devstack Swift
         if: ${{ inputs.setup-devstack-swift }}
         id: setup-devstack-swift
-        uses: canonical/setup-devstack-swift@v1
+        uses: canonical/setup-devstack-swift@cc59d45b2a8de233b990a98339fdd4a21bce6311 # v1
       - name: Setup operator environment
-        uses: charmed-kubernetes/actions-operator@main
+        uses: charmed-kubernetes/actions-operator@d8217ad61c15f746727a9d41563c13e9b9fe56e3 # main
         with:
           provider: ${{ inputs.provider }}
           credentials-yaml: ${{ steps.canonical-k8s.outputs.kubeconfig }}
@@ -313,7 +313,7 @@ jobs:
           juju-channel: ${{ inputs.juju-channel }}
           bootstrap-constraints: "cores=2 mem=4G root-disk=10G"
           bootstrap-options: ${{ inputs.bootstrap-options }}
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Remove Android SDK
         run: sudo rm -rf /usr/local/lib/android
       - name: Create OpenStack credential file
@@ -410,20 +410,20 @@ jobs:
       - name: Upload Allure results
         timeout-minutes: 3
         if: env.ENABLE_ALLURE == 'true' && always() && !cancelled() && github.run_attempt == '1'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: allure-results-${{ env.UNIQUE_ARTIFACT_SUFFIX }}
           path: ${{ inputs.working-directory }}allure-results/
       - name: Tmate debugging session (self-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && inputs.self-hosted-runner }}
-        uses: canonical/action-tmate@main
+        uses: canonical/action-tmate@baddea442daf5926b58746bfb44e2e06afd45401 # main
         timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Tmate debugging session (gh-hosted)
         if: ${{ failure() && (inputs.tmate-debug || runner.debug) && !inputs.self-hosted-runner }}
-        uses: mxschmitt/action-tmate@v3
+        uses: mxschmitt/action-tmate@35b54afac29c97fb54faba5b513f8fbd1882f113 # v3.24
         timeout-minutes: ${{ inputs.tmate-timeout }}
       - name: Dump logs
-        uses: canonical/charm-logdump-action@main
+        uses: canonical/charm-logdump-action@8c70064e4a63a88be523946371081d1f9150c69d # main
         if: failure()
         with:
           app: ${{ env.CHARM_NAME }}

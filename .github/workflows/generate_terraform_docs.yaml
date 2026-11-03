@@ -22,10 +22,10 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7.0.1
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: Render terraform docs and push changes back to PR
-      uses: terraform-docs/gh-actions@v1.4.1
+      uses: terraform-docs/gh-actions@6de6da0cefcc6b4b7a5cbea4d79d97060733093c # v1.4.1
       with:
         working-dir: ${{ inputs.terraform-directory }}
         output-file: README.md
@@ -36,7 +36,7 @@ jobs:
       run: sudo chown $USER -R .
 
     - name: Create pull request
-      uses: canonical/create-pull-request@main
+      uses: canonical/create-pull-request@f6f95ebd450baeb02e6448decb08578ce69ee184 # main
       if: ${{ github.event_name != 'pull_request' }}
       with:
         github-token: ${{ secrets.github-token || secrets.GITHUB_TOKEN }}

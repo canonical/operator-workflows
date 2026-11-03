@@ -13,7 +13,7 @@ jobs:
     if: always() && !cancelled() && github.run_attempt == '1'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Create gh-pages branch if not exists
         run: |
           if ! git ls-remote --exit-code origin gh-pages >/dev/null 2>&1; then
@@ -39,20 +39,20 @@ jobs:
           sudo apt-get update
           sudo apt-get install ./allure_*.deb -y
       - name: Checkout GitHub pages branch 
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: gh-pages
           path: repo/ 
         # The `gh-pages` branch is used to host the Allure report site.
         # With every workflow run, the workflow creates a new folder with the run_number and stores the test results there
       - name: Download fallback test results
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: allure-collection-fallback-results/
           pattern: allure-fallback-results*
           merge-multiple: true
       - name: Download actual test results
-        uses: actions/download-artifact@v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: allure-results/
           pattern: allure-results*

@@ -4,6 +4,28 @@ This repository includes several parametrized CI workflows to be used for both k
 
 To use the workflows in your repository, just reuse them including the `secrets: inherit` key. Examples of usage for every workflow can be found at the [indico operator](https://github.com/canonical/indico-operator/blob/main/.github/workflows). Note that you will need a CHARMHUB_TOKEN among your repository secrets to be able to run the workflows that interact with charmhub.
 
+## Pinning the workflows
+
+Pin the workflows to a commit SHA (or release tag) instead of `@main` for reproducible CI. Every reusable workflow in this repository resolves its own helper actions, scripts and files at the exact commit it was called with (`${{ job.workflow_sha }}`), so pinning the workflow also pins everything it uses. The one exception is the integration test and publish pipeline (`integration_test.yaml`, `integration_test_run.yaml`, `publish_charm.yaml`), whose `internal/*` actions (`plan`, `build`, `plan-scan`, `plan-integration`, `get-plan`, `publish`) are still referenced at `@main`. Pinning them is technically possible by checking this repository out at `${{ job.workflow_sha }}` and using the local action, and this was verified for `plan`, `plan-scan`, `get-plan` and `publish`. It cannot be done safely for `build` and `plan-integration`: they run in the project directory, and an extra checkout inside it could end up in the packed charm or rock and changes the rock cache key, while GitHub rejects local actions outside the workspace (`../`). These actions share a contract (the plan, artifact names and manifests), so they must all run the same version and are left together at `@main`. Integration testing is superseded by charm-ci.
+
+```yaml
+jobs:
+  test:
+    uses: canonical/operator-workflows/.github/workflows/test.yaml@<full-commit-sha> # <version>
+    secrets: inherit
+```
+
+The `helpers:pinGitHubActionDigests` Renovate preset pins `uses:` references to digests and opens PRs when a new version is published:
+
+```json
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"]
+}
+```
+
+Within this repository, external actions are pinned to commit SHAs with a version comment (or `# main` for actions that don't publish releases), and Renovate keeps them updated.
+
 ## Workflows
 
 ### Test Workflow (`canonical/operator-workflows/.github/workflows/test.yaml@main`)

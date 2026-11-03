@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-10-21
+
+- Pin external actions to commit SHAs (kept up to date by Renovate) and make the workflows
+(`terraform_modules_compliance.yaml`, `docs_spread.yaml`, `test.yaml` and, for the `charmbuild`
+install, `integration_test.yaml`) resolve their files at the commit they were called with, so pinning
+a workflow version pins everything they use. The integration test and publish workflows still
+reference their own `internal/*` actions at `@main`.
+
 ## 2026-10-09
 
 - Always add `~/.local/bin` to `PATH` in the `integration_test.yaml` build job, so tools installed by

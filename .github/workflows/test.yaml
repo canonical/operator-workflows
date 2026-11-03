@@ -96,11 +96,11 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Checkout repo to runner
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
           sudo apt-get update -y && sudo apt-get install -y tree ruby-rubygems docutils
       - name: Install styles
-        uses: canonical/documentation-style-guide@main
+        uses: canonical/documentation-style-guide@705da792f4baf51dfeebb70990f43cc04359cdcd # main
       - name: Resolve Vale file paths
         id: resolve_vale_files
         run: |
@@ -119,7 +119,7 @@ jobs:
           echo "Files identified for Vale check: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"
       - name: Run Vale tests
-        uses: vale-cli/vale-action@v3.0.0
+        uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           files: ${{ steps.resolve_vale_files.outputs.files }}
           fail_on_error: ${{ inputs.vale-style-check }}
@@ -137,7 +137,7 @@ jobs:
       run:
         working-directory: ${{ inputs.shellcheck-working-directory || inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Gather files to scan
         shell: bash
         id: gather
@@ -191,7 +191,7 @@ jobs:
           set +f # re-enable globbing
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         name: Shellcheck Problem Matchers
-        uses: lumaxis/shellcheck-problem-matchers@v2.3.1
+        uses: lumaxis/shellcheck-problem-matchers@bf6e0860fd06e4910738c6160dcd2889146ce824 # v2.3.1
       - if: ${{ steps.gather.outputs.filepaths != '' }}
         run: shellcheck -f gcc ${{steps.gather.outputs.filepaths}}
   terraform-lint:
@@ -207,9 +207,9 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Setup Tflint
-        uses: terraform-linters/setup-tflint@v6.3.1
+        uses: terraform-linters/setup-tflint@1cf010d3c7aef302051ccdb68c14c5dc2efa34ef # v6.3.1
         with:
           tflint_wrapper_enabled: true
       - name: Run Tflint
@@ -230,7 +230,7 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Resolve Python version source
         id: python-version
         run: |
@@ -260,13 +260,13 @@ jobs:
 
       - name: Setup Python (from project file)
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file != '' }}
-        uses: actions/setup-python@v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: ${{ steps.python-version.outputs.file }}
 
       - name: Setup Python
         if: ${{ ! inputs.with-uv && steps.python-version.outputs.file == '' }}
-        uses: actions/setup-python@v7.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ inputs.python-version || steps.python-version.outputs.version }}
 
@@ -276,7 +276,7 @@ jobs:
           
       - name: Setup Astral UV
         if: ${{ inputs.with-uv }}
-        uses: astral-sh/setup-uv@v10.1.0
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
           python-version: >-
             ${{ steps.python-version.outputs.file == ''
@@ -296,7 +296,7 @@ jobs:
           tox --result-json=test-result.json | tee $STDOUT_LOG ; test ${PIPESTATUS[0]} -eq 0
       - name: Export test report
         if: always() && !cancelled()
-        uses: actions/github-script@v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const no_color = (text) => {
@@ -352,7 +352,7 @@ jobs:
         run: |
           echo "REPORT_NAME=report-${CONCURRENCY_GROUP//\//_}" >> $GITHUB_ENV
       - name: Upload coverage report
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always() && github.event_name == 'pull_request' && !cancelled()
         with:
           name: ${{ env.REPORT_NAME }}
@@ -370,16 +370,16 @@ jobs:
       run:
         working-directory: ${{ inputs.working-directory }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Check .licenserc.yaml exists
         id: licenserc-yaml
         run: echo "exists=$([ -f .licenserc.yaml ] && echo "true" || echo "false")" >> $GITHUB_OUTPUT
       - name: Get default license configuration
         if: steps.licenserc-yaml.outputs.exists == 'false'
         run: |
-          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/canonical/operator-workflows/main/.github/files/.licenserc.yaml
+          curl -fLsSo .licenserc.yaml https://raw.githubusercontent.com/${{ job.workflow_repository }}/${{ job.workflow_sha }}/.github/files/.licenserc.yaml
       - name: Check license headers
-        uses: apache/skywalking-eyes/header@main
+        uses: apache/skywalking-eyes/header@7f98a36a3cbbb2b876b6a05ddc24315b82c77737 # main
         with:
           config: .licenserc.yaml
   lib-check:
@@ -392,7 +392,7 @@ jobs:
         )) || inputs.runs-on-base
       }}
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Resolve charmcraft.yaml
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
         working-directory: ${{ inputs.working-directory }}/${{ inputs.charm-directory }}
@@ -411,7 +411,7 @@ jobs:
           ln -s "${candidates[0]}" charmcraft.yaml
       - name: Check libs
         if: ${{ !github.event.pull_request.head.repo.fork && inputs.require-check-lib }}
-        uses: canonical/charming-actions/check-libraries@2.7.0
+        uses: canonical/charming-actions/check-libraries@1753e0803f70445132e92acd45c905aba6473225 # 2.7.0
         env:
           CHARMCRAFT_ENABLE_EXPERIMENTAL_EXTENSIONS: "1"
         with:
