@@ -3,9 +3,10 @@
   "automerge": true,
   "extends": [
     "config:base",
-    "group:all",
+    "group:allNonMajor",
     "helpers:pinGitHubActionDigests"
   ],
+  "minimumReleaseAge": "3 days",
   "schedule": [
     "* * * * 0,6"
   ],
