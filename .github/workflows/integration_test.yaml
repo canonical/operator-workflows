@@ -346,7 +346,17 @@ jobs:
         run: |
           if [ -f ".trivyignore" ]
           then
-            curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.2
+            # Install from the pinned GitHub release and verify its checksum. The upstream
+            # install.sh is not used: it is not pinned and depends on get.trivy.dev.
+            trivy_release="https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}"
+            trivy_archive="trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz"
+            trivy_checksums="trivy_${TRIVY_VERSION#v}_checksums.txt"
+            trivy_tmp=$(mktemp -d)
+            curl -sfL -o "${trivy_tmp}/${trivy_archive}" "${trivy_release}/${trivy_archive}"
+            curl -sfL -o "${trivy_tmp}/${trivy_checksums}" "${trivy_release}/${trivy_checksums}"
+            (cd "${trivy_tmp}" && grep -F " ${trivy_archive}" "${trivy_checksums}" | sha256sum -c -)
+            sudo tar -xzf "${trivy_tmp}/${trivy_archive}" -C /usr/local/bin trivy
+            rm -rf "${trivy_tmp}"
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
@@ -380,6 +390,8 @@ jobs:
             fi
           fi
         env:
+          # renovate: datasource=github-releases depName=aquasecurity/trivy
+          TRIVY_VERSION: v0.69.2
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ matrix.scan.image }}
