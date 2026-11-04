@@ -344,9 +344,11 @@ jobs:
       - name: Check trivyignore
         if: matrix.scan.image != ''
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.2
           if [ -f ".trivyignore" ]
           then
+            # Install the pinned release. install.sh is not used because it depends on get.trivy.dev.
+            curl -sfL "https://github.com/aquasecurity/trivy/releases/download/${TRIVY_VERSION}/trivy_${TRIVY_VERSION#v}_Linux-64bit.tar.gz" \
+              | sudo tar -xz -C /usr/local/bin trivy
             ignored_cves=$(trivy image "$ROCK_IMAGE" \
               --severity "CRITICAL,HIGH" \
               --show-suppressed \
@@ -380,6 +382,8 @@ jobs:
             fi
           fi
         env:
+          # renovate: datasource=github-releases depName=aquasecurity/trivy
+          TRIVY_VERSION: v0.69.2
           TRIVY_USERNAME: ${{ github.actor }}
           TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
           ROCK_IMAGE: ${{ matrix.scan.image }}
