@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-11-05
+
+- Fix the integration test plan defaulting to the `registry` image upload for pull requests from
+forks when the workflow is triggered by a `pull_request_review` or `pull_request_review_comment`
+event. These runs have a read-only `GITHUB_TOKEN`, so the push to GHCR was denied; such pull
+requests now default to `artifact`, as they already did for `pull_request` events. Behaviour for
+all other events, and when `upload-image` is set explicitly, is unchanged.
+
 ## 2026-10-21
 
 - Pin external actions to commit SHAs (kept up to date by Renovate) and make the workflows
