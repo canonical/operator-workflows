@@ -20,6 +20,14 @@ alias of `terraform-check`. The discovery settings live in `terraform_spec.py`.
 (product) / `components` (component) / `juju_application` (charm), decides the type.
 Unidentified modules fail a new `module-type` check.
 - `main.tf` is no longer a required module file.
+ 
+## 2026-11-05
+
+- Fix the integration test plan defaulting to the `registry` image upload for pull requests from
+forks when the workflow is triggered by a `pull_request_review` or `pull_request_review_comment`
+event. These runs have a read-only `GITHUB_TOKEN`, so the push to GHCR was denied; such pull
+requests now default to `artifact`, as they already did for `pull_request` events. Behaviour for
+all other events, and when `upload-image` is set explicitly, is unchanged.
 
 ## 2026-10-21
 

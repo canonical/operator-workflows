@@ -124066,9 +124066,16 @@ function normalizePath(p) {
 function sanitizeArtifactName(name) {
     return name.replaceAll(/[\t\n:/\\"<>|*?]/g, '-');
 }
+// Events triggered by a pull request that carry the pull request in the payload
+// and, for forks, run with a read-only GITHUB_TOKEN.
+const PULL_REQUEST_EVENTS = [
+    'pull_request',
+    'pull_request_review',
+    'pull_request_review_comment'
+];
 function fromFork() {
     const context = context$2;
-    if (context.eventName !== 'pull_request') {
+    if (!PULL_REQUEST_EVENTS.includes(context.eventName)) {
         return false;
     }
     return (
