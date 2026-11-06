@@ -21,7 +21,6 @@ from terraform_hcl import (
     load_module_files,
     module_sources,
     output_bodies,
-    resource_type_labels,
     terraform_type,
     unquote,
     variable_bodies,
@@ -48,6 +47,7 @@ class CheckResult:
 
 CHECK_SLUGS = (
     "required-files",
+    "module-type",
     "terraform-configuration",
     "variable-ordering",
     "output-ordering",
@@ -60,7 +60,7 @@ CHECK_SLUGS = (
 class ModuleReport:
     """Detailed compliance report for one Terraform module."""
 
-    module_type: ModuleType
+    module_type: ModuleType | None
     checks: tuple[CheckResult, ...]
     variables: tuple[str, ...]
     outputs: tuple[str, ...]
@@ -166,31 +166,60 @@ def check_alphabetical(parsed: dict, block_type: str, filename: str) -> list[str
     return []
 
 
-def is_composed_module(parsed_files: list[dict]) -> bool:
-    """Return True when any parsed file composes other modules."""
-    return any(parsed.get("module") for parsed in parsed_files)
+UNIDENTIFIED_MODULE_TYPE_MESSAGE = (
+    "module type is not identified: the module must either have a path element "
+    "containing 'product', 'component' or 'charm', or have an outputs.tf "
+    "containing '{product}' (product module), '{component}' (component module) "
+    "or '{charm}' (charm module)"
+)
 
 
-def _defines_tying_resources(parsed_files: list[dict], spec: ModuleSpec) -> bool:
-    """Return True if any file declares a Product-module tying resource/data block."""
-    return any(
-        label in spec.tying_resource_types
-        for block_type in ("resource", "data")
-        for label in resource_type_labels(parsed_files, block_type)
-    )
+def _path_names_type(module_type: ModuleType, lowered_parts: list[str]) -> bool:
+    """Return True if a path element names the module type.
+
+    "charm" must be a whole word so that e.g. "charmed-spark" is not a charm.
+    """
+    if module_type == ModuleType.CHARM:
+        words = [word for part in lowered_parts for word in re.split(r"[-_.]", part)]
+        return any(word in (ModuleType.CHARM, f"{ModuleType.CHARM}s") for word in words)
+    return any(module_type in part for part in lowered_parts)
+
+
+def _type_from_path(path_parts: tuple[str, ...]) -> ModuleType | None:
+    """Return the type named by the path elements, None if absent or ambiguous."""
+    lowered = [part.lower() for part in path_parts]
+    named_types = [kind for kind in ModuleType if _path_names_type(kind, lowered)]
+    return named_types[0] if len(named_types) == 1 else None
+
+
+def _type_from_outputs(outputs_text: str, spec: ModuleSpec) -> ModuleType | None:
+    """Return the type implied by markers in the outputs.tf text, if any."""
+    if spec.product_output_marker in outputs_text:
+        return ModuleType.PRODUCT
+    if spec.component_output_marker in outputs_text:
+        return ModuleType.COMPONENT
+    if spec.charm_output_marker in outputs_text:
+        return ModuleType.CHARM
+    return None
 
 
 def classify_module_type(
-    parsed_files: list[dict], spec: ModuleSpec = DEFAULT_SPEC
-) -> ModuleType:
-    """Classify a module as CHARM (no module blocks), PRODUCT (composes
-    modules and defines a tying resource), or COMPONENT (composes only).
+    module_dir: Path,
+    spec: ModuleSpec = DEFAULT_SPEC,
+    root: Path | None = None,
+) -> ModuleType | None:
+    """Classify a module, or return None when its type cannot be identified.
+
+    The type comes from the path (relative to ``root`` when given) containing
+    "product", "component" or "charm", then from the markers in outputs.tf.
     """
-    if not is_composed_module(parsed_files):
-        return ModuleType.CHARM
-    if _defines_tying_resources(parsed_files, spec):
-        return ModuleType.PRODUCT
-    return ModuleType.COMPONENT
+    relative_dir = module_dir.relative_to(root) if root else module_dir
+    path_type = _type_from_path(relative_dir.parts)
+    if path_type:
+        return path_type
+    outputs_file = module_dir / "outputs.tf"
+    outputs_text = outputs_file.read_text() if outputs_file.is_file() else ""
+    return _type_from_outputs(outputs_text, spec)
 
 
 def _check_variable_rule(
@@ -306,6 +335,22 @@ def check_output_shapes(
                         f'{module_type} module output "{rule.name}" entry '
                         f'"{entry_name}": must be an object containing {fields}'
                     )
+        if rule.required_keys and isinstance(value, dict):
+            missing_keys = [key for key in rule.required_keys if key not in value]
+            extra_keys = (
+                [key for key in value if key not in rule.required_keys]
+                if not rule.allow_extra_keys
+                else []
+            )
+            if missing_keys or extra_keys:
+                fields = ", ".join(rule.required_keys)
+                qualifier = (
+                    "containing" if rule.allow_extra_keys else "containing exactly"
+                )
+                violations.append(
+                    f'{module_type} module output "{rule.name}": must be an object '
+                    f"{qualifier} {fields}"
+                )
     return violations
 
 
@@ -361,20 +406,35 @@ def check_pinned_module_sources(
     return violations
 
 
-def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleReport:
+def inspect_module(
+    module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC, root: Path | None = None
+) -> ModuleReport:
     """Return a detailed compliance report for a Terraform module directory."""
     parsed = load_module_files(module_dir)
     parsed_files = list(parsed.values())
     variable_bodies_by_name = variable_bodies(parsed_files)
     variables = list(variable_bodies_by_name)
     outputs = [name for file in parsed_files for name in block_names(file, "output")]
-    module_type = classify_module_type(parsed_files, spec)
+    module_type = classify_module_type(module_dir, spec, root)
 
     checks = (
         CheckResult(
             "required-files",
             "Required files",
             tuple(check_required_files(module_dir, spec)),
+        ),
+        CheckResult(
+            "module-type",
+            "Module type",
+            ()
+            if module_type
+            else (
+                UNIDENTIFIED_MODULE_TYPE_MESSAGE.format(
+                    product=spec.product_output_marker,
+                    component=spec.component_output_marker,
+                    charm=spec.charm_output_marker,
+                ),
+            ),
         ),
         CheckResult(
             "terraform-configuration",
@@ -408,7 +468,10 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
             tuple(
                 check_interface(variable_bodies_by_name, outputs, module_type, spec)
                 + check_output_shapes(parsed_files, module_type, spec)
-            ),
+            )
+            if module_type
+            else (),
+            None if module_type else "module type is not identified",
         ),
         CheckResult(
             "module-sources",
@@ -425,9 +488,11 @@ def inspect_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> ModuleR
     )
 
 
-def check_module(module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC) -> list[str]:
+def check_module(
+    module_dir: Path, spec: ModuleSpec = DEFAULT_SPEC, root: Path | None = None
+) -> list[str]:
     """Return all violations for a single Terraform module directory."""
-    return inspect_module(module_dir, spec).violations
+    return inspect_module(module_dir, spec, root).violations
 
 
 def _escape_annotation(message: str) -> str:
@@ -435,10 +500,61 @@ def _escape_annotation(message: str) -> str:
     return message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
 
+def _is_excluded(path: Path, root: Path, spec: ModuleSpec) -> bool:
+    return bool(set(path.relative_to(root).parts) & spec.discovery_excluded_dir_names)
+
+
+def discover_module_directories(
+    root: Path, spec: ModuleSpec = DEFAULT_SPEC
+) -> tuple[list[Path], list[Path]]:
+    """Find Terraform module directories under ``root``.
+
+    Returns ``(modules, unmarked)``: directories holding one of the spec's
+    module marker files (each reported once), and directories holding ``.tf``
+    files but no marker file, which are not checked. Directories named in the
+    spec's exclusions (e.g. ``tests``) are ignored with everything beneath.
+    """
+    modules: list[Path] = []
+    unmarked: list[Path] = []
+    for current in [root, *sorted(root.rglob("*"))]:
+        if not current.is_dir() or _is_excluded(current, root, spec):
+            continue
+        if any((current / marker).is_file() for marker in spec.module_marker_files):
+            modules.append(current)
+        elif any(current.glob("*.tf")):
+            unmarked.append(current)
+    return modules, unmarked
+
+
+def _discover_all(
+    roots: list[Path], spec: ModuleSpec = DEFAULT_SPEC
+) -> list[tuple[Path, Path]]:
+    """Return ``(module directory, root it was found under)`` for all roots."""
+    found: list[tuple[Path, Path]] = []
+    for root in roots:
+        modules, unmarked = discover_module_directories(root, spec)
+        for directory in unmarked:
+            markers = " or ".join(spec.module_marker_files)
+            message = f"{directory}: contains .tf files but no {markers}; not checked"
+            print(f"WARNING: {message}")
+            print(f"::warning title=Terraform compliance::{_escape_annotation(message)}")
+        found.extend((module, root) for module in modules)
+    return found
+
+
 def main(argv: list[str] | None = None) -> int:
-    """Run the Terraform module compliance check over the given directories."""
+    """Run the Terraform module compliance check over the given paths."""
     parser = argparse.ArgumentParser(
-        description="Check Terraform modules for compliance with the configured spec."
+        description=(
+            "Check Terraform modules for compliance with the configured spec. "
+            "By default each path is a repository root searched for module "
+            "directories (those containing main.tf or terraform.tf)."
+        )
+    )
+    parser.add_argument(
+        "--no-discover",
+        action="store_true",
+        help="Treat each path as a module directory instead of searching it.",
     )
     parser.add_argument(
         "--verbose",
@@ -456,7 +572,18 @@ def main(argv: list[str] | None = None) -> int:
         help="Print the available --check slugs and exit.",
     )
     parser.add_argument(
-        "directories", nargs="*", help="Terraform module directories to check."
+        "--root",
+        type=Path,
+        help=(
+            "Repository root; module paths are made relative to it when "
+            "identifying module types (defaults to the searched root when "
+            "discovering, otherwise to the paths as given)."
+        ),
+    )
+    parser.add_argument(
+        "paths",
+        nargs="*",
+        help="Repository roots to search (or module directories with --no-discover).",
     )
     args = parser.parse_args(argv)
 
@@ -465,21 +592,35 @@ def main(argv: list[str] | None = None) -> int:
             print(slug)
         return 0
 
-    directories = [directory for directory in args.directories if directory.strip()]
+    paths = [Path(path) for path in args.paths if path.strip()]
 
-    if not directories:
-        message = "no Terraform module directories were provided"
+    if not paths:
+        message = "no Terraform paths were provided"
         print(f"ERROR: {message}")
         print(
             f"::error title=Terraform compliance configuration::{_escape_annotation(message)}"
         )
         return 2
 
+    if args.no_discover:
+        targets = [(path, args.root) for path in paths]
+    else:
+        invalid = [path for path in paths if not path.is_dir()]
+        if invalid:
+            print(f"ERROR: not a directory: {', '.join(map(str, invalid))}")
+            return 2
+        targets = [
+            (module, args.root or root) for module, root in _discover_all(paths)
+        ]
+        if not targets:
+            print("No Terraform modules found")
+            return 1
+
     label = f"check '{args.check}'" if args.check else "all checks"
-    print(f"Checking {len(directories)} Terraform module(s) for compliance ({label})")
+    print(f"Checking {len(targets)} Terraform module(s) for compliance ({label})")
     failed_count = 0
-    for directory in directories:
-        report = inspect_module(Path(directory))
+    for directory, root in targets:
+        report = inspect_module(directory, root=root)
         checks = (
             [check for check in report.checks if check.slug == args.check]
             if args.check
@@ -488,7 +629,7 @@ def main(argv: list[str] | None = None) -> int:
         module_violations = [
             violation for check in checks for violation in check.violations
         ]
-        print(f"\nChecking {directory} ({report.module_type} module)")
+        print(f"\nChecking {directory} ({report.module_type or 'unidentified'} module)")
         if args.verbose:
             print(f"  Variables: {', '.join(report.variables) or 'none'}")
             print(f"  Outputs: {', '.join(report.outputs) or 'none'}")
@@ -508,9 +649,9 @@ def main(argv: list[str] | None = None) -> int:
         else:
             print(f"PASS {directory}")
 
-    passed_count = len(directories) - failed_count
+    passed_count = len(targets) - failed_count
     print(
-        f"\nSummary: {len(directories)} checked, "
+        f"\nSummary: {len(targets)} checked, "
         f"{passed_count} passed, {failed_count} failed"
     )
     return 1 if failed_count else 0

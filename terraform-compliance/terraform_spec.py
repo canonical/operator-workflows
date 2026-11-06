@@ -56,6 +56,9 @@ class OutputRule:
     optional: bool = False
     expected_resource_type: str | None = None
     literal_map_entry_fields: tuple[str, ...] = ()
+    required_keys: tuple[str, ...] = ()
+    # When False, `required_keys` must be the object's only keys.
+    allow_extra_keys: bool = True
 
 
 @dataclass(frozen=True)
@@ -79,8 +82,16 @@ class ModuleSpec:
     """The full set of requirements a Terraform module must satisfy."""
 
     required_files: tuple[str, ...]
+    # Files whose presence marks a directory as a module during autodiscovery
+    # (legacy modules may lack terraform.tf).
+    module_marker_files: tuple[str, ...]
+    # Directory names skipped by autodiscovery, along with everything beneath.
+    discovery_excluded_dir_names: frozenset[str]
     terraform_block: TerraformBlockRequirements
-    tying_resource_types: frozenset[str]
+    # Text found in outputs.tf that identifies a module's type.
+    product_output_marker: str
+    component_output_marker: str
+    charm_output_marker: str
     floating_ref_names: frozenset[str]
     deprecated_names: frozenset[str]
     module_interfaces: dict[ModuleType, ModuleInterface]
@@ -92,17 +103,29 @@ DEFAULT_SPEC = ModuleSpec(
         "terraform.tf",
         "variables.tf",
         "outputs.tf",
-        "main.tf",
         "README.md",
+    ),
+    module_marker_files=("main.tf", "terraform.tf"),
+    discovery_excluded_dir_names=frozenset(
+        {
+            ".git",
+            ".terraform",
+            ".venv",
+            "node_modules",
+            "__pycache__",
+            ".mypy_cache",
+            ".pytest_cache",
+            ".tox",
+            "tests",
+        }
     ),
     terraform_block=TerraformBlockRequirements(
         provider_source="juju/juju",
         minimum_provider_version="1.0.0",
     ),
-    # Resource/data types that mark a module as tying components together.
-    tying_resource_types=frozenset(
-        {"juju_model", "juju_secret", "juju_integration", "juju_offer"}
-    ),
+    product_output_marker="juju_model",
+    component_output_marker="components",
+    charm_output_marker="juju_application",
     # Floating branch names disallowed as module refs.
     floating_ref_names=frozenset(
         {"main", "master", "trunk", "develop", "development", "head"}
@@ -217,7 +240,11 @@ DEFAULT_SPEC = ModuleSpec(
                 VariableRule("proxy", TerraformType.OBJECT, optional=True),
             ),
             outputs=(
-                OutputRule("metadata"),
+                OutputRule(
+                    "metadata",
+                    required_keys=("version", "updated_at", "deployed_at"),
+                    allow_extra_keys=False,
+                ),
                 OutputRule("models"),
                 OutputRule("offers", optional=True),
                 OutputRule("credentials", optional=True),
