@@ -40,7 +40,7 @@ jobs:
     name: Automatic doc checks
     needs: check-makefile
     if: ${{ needs.check-makefile.outputs.makefile-exists == 'true' }}
-    uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@309dd382b6a07cbd23d84e3912fb05e6bc1f4ffb  # main
+    uses: canonical/documentation-workflows/.github/workflows/documentation-checks.yaml@e2998cc659396f43165fefde2d01c39b1a88d64c  # main
     with:
       working-directory: "docs"
       fetch-depth: 0
