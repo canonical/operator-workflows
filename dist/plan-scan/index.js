@@ -33578,7 +33578,7 @@ The following characters are not allowed in files that are uploaded due to limit
     }
 }
 
-var version$1 = "6.2.1";
+var version$1 = "6.3.1";
 var require$$0$1 = {
 	version: version$1};
 
@@ -33852,8 +33852,9 @@ var __awaiter$a = (undefined && undefined.__awaiter) || function (thisArg, _argu
 class ArtifactHttpClient {
     constructor(userAgent, maxAttempts, baseRetryIntervalMilliseconds, retryMultiplier) {
         this.maxAttempts = 5;
-        this.baseRetryIntervalMilliseconds = 3000;
+        this.baseRetryIntervalMilliseconds = 8000;
         this.retryMultiplier = 1.5;
+        this.retryTimeoutMilliseconds = 120000;
         const token = getRuntimeToken();
         this.baseUrl = getResultsServiceUrl();
         if (maxAttempts) {
@@ -33892,11 +33893,16 @@ class ArtifactHttpClient {
             let attempt = 0;
             let errorMessage = '';
             let rawBody = '';
+            let totalRetryWaitMilliseconds = 0;
             while (attempt < this.maxAttempts) {
                 let isRetryable = false;
+                let retryAfterSeconds;
                 try {
                     const response = yield operation();
                     const statusCode = response.message.statusCode;
+                    if (statusCode === HttpCodes.TooManyRequests) {
+                        retryAfterSeconds = this.getRetryAfterSeconds(response);
+                    }
                     rawBody = yield response.readBody();
                     debug(`[Response] - ${response.message.statusCode}`);
                     debug(`Headers: ${JSON.stringify(response.message.headers, null, 2)}`);
@@ -33934,9 +33940,16 @@ class ArtifactHttpClient {
                 if (attempt + 1 === this.maxAttempts) {
                     throw new Error(`Failed to make request after ${this.maxAttempts} attempts: ${errorMessage}`);
                 }
-                const retryTimeMilliseconds = this.getExponentialRetryTimeMilliseconds(attempt);
+                const retryTimeMilliseconds = retryAfterSeconds !== undefined
+                    ? retryAfterSeconds * 1000
+                    : this.getExponentialRetryTimeMilliseconds(attempt);
+                if (totalRetryWaitMilliseconds + retryTimeMilliseconds >
+                    this.retryTimeoutMilliseconds) {
+                    throw new Error(`Retry wait of ${retryTimeMilliseconds} ms would exceed the maximum total retry wait of ${this.retryTimeoutMilliseconds} ms: ${errorMessage}`);
+                }
                 info(`Attempt ${attempt + 1} of ${this.maxAttempts} failed with error: ${errorMessage}. Retrying request in ${retryTimeMilliseconds} ms...`);
                 yield this.sleep(retryTimeMilliseconds);
+                totalRetryWaitMilliseconds += retryTimeMilliseconds;
                 attempt++;
             }
             throw new Error(`Request failed`);
@@ -33958,6 +33971,17 @@ class ArtifactHttpClient {
             HttpCodes.TooManyRequests
         ];
         return retryableStatusCodes.includes(statusCode);
+    }
+    // Only positive integer seconds are supported, not HTTP-date values.
+    getRetryAfterSeconds(response) {
+        var _a;
+        const header = response.message.headers['retry-after'];
+        const value = (_a = (Array.isArray(header) ? header[0] : header)) === null || _a === void 0 ? void 0 : _a.trim();
+        if (value === undefined || !/^\d+$/.test(value)) {
+            return undefined;
+        }
+        const parsed = parseInt(value, 10);
+        return !isNaN(parsed) && parsed > 0 ? parsed : undefined;
     }
     sleep(milliseconds) {
         return __awaiter$a(this, void 0, void 0, function* () {
