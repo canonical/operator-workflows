@@ -10,7 +10,7 @@ name = "terraform-compliance"
 version = "0.1.0"
 description = "Generic Terraform module compliance checker enforcing a configurable spec (default: CC008)"
 requires-python = ">=3.11"
-dependencies = ["python-hcl2==8.1.4"]
+dependencies = ["python-hcl2==8.2.0"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
