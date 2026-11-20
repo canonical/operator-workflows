@@ -15,11 +15,6 @@ on:
         description: Path to the file containing the major version number.
         default: terraform/MAJOR_VERSION
 
-# Serialize tag creation so concurrent pushes don't compute the same minor.
-concurrency:
-  group: tag-terraform-module
-  cancel-in-progress: false
-
 env:
   TAG_PREFIX: ${{ inputs.tag-prefix }}
   MAJOR_VERSION_FILE: ${{ inputs.major-version-file }}
@@ -48,6 +43,11 @@ jobs:
 
   release:
     if: ${{ github.event_name != 'pull_request' }}
+    # Serialize tag creation for each prefix without blocking PR checks.
+    concurrency:
+      group: tag-terraform-module-${{ inputs.tag-prefix }}
+      queue: max
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 Each revision is versioned by the date of the revision.
 
+## 2026-11-20
+
+- Queue Terraform module releases per tag prefix without blocking pull request checks.
+
 ## 2026-10-23
 
 - Add `terraform-check` autodiscovery: each path is searched for Terraform module
