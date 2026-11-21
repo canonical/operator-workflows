@@ -36,7 +36,7 @@ jobs:
       run: sudo chown $USER -R .
 
     - name: Create pull request
-      uses: canonical/create-pull-request@3e8ce48835166a39a03d57caea795d7596c7c2bf # main
+      uses: canonical/create-pull-request@a7f9e54acb0eaaa09e6c35ff81b9588eb511f362 # main
       if: ${{ github.event_name != 'pull_request' }}
       with:
         github-token: ${{ secrets.github-token || secrets.GITHUB_TOKEN }}
