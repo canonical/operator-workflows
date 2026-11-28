@@ -55,7 +55,7 @@ jobs:
         working-directory: ${{ inputs.working-directory }}
         run: rm -f charmcraft.yaml
       - name: Create pull request
-        uses: canonical/create-pull-request@a7f9e54acb0eaaa09e6c35ff81b9588eb511f362 # main
+        uses: canonical/create-pull-request@f4120f2d66aa9cb22319ccf97d2b8db7d78dc055 # main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: update charm libraries"
